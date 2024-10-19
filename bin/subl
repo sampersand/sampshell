@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Opens the supplied files in Sublime Text. If no files are given, defaults to the 
+# current directory.
+[ $# = 0 ] && set -- "$PWD"
+
+open -a "${SampShell_EDITOR:-TextEdit}" -- "$@"

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Same as `subl`, except it creates files if they don't already exist.
+for file; do
+	if [ ! -e "$file" ]; then
+		mkdir -p "$(dirname "$file")" && touch "$file"
+	fi
+done
+
+subl "$@"
