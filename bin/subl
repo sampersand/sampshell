@@ -1,7 +1,17 @@
 #!/bin/sh
 
-# Opens the supplied files in Sublime Text. If no files are given, defaults to the 
-# current directory.
+editor_default=TextEdit
+
+if [ "$1" = '--' ]; then
+	shift
+elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+	echo "usage: $(basename "$0") [-h] [--] [file ...]"
+	echo $'\t'"Opens given files (or PWD if no files given)"
+	echo $'\t'"in \$SampShell_EDITOR (defaults to $editor_default)"
+	exit -1
+fi
+
+# Do after the conditional to allow for `subl --` with no additional arguments
 [ $# = 0 ] && set -- "$PWD"
 
-open -a "${SampShell_EDITOR:-TextEdit}" -- "$@"
+open -a "${SampShell_EDITOR:-$editor_default}" -- "$@"

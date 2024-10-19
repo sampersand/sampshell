@@ -1,8 +1,28 @@
 #!/bin/sh
 
+if [ "$1" = '--' ]; then
+	shift
+elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+	echo "usage: $(basename "$0") [-h] [--] [file ...]"
+	echo $'\t'"Same as 'subl', except it creates files if they're not given"
+	echo $'\t'"if a path ends in /, it's created as a dir"
+	exit -1
+fi
+
 # Same as `subl`, except it creates files if they don't already exist.
 for file; do
-	if [ ! -e "$file" ]; then
+	if [ -z "$file" ]; then
+		echo "error: empty filename given; not creating it" >&2
+		continue
+	fi
+
+	# File exists, no need to make it.
+	[ -e "$file" ] && continue
+
+	# If the file ends with `/`, then make a directory
+	if [ "${file#${file%?}}" = '/' ]; then
+		mkdir -p "$file"
+	else
 		mkdir -p "$(dirname "$file")" && touch "$file"
 	fi
 done

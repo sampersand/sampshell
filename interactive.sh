@@ -5,7 +5,8 @@ export SampShell_HOME="${SampShell_HOME:-"$HOME/.sampshell"}"
 alias s=subl
 alias ss=ssubl
 
-nargs SampShell_nargs () { echo $#; }
+SampShell_nargs () { echo $#; }
+SampShell_isalias nargs || alias nargs=SampShell_nargs
 
 : ${SampShell_words:=/usr/share/dict/words}
 [ -e "$SampShell_words" ] || unset SampShell_words
