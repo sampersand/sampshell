@@ -1,6 +1,9 @@
 export SampShell_HOME="${SampShell_HOME:-"$HOME/.sampshell"}"
 
 . "$SampShell_HOME/non-interactive.sh"
+. "$SampShell_HOME/git.sh"
+. "$SampShell_HOME/prompt.sh"
+. "$SampShell_HOME/safety.sh"
 
 alias s=subl
 alias ss=ssubl
@@ -11,3 +14,13 @@ SampShell_isalias nargs || alias nargs=SampShell_nargs
 : ${SampShell_words:=/usr/share/dict/words}
 [ -e "$SampShell_words" ] || unset SampShell_words
 [ -n "$SampShell_words" ] && words=SampShell_words
+
+## Override builtins with safer versions
+set -o noclobber
+alias rm='rm -i'
+alias mv='mv -i'
+alias cp='cp -i'
+alias rrm='command rm'
+alias mmv='command mv'
+alias ccp='command cp'
+
