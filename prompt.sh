@@ -1,16 +1,11 @@
-# #!/bin/zsh
-
-# ################################
-# # Sets up prompt substitutions #
-# ################################
-
 if [ -z "$PS1" ]; then
     export PS1='(last exit=$?) ! ${PWD##"$HOME/"} $ '
 fi
 
-return 
+# ZSH-specific options
+[ -n "$ZSH_VERSION" ] && . "$SampShell_HOME/zsh/prompt.zsh"
 
-if false; then
+return 
 
 # There's some tomfoolery going on with ZSH and not accepting prompt expansions that are
 # too long, so this stuff down here is ignored sadly
@@ -88,4 +83,3 @@ PS1+=' \$$reset '
 # }
 
 # alias make-ps1=make-prompt
-fi
