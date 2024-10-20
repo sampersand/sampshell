@@ -49,4 +49,4 @@ function parallelize_it_skip () {
 	done
 }
 
-echo 'Todo: set -m'
+echo 'todo: set -m'

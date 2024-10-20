@@ -131,3 +131,4 @@ function make-prompt {
 }
 
 alias make-ps1=make-prompt
+make-ps1 # Set it

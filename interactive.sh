@@ -1,27 +1,12 @@
-export SampShell_HOME="${SampShell_HOME:-"$HOME/.sampshell"}"
+# Load the non-interactive one in case it hasn't been loaded already.
+. "${SampShell_HOME:-"$HOME/.sampshell"}/non-interactive.sh"
 
-. "$SampShell_HOME/non-interactive.sh"
-
+# Load all the shared files.
 for file in "$SampShell_HOME"/shared/*; do
 	. "$file"
 done
 
+# If we also have zsh, load its stuff
 [ -n "$ZSH_VERSION" ] && for file in "$SampShell_HOME"/zsh/*; do
 	. "$file"
 done
-
-
-# . "$SampShell_HOME/non-interactive.sh"
-# . "$SampShell_HOME/git.sh"
-# . "$SampShell_HOME/prompt.sh"
-# . "$SampShell_HOME/safety.sh"
-
-alias s=subl
-alias ss=ssubl
-
-SampShell_nargs () { echo $#; }
-SampShell_isalias nargs || alias nargs=SampShell_nargs
-
-: ${SampShell_words:=/usr/share/dict/words}
-[ -e "$SampShell_words" ] || unset SampShell_words
-[ -n "$SampShell_words" ] && words=SampShell_words

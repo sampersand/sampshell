@@ -10,4 +10,4 @@ if type pbcopy >/dev/null 2>&1; then
 	alias pbp=pbpaste
 fi
 
-# TODO: caffeinate things
+echo 'todo: caffeinate'
