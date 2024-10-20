@@ -2,9 +2,6 @@ if [ -z "$PS1" ]; then
     export PS1='(last exit=$?) ! ${PWD##"$HOME/"} $ '
 fi
 
-# ZSH-specific options
-[ -n "$ZSH_VERSION" ] && . "$SampShell_HOME/zsh/prompt.zsh"
-
 return 
 
 # There's some tomfoolery going on with ZSH and not accepting prompt expansions that are

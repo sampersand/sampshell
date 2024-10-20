@@ -10,6 +10,3 @@ alias cp='cp -i'
 alias rrm='command rm'
 alias mmv='command mv'
 alias ccp='command cp'
-
-# ZSH-specific options
-[ -n "$ZSH_VERSION" ] && . "$SampShell_HOME/zsh/safety.zsh"
