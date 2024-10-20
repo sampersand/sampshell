@@ -1,6 +1,4 @@
-if [ -z "$PS1" ]; then
-    export PS1='(last exit=$?) ! ${PWD##"$HOME/"} $ '
-fi
+export PS1='[$? !] ${PWD##"$HOME/"} $ '
 
 return 
 

@@ -1,48 +1,24 @@
 #!/bin/zsh
 
-return # TODO
-
-# if false; then
-# 	# Gets the current branch (ISH---this isn't working)
-# 	function git-current-branch () git rev-parse --abbrev-ref HEAD
-
-# 	# Returns zero or nonzero depending on when on if it's in a repo.
-# 	function is-in-a-git-repo () git rev-parse --is-inside-work-tree >&- 2>&-
-# fi
-
-
-##################
-# Global aliases #
-##################
-
 alias g=git
 
-for i in {1..10}; do
-	alias -g "@-$i=@{-$i}"
-done
+: "${SampShell_git_default_master_branch:=master}"
+: "${SampShell_git_branch_prefix:=swesterman}"
+: "${SampShell_git_branch_prefix_pattern:='$SampShell_git_branch_prefix/??-??-??'}"
 
-#######################
-# Helper git commands #
-#######################
-
-typeset -xgA _samp_shell_git_options
-_samp_shell_git_options[default-master-branch]=master
-
-function master-branch (){
-	echo ${"$(git symbolic-ref refs/remotes/origin/HEAD -q || echo ${_samp_shell_git_options[default-master-branch]})":t}
+alias master-branch=SampShell_master_branch
+SampShell_master_branch () {
+	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
-# alias -g '$master-branch="$(master-branch)"'
+echo "todo: regex matching"
+SampShell_git_branch_prefix () {
+	if [ -z "$1" ]; then
+		set -- "${date:-"$(date +%y-%m-%d)"}"
+	fi
 
-function git-branch-prefix () {
-	local prefix=${_samp_shell_git_options[branch-prefix]?set a branch prefix please}
-	: ${1:=${date:-$(date +%y-%m-%d)}}
 	[[ $1 =~ '([0-9]{2}-){2}[0-9]{2}' ]] || warn "$0: date isn't in the right format: $1"
-	echo $prefix/$1
-}
-
-function git-branch-prefix-pattern () {
-	echo "${(q)_samp_shell_git_options[branch-prefix]?}/??-??-??"
+	echo "${SampShell_git_branch_prefix?}/$1"
 }
 
 ################################
@@ -52,41 +28,37 @@ alias gf='git fetch'
 alias gpl='git pull'
 alias gph='git push'
 alias gphf='git push --force'
-gremove-remote () {
-	echo "not tested" && return
-	git branch -d | xargs -L1 git branch -Dr
-}
-
-### Stashing Code
 alias gst='git stash'
 alias gstash=gst
 alias gstp='git stash pop'
-
-
 
 #####################
 # Changing branches #
 #####################
 
 # Create a new branch; date is optional.
-function gnb git-new-branch () {
-	if [[ $# = 0 ]]; then eecho "[date=YY-MM-DD] $0 branch name here" && return -1; fi
-	git switch --create "$(git-branch-prefix)/${(j:-:)@}"
+gnb () {
+	if [ $# = 0 ]; then
+		echo "[date=YY-MM-DD] $0 (branch name here)" >&2
+		return -1
+	fi
+
+	if [ -n "$ZSH_VERSION" ]; then echo "todo: join in sh"; return 1; fi
+
+	git switch --create "$(SampShell_git_branch_prefix)/${(j:-:)@}"
 }
 
-function gsw () git switch ${@:-'@{-1}'}
-alias gswm='gsw "$(master-branch)"'
-
+alias gswm='gsw "$(SampShell_master_branch)"'
+gsw () {
+	[ $# = 0 ] && set -- '@{-1}'
+	git switch "$@"
+}
 alias gbr='git branch'
 
-
-
-
 gdb () {
-	[[ $# = 0 && $1 = '-' ]] && set -- '@{-1}'
-	git branch --delete $@
+	[ $# = 1 ] && [ "$1" = '-' ] && set -- '@{-1}'
+	git branch --delete "$@"
 }
-
 alias grename='git branch --move'
 alias gbmv=grename
 alias gbrmv=grename
@@ -97,43 +69,39 @@ alias gbrmv=grename
 ##########################
 
 # Squash all commits down lightly.
-function gsquash git-squash () {
-	if [[ $# != 1 ]]; then
-		eecho "$0 <branch-or-commit>"
+gsquash () {
+	if [ $# != 1 ]; then
+		echo "usage: $0 <branch-or-commit>"
 		return -1
 	fi
 
-	git reset --soft "$(git merge-base ${1?} HEAD)"
+	git reset --soft "$(git merge-base "${1?}" HEAD)"
 }
 
 # Fixup code
-function goops git-oops () {
-	git add "${@:---all}" && git commit --amend --no-edit && git push --force
+goops () {
+	[ $# = 0 ] && set -- '--all'
+	git add "$@" && git commit --amend --no-edit && git push --force
 }
 
-function gclear git-clear () {
+gclear () {
 	# git add --all && git stash push && git status
 	echo 'todo'
+	return 1
 }
 
 # Adds everything and prints out the status
-function gaa git-add-all () {
+gaa () {
 	git add --all && git status
 }
 
-
-##################################
-# Extended builtin git functions #
-##################################
-
 # Commits untracked files; all arguments are joined with a space.
-function gcm git-commit () git commit ${1+--message} ${(j: :)@}
-
-
-
-###########
-# Aliases #
-###########
+gcm () if [ $# = 0 ]; then
+	git commit
+else
+	echo '<gcm: todo: what if the argument starts with `-`?>'
+	git commit ${1+--message} "$*"
+fi
 
 alias gs='git status'
 alias grb='git rebase'
@@ -149,16 +117,25 @@ alias gcp='git cherry-pick'
 alias gg='git grep'
 alias ginit='git init'
 alias gnit='git commit --amend --no-edit'
-function gnita () { gaa && gnit }
+gnita () { gaa && gnit; }
 
-gcl () { git clone ${1?'must supply a repo'} && cd ${1:t:r} }
+gcl () { git clone ${1?'must supply a repo'} && cd ${1:t:r}; }
 alias gl='git log'
 
-function gm () git merge ${@:-'@{-1}'}
-alias gmm='gm "$(master-branch)"'
-function gd () git diff ${@:-'@{-1}'}
-alias gdm='gd "$(master-branch)"'
-function gdd () git diff --name-status ${@:-'@{-1}'}
-alias gddm='gdd "$(master-branch)"'
+alias gmm='gm "$(SampShell_master_branch)"'
+gm () {
+	[ $# = 0 ] && set -- '@{-1}'
+	git merge "$@"
+}
 
-# 	# interact with remote
+alias gdm='gd "$(SampShell_master_branch)"'
+gd () {
+	[ $# = 0 ] && set -- '@{-1}'
+	git diff "$@"
+}
+
+alias gddm='gdd "$(SampShell_master_branch)"'
+gdd () {
+	[ $# = 0 ] && set -- '@{-1}'
+	git diff --name-status ${@:-'@{-1}'}
+}

@@ -2,11 +2,11 @@
 set -o noclobber
 
 # Override builtins with safer versions
-alias rm='rm -i'
+alias rm='rm -id'
 alias mv='mv -i'
 alias cp='cp -i'
 
 # Still let you do the builtins
-alias rrm='command rm'
-alias mmv='command mv'
-alias ccp='command cp'
+alias rmm='rm -f'
+alias mvv='mv -f'
+alias cpp='cp -f'
