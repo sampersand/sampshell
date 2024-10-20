@@ -1,0 +1,42 @@
+#!/bin/zsh
+
+if [[ $1 = -- ]]; then
+	shift
+elif [[ $1 = -h || $1 = --help ]] || [[ $# < 2 ]]; then
+	eecho "usage: $0 source ... target_folder"
+	eecho "  moves files from source into dst, in the form 'XX (#).ext'"
+	eecho "  for duplicates"
+	return -1
+fi
+
+function set_destionation_file () {
+	destination_file=$target_folder/${source_file:t}
+	
+	[[ ! -e $destination_file ]] && return
+
+	# Weird hack to get a trailing `.` when needed.
+	local ext=
+	if [[ $source_file[-1] = . || -n $source_file:e ]]; then
+		ext=.
+	fi
+	ext=$ext${source_file:e}
+
+	for (( i=2 ;; i++ )); do
+		destination_file="$target_folder/${source_file:t:r} ($i)$ext"
+
+		[[ ! -e $destination_file ]] && return
+	done
+}
+
+target_folder=${@[-1]}
+shift -p
+
+if [[ ! -d $target_folder ]]; then
+	warn "$0: target folder doesn't exist: ${(q)target_folder}"
+	return 1
+fi
+
+for source_file; do
+	set_destionation_file
+	mv -n $source_file $destination_file || return $?
+done
