@@ -1,5 +1,7 @@
-# Load the non-interactive one in case it hasn't been loaded already.
-. "${SampShell_HOME:-"$HOME/.sampshell"}/non-interactive.sh"
+# Load the non-interactive config file in case it hasn't been loaded already.
+if [ -z "$SampShell_NONINTERACTIVE_LOADED" ]; then
+	. "${SampShell_HOME:-"$(dirname "$0")"}/non-interactive.sh"
+fi
 
 # Load all the shared files.
 for file in "$SampShell_HOME"/shared/*; do

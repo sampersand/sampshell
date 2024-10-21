@@ -13,6 +13,9 @@ SampShell_reload () {
 		return -1
 	fi
 
+	# Make sure it's not set regardless of what we're loading.
+	unset SampShell_NONINTERACTIVE_LOADED
+
 	local file_to_reload="${SampShell_HOME?}/${1:-interactive.sh}"
 	. "$file_to_reload" || return $?
 	echo "Reloaded $file_to_reload"
