@@ -2,10 +2,11 @@
 HISTSIZE=1000000    # how many lines to load into history originally
 SAVEHIST=1000000    # how many lines to save at the end
 
-# `history` isn't technically valid, so only use it if it does exist.
-if type history >/dev/null 2>&1; then
-	alias h=history
-else
-	alias h='fc -l'
+echo 'todo: HISTFILE!'
+
+## Sets up `history` and `h` aliases
+if ! type history >/dev/null 2>&1; then
+	alias history='fc -l'
 fi
 
+alias h=history

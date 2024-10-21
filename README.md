@@ -12,6 +12,7 @@ All variables that are used by sampshell are prefixed with `SampShell_`; exporte
 | `SampShell_TRASHDIR` | `$HOME/.Trash/.sampshell-trash` | The destination for the `trash` command |
 | `SampShell_TMPDIR` | `$HOME/tmp` | A temporary directory; different from `/tmp` as this persists between restarts, if needed. |
 | `SampShell_WORDS` | `/usr/share/dict/words` | Unused by SampShell, but I use it frequently. |
+| `SampShell_HISTDIR` | `$SampShell_ROOTDIR/.sampshell-history` | The folder where history commands go |
 
 ## Unexported
 | Variable name | Default | Description |
