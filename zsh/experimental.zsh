@@ -1,4 +1,4 @@
-[ -z "$SampShell_Experimental" ] && return
+[ -z "$SampShell_experimental" ] && return
 
 ## under-used, but still want them
 alias pwc='current-commit'

@@ -1,4 +1,4 @@
-[ -z "$SampShell_Experimental" ] && return
+[ -z "$SampShell_experimental" ] && return
 
 ## Creating files
 alias touchd='mkdir -p' # alias incase i ever end up using it

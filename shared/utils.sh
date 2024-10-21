@@ -1,7 +1,7 @@
 # Prints out how many arguments were passed; used in testing expansion syntax.
 nargs () { echo $#; }
 
-export SampShell_WORDS="${SampShell_words:-/usr/share/dict/words}"
+export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
 SampShell_reload () {
@@ -9,14 +9,14 @@ SampShell_reload () {
 		shift
 	elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
 		echo "usage: $0 [--] [file=interactive.sh]"
-		echo $'\tReloads samp shell. $SampShell_HOME should be set.'
+		echo $'\tReloads samp shell. $SampShell_ROOTDIR should be set.'
 		return -1
 	fi
 
 	# Make sure it's not set regardless of what we're loading.
-	unset SampShell_NONINTERACTIVE_LOADED
+	unset SampShell_noninteractive_loaded
 
-	local file_to_reload="${SampShell_HOME?}/${1:-interactive.sh}"
+	local file_to_reload="${SampShell_ROOTDIR?}/${1:-interactive.sh}"
 	. "$file_to_reload" || return $?
 	echo "Reloaded $file_to_reload"
 }

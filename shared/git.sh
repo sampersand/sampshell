@@ -3,7 +3,7 @@
 alias g=git
 
 : "${SampShell_git_default_master_branch:=master}"
-: "${SampShell_git_branch_prefix:=swesterman}"
+: "${SampShell_git_branch_prefix:="$(whoami)"}"
 : "${SampShell_git_branch_prefix_pattern:='$SampShell_git_branch_prefix/??-??-??'}"
 
 alias master-branch=SampShell_master_branch
