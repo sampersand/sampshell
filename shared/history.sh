@@ -2,9 +2,12 @@
 HISTSIZE=1000000    # how many lines to load into history originally
 SAVEHIST=1000000    # how many lines to save at the end
 
-echo 'todo: HISTFILE!'
+# Set HISTFILE if it doesn't exist.
+if [ -z "$HISTFILE" ]; then
+	HISTFILE="${SampShell_HISTDIR:-"$HOME"}/.sampshell_history"
+fi
 
-## Sets up `history` and `h` aliases
+# Sets up `history` and `h` aliases
 if ! type history >/dev/null 2>&1; then
 	alias history='fc -l'
 fi
