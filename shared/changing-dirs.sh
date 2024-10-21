@@ -10,3 +10,12 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
+
+# Make sure that CDPATH always starts with `:`, so we won't cd elsewhere on accident.
+add_to_cd_path () {
+	[ $# = 0 ] && set -- "$PWD"
+
+	for arg; do
+		CDPATH=":$(realpath "$arg")$CDPATH"
+	done
+}

@@ -1,3 +1,4 @@
+alias f='find .'
 alias t=trash
 alias s=subl
 alias ss=ssubl
