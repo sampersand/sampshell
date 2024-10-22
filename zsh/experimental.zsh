@@ -1,13 +1,17 @@
 [ -z "$SampShell_experimental" ] && return
 
+setopt MAGIC_EQUAL_SUBST # `a=b` does expansions
+setopt CASE_GLOB # ?
+setopt BRACE_CCL # Enable `{a-z}` and stuff
+setopt C_BASES   # ?
+# setopt SOURCE_TRACE # for debugging
+
 ## under-used, but still want them
 alias pwc='current-commit'
 alias pwb='current-branch'
 alias mbr='master-branch'
 
 alias grep='grep --color=auto'
-alias clean-zsh='env -i =zsh -f'
-
 
 # Gets the current branch (ISH---this isn't working)
 function git-current-branch () git rev-parse --abbrev-ref HEAD

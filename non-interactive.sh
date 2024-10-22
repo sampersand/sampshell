@@ -7,3 +7,6 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-"$SampShell_ROOTDIR"/.sampshell-hi
 
 export PATH="$SampShell_ROOTDIR/bin:$PATH"
 
+if [ -n "$ZSH_VERSION" ]; then
+	setopt EXTENDED_GLOB # Add additoinal glob syntax in zsh
+fi
