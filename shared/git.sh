@@ -40,7 +40,7 @@ alias gstp='git stash pop'
 gnb () {
 	if [ $# = 0 ]; then
 		echo "[date=YY-MM-DD] $0 (branch name here)" >&2
-		return -1
+		return 255
 	fi
 
 	if [ -n "$ZSH_VERSION" ]; then echo "todo: join in sh"; return 1; fi
@@ -72,7 +72,7 @@ alias gbrmv=grename
 gsquash () {
 	if [ $# != 1 ]; then
 		echo "usage: $0 <branch-or-commit>"
-		return -1
+		return 255
 	fi
 
 	git reset --soft "$(git merge-base "${1?}" HEAD)"
@@ -137,5 +137,5 @@ gd () {
 alias gddm='gdd "$(SampShell_master_branch)"'
 gdd () {
 	[ $# = 0 ] && set -- '@{-1}'
-	git diff --name-status ${@:-'@{-1}'}
+	git diff --name-status "$@"
 }

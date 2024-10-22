@@ -1,6 +1,7 @@
 #!/bin/zsh
 
 ## History options
+setopt BANG_HIST # Who doesn't use `!` for history?
 setopt EXTENDED_HISTORY   # more fancy history
 setopt HIST_NO_STORE      # Don't store `history` commands
 setopt HIST_ALLOW_CLOBBER # History saves commands as clobber commands
@@ -35,7 +36,7 @@ SampShell_record_history () {
 
 	# We make the histfile based on the date.
 	local histfile="$SampShell_HISTDIR/$(date +%F).history"
-	echo "$(date '+%F %r %z'): $1" >>| $histfile
+	echo "$(date '+%F %r %z')| ${1%%[[:blank:]]}" >>| $histfile
 	return 0
 }
 
