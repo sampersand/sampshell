@@ -15,9 +15,8 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
 clean_sh () {
-	set -- 'SHELL=/bin/sh' "$@"
 	[ -z "$TERM" ] && set -- "$@" "TERM=$TERM"
-	env -i "$@" /bin/sh
+	env -i SHELL=/bin/sh HOME="$HOME" "$@" /bin/sh
 }
 
 SampShell_reload () {

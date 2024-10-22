@@ -1,4 +1,4 @@
-export PS1='[$? !] ${PWD##"$HOME/"} $ '
+export PS1='[$? : !] ${PWD##"${HOME:+$HOME/}"} $ '
 
 return 
 
