@@ -19,7 +19,7 @@ function _samp_shell_ps1_hostname_username () {
 
 
 function _samp_shell_ps1_git_branch {
-    local br=$(git branch --show-current 2>&-)
+    local br=${"$(git branch --show-current 2>&-)":gs/%/%%} # branches can have `%` in them
 
     if [[ $1 = 1 ]]; then
         echo ' '${br:-'%F{red}(no branch)%f'}
@@ -107,7 +107,7 @@ function make-prompt {
     PS1+='%B%F{blue}]%b%f'                                 # ]
 
     # Add in the hostname, if applicable
-    PS1+=$(_samp_shell_ps1_hostname_username "$show_login_info" "$username" "$hostname") 
+    PS1+="$(_samp_shell_ps1_hostname_username "$show_login_info" "$username" "$hostname")"
 
     # Add ~path, possibly limiting it if $pathlen is nonzero
     [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
@@ -124,9 +124,6 @@ function make-prompt {
     # Trailing %
     PS1+='%b %F{8}'
 
-    if [[ $all = 1 ]]; then
-        PS1+=$'\n'
-    fi
     PS1+='%#%f '                                   # ending %
 }
 
