@@ -12,6 +12,6 @@ elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
 fi
 
 # Do after the conditional to allow for `subl --` with no additional arguments
-[ $# = 0 ] && set -- "$PWD"
+[ "$#" = 0 ] && set -- "$PWD"
 
 open -a "${SampShell_EDITOR:-$editor_default}" -- "$@"

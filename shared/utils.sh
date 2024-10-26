@@ -1,15 +1,19 @@
 # Prints out how many arguments were passed; used in testing expansion syntax.
-nargs () {
-	echo $#;
+nargs () { echo "$#"; }
+
+prargs () {
+	SampShell_scratch=0
+
+	until [ "$#" = 0 ]; do
+		SampShell_scratch=$((SampShell_scratch + 1))
+		printf "%3d: %s\n" "$SampShell_scratch" "$1"
+		shift
+	done
+
+	unset -v SampShell_scratch
 }
 
-prargs () (
-	i=0 # lol local variables inside a subshell
-	for arg; do
-		printf "%-3d %s\n" "$i" "$arg"
-		i=$((i + 1))
-	done
-)
+alias pargs=prargs
 
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
@@ -29,7 +33,7 @@ SampShell_reload () {
 	fi
 
 	# Make sure it's not set regardless of what we're loading.
-	unset SampShell_noninteractive_loaded
+	unset -v SampShell_noninteractive_loaded
 
 	set -- "${SampShell_ROOTDIR?}/${1:-interactive.sh}"
 	. "$1" || return $?
@@ -39,16 +43,18 @@ SampShell_reload () {
 # Use the reload alias if it doesn't already exist
 type reload >/dev/null 2>&1 || alias reload=SampShell_reload
 
-# Same as `source`, except only does it if the file exists.
-source_optional () for file; do
-	[ -e "$file" ] && . "$file"
+# Same as `.`, except only does it if the file exists.
+SampShell_source_optional () until [ "$#" = 0 ]; do
+	[ -e "$1" ] && . "$1"
+	shift
 done
 
-# Same as `source`, except warns if it doesn't exist.
-source_or_warn () for file; do
-	if [ -e "$file" ]; then
-		. "$file"
+# Same as `.`, except warns if it doesn't exist.
+SampShell_source_or_warn () until [ "$#" = 0 ]; do
+	if [ -e "$1" ]; then
+		. "$1"
 	else
-		echo "[WARN] Unable to source file: $file" >&2
+		echo "[WARN] Unable to source file: $1" >&2
 	fi
+	shift
 done

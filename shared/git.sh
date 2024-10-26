@@ -17,7 +17,7 @@ SampShell_git_branch_prefix () {
 		set -- "${date:-"$(date +%y-%m-%d)"}"
 	fi
 
-	[[ $1 =~ '([0-9]{2}-){2}[0-9]{2}' ]] || warn "$0: date isn't in the right format: $1"
+	[[ $1 =~ '([0-9]{2}-){2}[0-9]{2}' ]] || echo "$0: date isn't in the right format: $1" >&2
 	echo "${SampShell_git_branch_prefix?}/$1"
 }
 
@@ -38,25 +38,23 @@ alias gstp='git stash pop'
 
 # Create a new branch; date is optional.
 gnb () {
-	if [ $# = 0 ]; then
+	if [ "$#" = 0 ]; then
 		echo "[date=YY-MM-DD] $0 (branch name here)" >&2
 		return 255
 	fi
 
-	if [ -n "$ZSH_VERSION" ]; then echo "todo: join in sh"; return 1; fi
-
-	git switch --create "$(SampShell_git_branch_prefix)/${(j:-:)@}"
+	echo git switch --create "$(SampShell_git_branch_prefix)/$(IFS='-' ; echo "$*")"
 }
 
 alias gswm='gsw "$(SampShell_master_branch)"'
 gsw () {
-	[ $# = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- '@{-1}'
 	git switch "$@"
 }
 alias gbr='git branch'
 
 gdb () {
-	[ $# = 1 ] && [ "$1" = '-' ] && set -- '@{-1}'
+	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- '@{-1}'
 	git branch --delete "$@"
 }
 alias grename='git branch --move'
@@ -70,7 +68,7 @@ alias gbrmv=grename
 
 # Squash all commits down lightly.
 gsquash () {
-	if [ $# != 1 ]; then
+	if [ "$#" != 1 ]; then
 		echo "usage: $0 <branch-or-commit>"
 		return 255
 	fi
@@ -80,7 +78,7 @@ gsquash () {
 
 # Fixup code
 goops () {
-	[ $# = 0 ] && set -- '--all'
+	[ "$#" = 0 ] && set -- '--all'
 	git add "$@" && git commit --amend --no-edit && git push --force
 }
 
@@ -96,7 +94,7 @@ gaa () {
 }
 
 # Commits untracked files; all arguments are joined with a space.
-gcm () if [ $# = 0 ]; then
+gcm () if [ "$#" = 0 ]; then
 	git commit
 else
 	echo '<gcm: todo: what if the argument starts with `-`?>'
@@ -119,23 +117,23 @@ alias ginit='git init'
 alias gnit='git commit --amend --no-edit'
 gnita () { gaa && gnit; }
 
-gcl () { git clone ${1?'must supply a repo'} && cd ${1:t:r}; }
+gcl () { git clone "${1?'must supply a repo'}" && cd ${1:t:r}; }
 alias gl='git log'
 
 alias gmm='gm "$(SampShell_master_branch)"'
 gm () {
-	[ $# = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- '@{-1}'
 	git merge "$@"
 }
 
 alias gdm='gd "$(SampShell_master_branch)"'
 gd () {
-	[ $# = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- '@{-1}'
 	git diff "$@"
 }
 
 alias gddm='gdd "$(SampShell_master_branch)"'
 gdd () {
-	[ $# = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- '@{-1}'
 	git diff --name-status "$@"
 }

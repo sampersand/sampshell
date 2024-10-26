@@ -15,5 +15,5 @@ alias ll='ls -l'    # Shorthand for `ls -al`
 
 ## Deleting files
 # `rm -d` is in safety.
-alias purge='command rm -ridP' ## Purge deletes something entirely
+alias purge='echo command rm -ridP' ## Purge deletes something entirely
 ppurge () { echo "todo: parallelize purging"; }

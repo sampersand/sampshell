@@ -19,8 +19,8 @@ for file; do
 	# File exists, no need to make it.
 	[ -e "$file" ] && continue
 
-	# If the file ends with `/`, then make a directory
-	if [ "${file#${file%?}}" = '/' ]; then
+	# If the file ends with `/`, then it's a directory and we create it.
+	if [ "${file%/}" != "$file" ]; then
 		mkdir -p "$file"
 	else
 		mkdir -p "$(dirname "$file")" && touch "$file"
