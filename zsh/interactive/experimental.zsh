@@ -1,9 +1,11 @@
 [ -z "$SampShell_experimental" ] && return
 
-setopt MAGIC_EQUAL_SUBST # `a=b` does expansions
+setopt LONG_LIST_JOBS # long form description for jobs when exiting
+setopt PRINT_EXIT_VALUE # print exit value for commands?
 setopt CASE_GLOB # ?
-setopt BRACE_CCL # Enable `{a-z}` and stuff
 setopt C_BASES   # ?
+setopt MARK_DIRS
+# setopt NUMERIC_GLOB_SORT
 # setopt SOURCE_TRACE # for debugging
 
 ## under-used, but still want them

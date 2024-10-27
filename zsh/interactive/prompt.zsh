@@ -1,4 +1,6 @@
-setopt PROMPT_SUBST # allows you to use variable substitutions in prompts
+setopt PROMPT_SUBST   # allows you to use variable substitutions in prompts
+setopt PROMPT_PERCENT # Allow `%` to be read properly
+setopt NO_PROMPT_BANG # Don't treat `!` specially, like posix does
 
 alias prp='print -P'
 
