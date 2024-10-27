@@ -14,6 +14,7 @@ setopt NO_AUTO_CD           # You have to actually `cd` into a directory to chan
 setopt NO_RM_STAR_SILENT    # Don't let `*` do dumb stuff
 setopt NO_SHARE_HISTORY     # Dont' sahre history between shell invocations?
 setopt HIST_IGNORE_ALL_DUPS # If we have all the commands, we can see the frequency at which they're used.
+setopt RM_STAR_WAIT         # Ensure accidental rm * will wait
 
 echo 'todo: INC_APPEND_HISTORY'
 setopt NO_KSH_GLOB # ???

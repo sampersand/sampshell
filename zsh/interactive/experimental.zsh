@@ -1,7 +1,9 @@
 [ -z "$SampShell_experimental" ] && return
 
+setopt AUTO_CD # you can cd with filenames
+
 setopt LONG_LIST_JOBS # long form description for jobs when exiting
-setopt PRINT_EXIT_VALUE # print exit value for commands?
+# setopt PRINT_EXIT_VALUE # print exit value for commands; nope, because it prints out for bad commands too
 setopt CASE_GLOB # ?
 setopt C_BASES   # ?
 setopt MARK_DIRS

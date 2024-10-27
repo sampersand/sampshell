@@ -3,7 +3,7 @@
 SAVEHIST=$HISTSIZE    # how many lines to save at the end
 
 ## History options
-setopt BANG_HIST # Who doesn't use `!` for history?
+setopt BANG_HIST          # Who doesn't use `!` for history?
 setopt EXTENDED_HISTORY   # more fancy history
 setopt HIST_NO_STORE      # Don't store `history` commands
 setopt HIST_ALLOW_CLOBBER # History saves commands as clobber commands
@@ -20,6 +20,8 @@ zshaddhistory_functions+=('SampShell_record_history')
 
 # Records a command in a separate history file.
 SampShell_record_history () {
+	emulate -L zsh
+
 	# Note we intentionally always return 0, as any errors in the commands shouldn't
 	# preclude the command from going to main history.
 

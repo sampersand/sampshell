@@ -1,6 +1,9 @@
+# Set options
 setopt AUTO_PUSHD        # All `cd`s push directories
+setopt CHASE_LINKS       # Always resolve paths as their absolute paths.
 setopt CDABLE_VARS       # Able to cd to directory vars
 setopt PUSHD_SILENT      # pushd no longer prints things out; So annoying, just use `dir` if needed
+
 # setopt AUTO_NAME_DIRS  # kinda iffy, cds to any variable
 
 ## Setup named directory system
