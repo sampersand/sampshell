@@ -1,7 +1,7 @@
 # Prints out how many arguments were passed; used in testing expansion syntax.
 nargs () { echo "$#"; }
 
-ping () { curl --connect-timeout 10 ${1:-http://www.example.com} }
+ping () { curl --connect-timeout 10 ${1:-http://www.example.com}; }
 
 alias pargs=prargs
 prargs () {
@@ -61,7 +61,7 @@ SampShell_source_optional () {
 
 # Same as `.`, except warns if it doesn't exist.
 SampShell_source_or_warn () {
-		until [ "$#" = 0 ]; do
+	until [ "$#" = 0 ]; do
 		if [ -e "$1" ]; then
 			. "$1"
 		else
