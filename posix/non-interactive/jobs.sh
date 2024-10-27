@@ -1,25 +1,5 @@
-SampShell_noninteractive_loaded=1
-
-export SampShell_ROOTDIR="${SampShell_ROOTDIR:-"$(dirname "$0")"}"
-export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-export SampShell_TRASHDIR="${SampShell_TRASHDIR:-"$HOME/.Trash/.sampshell-trash"}"
-export SampShell_TMPDIR="${SampShell_TMPDIR:-"$HOME/tmp"}"
-export SampShell_HISTDIR="${SampShell_HISTDIR-"$SampShell_ROOTDIR"/.sampshell-history}" # Allow it to be empty.
-
-# 'Add the path in'
-case ":$PATH:" in
-	*:"$SampShell_ROOTDIR/bin":*) ;;
-	*) export PATH="$SampShell_ROOTDIR/bin:$PATH" ;;
-esac
-
-if [ -n "$ZSH_VERSION" ]; then
-	setopt EXTENDED_GLOB # Add additoinal glob syntax in zsh
-fi
-
 ## Parallelize a function by making a new job once per argument given
 if command -V local >/dev/null 2>&1; then
-	command -V parallelize_it >/dev/null 2>&1 || alias parallelize_it=SampShell_parallelize_it
-
 	SampShell_parallelize_it () {
 		local expand fn skipchr
 
@@ -75,5 +55,7 @@ if command -V local >/dev/null 2>&1; then
 			shift
 		done
 	}
+
+	command -V parallelize_it >/dev/null 2>&1 || alias parallelize_it=SampShell_parallelize_it
 fi
 
