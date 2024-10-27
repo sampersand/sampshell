@@ -1,6 +1,8 @@
 # sampshell
 My startup shell files
 
+
+
 # SampShell Variables
 All variables that are used by sampshell are prefixed with `SampShell_`; exported variables are all-caps (such as `SampShell_ROOTDIR`), and unexported ones are lower-case (such as `SampShell_experimental`)
 

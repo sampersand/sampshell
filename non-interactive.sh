@@ -17,8 +17,8 @@ if [ -n "$ZSH_VERSION" ]; then
 fi
 
 ## Parallelize a function by making a new job once per argument given
-if type local >/dev/null 2>&1; then
-	type parallelize_it >/dev/null 2>&1 || alias parallelize_it=SampShell_parallelize_it
+if command -V local >/dev/null 2>&1; then
+	command -V parallelize_it >/dev/null 2>&1 || alias parallelize_it=SampShell_parallelize_it
 
 	SampShell_parallelize_it () {
 		local expand fn skipchr
