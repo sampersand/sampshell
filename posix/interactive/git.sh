@@ -105,6 +105,9 @@ gcm () {
 		git commit --message "$*"
 	fi
 }
+alias gam='git commit --amend'
+alias gcma='git commit --amend'
+alias gammend='git commit --amend'
 
 alias gs='git status'
 alias grb='git rebase'
