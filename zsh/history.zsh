@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+SAVEHIST=$HISTSIZE    # how many lines to save at the end
+
 ## History options
 setopt BANG_HIST # Who doesn't use `!` for history?
 setopt EXTENDED_HISTORY   # more fancy history

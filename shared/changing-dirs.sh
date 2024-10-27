@@ -1,9 +1,6 @@
 # Change directories to the one that contains a file.
-cdd () {
-	cd "$(dirname "$1")"
-}
-
-alias cdtmp='cd "${SampShell_TMPDIR?}"'
+cdd () { cd "$(dirname "$1")"; }
+cdtmp () { cd "${SampShell_TMPDIR?}"; }
 
 # Aliases for going up directories
 alias ..='cd ..'
@@ -16,8 +13,9 @@ add_to_cd_path () {
 	[ "$#" -eq 0 ] && set -- "$PWD"
 
 	until [ "$#" -eq 0 ]; do
-		SampShell_scratch="$(realpath "$arg")" || return
+		SampShell_scratch="$(realpath "$1")" || return
 		CDPATH=":$SampShell_scratch$CDPATH"
+		shift
 	done
 
 	unset -v SampShell_scratch

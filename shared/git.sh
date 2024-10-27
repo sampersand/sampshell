@@ -1,5 +1,3 @@
-#!/bin/zsh
-
 alias g=git
 
 : "${SampShell_git_default_master_branch:=master}"
@@ -11,13 +9,19 @@ SampShell_master_branch () {
 	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
-echo "todo: regex matching"
 SampShell_git_branch_prefix () {
 	if [ -z "$1" ]; then
 		set -- "${date:-"$(date +%y-%m-%d)"}"
 	fi
 
-	[[ $1 =~ '([0-9]{2}-){2}[0-9]{2}' ]] || echo "$0: date isn't in the right format: $1" >&2
+	case "$1" in
+		[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+			;;
+		*)
+			echo "$0: Date isn't in the right format: $1" >&2
+			return 1 ;;
+	esac
+
 	echo "${SampShell_git_branch_prefix?}/$1"
 }
 
@@ -43,7 +47,7 @@ gnb () {
 		return 255
 	fi
 
-	echo git switch --create "$(SampShell_git_branch_prefix)/$(IFS='-' ; echo "$*")"
+	git switch --create "$(SampShell_git_branch_prefix)/$(IFS='-' ; echo "$*")"
 }
 
 alias gswm='gsw "$(SampShell_master_branch)"'
@@ -94,12 +98,13 @@ gaa () {
 }
 
 # Commits untracked files; all arguments are joined with a space.
-gcm () if [ "$#" = 0 ]; then
-	git commit
-else
-	echo '<gcm: todo: what if the argument starts with `-`?>'
-	git commit ${1+--message} "$*"
-fi
+gcm () {
+	if [ "$#" = 0 ]; then
+		git commit
+	else
+		git commit --message "$*"
+	fi
+}
 
 alias gs='git status'
 alias grb='git rebase'
@@ -117,7 +122,12 @@ alias ginit='git init'
 alias gnit='git commit --amend --no-edit'
 gnita () { gaa && gnit; }
 
-gcl () { git clone "${1?'must supply a repo'}" && cd ${1:t:r}; }
+gcl () {
+	git clone "${1?'must supply a repo'}" || return "$?"
+	set -- "$(basename "$1")"
+	cd "${1%%.*}"
+}
+
 alias gl='git log'
 
 alias gmm='gm "$(SampShell_master_branch)"'

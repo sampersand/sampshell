@@ -1,3 +1,7 @@
+## COMMANDS TO LOOK INTO:
+- `du`, `df`, `file`, `mkfile`, `crontab`, `at`, `batch`
+- `comm`, `cut`, `fold`, `join`, `paste`, `patch`
+
 autoload -U bracketed-paste-url-magic; zle -N bracketed-paste bracketed-paste-url-magic
 
 # Notes

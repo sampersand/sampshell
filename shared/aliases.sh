@@ -4,6 +4,8 @@ alias s=subl
 alias ss=ssubl
 alias '%= ' # Make sure an `%` at the beginning of a line will be ignored.
 
+alias cpu='top -o cpu'
+
 ## Spellcheck
 alias gti=git
 alias sbul=subl

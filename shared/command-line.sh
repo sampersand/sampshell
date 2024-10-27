@@ -1,4 +1,4 @@
-if type clear >/dev/null 2>&1; then
+if command -V clear >/dev/null 2>&1; then
 	cls () {
 		clear && printf '\ec\e[3J'
 	}

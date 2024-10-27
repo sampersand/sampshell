@@ -10,7 +10,7 @@ set -o noclobber
 #
 #   If the first argument starts with `-` (and isn't `--`), then forward
 #   all the arguments to the `rm` command and don't do any custom logic.
-rom () {
+rm () {
 	# If the first argument is a `--`, then just delete that and interpret the rest
 	# as filenames to delete.
 	if [ "$1" = -- ]; then
