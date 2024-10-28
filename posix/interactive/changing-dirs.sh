@@ -10,11 +10,12 @@ alias .....='cd ../../../..'
 
 # Make sure that CDPATH always starts with `:`, so we won't cd elsewhere on accident.
 add_to_cd_path () {
-	[ "$#" -eq 0 ] && set -- "$PWD"
+	[ "${#}" -eq 0 ] && set -- "${PWD}"
 
+	SampShell_scratch=
 	until [ "$#" -eq 0 ]; do
 		SampShell_scratch="$(realpath "$1")" || return
-		CDPATH=":$SampShell_scratch$CDPATH"
+		CDPATH=":${SampShell_scratch}${CDPATH}"
 		shift
 	done
 
