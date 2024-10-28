@@ -1,4 +1,4 @@
-SampShell_noninteractive_loaded=1
+SampShell_POSIX_noninteractive_loaded=1
 
 export SampShell_ROOTDIR="${SampShell_ROOTDIR:-"$(dirname "$0")"}"
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
@@ -11,3 +11,8 @@ case ":$PATH:" in
 	*:"$SampShell_ROOTDIR/bin":*) ;;
 	*) export PATH="$SampShell_ROOTDIR/bin:$PATH" ;;
 esac
+
+for SampShell_scratch in "$SampShell_ROOTDIR"/posix/non-interactive/*; do
+	. "$SampShell_scratch"
+done
+unset -v SampShell_scratch

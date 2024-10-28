@@ -16,6 +16,8 @@ All variables that are used by sampshell are prefixed with `SampShell_`; exporte
 | `SampShell_WORDS` | `/usr/share/dict/words` | Unused by SampShell, but I use it frequently. |
 | `SampShell_HISTDIR` | `$SampShell_ROOTDIR/.sampshell-history` | The folder where history commands go |
 
+REPORTTIME - 5 second default
+
 ## Unexported
 | Variable name | Default | Description |
 | ------------- | ------- | ----------- |

@@ -6,7 +6,9 @@ if [ -z "$SampShell_POSIX_noninteractive_loaded" ]; then
 fi
 
 # Load all the shared files.
-for file in "$SampShell_ROOTDIR"/posix/interactive/*; do
-	. "$file"
+for SampShell_scratch in "$SampShell_ROOTDIR"/posix/interactive/*; do
+	. "$SampShell_scratch"
 done
+
+unset -v SampShell_scratch
 
