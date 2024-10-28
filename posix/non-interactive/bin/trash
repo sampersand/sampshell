@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -o nounset
+
+scriptname=trash
+
+if [ -z "$SampShell_TRASHDIR" ]; then
+	echo "\$SampShell_TRASHDIR must be set to call $scriptname" >&2
+	exit 1
+fi
+
+if [ "$1" = -- ]; then
+	shift
+elif [ "$1" = -h ] || [ "$1" = --help ]; then
+	cat <<EOS >&2; exit 255
+usage: $scriptname [-h] [---] [files ...]
+   Moves files to the trash, possibly renaming them. The trash dir is
+   controlled by the variable 'SampShell_TRASHDIR'
+EOS
+fi
+
+if [ ! -d "$SampShell_TRASHDIR" ]; then
+	if [ -e $SampShell_TRASHDIR ]; then
+		echo "$scriptname: \$SampShell_TRASHDIR exists but isn't a dir: ${SampShell_TRASHDIR}" >&2
+		exit 2
+	fi
+
+	mkdir -p "$SampShell_TRASHDIR" || exit
+fi
+
+echo mv-safe -- "$@" "$SampShell_TRASHDIR"

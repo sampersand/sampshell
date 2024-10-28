@@ -10,6 +10,12 @@ if [ -z "$SampShell_POSIX_noninteractive_loaded" ]; then
 	. "${SampShell_ROOTDIR:?}/posix/non-interactive.sh" || return
 fi
 
+# Ensure that the posix bin is included.
+case ":$PATH:" in
+	*:"$SampShell_ROOTDIR/posix/interactive/bin":*) ;;
+	*) export PATH="$SampShell_ROOTDIR/posix/interactive/bin:$PATH" ;;
+esac
+
 set -- "$SampShell_ROOTDIR"/posix/interactive/*
 until [ "$#" = 0 ]; do
 	. "$1"

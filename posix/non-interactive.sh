@@ -15,8 +15,8 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-"$SampShell_ROOTDIR"/.sampshell-hi
 
 # Ensure that the posix bin is included.
 case ":$PATH:" in
-	*:"$SampShell_ROOTDIR/posix/bin":*) ;;
-	*) export PATH="$SampShell_ROOTDIR/posix/bin:$PATH" ;;
+	*:"$SampShell_ROOTDIR/posix/non-interactive/bin":*) ;;
+	*) export PATH="$SampShell_ROOTDIR/posix/non-interactive/bin:$PATH" ;;
 esac
 
 set -- "$SampShell_ROOTDIR"/posix/non-interactive/*

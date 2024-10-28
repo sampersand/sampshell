@@ -1,11 +1,12 @@
-#!/bin/zsh
+#!/bin/sh
+
 
 if [[ $1 = -- ]]; then
 	shift
 elif [[ $1 = -h || $1 = --help ]] || [[ $# < 2 ]]; then
-	eecho "usage: $0 source ... target_folder"
-	eecho "  moves files from source into dst, in the form 'XX (#).ext'"
-	eecho "  for duplicates"
+	echo "usage: $0 source ... target_folder" >&2
+	echo "  moves files from source into dst, in the form 'XX (#).ext'" >&2
+	echo "  for duplicates" >&2
 	return -1
 fi
 
