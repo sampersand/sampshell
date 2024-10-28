@@ -21,8 +21,8 @@ NUMERIC_GLOB_SORT
 √ 16.2.6 Input/Output
 √ 16.2.7 Job Control
 16.2.8 Prompting
-16.2.9 Scripts and Functions
-16.2.10 Shell Emulation
+√ 16.2.9 Scripts and Functions
+√ 16.2.10 Shell Emulation
 16.2.11 Shell State
 16.2.12 Zle
 

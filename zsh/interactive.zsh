@@ -5,7 +5,8 @@ for file in "${SampShell_ROOTDIR:-${0:A:h}}"/zsh/interactive/*.zsh; do
 done
 
 setopt INTERACTIVE_COMMENTS # I use comments in interactive shells often.
-REPORTTIME=1
+REPORTTIME=3 # anything that takes more than 3s of cpu time is reported
+false && TIMEFMT=123
 # REPORTMEMORY=
 
 ## Things to get used to
