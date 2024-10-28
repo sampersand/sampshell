@@ -16,7 +16,6 @@ setopt PROMPT_CR            # Put a `\n` before so you dont get the newline icki
 setopt NO_AUTO_CD           # You have to actually `cd` into a directory to change.
 setopt NO_RM_STAR_SILENT    # Don't let `*` do dumb stuff
 setopt NO_SHARE_HISTORY     # Dont' sahre history between shell invocations?
-setopt NO_HIST_IGNORE_ALL_DUPS # If we have all the commands, we can see the frequency at which they're used.
 setopt RM_STAR_WAIT         # Ensure accidental rm * will wait
 
 ## Report times of commands that go long (cpu-wise)

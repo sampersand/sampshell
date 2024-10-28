@@ -7,4 +7,3 @@ done
 
 ## Others
 setopt BAD_PATTERN # This is crazy not to have lol
-# setopt UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR # For debugging

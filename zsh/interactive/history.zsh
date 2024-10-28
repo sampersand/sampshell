@@ -6,6 +6,7 @@ SAVEHIST=$HISTSIZE    # how many lines to save at the end
 setopt BANG_HIST            # Who doesn't use `!` for history?
 setopt HIST_ALLOW_CLOBBER   # History saves commands as clobber commands
 setopt HIST_IGNORE_DUPS # Delete all duplicate commands <--- TODO
+setopt NO_HIST_IGNORE_ALL_DUPS # Unset it
 echo 'todo:L HIST_IGNORE_ALL_DUPS'
 setopt HIST_IGNORE_SPACE    # Don't record lines that start with spaces
 setopt NO_HIST_IGNORE_DUPS  # Just to declutter `setopt`

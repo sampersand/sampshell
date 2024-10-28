@@ -7,7 +7,7 @@ setopt PUSHD_SILENT      # pushd no longer prints things out; So annoying, just 
 # setopt AUTO_NAME_DIRS  # kinda iffy, cds to any variable
 
 ## Setup named directory system
-function add-named-dir {
+function {SampShell-,}add-named-dir {
 	if [[ $1 = -h || $1 = --help ]]; then
 		echo "usage: $0 [name=basename(dir)] [dir=PWD]" >&2
 		return -1
@@ -19,7 +19,7 @@ function add-named-dir {
 	builtin hash -d $name=$dir
 }
 
-function del-named-dir  {
+function {SampShell-,}del-named-dir  {
 	builtin unhash -d ${1:-${PWD:t}}
 }
 
