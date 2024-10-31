@@ -3,18 +3,27 @@
 # Safety first
 set -o nounset
 
+# Overwrite 'IFS' even if it was somehow given to us
+nl='
+'
+IFS=" "" $nl"
+unset nl
+
 scriptname=$(basename "$0")
 
 usage () { cat; exit 255; } <<EOS >&2
-usage: $scriptname [-h/--help] ...
-       $scriptname [options] [--] source target
-       $scriptname [options] [--] source ... directory
+usage: ${scriptname} [-h/--help] ...
+       ${scriptname} [options] [--] source target
+       ${scriptname} [options] [--] source ... directory
 options:
-	-r/-R  enable/disable "rename mode" (see below)
-	-c/-C  enable/disable overwriting empty files/folders
+   -h, --help              print help, then exit.
+   -r, --rename            enable rename mode (see below)
+   -R, --no-rename         disable rename mode
+   -c, --clobber-empty     overwrite empty files/folders
+   -C, --no-clobber-empty  don't overwrite empty files/folders
 returns:
-	0   if everything was successful
-	254 if an unknown argument was given
+   0   if everything was successful
+   254 if an unknown argument was given
 
 Without the '-r' flag, this acts the same as 'mv -i', except it will try to
 overwrite empty files/directories without confirmation. (Note that it's
@@ -34,69 +43,93 @@ EOS
 rename_mode=
 clobber_empty=
 
-while [ "$#" -ne 0 ]; do
-	case "$1" in
-	--) shift; break ;;
-	-r) rename_mode=1 ;;
-	-R) rename_mode= ;;
-	-c) clobber_empty=1 ;;
-	-C) clobber_empty= ;;
-	-h|--help) usage ;;
-	-*) exit 254;;
-	*) break ;;
-	esac
-	shift
+while test "$#" -ne 0
+do
+   case "$1" in
+      -h | --help)
+         usage ;;
+
+      --)
+         shift
+         break ;;
+
+      -r | --rename)
+         rename_mode=1 ;;
+
+      -R | --no-rename)
+         rename_mode= ;;
+
+      -c | --clobber-empty)
+         clobber_empty=1 ;;
+
+      -C | --no-clobber-empty)
+         clobber_empty= ;;
+
+      -*)
+         exit 254;;
+
+      *)
+         break ;;
+   esac
+   shift
 done
+
+if test "$#" -le 1
+then
+   usage
+fi
 
 echo "todo: rename_mode and clobber_empty"
 
 try_move () {
-	if [ ! -e "$1" ]; then
-		echo "$scriptname: cannot move $1: No such file or directory" >&2
-		return 1
-	fi
+   if ! test -e "$1"
+   then
+      printf >&2 '%s: cannot move %s: No such file or directory\n' "${scriptname}" "$1"
+      return 1
+   fi
 
-	base="$(basename "$2")"
-	stem=${base%%.*}
-	ext=${base#"$stem"}
-	root="$(dirname "$2")/$stem"
+   base="$(basename "$2")"
+   stem="${base%%.*}"
+   ext="${base#"$stem"}"
+   root="$(dirname "$2")/$stem"
 
-	idx=
-	while [ -e "$1" ]; do
-		target="$root${idx:+" $idx"}$ext"
+   idx=
+   while [ -e "$1" ]; do
+      target="$root${idx:+" $idx"}$ext"
 
-		# If the target exists, try again
-		if [ -e "$target" ]; then
-			[ -z "$idx" ] && idx=1
-			: $((idx+=1))
-			continue
-		fi
+      # If the target exists, try again
+      if [ -e "$target" ]; then
+         [ -z "$idx" ] && idx=1
+         : $((idx+=1))
+         continue
+      fi
 
-		# try to move it in; if it doesn't succeed
-		# try to move the file into the target
-		command -p mv -n -- "$1" "$target" || return
-	done
+      # try to move it in; if it doesn't succeed
+      # try to move the file into the target
+      command -p mv -n -- "$1" "$target" || return
+   done
 }
 
-[ "$#" -le 1 ] && usage
-
 # If two arguments are given, and the second isn't a directory, assume the first form
-if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
-	try_move "$@"
-	exit
+if test "$#" -eq 2 && ! test -d "$2"
+then
+   try_move "$1" "$2"
+   exit
 fi
 
 # The target folder is the last argument; make sure it exists.
 target_folder=$(eval "echo \"\${$#}\"")
-if [ ! -d "$target_folder" ]; then
-	echo "$scriptname: cannot move files into $target_folder: Not a directory" >&2
-	exit 11
+if ! test -d "${target_folder}"
+then
+   printf >&2 '%s: cannot move files into %s: Not a directory\n' "${scriptname}" "${target_folder}"
+   exit 11
 fi
 
 last_status=0
-until [ "$#" -eq 1 ]; do
-	try_move "$1" "$target_folder/$(basename "$1")" || last_status=$?
-	shift
+while test "$#" -gt 1
+do
+   try_move "$1" "${target_folder}/$(basename "$1")" || last_status=$?
+   shift
 done
 
-exit "$last_status"
+exit "${last_status}"
