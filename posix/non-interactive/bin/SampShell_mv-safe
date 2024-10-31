@@ -48,6 +48,8 @@ while [ "$#" -ne 0 ]; do
 	shift
 done
 
+echo "todo: rename_mode and clobber_empty"
+
 try_move () {
 	if [ ! -e "$1" ]; then
 		echo "$scriptname: cannot move $1: No such file or directory" >&2
