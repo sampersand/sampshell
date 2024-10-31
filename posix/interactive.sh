@@ -16,7 +16,7 @@ case ":$PATH:" in
 	*) export PATH="$SampShell_ROOTDIR/posix/interactive/bin:$PATH" ;;
 esac
 
-set -- "$SampShell_ROOTDIR"/posix/interactive/*
+set -- "$SampShell_ROOTDIR"/posix/interactive/*.sh
 until [ "$#" = 0 ]; do
 	. "$1"
 	shift

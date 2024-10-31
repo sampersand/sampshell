@@ -5,13 +5,7 @@ if [ -z "${SampShell_ROOTDIR+1}" ]; then
 fi
 
 SampShell_POSIX_noninteractive_loaded=1
-
-# Default variables that should always be visible
-export SampShell_ROOTDIR="${SampShell_ROOTDIR:?}"
-export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-export SampShell_TRASHDIR="${SampShell_TRASHDIR:-"$HOME/.Trash/.sampshell-trash"}"
-export SampShell_TMPDIR="${SampShell_TMPDIR:-"$HOME/tmp"}"
-export SampShell_HISTDIR="${SampShell_HISTDIR-"$SampShell_ROOTDIR"/.sampshell-history}" # Allow it to be empty.
+export SampShell_ROOTDIR="${SampShell_ROOTDIR:?}" # Make sure this is set!
 
 # Ensure that the posix bin is included.
 case ":$PATH:" in
@@ -19,8 +13,8 @@ case ":$PATH:" in
 	*) export PATH="$SampShell_ROOTDIR/posix/non-interactive/bin:$PATH" ;;
 esac
 
-set -- "$SampShell_ROOTDIR"/posix/non-interactive/*
-
+# Load additionalconfig files
+set -- "$SampShell_ROOTDIR"/posix/non-interactive/*.sh
 until [ "$#" = 0 ]; do
 	. "$1"
 	shift

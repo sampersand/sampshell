@@ -1,43 +1,134 @@
 #!/bin/sh
 
+# Safety first
+set -o nounset
 
-if [[ $1 = -- ]]; then
+scriptname=$(basename "$0")
+
+usage () { cat; exit 255; } <<EOS >&2
+usage: $scriptname [-h/--help] ...
+       $scriptname [options] [--] source target
+       $scriptname [options] [--] source ... directory
+       $scriptname -(any other flag) ...
+options:
+	-r  enable "rename mode" (see below)
+	-c  overwrite empty files/folders
+Without the '-r' flag, this acts the same as 'mv -i', except it will try to
+overwrite empty files/directories without confirmation. (Note that it's
+impossible to guarantee this, as atomic operations arne't really possible).
+With the '-r' option, a "rename" move will be perfomed (see below). If any other
+flags are given, then all the arguments are forwarded to the builtin 'mv'.
+
+A "rename" operation only works when provided a directory as the last argument;
+passing a file in will result in an error. It will attempt to move the file to
+the path '\$directory/{file basename}'. If that file already exists, it will
+attempt to move the file to '\$directory/{file stem} #{file ext}', where '#' is
+a number (starting from 2). The number will be incremented until a nonempty
+file is found. ## (it might) This doesn't suffer from the atomic issues, and this operation
+will never override extant files.
+EOS
+
+rename_mode=
+clobber_empty=
+
+while [ "$#" -ne 0 ]; do
+	case "$1" in
+	--) shift; break ;;
+	-r) rename_mode=1 ;;
+	-c) clobber_empty=1 ;;
+	-h|--help) usage ;;
+	-*) command -p mv "$@"; exit ;;
+	*) break ;;
+	esac
 	shift
-elif [[ $1 = -h || $1 = --help ]] || [[ $# < 2 ]]; then
-	echo "usage: $0 source ... target_folder" >&2
-	echo "  moves files from source into dst, in the form 'XX (#).ext'" >&2
-	echo "  for duplicates" >&2
-	return -1
-fi
-
-function set_destionation_file () {
-	destination_file=$target_folder/${source_file:t}
-	
-	[[ ! -e $destination_file ]] && return
-
-	# Weird hack to get a trailing `.` when needed.
-	local ext=
-	if [[ $source_file[-1] = . || -n $source_file:e ]]; then
-		ext=.
-	fi
-	ext=$ext${source_file:e}
-
-	for (( i=2 ;; i++ )); do
-		destination_file="$target_folder/${source_file:t:r} ($i)$ext"
-
-		[[ ! -e $destination_file ]] && return
-	done
-}
-
-target_folder=${@[-1]}
-shift -p
-
-if [[ ! -d $target_folder ]]; then
-	warn "$0: target folder doesn't exist: ${(q)target_folder}"
-	return 1
-fi
-
-for source_file; do
-	set_destionation_file
-	mv -n $source_file $destination_file || return $?
 done
+
+[ "$#" -le 1 ] && usage
+
+if [ "$#" -eq 2 ]; then
+	echo "Todo: two args"
+	# exit
+fi
+
+target_folder=$(eval "echo \"\${"$#"}\"")
+
+if ! command -V rm-if-empty >/dev/null 2>&1; then
+	echo "$scriptname: unable to find rm-if-empty; check \$PATH" >&2
+	exit 10
+fi
+
+if [ ! -d "$target_folder" ]; then
+	echo "$scriptname: cannot move files into $target_folder: Not a directory" >&2
+	exit 11
+fi
+
+last_status=0
+until [ "$#" -eq 1 ]; do
+	base=$(basename "$1")
+	stem=${base%%.*}
+	ext=${base#"$stem"}
+
+	idx=
+	while true; do
+		target="$target_folder/$stem${idx:+" $idx"}$ext"
+
+		# Remove the target if it is empty
+		echo "[$clobber_empty]"
+		if [ -n "$clobber_empty" ]; then echo yes; 
+		&& rm-if-empty -- "$target" || true
+fi
+
+		# try to move the file into the target
+		if ! command -p mv -n -- "$1" "$target"; then
+			last_status=$?
+			echo "unable to 'mv -n'. skipping: $1" >&2
+			break
+		fi
+
+		# It's passed, so we know either the file wasmoved over, or it was replaced.
+
+		# Hey, the source doesn't exist anymore! We probably moved it.
+		[ ! -e "$1" ] && break
+
+		[ -z "$idx" ] && idx=1
+		: $((idx+=1))
+	done
+	shift
+done
+
+exit "$last_status"
+
+# function set_destionation_file () {
+# 	destination_file=$target_folder/${source_file:t}
+	
+# 	[[ ! -e $destination_file ]] && exit
+
+# 	# Weird hack to get a trailing `.` when needed.
+# 	local ext=
+# 	if [[ $source_file[-1] = . || -n $source_file:e ]]; then
+# 		ext=.
+# 	fi
+# 	ext=$ext${source_file:e}
+
+# 	for (( i=2 ;; i++ )); do
+# 		destination_file="$target_folder/${source_file:t:r} ($i)$ext"
+
+# 		[[ ! -e $destination_file ]] && exit
+# 	done
+# }
+
+# set -x
+# target_folder="$(eval "\${$#}")"
+# echo $target_folder
+# exit
+# shift -p
+
+# if [[ ! -d $target_folder ]]; then
+# 	warn "$0: target folder doesn't exist: ${(q)target_folder}"
+# 	exit 1
+# fi
+
+# for source_file; do
+# 	set_destionation_file
+# 	mv -n $source_file $destination_file || exit $?
+# done

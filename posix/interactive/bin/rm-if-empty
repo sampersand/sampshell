@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ "$#" -ne 0 ] && [ "$1" = -- ]; then
+	shift
+elif [ "$#" -eq 0 ] || [ "$1" = -h ] || [ "$1" = --help ]; then
+	cat <<EOS >&2
+usage: $(basename "$0") [--] file ...
+removes files if theyre not empty.
+returns 2 if atleast one file doesn't exist, 1 if at least one is nonempty, and 0 if
+all were it was removed.
+EOS
+	exit 255
+fi
+
+# Keep track of the last non-zero exit status
+exit_status=0
+
+for filename; do
+	if [ ! -e "$filename" ]; then
+		exit_status=2
+	elif [ -f "$filename" ] && [ ! -s "$filename" ]; then
+		command -p rm -- "$filename"
+	elif [ -d "$filename" ] && ! ls -A1q -- "$filename" | grep -q .; then
+		command -p rm -d -- "$filename"
+	else
+		exit_status=1
+	fi || exit_status=$?
+done
+
+exit "$exit_status"

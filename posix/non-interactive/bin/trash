@@ -28,4 +28,4 @@ if [ ! -d "$SampShell_TRASHDIR" ]; then
 	mkdir -p "$SampShell_TRASHDIR" || exit
 fi
 
-echo mv-safe -- "$@" "$SampShell_TRASHDIR"
+mv-safe -- "$@" "$SampShell_TRASHDIR"
