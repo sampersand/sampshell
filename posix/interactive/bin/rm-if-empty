@@ -4,10 +4,12 @@ if [ "$#" -ne 0 ] && [ "$1" = -- ]; then
 	shift
 elif [ "$#" -eq 0 ] || [ "$1" = -h ] || [ "$1" = --help ]; then
 	cat <<EOS >&2
-usage: $(basename "$0") [--] file ...
+usage: $(basename "$0") [-h/--help] [--] file ...
 removes files if theyre not empty.
-returns 2 if atleast one file doesn't exist, 1 if at least one is nonempty, and 0 if
-all were it was removed.
+returns:
+	0 all files were empty and removed
+	1 at least one file was non-empty (and thus not removed)
+	2 at least one file didn't exist
 EOS
 	exit 255
 fi

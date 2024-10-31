@@ -48,20 +48,44 @@ while [ "$#" -ne 0 ]; do
 	shift
 done
 
+try_move () {
+	if [ ! -e "$1" ]; then
+		echo "$scriptname: cannot move $1: No such file or directory" >&2
+		return 1
+	fi
+
+	base="$(basename "$2")"
+	stem=${base%%.*}
+	ext=${base#"$stem"}
+	root="$(dirname "$2")/$stem"
+
+	idx=
+	while [ -e "$1" ]; do
+		target="$root${idx:+" $idx"}$ext"
+
+		# If the target exists, try again
+		if [ -e "$target" ]; then
+			[ -z "$idx" ] && idx=1
+			: $((idx+=1))
+			continue
+		fi
+
+		# try to move it in; if it doesn't succeed
+		# try to move the file into the target
+		command -p mv -n -- "$1" "$target" || return
+	done
+}
+
 [ "$#" -le 1 ] && usage
 
-if [ "$#" -eq 2 ]; then
-	echo "Todo: two args"
-	# exit
+# If two arguments are given, and the second isn't a directory, assume the first form
+if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
+	try_move "$@"
+	exit
 fi
 
-target_folder=$(eval "echo \"\${"$#"}\"")
-
-if ! command -V rm-if-empty >/dev/null 2>&1; then
-	echo "$scriptname: unable to find rm-if-empty; check \$PATH" >&2
-	exit 10
-fi
-
+# The target folder is the last argument; make sure it exists.
+target_folder=$(eval "echo \"\${$#}\"")
 if [ ! -d "$target_folder" ]; then
 	echo "$scriptname: cannot move files into $target_folder: Not a directory" >&2
 	exit 11
@@ -69,71 +93,8 @@ fi
 
 last_status=0
 until [ "$#" -eq 1 ]; do
-	base=$(basename "$1")
-	stem=${base%%.*}
-	ext=${base#"$stem"}
-
-	idx=
-	while true; do
-		target="$target_folder/$stem${idx:+" $idx"}$ext"
-
-		# Remove the target if it is empty
-		echo "[$clobber_empty]"
-		if [ -n "$clobber_empty" ]; then echo yes; 
-		&& rm-if-empty -- "$target" || true
-fi
-
-		# try to move the file into the target
-		if ! command -p mv -n -- "$1" "$target"; then
-			last_status=$?
-			echo "unable to 'mv -n'. skipping: $1" >&2
-			break
-		fi
-
-		# It's passed, so we know either the file wasmoved over, or it was replaced.
-
-		# Hey, the source doesn't exist anymore! We probably moved it.
-		[ ! -e "$1" ] && break
-
-		[ -z "$idx" ] && idx=1
-		: $((idx+=1))
-	done
+	try_move "$1" "$target_folder/$(basename "$1")" || last_status=$?
 	shift
 done
 
 exit "$last_status"
-
-# function set_destionation_file () {
-# 	destination_file=$target_folder/${source_file:t}
-	
-# 	[[ ! -e $destination_file ]] && exit
-
-# 	# Weird hack to get a trailing `.` when needed.
-# 	local ext=
-# 	if [[ $source_file[-1] = . || -n $source_file:e ]]; then
-# 		ext=.
-# 	fi
-# 	ext=$ext${source_file:e}
-
-# 	for (( i=2 ;; i++ )); do
-# 		destination_file="$target_folder/${source_file:t:r} ($i)$ext"
-
-# 		[[ ! -e $destination_file ]] && exit
-# 	done
-# }
-
-# set -x
-# target_folder="$(eval "\${$#}")"
-# echo $target_folder
-# exit
-# shift -p
-
-# if [[ ! -d $target_folder ]]; then
-# 	warn "$0: target folder doesn't exist: ${(q)target_folder}"
-# 	exit 1
-# fi
-
-# for source_file; do
-# 	set_destionation_file
-# 	mv -n $source_file $destination_file || exit $?
-# done

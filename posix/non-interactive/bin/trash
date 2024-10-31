@@ -2,30 +2,42 @@
 
 set -o nounset
 
-scriptname=trash
-
-if [ -z "$SampShell_TRASHDIR" ]; then
-	echo "\$SampShell_TRASHDIR must be set to call $scriptname" >&2
-	exit 1
-fi
-
-if [ "$1" = -- ]; then
-	shift
-elif [ "$1" = -h ] || [ "$1" = --help ]; then
-	cat <<EOS >&2; exit 255
-usage: $scriptname [-h] [---] [files ...]
+die () { echo "$1" >&2; exit "${2:-1}"; }
+usage () { cat <<EOS >&2; exit 255; }
+usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
    Moves files to the trash, possibly renaming them. The trash dir is
    controlled by the variable 'SampShell_TRASHDIR'
 EOS
+
+
+scriptname=$(basename "$0")
+trashdir=$SampShell_TRASHDIR
+
+until [ "$#" -eq 0 ]; do
+	case "$1" in
+		(--) shift; break;;
+		(-h|--help) usage ;;
+		(-t*)
+			trashdir=${1#-t}
+			shift
+			if [ -z "$trashdir" ]; then
+				if [ "$#" -eq 0 ] || [ -z "$1" ]; then
+					die "$scriptname: missing trash directory for -t"
+				fi
+
+				trashdir=$1
+			fi ;;
+		(*) break ;;
+	esac
+	shift
+done
+
+[ -z "$trashdir" ] && die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
+[ "$#" -eq 0 ] && usage
+
+if [ ! -d "$trashdir" ]; then
+	[ -e $trashdir ] && die "trashdir exists, but isn't a dir: $trashdir" 2
+	mkdir -p "$trashdir" || exit
 fi
 
-if [ ! -d "$SampShell_TRASHDIR" ]; then
-	if [ -e $SampShell_TRASHDIR ]; then
-		echo "$scriptname: \$SampShell_TRASHDIR exists but isn't a dir: ${SampShell_TRASHDIR}" >&2
-		exit 2
-	fi
-
-	mkdir -p "$SampShell_TRASHDIR" || exit
-fi
-
-mv-safe -- "$@" "$SampShell_TRASHDIR"
+SampShell_mv-safe -r -C -- "$@" "$trashdir"
