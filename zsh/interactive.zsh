@@ -8,7 +8,6 @@ done
 ## Others
 setopt BAD_PATTERN # This is crazy not to have lol
 
-
 [[ -n $SampShell_TMPDIR ]] && add-named-dir tmp $SampShell_TMPDIR
 add-named-dir d ~/Desktop
 add-named-dir dl ~/Downloads
