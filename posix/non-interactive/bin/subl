@@ -2,54 +2,67 @@
 
 set -o nounset
 
-# It's overwritten in `ssubl`
-scriptname=${SampShell_subl_scriptname:-subl}
+# Allow for `ssubl` to overwrite the
+scriptname=${SampShell_subl_scriptname:-"$(dirname "$0")"}
 
-usage () { [ "$#" -ne 0 ] && echo "$*" >&2 ; cat >&2; exit 255; } <<USAGE
-usage: $scriptname [options] [--] [file ...]"
-options:
-	-h     print help
-	-c     creates non-existing files/dirs
-	-eNAME set the editor; overrides \$SampShell_EDITOR.
-USAGE
+die () {
+	printf >&2 "%s$1"'\n' "$scriptname"
+	exit 1
+}
 
 editor=${SampShell_EDITOR:-TextEdit}
 create=
 
 until [ "$#" -eq 0 ]; do
 	case "$1" in 
-	-h|--help) usage ;;
-	-c) create=1 ;;
-	-e*)
-		editor="${1#-e}"
-		if [ -z "$editor" ]; then
-			[ "$#" -eq 1 ] && usage 'missing required argument for -e'
+		(-h|--help)
+			cat >&2 <<USAGE
+usage: $scriptname [options] [--] [file ...]"
+options:
+	-h/--help print help
+	-c/-C     creates (or disable creation of) non-existing files/dirs
+	-eNAME    set the editor; overrides \$SampShell_EDITOR.
+USAGE
+			exit 255 ;;
+
+		(-c)
+			create=1 ;;
+		(-C)
+			create= ;;
+
+		(-e*)
+			editor=${1#-e}
+			if [ -z "${editor}" ]; then
+				shift
+				editor=${1:-}
+				[ -z "${editor}" ] && die 'missing required argument for -e'
+			fi ;;
+
+		(--)
 			shift
-			editor="${1}"
-		fi ;;
-	--) shift; break ;;
-	*) break;
+			break ;;
+
+		(*)
+			break ;;
 	esac
+
 	shift
 done
 
-[ "$#" = 0 ] && set -- "${PWD}"
-
-if [ -n "$create" ]; then
+if [ "$#" = 0 ]; then
+	set -- "${PWD}"
+elif [ -n "${create}" ]; then
 	for file; do
-		if [ -z "$file" ]; then
-			echo "$scriptname: empty filename given; not creating it" >&2
-			exit 1
-		fi
+		[ -z "${file}" ] && die 'empty filename given; not creating it'
 
 		# File exists, no need to make it.
-		[ -e "$file" ] && continue
+		[ -e "${file}" ] && continue
 
 		# If the file ends with `/`, then it's a directory and we create it.
 		if [ "${file%/}" != "$file" ]; then
-			mkdir -p "$file" || exit
+			mkdir -p "${file}" || exit
 		else
-			{ mkdir -p "$(dirname "$file")" && touch "$file"; } || exit
+			{ mkdir -p "$(dirname "${file}")" && touch "${file}"; } || exit
 		fi
 	done
 fi
