@@ -9,7 +9,7 @@ nl='
 IFS=" "" $nl"
 unset nl
 
-scriptname=$(basename "$0")
+scriptname="$(basename -- "$0"; echo x)"; scriptname="${scriptname%x}"
 
 usage () { cat; exit 255; } <<EOS >&2
 usage: ${scriptname} [-h/--help] ...
@@ -43,6 +43,7 @@ EOS
 rename_mode=
 clobber_empty=
 
+# Parse command line options
 while test "$#" -ne 0
 do
    case "$1" in
@@ -74,10 +75,8 @@ do
    shift
 done
 
-if test "$#" -le 1
-then
-   usage
-fi
+# If no arguments are given, then error out with the usage.
+test "$#" -le 1 && usage
 
 echo "todo: rename_mode and clobber_empty"
 
@@ -88,25 +87,31 @@ try_move () {
       return 1
    fi
 
-   base="$(basename "$2")"
+   # TODO: fix `\n` stuff
+   base="$(basename -- "$2"; echo .)"; base="${base%?.}"
    stem="${base%%.*}"
    ext="${base#"$stem"}"
    root="$(dirname "$2")/$stem"
 
-   idx=
-   while [ -e "$1" ]; do
-      target="$root${idx:+" $idx"}$ext"
+   idx=1
+   while test -e "$1"
+   do
+      if test "${idx}" -gt 1
+      then
+         target="${root} ${idx}${ext}"
+      else
+         target="${root}${ext}"
+      fi
 
-      # If the target exists, try again
-      if [ -e "$target" ]; then
-         [ -z "$idx" ] && idx=1
-         : $((idx+=1))
+      if test -e "${target}"
+      then
+         idx="$((idx+1))"
          continue
       fi
 
       # try to move it in; if it doesn't succeed
       # try to move the file into the target
-      command -p mv -n -- "$1" "$target" || return
+      command -p mv -n -- "$1" "${target}" || return
    done
 }
 
