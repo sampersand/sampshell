@@ -9,12 +9,22 @@ nl='
 IFS=" "" $nl"
 unset nl
 
-scriptname="$(basename -- "$0"; echo x)"; scriptname="${scriptname%x}"
+scriptname="$(basename -- "$0"; echo x)"; scriptname="${scriptname%?x}"
 
-usage () { cat; exit 255; } <<EOS >&2
+die () {
+   status=$1 msg="%s: $2"'\n'
+   shift 2
+   printf "$msg" "$scriptname" "$@"
+   exit "$status"
+}
+
+shortusage () { cat <<EOS; [ "$#" -eq 0 ] && exit 255; } >&2
 usage: ${scriptname} [-h/--help] ...
        ${scriptname} [options] [--] source target
        ${scriptname} [options] [--] source ... directory
+EOS
+
+longusage () { shortusage 0; cat <<EOS; exit 255; } >&2
 options:
    -h, --help              print help, then exit.
    -r, --rename            enable rename mode (see below)
@@ -43,12 +53,13 @@ EOS
 rename_mode=
 clobber_empty=
 
+set -- 
+
 # Parse command line options
-while test "$#" -ne 0
-do
+while [ "$#" -ne 0 ]; do
    case "$1" in
       -h | --help)
-         usage ;;
+         longusage ;;
 
       --)
          shift
@@ -67,7 +78,7 @@ do
          clobber_empty= ;;
 
       -*)
-         exit 254;;
+         die 254 'unknown option: %s' "$1" ;;
 
       *)
          break ;;
@@ -76,7 +87,7 @@ do
 done
 
 # If no arguments are given, then error out with the usage.
-test "$#" -le 1 && usage
+[ "$#" -le 1 ] && shortusage
 
 echo "todo: rename_mode and clobber_empty"
 
