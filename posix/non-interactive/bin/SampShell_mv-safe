@@ -11,11 +11,10 @@ unset nl
 
 scriptname="$(basename -- "$0"; echo x)"; scriptname="${scriptname%?x}"
 
-die () {
-   status=$1 msg="%s: $2"'\n'
-   shift 2
-   printf "$msg" "$scriptname" "$@"
-   exit "$status"
+warn () {
+   msg="%s: $1"'\n'
+   shift
+   printf "$msg" "$scriptname" "$@" >&2
 }
 
 shortusage () { cat <<EOS; [ "$#" -eq 0 ] && exit 255; } >&2
@@ -27,60 +26,57 @@ EOS
 longusage () { shortusage 0; cat <<EOS; exit 255; } >&2
 options:
    -h, --help              print help, then exit.
-   -r, --rename            enable rename mode (see below)
-   -R, --no-rename         disable rename mode
+   -i, --interactive       ask to overwrite files that exist (disables -n)
+   -n, --not-interactive   do not overwrite  not overwrite existing files at all (disables -i); default
+   -r, --rename            rename files to prevent conflicts mode
+   -R, --no-rename         disables '-r'
    -c, --clobber-empty     overwrite empty files/folders
-   -C, --no-clobber-empty  don't overwrite empty files/folders
-returns:
-   0   if everything was successful
-   254 if an unknown argument was given
+   -C, --no-clobber-empty  disables -'c'
+returns: (for non-zero exit status, it's the last error status encountered.)
+   0   If everything was successful
+   2   There's a problem running 'mv' (or 'rm' when --clobber-empty is enabled)
+   3   If 'directory' is not actually a directory ((, or is not executable))
+   4   A 'source' does not exist
+   5   The 'source' and the destination are identical
+   254 If an unknown argument was given
+   255 When -h or --help supplied provided
 
-Without the '-r' flag, this acts the same as 'mv -i', except it will try to
-overwrite empty files/directories without confirmation. (Note that it's
-impossible to guarantee this, as atomic operations arne't really possible).
-With the '-r' option, a "rename" move will be perfomed (see below). If any other
-flags are given, then all the arguments are forwarded to the builtin 'mv'.
+Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive).
 
-A "rename" operation only works when provided a directory as the last argument;
-passing a file in will result in an error. It will attempt to move the file to
-the path '\$directory/{file basename}'. If that file already exists, it will
-attempt to move the file to '\$directory/{file stem} #{file ext}', where '#' is
-a number (starting from 2). The number will be incremented until a nonempty
-file is found. ## (it might) This doesn't suffer from the atomic issues, and this operation
-will never override extant files.
+If the '--clobber-empty' flag is given, then attempting to overwrite empty
+files/folders will succeed. (Note that this is susceptible to race conditions)
+
+If the '--rename' flag is given, then files will first be moved via 'mv -n',
+but if the target file exists, the the first 'num' where the path
+'<dir>/<base> <num><ext>' does not exist will be used instead.
 EOS
 
 rename_mode=
 clobber_empty=
+move_mode=-n
 
 # Parse command line options
 while [ "$#" -ne 0 ]; do
    case "$1" in
-      -h | --help)
-         longusage ;;
+      --) shift; break ;;
+      -h | --help) longusage ;;
+      -r | --rename) rename_mode=1 ;;
+      -R | --no-rename) rename_mode= ;;
+      -c | --clobber-empty) clobber_empty=1 ;;
+      -C | --no-clobber-empty) clobber_empty= ;;
+      -n | --not-interactive) move_mode=-n ;;
+      -i | --interactive) move_mode=-i ;;
 
-      --)
+      -??*) # Support `-abc` options
+         rest2="${1#-?}"
+         rest1="${1%"$rest2"}"
          shift
-         break ;;
-
-      -r | --rename)
-         rename_mode=1 ;;
-
-      -R | --no-rename)
-         rename_mode= ;;
-
-      -c | --clobber-empty)
-         clobber_empty=1 ;;
-
-      -C | --no-clobber-empty)
-         clobber_empty= ;;
-
-      -*)
-         die 254 'unknown option: %s' "$1" ;;
-
-      *)
-         break ;;
+         set -- "${rest1}" "-${rest2}" "$@"
+         continue ;;
+      -?) warn 'unknown option: %s' "$1"; exit 254 ;;
+      *) break ;;
    esac
+
    shift
 done
 
@@ -89,35 +85,56 @@ done
 
 # Arg 1 is source, arg2 is destination
 try_move () {
-   if [ ! -e "$1" ]; then
-      printf >&2 '%s: cannot move %s: No such file or directory\n' "${scriptname}" "$1"
-      return 1
+   # Resolve the paths to absolute values.
+   source="$(realpath -- "$1"; echo x)"; source="${source%?x}"
+   target="$(realpath -- "$2"; echo x)"; target="${target%?x}"
+
+   # If the thing we're trying to move does not exist, then print out an error
+   # and go to the next one
+   if [ ! -e "${source}" ]; then
+      printf '%s: cannot move %s: No such file or directory\n' \
+         "${scriptname}" "${source}" >&2
+      return 4
    fi
 
-   idx= target="$2"
+   # If the paths are identical, then just don't move anything.
+   if [ "$source" = "$target" ]; then
+      printf '%s: cannot move %s to %s: Paths are identical' \
+         "${scriptname}" "$1" "$2"
+      return 5
+   fi
 
+   idx=1
    while
-      # Delete the target file/dir if it's empty.
+      # If clobber empty is defined, then delete the target if it doesn't exist
+      # before we attempt to move our file.
       if [ -n "${clobber_empty}" ]; then
+         # If the target is a file and it's empty, then forcibly remove it.
          if [ -f "${target}" ] && [ ! -s "${target}" ]; then
-            command -p rm -f -- "${target}" || return
+            command -p rm -f -- "${target}" || return 2
+
+         # If the target is a folder, and there's nothing in it, then delete it.
          elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
-            command -p rm -fd -- "${target}" || return
+            command -p rm -fd -- "${target}" || return 2
          fi
       fi
 
-      # try to move the source file, returning an error if there's a problem.
-      command -p mv -n -- "$1" "${target}" || return
+      # Try to rename '$source' to '$target', making sure not to override
+      # '$target' if it exists.
+      command -p mv "${move_mode}" -- "${source}" "${target}" || return 2
 
-      # Now, after moving it, does it exist?
-      [ -e "$1" ]
+      # Now, after moving it, does the source still exist? ...
+      [ -e "${source}" ]
    do
-      # If we aren't renaming, and it exists, oops error!
-      [ -z "$rename_mode" ] && return 1
+      # ... It does still exist! 
 
-      # If we haven't created an index, then setup all the arguments
-      if [ -z "$idx" ]; then
-         idx=1
+      # If we're not renaming files, and the original file still exists, then
+      # return an error.
+      [ -z "${rename_mode}" ] && return 1
+
+      # If we have an index of 1, that means this is our first time in
+      # the body. Setup all the required variables.
+      if [ "$idx" = 1 ]; then
          base="$(basename -- "$2"; echo x)"; base="${base%?x}"
          stem="${base%%.*}"
          ext="${base#"$stem"}"
@@ -128,10 +145,12 @@ try_move () {
       # Now set the target and let's try again
       target="$root $((idx=idx+1))$ext"
    done
+
    return 0
 }
 
-# If two arguments are given, and the second isn't a directory, assume the first form
+# If two arguments are given, and the second isn't a directory, assume the first
+# command form
 if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
    try_move "$1" "$2"
    exit
@@ -139,15 +158,26 @@ fi
 
 # The target folder is the last argument; make sure it exists.
 target_folder=$(eval "echo \"\${$#}\"")
-if ! [ -d "${target_folder}" ]; then
-   die 11 'cannot move files into %s: Not a directory' "${target_folder}"
+# target_folder="$(eval "echo \"\${$#}\")" 2>/dev/null && echo x)" || {
+#    warn 'cannot move files into %s: No such file or directory' "${target_folder?}"
+#    exit 3
+# }
+# target_folder="${target_folder%?x}"
+if [ ! -d "${target_folder}" ]; then
+   warn 'cannot move files into %s: Not a directory' "${target_folder}"
+   exit 3
+elif [ ! -x "${target_folder}" ] || [ ! -r "${target_folder}" ]; then
+   warn 'cannot move files into %s: Directory not accessible' "${target_folder}"
+   exit 3
 fi
+exit
 
 last_status=0
-while [ "$#" -gt 1 ]; do
-   base="$(basename "$1"; echo x)"; base="${base%?x}"
+while [ "$#" -gt 1 ]; do # Stop at 1, because the last argument is the folder.
+   base="$(basename -- "$1"; echo x)"; base="${base%?x}"
    try_move "$1" "$target_folder/$base" || last_status=$?
    shift
 done
 
+# Return the most recent failure
 exit "${last_status}"
