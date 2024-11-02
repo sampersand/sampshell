@@ -85,9 +85,20 @@ done
 
 # Arg 1 is source, arg2 is destination
 try_move () {
+   source="$(realpath -- "$1")"
+   
    # Resolve the paths to absolute values.
-   source="$(realpath -- "$1"; echo x)"; source="${source%?x}"
-   target="$(realpath -- "$2"; echo x)"; target="${target%?x}"
+   source="$(realpath -- "$1" 2>/dev/null && echo x)" || {
+      warn 'cannot move %s: No such file or directory' "$1"
+      return 4
+   }
+   source="${source%?x}"
+
+   target="$(realpath -- "$2" 2>/dev/null && echo x)" || {
+      warn 'cannot move %s: No such file or directory' "$1"
+      return 4
+   }
+   target="${target%?x}"
 
    # If the thing we're trying to move does not exist, then print out an error
    # and go to the next one
