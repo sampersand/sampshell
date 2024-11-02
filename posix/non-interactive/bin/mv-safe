@@ -88,28 +88,17 @@ try_move () {
    # Resolve the paths to absolute values.
    source="$1"
    target="$2"
-   # source="$(realpath -- "$1" 2>/dev/null && echo x)" || {
-   #    warn 'cannot move %s: No such file or directory' "$1"
-   #    return 4
-   # }
-   # source="${source%?x}"
-
-   # target="$(realpath -- "$2" 2>/dev/null && echo x)" || {
-   #    warn 'cannot move %s: No such file or directory' "$1"
-   #    return 4
-   # }
-   # target="${target%?x}"
 
    # If the thing we're trying to move does not exist, then print out an error
    # and go to the next one
    if [ ! -e "${source}" ]; then
-      warn 'cannot move %s: No such file or directory' "${source}"
+      warn 'cannot move %q: No such file or directory' "${source}"
       return 4
    fi
 
    # If the paths are identical, then just don't move anything.
    if [ "$source" -ef "$target" ]; then
-      warn 'cannot move %s to %s: Paths are identical' "${source}" "${target}"
+      warn 'cannot move %q to %q: Paths are identical' "${source}" "${target}"
       return 5
    fi
 
@@ -166,7 +155,8 @@ if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
 fi
 
 # The target folder is the last argument; make sure it exists.
-target_folder="$(eval "echo \"\${$#}\"" && echo x)"; target_folder="${target_folder%?x}"
+target_folder="$(eval "echo \"\${$#}\"" && echo x)"
+target_folder="${target_folder%?x}"
 # target_folder="$(realpath "$target_folder" && echo x)" || {
 #    warn 'cannot move files into %s: No such file or directory' "${target_folder}"
 #    exit 3   
@@ -174,13 +164,13 @@ target_folder="$(eval "echo \"\${$#}\"" && echo x)"; target_folder="${target_fol
 # target_folder="${target_folder%?x}"
 
 # target_folder="${target_folder%?x}"
-if [ ! -d "${target_folder}" ]; then
-   warn 'cannot move files into %s: Not a directory' "${target_folder}"
-   exit 3
-elif [ ! -x "${target_folder}" ] || [ ! -r "${target_folder}" ]; then
-   warn 'cannot move files into %s: Directory not accessible' "${target_folder}"
-   exit 3
-fi
+# if [ ! -d "${target_folder}" ]; then
+#    warn 'cannot move files into %s: Not a directory' "${target_folder}"
+#    exit 3
+# elif [ ! -x "${target_folder}" ] || [ ! -r "${target_folder}" ]; then
+#    warn 'cannot move files into %s: Directory not accessible' "${target_folder}"
+#    exit 3
+# fi
 
 last_status=0
 while [ "$#" -gt 1 ]; do # Stop at 1, because the last argument is the folder.
