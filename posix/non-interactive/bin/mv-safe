@@ -17,13 +17,13 @@ warn () {
    printf "$msg" "$scriptname" "$@" >&2
 }
 
-shortusage () { cat <<EOS; [ "$#" -eq 0 ] && exit 255; } >&2
+shortusage () { cat; } <<EOS >&2
 usage: ${scriptname} [-h/--help] ...
        ${scriptname} [options] [--] source target
        ${scriptname} [options] [--] source ... directory
 EOS
 
-longusage () { shortusage 0; cat <<EOS; exit 255; } >&2
+longusage () { shortusage; cat <<EOS; } >&2
 options:
    -h, --help              print help, then exit.
    -i, --interactive       ask to overwrite files that exist (disables -n)
@@ -38,6 +38,7 @@ returns: (for non-zero exit status, it's the last error status encountered.)
    3   If 'directory' is not actually a directory ((, or is not executable))
    4   A 'source' does not exist
    5   The 'source' and the destination are identical
+   253 not enough args were given
    254 If an unknown argument was given
    255 When -h or --help supplied provided
 
@@ -51,7 +52,7 @@ but if the target file exists, the the first 'num' where the path
 '<dir>/<base> <num><ext>' does not exist will be used instead.
 EOS
 
-rename_mode=
+do_rename=
 clobber_empty=
 move_mode=-n
 
@@ -59,9 +60,9 @@ move_mode=-n
 while [ "$#" -ne 0 ]; do
    case "$1" in
       --) shift; break ;;
-      -h | --help) longusage ;;
-      -r | --rename) rename_mode=1 ;;
-      -R | --no-rename) rename_mode= ;;
+      -h | --help) longusage; exit 255 ;;
+      -r | --rename) do_rename=1 ;;
+      -R | --no-rename) do_rename= ;;
       -c | --clobber-empty) clobber_empty=1 ;;
       -C | --no-clobber-empty) clobber_empty= ;;
       -n | --not-interactive) move_mode=-n ;;
@@ -73,6 +74,7 @@ while [ "$#" -ne 0 ]; do
          shift
          set -- "${rest1}" "-${rest2}" "$@"
          continue ;;
+
       -?) warn 'unknown option: %s' "$1"; exit 254 ;;
       *) break ;;
    esac
@@ -81,9 +83,11 @@ while [ "$#" -ne 0 ]; do
 done
 
 # If no arguments are given, then error out with the usage.
-[ "$#" -le 1 ] && shortusage
+if [ "$#" -le 1 ]; then
+   shortusage
+   exit 253
+fi
 
-# Arg 1 is source, arg2 is destination
 try_move () {
    # Resolve the paths to absolute values.
    source="$1"
@@ -97,7 +101,7 @@ try_move () {
    fi
 
    # If the paths are identical, then just don't move anything.
-   if [ "$source" -ef "$target" ]; then
+   if [ "${source}" -ef "${target}" ]; then
       warn 'cannot move %q to %q: Paths are identical' "${source}" "${target}"
       return 5
    fi
@@ -128,7 +132,7 @@ try_move () {
 
       # If we're not renaming files, and the original file still exists, then
       # return an error.
-      [ -z "${rename_mode}" ] && return 1
+      [ -z "${do_rename}" ] && return 1
 
       # If we have an index of 1, that means this is our first time in
       # the body. Setup all the required variables.
@@ -157,20 +161,6 @@ fi
 # The target folder is the last argument; make sure it exists.
 target_folder="$(eval "echo \"\${$#}\"" && echo x)"
 target_folder="${target_folder%?x}"
-# target_folder="$(realpath "$target_folder" && echo x)" || {
-#    warn 'cannot move files into %s: No such file or directory' "${target_folder}"
-#    exit 3   
-# }
-# target_folder="${target_folder%?x}"
-
-# target_folder="${target_folder%?x}"
-# if [ ! -d "${target_folder}" ]; then
-#    warn 'cannot move files into %s: Not a directory' "${target_folder}"
-#    exit 3
-# elif [ ! -x "${target_folder}" ] || [ ! -r "${target_folder}" ]; then
-#    warn 'cannot move files into %s: Directory not accessible' "${target_folder}"
-#    exit 3
-# fi
 
 last_status=0
 while [ "$#" -gt 1 ]; do # Stop at 1, because the last argument is the folder.
