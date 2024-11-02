@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 
 # Safety first
 set -o nounset
@@ -85,8 +86,6 @@ done
 
 # Arg 1 is source, arg2 is destination
 try_move () {
-   source="$(realpath -- "$1")"
-   
    # Resolve the paths to absolute values.
    source="$(realpath -- "$1" 2>/dev/null && echo x)" || {
       warn 'cannot move %s: No such file or directory' "$1"
