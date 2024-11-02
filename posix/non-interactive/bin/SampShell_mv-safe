@@ -92,15 +92,13 @@ try_move () {
    # If the thing we're trying to move does not exist, then print out an error
    # and go to the next one
    if [ ! -e "${source}" ]; then
-      printf '%s: cannot move %s: No such file or directory\n' \
-         "${scriptname}" "${source}" >&2
+      warn 'cannot move %s: No such file or directory' "${source}"
       return 4
    fi
 
    # If the paths are identical, then just don't move anything.
    if [ "$source" = "$target" ]; then
-      printf '%s: cannot move %s to %s: Paths are identical' \
-         "${scriptname}" "$1" "$2"
+      warn 'cannot move %s to %s: Paths are identical' "${source}" 
       return 5
    fi
 
@@ -157,11 +155,13 @@ if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
 fi
 
 # The target folder is the last argument; make sure it exists.
-target_folder=$(eval "echo \"\${$#}\"")
-# target_folder="$(eval "echo \"\${$#}\")" 2>/dev/null && echo x)" || {
-#    warn 'cannot move files into %s: No such file or directory' "${target_folder?}"
-#    exit 3
-# }
+target_folder="$(eval "echo \"\${$#}\"")"
+target_folder="$(realpath "$target_folder" && echo x)" || {
+   warn 'cannot move files into %s: No such file or directory' "${target_folder}"
+   exit 3   
+}
+target_folder="${target_folder#?x}"
+
 # target_folder="${target_folder%?x}"
 if [ ! -d "${target_folder}" ]; then
    warn 'cannot move files into %s: Not a directory' "${target_folder}"
