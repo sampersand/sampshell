@@ -2,7 +2,8 @@
 
 set -o nounset
 
-die () { echo "$1" >&2; exit "${2:-1}"; }
+warn () { msg="%s: $1"'\n'; shift; printf "$msg" "$scriptname" "$@" >&2; }
+die () { warn "$@"; exit 1; }
 usage () { cat <<EOS >&2; exit 255; }
 usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
    Moves files to the trash, possibly renaming them. The trash dir is
@@ -10,22 +11,21 @@ usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
 EOS
 
 
-scriptname=$(basename "$0")
-trashdir=$SampShell_TRASHDIR
+scriptname=$(basename -- "$0"; echo x); scriptname=${scriptname%?x}
+trashdir=${SampShell_TRASHDIR:-$SampShell_ROOTDIR/.trash}
 
 until [ "$#" -eq 0 ]; do
 	case "$1" in
-		(--) shift; break;;
-		(-h|--help) usage ;;
-		(-t*)
+		--) shift; break;;
+		-h|--help) usage ;;
+		-t*)
 			trashdir=${1#-t}
 			shift
 			if [ -z "$trashdir" ]; then
+				trashdir=${1-}
 				if [ "$#" -eq 0 ] || [ -z "$1" ]; then
-					die "$scriptname: missing trash directory for -t"
+					die 1 'missing trash directory for -t'
 				fi
-
-				trashdir=$1
 			fi ;;
 		(*) break ;;
 	esac
@@ -36,8 +36,8 @@ done
 [ "$#" -eq 0 ] && usage
 
 if [ ! -d "$trashdir" ]; then
-	[ -e $trashdir ] && die "trashdir exists, but isn't a dir: $trashdir" 2
+	[ -e "$trashdir" ] && die "trashdir exists, but isn't a dir: %s" "$trashdir"
 	mkdir -p "$trashdir" || exit
 fi
 
-SampShell_mv-safe -r -C -- "$@" "$trashdir"
+mv-safe -rC -- "$@" "$trashdir"

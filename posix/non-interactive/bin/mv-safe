@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Nearly posix-safe, except it uses `%q` instead of `%s` in outputs, as 
+# %s might might mask small errors
+
 # Safety first
 set -o nounset
 
@@ -159,9 +162,8 @@ if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
    exit
 fi
 
-# The target folder is the last argument; make sure it exists.
-target_folder="$(eval "echo \"\${$#}\"" && echo x)"
-target_folder="${target_folder%?x}"
+# The target folder is the last argument.
+eval 'target_folder=${'"$#"'}'
 
 last_status=0
 while [ "$#" -gt 1 ]; do # Stop at 1, because the last argument is the folder.
