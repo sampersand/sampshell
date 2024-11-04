@@ -117,17 +117,17 @@ try_move () {
       if [ -n "${clobber_empty}" ]; then
          # If the target is a file and it's empty, then forcibly remove it.
          if [ -f "${target}" ] && [ ! -s "${target}" ]; then
-            command -p rm -f -- "${target}" || return 2
+            command rm -f -- "${target}" || return 2
 
          # If the target is a folder, and there's nothing in it, then delete it.
          elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
-            command -p rm -fd -- "${target}" || return 2
+            command rm -fd -- "${target}" || return 2
          fi
       fi
 
       # Try to rename '$source' to '$target', making sure not to override
       # '$target' if it exists.
-      command -p mv "${move_mode}" -- "${source}" "${target}" || return 2
+      command mv "${move_mode}" -- "${source}" "${target}" || return 2
 
       # Now, after moving it, does the source still exist? ...
       [ -e "${source}" ]
