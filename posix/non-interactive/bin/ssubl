@@ -1,4 +1,6 @@
 #!/bin/sh
 
+set -o nounset
+
 [ "$#" -ne 0 ] && [ "$1" = -- ] && shift
 SampShell_subl_scriptname=ssubl exec subl -c "$@"

@@ -6,19 +6,10 @@
 # Safety first
 set -o nounset
 
-# Overwrite 'IFS' even if it was somehow given to us
-nl='
-'
-IFS=" "" $nl"
-unset nl
 
-scriptname="$(basename -- "$0"; echo x)"; scriptname="${scriptname%?x}"
+scriptname="${0##*/}"
 
-warn () {
-   msg="%s: $1"'\n'
-   shift
-   printf "$msg" "$scriptname" "$@" >&2
-}
+warn () { fmt="$1"; shift; printf "%s: $fmt\\n" "$scriptname" "$@" >&2; }
 
 shortusage () { cat; } <<EOS >&2
 usage: ${scriptname} [-h/--help] ...
@@ -72,7 +63,7 @@ while [ "$#" -ne 0 ]; do
       -n | --not-interactive) move_mode=-n ;;
       -i | --interactive) move_mode=-i ;;
 
-      -??*) # Support `-abc` options
+      -[hrRcCni]?*) # Support `-abc` options
          rest2="${1#-?}"
          rest1="${1%"$rest2"}"
          shift

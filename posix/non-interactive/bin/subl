@@ -2,8 +2,7 @@
 
 set -o nounset
 
-# Allow for `ssubl` to overwrite the
-scriptname=${SampShell_subl_scriptname:-"$(dirname "$0")"}
+scriptname="${0##*/}"
 
 die () {
 	printf >&2 "%s$1"'\n' "$scriptname"
@@ -80,4 +79,4 @@ elif [ -n "${create}" ]; then
 	done
 fi
 
-open -a "${editor}" -- "$@"
+exec open -a "${editor}" -- "$@"

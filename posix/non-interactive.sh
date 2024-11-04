@@ -9,7 +9,7 @@ export SampShell_ROOTDIR="${SampShell_ROOTDIR:?}" # Make sure this is set!
 
 # Ensure that the posix bin is included.
 case ":$PATH:" in
-	*:"$SampShell_ROOTDIR/posix/non-interactive/bin":*) ;;
+	*:"$SampShell_ROOTDIR"/posix/non-interactive/bin:*) ;;
 	*) export PATH="$SampShell_ROOTDIR/posix/non-interactive/bin:$PATH" ;;
 esac
 

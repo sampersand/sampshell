@@ -2,6 +2,8 @@
 
 set -o nounset
 
+scriptname=${0##*/}
+
 warn () { msg="%s: $1"'\n'; shift; printf "$msg" "$scriptname" "$@" >&2; }
 die () { warn "$@"; exit 1; }
 usage () { cat <<EOS >&2; exit 255; }
@@ -10,9 +12,7 @@ usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
    controlled by the variable 'SampShell_TRASHDIR'
 EOS
 
-
-scriptname=$(basename -- "$0"; echo x); scriptname=${scriptname%?x}
-trashdir=${SampShell_TRASHDIR:-$SampShell_ROOTDIR/.trash}
+trashdir=${SampShell_TRASHDIR:-}
 
 until [ "$#" -eq 0 ]; do
 	case "$1" in
@@ -20,14 +20,12 @@ until [ "$#" -eq 0 ]; do
 		-h|--help) usage ;;
 		-t*)
 			trashdir=${1#-t}
-			shift
 			if [ -z "$trashdir" ]; then
+				shift
 				trashdir=${1-}
-				if [ "$#" -eq 0 ] || [ -z "$1" ]; then
-					die 1 'missing trash directory for -t'
-				fi
+				[ -z "$trashdir" ] && die 'missing trash directory for -t'
 			fi ;;
-		(*) break ;;
+		*) break ;;
 	esac
 	shift
 done
@@ -35,9 +33,11 @@ done
 [ -z "$trashdir" ] && die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
 [ "$#" -eq 0 ] && usage
 
-if [ ! -d "$trashdir" ]; then
-	[ -e "$trashdir" ] && die "trashdir exists, but isn't a dir: %s" "$trashdir"
+if [ ! -e "$trashdir" ]; then
 	mkdir -p "$trashdir" || exit
+elif [ ! -d "$trashdir" ]; then
+	die "trashdir exists, but isn't a dir: %s" "$trashdir"
 fi
 
-mv-safe -rC -- "$@" "$trashdir"
+# `exec` so we don't fork
+exec mv-safe -r -C -- "$@" "$trashdir"
