@@ -60,7 +60,8 @@ move_mode=-n
 while [ "$#" -ne 0 ]; do
    case "$1" in
       --) shift; break ;;
-      -h | --help) longusage; exit 255 ;;
+      -h) shortusage; exit 255 ;;
+      --help) longusage; exit 255 ;;
       -r | --rename) do_rename=1 ;;
       -R | --no-rename) do_rename= ;;
       -c | --clobber-empty) clobber_empty=1 ;;
