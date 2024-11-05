@@ -1,23 +1,40 @@
 #!/bin/sh
 
-# Nearly posix-safe, except it uses `%q` instead of `%s` in outputs, as 
-# %s might might mask small errors
+## mv-safe: Move files safely
+#
+# This file is intended to be 100% POSIX-compliant, as of the 2024 implementation.
+# As such, these some silly workarounds that need to be done to get around the
+# limitations POSIX has (such as the `dirname` hack.)
+#
+# Also, in the interest of future-portability to a shell I may eventually
+# implement, I've eschewed some of the more complex commands.
+# 
 
-# Safety first
+## Safety first!
 set -o nounset
 
-
+## The name of the script; this is used in `usage` and `warn`. Note that this
+# doesn't use the `basename` hack (see the body of `try_move` for that), as
+# this is just used for printing out usages, and isn't critical.
 scriptname="${0##*/}"
 
-warn () { fmt="$1"; shift; printf "%s: $fmt\\n" "$scriptname" "$@" >&2; }
+## Prints a message in the format `<scriptname>: ...` to stderr.
+# Note: `printf` is used instead of `echo`, as echo has a lot of weird issues
+# that can come up with user input. (e.g. `echo a\\cb` will only echo a).
+warn () {
+   fmt="%s: $1"'\n'
+   shift
+   printf "${fmt}" "${scriptname}" "$@" >&2
+}
 
-shortusage () { cat; } <<EOS >&2
+## Prints a short usage message to stderr.
+shortusage () { cat <<EOS >&2; }
 usage: ${scriptname} [-h/--help] ...
        ${scriptname} [options] [--] source target
        ${scriptname} [options] [--] source ... directory
 EOS
 
-longusage () { shortusage; cat <<EOS; } >&2
+longusage () { shortusage; cat <<EOS >&2; }
 options:
    -h, --help              print help, then exit.
    -i, --interactive       ask to overwrite files that exist (disables -n)
@@ -25,7 +42,9 @@ options:
    -r, --rename            rename files to prevent conflicts mode
    -R, --no-rename         disables '-r'
    -c, --clobber-empty     overwrite empty files/folders
-   -C, --no-clobber-empty  disables -'c'
+   -C, --no-clobber-empty  disables '-c'
+   -v, --verbose           passed '-v' to underlying mv/rm commands
+   -V, --no-verbose        do not pass '-v' to underlying mv/rm commands
 returns: (for non-zero exit status, it's the last error status encountered.)
    0   If everything was successful
    2   There's a problem running 'mv' (or 'rm' when --clobber-empty is enabled)
@@ -46,11 +65,13 @@ but if the target file exists, the the first 'num' where the path
 '<dir>/<base> <num><ext>' does not exist will be used instead.
 EOS
 
+## Setup option variables; these are configurable via flags on the command line.
 do_rename=
 clobber_empty=
 move_mode=-n
+verbose_flag=
 
-# Parse command line options
+## Parse command line options
 while [ "$#" -ne 0 ]; do
    case "$1" in
       --) shift; break ;;
@@ -62,10 +83,12 @@ while [ "$#" -ne 0 ]; do
       -C | --no-clobber-empty) clobber_empty= ;;
       -n | --not-interactive) move_mode=-n ;;
       -i | --interactive) move_mode=-i ;;
+      -v | --verbose) verbose_flag=v ;;
+      -V | --no-verbose) verbose_flag= ;;
 
-      -[hrRcCni]?*) # Support `-abc` options
+      -[hrRcCnivV]?*) # Support `-abc` options
          rest2="${1#-?}"
-         rest1="${1%"$rest2"}"
+         rest1="${1%"${rest2}"}"
          shift
          set -- "${rest1}" "-${rest2}" "$@"
          continue ;;
@@ -77,91 +100,159 @@ while [ "$#" -ne 0 ]; do
    shift
 done
 
-# If no arguments are given, then error out with the usage.
+## The `try_move` function is the meat of the program, responsible for attempt-
+# ing to rename files/directories, along with the clobbering of empty files and
+# renaming when needed.
+#
+# It takes two arguments, the first is the source, the second, the destination.
+#
+# It returns `0` if the file was successfully moved; or if it wasn't moved and
+# rename mode was not enabled. Nonzero exit status codes are returned in case
+# of errors, and are the same as in the usage.
+try_move () {
+   ## Use variables for clarity
+   source="$1"
+   target="$2"
+
+   ## If the thing we're moving doesn't exist, then print an error and return.
+   if ! [ -e "${source}" ]; then
+      warn 'cannot move %s: No such file or directory' "${source}"
+      return 4
+   fi
+
+   ## If the paths are identical, print an error adn return.
+   if [ "${source}" -ef "${target}" ]; then
+      warn 'cannot move %s to %s: Paths are identical' "${source}" "${target}"
+      return 5
+   fi
+
+   ## Unlike most languages, the `while` loop of POSIX-compliant shells can be
+   # any series of commands, and the last one's exit status determines whether
+   # to execute the body. In this case, we do three separate tasks in order:
+   #   1. Remove empty files/folders if `--clobber-empty` was supplied
+   #   2. Attempt to move the file, prompting or not based on `$move_mode`
+   #   3. Check to see if the file still exists.
+   # If the file still exists after those three steps, that means we couldn't
+   # move the file; if `--rename` was not supplied we just return, but if it
+   # was, we attempt to rename the file and try again.
+   idx=1
+   while
+      ## If we are clobber empty is enabled, then delete out empty files or 
+      # directories before attempting to move the file. Note that this _does_
+      # have race condition issues with it, however there's no good way to solve
+      # that...
+      if [ -n "${clobber_empty}" ]; then
+         # If the target is a file and it's empty, then forcibly remove it.
+         if [ -f "${target}" ] && ! [ -s "${target}" ]; then
+            command rm "-f${verbose_flag}" -- "${target}" || return 2
+
+         # If the target is a folder, and there's nothing in it, then delete it.
+         elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
+            command rm "-fd${verbose_flag}" -- "${target}" || return 2
+         fi
+      fi
+
+      ## Try to rename '$source' to '$target'; This uses `$move_mode`, which is,
+      # is either `-n` (default; never override things) or `-i` (prompt for
+      # overriding).
+      command mv "${move_mode}${verbose_flag}" -- "${source}" "${target}" || return 2
+
+      ## Now, after moving it, does the source still exist? ...
+      [ -e "${source}" ]
+   do
+      # ... It does still exist! 
+
+      ## Since the original file still exists, and we're not renaming things,
+      # then just return; returning 0 mimics the behaviour of `mv -n`, where
+      # not moving files returns 0.
+      [ -z "${do_rename}" ] && return 0
+
+      # Now we attempt to find a new name for the file
+
+      ## An index of 1 means that awe have not yet tried to find a new name for
+      # this file. As such, let's go ahead and setup all the required variables
+      # for it.
+      if [ "${idx}" -eq 1 ]; then
+         # Note that we have to do this silly dance here with the `printf` in
+         # case the filename ends with a newline, as command substitution strips
+         # all ending newlines. So by having `printf x`, we'll print out `x`,
+         # which we can then stirp via `%x`
+         base="$(basename -- "$2" && printf x)" || {
+            warn 'unable to get basename of %s' "$2"
+            return 2
+         }; base="${base%x}"
+         stem="${base%%.*}"
+         ext="${base#"$stem"}" # quote `$stem` to prevent glob interpretation
+         dir="$(dirname -- "$2" && printf x)" || {
+            warn 'unable to get dirname of %s' "$2"
+            return 2
+         }; dir="${dir%x}"
+         root="$dir/$stem"
+      fi
+
+      ## Set `target` to the newname---`<dir>/<stem> <idx><ext>`---and increment
+      # the index while we're at it. This is why the index always starts at 1,
+      # so that `$((idx=idx+1))` will start at 2, and not 1.
+      target="$root $((idx=idx+1))$ext"
+   done
+
+   ## Looks like we were able to rename the file successfully, huzzah! Return 0.
+   return 0
+}
+
+## If not enough arguments are given, then error out with the usage.
 if [ "$#" -le 1 ]; then
    shortusage
    exit 253
 fi
 
-try_move () {
-   # Resolve the paths to absolute values.
-   source="$1"
-   target="$2"
-
-   # If the thing we're trying to move does not exist, then print out an error
-   # and go to the next one
-   if [ ! -e "${source}" ]; then
-      warn 'cannot move %q: No such file or directory' "${source}"
-      return 4
-   fi
-
-   # If the paths are identical, then just don't move anything.
-   if [ "${source}" -ef "${target}" ]; then
-      warn 'cannot move %q to %q: Paths are identical' "${source}" "${target}"
-      return 5
-   fi
-
-   idx=1
-   while
-      # If clobber empty is defined, then delete the target if it doesn't exist
-      # before we attempt to move our file.
-      if [ -n "${clobber_empty}" ]; then
-         # If the target is a file and it's empty, then forcibly remove it.
-         if [ -f "${target}" ] && [ ! -s "${target}" ]; then
-            command rm -f -- "${target}" || return 2
-
-         # If the target is a folder, and there's nothing in it, then delete it.
-         elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
-            command rm -fd -- "${target}" || return 2
-         fi
-      fi
-
-      # Try to rename '$source' to '$target', making sure not to override
-      # '$target' if it exists.
-      command mv "${move_mode}" -- "${source}" "${target}" || return 2
-
-      # Now, after moving it, does the source still exist? ...
-      [ -e "${source}" ]
-   do
-      # ... It does still exist! 
-
-      # If we're not renaming files, and the original file still exists, then
-      # return an error.
-      [ -z "${do_rename}" ] && return 1
-
-      # If we have an index of 1, that means this is our first time in
-      # the body. Setup all the required variables.
-      if [ "$idx" = 1 ]; then
-         base="$(basename -- "$2"; echo x)"; base="${base%?x}"
-         stem="${base%%.*}"
-         ext="${base#"$stem"}"
-         dir="$(dirname -- "$2"; echo x)"; dir="${dir%?x}"
-         root="$dir/$stem"
-      fi
-
-      # Now set the target and let's try again
-      target="$root $((idx=idx+1))$ext"
-   done
-
-   return 0
-}
-
-# If two arguments are given, and the second isn't a directory, assume the first
-# command form
-if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
+## Handle the first command form (ie `mv-safe source target`): If exactly two
+# arguments are given, and the second is not a directory, then just attempt to
+# move the first to the second, and return the exit status of that `try_move`
+if [ "$#" -eq 2 ] && ! [ -d "$2" ]; then
    try_move "$1" "$2"
    exit
 fi
 
-# The target folder is the last argument.
-eval 'target_folder=${'"$#"'}'
+# Now we know we're in the second form (ie `mv-safe source ... directory`).
 
-last_status=0
-while [ "$#" -gt 1 ]; do # Stop at 1, because the last argument is the folder.
-   base="$(basename -- "$1"; echo x)"; base="${base%?x}"
-   try_move "$1" "$target_folder/$base" || last_status=$?
+## Get the destination for where all the files should go, which is the last
+# command-line argument. Note that we have to use `eval` here (icky!) because
+# POSIX has no way to get the last argument (unlike bash's `${!#}` or zsh's
+# `$@[#]`), which is unfortunate. Also note that `\${$#}` is used instead of
+# `\$$#`, as when `$#` is more than 9 you need braces (eg `${10}`).
+eval "target_folder=\${$#}" || return 2
+
+# We do not check for permissions for the `target_folder`, as the `mv`/`rm`
+# functions we eventually run will error out if there's problems; why check for
+# perms ahead-of-time when we can rely on `mv`/`rm` failing if there's problems?
+
+## The last exit status of `try_move`; we exit with the last non-zero status
+# that was encountered.
+exit_status=0
+
+## Try to move each argument given. Note that we have to use a `while` loop, not
+# a `for` loop, as the last argument is the `$target_folder`. If POSIX supported
+# a way to "pop" arguments off the end of `$@` (like zsh's `shift -p`), then we
+# could use a `for` loop. This is also why we have to go until we have one
+# argument left---it's the target folder.
+while [ "$#" -gt 1 ]; do
+   ## Get the basename of the file, used for moving it to the folder. Check the
+   # body of the `try_move`'s while loop for why we have to do this convoluted.
+   base="$(basename -- "$1" && printf x)" || {
+      warn 'unable to get dirname of %s' "$2"
+      exit_status=2
+      continue
+   }; base="${base%x}"
+
+   ## Attempt to move the argument into its destination; if there's any problems
+   # doing that, then set the last status to the exit code.
+   try_move "$1" "${target_folder}/${base}" || exit_status=$?
+
+   ## Delete the argument and try again.
    shift
 done
 
-# Return the most recent failure
-exit "${last_status}"
+## Exit with the exit status---the most recent non-zero exit code that was
+# encountered, or `0` if it was all successful.
+exit "${exit_status}"
