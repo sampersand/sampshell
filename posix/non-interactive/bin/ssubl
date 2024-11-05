@@ -2,5 +2,5 @@
 
 set -o nounset
 
-[ "$#" -ne 0 ] && [ "$1" = -- ] && shift
-SampShell_subl_scriptname=ssubl exec subl -c "$@"
+# `ssubl` is exactly like `subl`, except it creates files that don't exist.
+exec subl -c "$@"

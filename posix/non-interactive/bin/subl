@@ -1,26 +1,17 @@
 #!/bin/sh
 
+# Safety first
 set -o nounset
 
-scriptname="${0##*/}"
 
-die () {
-	printf >&2 "%s$1"'\n' "$scriptname"
-	exit 1
-}
+scriptname=${0##*/} # Scriptname is used for usage
+editor=${SampShell_EDITOR:-TextEdit} # What program to open
+create= # Whether or not to create missing files/folders
 
-editor=${SampShell_EDITOR:-TextEdit}
-create=
+warn () { fmt="$1"; shift; printf "%s: $fmt\\n" "$scriptname" "$@" >&2; }
+die () { warn "$@"; exit 1; }
 
-while test "$#" -gt 0
-do
-	case "$1" in 
-		--)
-			shift
-			break ;;
-
-		-h | --help)
-			cat >&2 <<USAGE
+usage () { cat; exit 255; } <<USAGE >&2
 usage: $scriptname [options] [--] [file ...]"
 options:
 	-h, --help            print help, and then exit
@@ -28,55 +19,55 @@ options:
 	-C, --no-create       disables creation
 	-eNAME, --editor=NAME sets the editor; overrides \$SampShell_EDITOR.
 USAGE
-			exit 255 ;;
 
-		-c | --create)
-			create=1 ;;
-
-		-C | --no-create)
-			create= ;;
-
+while [ "$#" -ne 0 ]; do
+	case "$1" in 
+		--) shift; break ;;
+		-h | --help) usage ;;
+		-c | --create) create=1 ;;
+		-C | --no-create) create= ;;
 		-e* | --editor*)
-
 			editor=${1#-e}
-			if test "${editor}" = "${1}"
-			then
-				editor=${1#--editor}
-			fi
+			[ "$editor" = "$1" ] && editor=${1#--editor}
 
-			if test "x${editor}" = x
-			then
+			if [ -z "$editor" ]; then
+				editor=${2-}
+				[ -z "$editor" ] && die 'missing required argument for %s' "$1"
 				shift
-				editor=${1:-}
-				if test "x${editor}" = x
-				then
-					die 'missing required argument for -e'
-				fi
 			fi
 			;;
-		*)
-			break ;;
+
+      -[^-]?*) # Support `-abc` options
+         rest2="${1#-?}"
+         rest1="${1%"$rest2"}"
+         shift
+         set -- "$rest1" "-$rest2" "$@"
+         continue ;;
+      -?*) die 'unknown option: %s' "$1" ;;
+		*) break ;;
 	esac
 
 	shift
 done
 
-if [ "$#" = 0 ]; then
-	set -- "${PWD}"
-elif [ -n "${create}" ]; then
-	for file; do
-		[ -z "${file}" ] && die 'empty filename given; not creating it'
+# If no arguments are given, use the pwd.
+[ "$#" = 0 ] && set -- "$PWD"
 
-		# File exists, no need to make it.
-		[ -e "${file}" ] && continue
+# Create files
+if [ -n "$create" ]; then
+	for file; do
+		[ -z "$file" ] && continue   # Don't create empty files
+		[ -e "$file" ] && continue # File exists, no need to make it.
 
 		# If the file ends with `/`, then it's a directory and we create it.
 		if [ "${file%/}" != "$file" ]; then
-			mkdir -p "${file}" || exit
+			mkdir -p -- "$fil}" || exit
 		else
-			{ mkdir -p "$(dirname "${file}")" && touch "${file}"; } || exit
+			{ dir="$(dirname -- "$file" && echo x)" && \
+				mkdir -p -- "${dir%?x}" && \
+				touch -- "$file"; } || exit
 		fi
 	done
 fi
 
-exec open -a "${editor}" -- "$@"
+exec open -a "$editor" -- "$@"

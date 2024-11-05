@@ -70,7 +70,7 @@ while [ "$#" -ne 0 ]; do
          set -- "${rest1}" "-${rest2}" "$@"
          continue ;;
 
-      -?) warn 'unknown option: %s' "$1"; exit 254 ;;
+      -?*) warn 'unknown option: %s' "$1"; exit 254 ;;
       *) break ;;
    esac
 
