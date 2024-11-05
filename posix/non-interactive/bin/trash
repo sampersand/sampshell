@@ -6,18 +6,18 @@ scriptname=${0##*/}
 
 warn () { msg="%s: $1"'\n'; shift; printf "$msg" "$scriptname" "$@" >&2; }
 die () { warn "$@"; exit 1; }
-usage () { cat <<EOS >&2; exit 255; }
+usage () { cat; } <<USAGE
 usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
    Moves files to the trash, possibly renaming them. The trash dir is
    controlled by the variable 'SampShell_TRASHDIR'
-EOS
+USAGE
 
 trashdir=${SampShell_TRASHDIR:-}
 
 until [ "$#" -eq 0 ]; do
 	case "$1" in
 		--) shift; break;;
-		-h|--help) usage ;;
+		-h|--help) usage; exit 0 ;;
 		-t*)
 			trashdir=${1#-t}
 			if [ -z "$trashdir" ]; then

@@ -29,8 +29,7 @@ todo return values
 # - `nounset` ensures that using any unset variables will cause the program to
 #             abort (and is equivalent to `set -u`, but I like being explicit).
 # - `pipefail` makes pipes exit with a nonzero status if any of their components
-#              fail. I'm not using pipes in here, but as a future-proof against
-#              myself, I've added it just in case.
+#              fail; makes `if a | b; ...` false if `a` failed too.
 # Some people also like to set `errexit`, however this has a lot of edgecases,
 # and I'm not nearly learned enough to know how to deal with them. So, instead
 # I've just manually checked all commands that might fail and returned.
@@ -156,7 +155,7 @@ try_move () {
    target="$2"
 
    ## If the thing we're moving doesn't exist, then print an error and return.
-   if ! [ -e "${source}" ]; then
+   if [ ! -e "${source}" ]; then
       warn 'cannot move %s: No such file or directory' "${source}"
       return 4
    fi
@@ -190,21 +189,33 @@ try_move () {
       # Note that this _does_ have race condition issues with it, however there
       # is no good way to solve that...
       if [ -n "${clobber_empty}" ]; then
-         # If the target is a file and it's empty, then forcibly remove it.
-         if [ -f "${target}" ] && ! [ -s "${target}" ]; then
-            command rm "-f${verbose_flag}" -- "${target}" || return 2
+         ## If the target is a file and it's empty, then forcibly remove it.
+         if [ -f "${target}" ] && [ ! -s "${target}" ]; then
+            rm "-f${verbose_flag}" -- "${target}" || return 2
 
-         # If the target is a folder, and there's nothing in it, then delete it.
-         |# <-- todo
+         ## If the target is a folder, and there's nothing in it, delete it.
+         # Note that `ls | grep` is usually a bad idea, as parsing the output of
+         # `ls` is fraught with danger. However, in this case, since we're just
+         # checking if _anything_ was outputted (via `grep -q .`), then it's
+         # fine.
+         # 
+         # If somehow `ls` fails, then the `pipefile` that was set at the start
+         # of the program will cause the entire `! ls | grep` to be false, and
+         # the `rm` command will not be run.
          elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
-            command rm "-fd${verbose_flag}" -- "${target}" || return 2
+            rm "-fd${verbose_flag}" -- "${target}" || return 2
+
+         ## Otherwise, the target is non-empty; we will defer to the `mv`
+         # command on what to do.
          fi
       fi
 
       ## Try to rename '$source' to '$target'; This uses `$move_flag`, which is,
       # is either `n` (default; never override things) or `i` (prompt for
       # overriding).
-      command mv "-${move_flag}${verbose_flag}" -- "${source}" "${target}" || return 2
+      # <> Note we still use `-n` here on the off chance that the file was
+      # created after a clobbered file was removed.
+      mv "-${move_flag}${verbose_flag}" -- "${source}" "${target}" || return 2
 
       ## Now, after moving it, does the source still exist? ...
       [ -e "${source}" ]
@@ -225,15 +236,16 @@ try_move () {
          # Note that we have to do this silly dance here with the `printf` in
          # case the filename ends with a newline, as command substitution strips
          # all ending newlines. So by having `printf x`, we'll print out `x`,
-         # which we can then stirp via `%x`
-         base="$(basename -- "$2" && printf x)" || {
-            warn 'unable to get basename of %s' "$2"
+         # which we can then strip via `%x`. Note that `$target` is safe to use
+         # here because we haven't yet updated it.
+         base="$(basename -- "${target}" && printf x)" || {
+            warn 'unable to get basename of %s' "${target}"
             return 2
          }; base="${base%x}"
          stem="${base%%.*}"
          ext="${base#"$stem"}" # quote `$stem` to prevent glob interpretation
-         dir="$(dirname -- "$2" && printf x)" || {
-            warn 'unable to get dirname of %s' "$2"
+         dir="$(dirname -- "${target}" && printf x)" || {
+            warn 'unable to get dirname of %s' "${target}"
             return 2
          }; dir="${dir%x}"
          root="$dir/$stem"
@@ -258,7 +270,7 @@ fi
 ## Handle the first command form (ie `mv-safe source target`): If exactly two
 # arguments are given, and the second is not a directory, then just attempt to
 # move the first to the second, and return the exit status of that `try_move`
-if [ "$#" -eq 2 ] && ! [ -d "$2" ]; then
+if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
    try_move "$1" "$2"
    exit
 fi
@@ -289,7 +301,7 @@ while [ "$#" -gt 1 ]; do
    ## Get the basename of the file, used for moving it to the folder. Check the
    # body of the `try_move`'s while loop for why we have to do this convoluted.
    base="$(basename -- "$1" && printf x)" || {
-      warn 'unable to get dirname of %s' "$2"
+      warn 'unable to get basename of %s' "$2"
       exit_status=2
       continue
    }; base="${base%x}"
