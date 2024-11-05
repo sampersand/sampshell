@@ -1,40 +1,65 @@
 #!/bin/sh
 
+todo shortusage details
+todo return values
+
 ## mv-safe: Move files safely
 #
-# This file is intended to be 100% POSIX-compliant, as of the 2024 implementation.
-# As such, these some silly workarounds that need to be done to get around the
-# limitations POSIX has (such as the `dirname` hack.)
+# This file is nearly 100% POSIX-compliant with the 2024 edition. (AFAIK, it is
+# compatible with older versions as well, except for the usage of the `-ef`
+# in a `[` within `try_move` to see if file paths are identical). The only non-
+# compliant thing is the `-v` flag, as technically `mv`/`rm` are not required
+# to support `-v`. However, callers can just avoid using that for strict POSIX-
+# compliance.
 #
-# Also, in the interest of future-portability to a shell I may eventually
-# implement, I've eschewed some of the more complex commands.
-# 
+# As POSIX is fairly limited in some respects, there's some (POSIX-compliant)
+# workarounds that have been used that wouldn't need to be used in more advanced
+# shells (such as the `basename && printf x` hack that's used). I've also
+# written it in as simple a way as possible (and with copious comments), to make
+# it easy to understand what is happening to people (/me in the future) that
+# are not as well-versed with POSIX.
+#
+# Lastly, to accommodate possibly running this on not-entirely-POSIX-compliant
+# shells, I've done a few things that are technically redundant (such as quoting
+# assignments, or doing `${foo}` for all variables), but might make this more
+# safe.
+##
 
 ## Safety first!
+# - `nounset` ensures that using any unset variables will cause the program to
+#             abort (and is equivalent to `set -u`, but I like being explicit).
+# - `pipefail` makes pipes exit with a nonzero status if any of their components
+#              fail. I'm not using pipes in here, but as a future-proof against
+#              myself, I've added it just in case.
+# Some people also like to set `errexit`, however this has a lot of edgecases,
+# and I'm not nearly learned enough to know how to deal with them. So, instead
+# I've just manually checked all commands that might fail and returned.
 set -o nounset
+set -o pipefail
 
-## The name of the script; this is used in `usage` and `warn`. Note that this
-# doesn't use the `basename` hack (see the body of `try_move` for that), as
-# this is just used for printing out usages, and isn't critical.
+## The name of the script
+# This is used in `usage` and `warn`. Note that this doesn't use the `basename`
+# hack (see the body of `try_move` for that), as this is just used for printing
+# out usages, and isn't critical if it's not exactly the name of the script.
 scriptname="${0##*/}"
 
 ## Prints a message in the format `<scriptname>: ...` to stderr.
 # Note: `printf` is used instead of `echo`, as echo has a lot of weird issues
 # that can come up with user input. (e.g. `echo a\\cb` will only echo a).
 warn () {
-   fmt="%s: $1"'\n'
+   fmt="%s: $1\\n" # Double up the `\` so `printf` will always get a `\` and `n`
    shift
    printf "${fmt}" "${scriptname}" "$@" >&2
 }
 
-## Prints a short usage message to stderr.
-shortusage () { cat <<EOS >&2; }
+## Prints a short usage message to stdout.
+shortusage () { cat <<EOS; }
 usage: ${scriptname} [-h/--help] ...
        ${scriptname} [options] [--] source target
        ${scriptname} [options] [--] source ... directory
 EOS
 
-longusage () { shortusage; cat <<EOS >&2; }
+longusage () { shortusage; cat <<EOS; }
 options:
    -h, --help              print help, then exit.
    -i, --interactive       ask to overwrite files that exist (disables -n)
@@ -43,7 +68,7 @@ options:
    -R, --no-rename         disables '-r'
    -c, --clobber-empty     overwrite empty files/folders
    -C, --no-clobber-empty  disables '-c'
-   -v, --verbose           passed '-v' to underlying mv/rm commands
+   -v, --verbose           passed '-v' to underlying mv/rm commands; not posix-compliant
    -V, --no-verbose        do not pass '-v' to underlying mv/rm commands
 returns: (for non-zero exit status, it's the last error status encountered.)
    0   If everything was successful
@@ -53,7 +78,7 @@ returns: (for non-zero exit status, it's the last error status encountered.)
    5   The 'source' and the destination are identical
    253 not enough args were given
    254 If an unknown argument was given
-   255 When -h or --help supplied provided
+   0 When -h or --help supplied provided
 
 Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive).
 
@@ -65,44 +90,60 @@ but if the target file exists, the the first 'num' where the path
 '<dir>/<base> <num><ext>' does not exist will be used instead.
 EOS
 
-## Setup option variables; these are configurable via flags on the command line.
-do_rename=
-clobber_empty=
-move_mode=-n
-verbose_flag=
+## Setup option variables
+# These are configurable via flags on the command line.
+do_rename=     # nonempty means it's set
+clobber_empty= # nonempty means it's set
+move_flag=n    # should be an `X` that `mv -X` understands
+verbose_flag=  # either empty or a `v`. 
 
-## Parse command line options
+## Parse command line options.
+# I'm not using the POSIX-supplied `getopts` here, as it does not support long-
+# form options (ie `--foo`), and I thoroughly enough using them. Additionally,
+# more barebones shells may not support getopts/the support may be buggy, so
+# to just avoid any oddities that may arise I just did a simple 'case' variant.
 while [ "$#" -ne 0 ]; do
    case "$1" in
-      --) shift; break ;;
-      -h) shortusage; exit 255 ;;
-      --help) longusage; exit 255 ;;
-      -r | --rename) do_rename=1 ;;
-      -R | --no-rename) do_rename= ;;
-      -c | --clobber-empty) clobber_empty=1 ;;
+      ## Option toggles
+      -r | --rename)           do_rename=1 ;;
+      -R | --no-rename)        do_rename= ;;
+      -c | --clobber-empty)    clobber_empty=1 ;;
       -C | --no-clobber-empty) clobber_empty= ;;
-      -n | --not-interactive) move_mode=-n ;;
-      -i | --interactive) move_mode=-i ;;
-      -v | --verbose) verbose_flag=v ;;
-      -V | --no-verbose) verbose_flag= ;;
+      -n | --not-interactive)  move_flag=n ;;
+      -i | --interactive)      move_flag=i ;;
+      -v | --verbose)          verbose_flag=v ;;
+      -V | --no-verbose)       verbose_flag= ;;
 
-      -[hrRcCnivV]?*) # Support `-abc` options
+      ## Help commands.
+      # Note we exit `0` and dont print to stderr as these are what the user
+      # requested, and thus are not an abnormal execution path.
+      -h)     shortusage; exit 0 ;;
+      --help) longusage; exit 0 ;;
+
+      ## Stop parsing options
+      --) shift; break ;;
+
+      ## Support chaining short-form options
+      -[^-]?*)
          rest2="${1#-?}"
          rest1="${1%"${rest2}"}"
-         shift
-         set -- "${rest1}" "-${rest2}" "$@"
+         shift # delete the option we just split apart
+         set -- "${rest1}" "-${rest2}" "$@" # add the split options back
          continue ;;
 
+      # Unknown options
       -?*) warn 'unknown option: %s' "$1"; exit 254 ;;
+
+      # Anything else is a filename to move, break out.
       *) break ;;
    esac
 
    shift
 done
 
-## The `try_move` function is the meat of the program, responsible for attempt-
-# ing to rename files/directories, along with the clobbering of empty files and
-# renaming when needed.
+## The `try_move` function attempts to move files/directories to a target.
+# It is the meat of the program, responsible for attempting to moving files/
+# directories, along with the clobbering of empty files and renaming when needed.
 #
 # It takes two arguments, the first is the source, the second, the destination.
 #
@@ -120,42 +161,50 @@ try_move () {
       return 4
    fi
 
-   ## If the paths are identical, print an error adn return.
+   ## If the paths are identical, print an error and return.
+   # Note that `-ef` is only POSIX-2024 compliant, and shells compliant to
+   # previous versions of POSIX might not run this...
    if [ "${source}" -ef "${target}" ]; then
       warn 'cannot move %s to %s: Paths are identical' "${source}" "${target}"
       return 5
    fi
 
-   ## Unlike most languages, the `while` loop of POSIX-compliant shells can be
+   ## Set the attempt number to one.
+   # Used in renaming files if `--rename` is supplied.
+   attempt=1
+
+   ## Attempt to move the (now-known-to-be-extant) target to the (non-identical)
+   # destination.
+   #
+   # Unlike most languages, the `while` loop of POSIX-compliant shells can be
    # any series of commands, and the last one's exit status determines whether
    # to execute the body. In this case, we do three separate tasks in order:
    #   1. Remove empty files/folders if `--clobber-empty` was supplied
-   #   2. Attempt to move the file, prompting or not based on `$move_mode`
+   #   2. Attempt to move the file, prompting or not based on `$move_flag`
    #   3. Check to see if the file still exists.
    # If the file still exists after those three steps, that means we couldn't
    # move the file; if `--rename` was not supplied we just return, but if it
    # was, we attempt to rename the file and try again.
-   idx=1
    while
-      ## If we are clobber empty is enabled, then delete out empty files or 
-      # directories before attempting to move the file. Note that this _does_
-      # have race condition issues with it, however there's no good way to solve
-      # that...
+      ## Attempt to delete empty files/dirs if `--clobber-empty` was passed.
+      # Note that this _does_ have race condition issues with it, however there
+      # is no good way to solve that...
       if [ -n "${clobber_empty}" ]; then
          # If the target is a file and it's empty, then forcibly remove it.
          if [ -f "${target}" ] && ! [ -s "${target}" ]; then
             command rm "-f${verbose_flag}" -- "${target}" || return 2
 
          # If the target is a folder, and there's nothing in it, then delete it.
+         |# <-- todo
          elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
             command rm "-fd${verbose_flag}" -- "${target}" || return 2
          fi
       fi
 
-      ## Try to rename '$source' to '$target'; This uses `$move_mode`, which is,
-      # is either `-n` (default; never override things) or `-i` (prompt for
+      ## Try to rename '$source' to '$target'; This uses `$move_flag`, which is,
+      # is either `n` (default; never override things) or `i` (prompt for
       # overriding).
-      command mv "${move_mode}${verbose_flag}" -- "${source}" "${target}" || return 2
+      command mv "-${move_flag}${verbose_flag}" -- "${source}" "${target}" || return 2
 
       ## Now, after moving it, does the source still exist? ...
       [ -e "${source}" ]
@@ -172,7 +221,7 @@ try_move () {
       ## An index of 1 means that awe have not yet tried to find a new name for
       # this file. As such, let's go ahead and setup all the required variables
       # for it.
-      if [ "${idx}" -eq 1 ]; then
+      if [ "${attempt}" -eq 1 ]; then
          # Note that we have to do this silly dance here with the `printf` in
          # case the filename ends with a newline, as command substitution strips
          # all ending newlines. So by having `printf x`, we'll print out `x`,
@@ -190,10 +239,10 @@ try_move () {
          root="$dir/$stem"
       fi
 
-      ## Set `target` to the newname---`<dir>/<stem> <idx><ext>`---and increment
+      ## Set `target` to the newname---`<dir>/<stem> <attempt><ext>`---and increment
       # the index while we're at it. This is why the index always starts at 1,
-      # so that `$((idx=idx+1))` will start at 2, and not 1.
-      target="$root $((idx=idx+1))$ext"
+      # so that `$((attempt=attempt+1))` will start at 2, and not 1.
+      target="$root $((attempt=attempt+1))$ext"
    done
 
    ## Looks like we were able to rename the file successfully, huzzah! Return 0.
@@ -202,7 +251,7 @@ try_move () {
 
 ## If not enough arguments are given, then error out with the usage.
 if [ "$#" -le 1 ]; then
-   shortusage
+   shortusage >&2
    exit 253
 fi
 
