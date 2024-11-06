@@ -28,12 +28,12 @@ SampShell_reload () {
 	if [ "$1" = '--' ]; then
 		shift
 	elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
-		cat <<-EOS >&2
+		cat <<-EOS
 		usage: $0 [--] [file=interactive.sh]
 		        Reloads samp shell. \$SampShell_ROOTDIR should be
 		        set if file is not absolute.
 		EOS
-		return 255
+		return 64
 	fi
 
 	# Make sure it's not set regardless of what we're loading.
@@ -47,9 +47,6 @@ SampShell_reload () {
 	. "$1" || return $?
 	echo "Reloaded $1"
 }
-
-# Use the reload alias if it doesn't already exist
-command -V reload >/dev/null 2>&1 || alias reload=SampShell_reload
 
 # Same as `.`, except only does it if the file exists.
 SampShell_source_optional () {

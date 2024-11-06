@@ -31,7 +31,10 @@ until [ "$#" -eq 0 ]; do
 done
 
 [ -z "$trashdir" ] && die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
-[ "$#" -eq 0 ] && usage
+if [ "$#" -eq 0 ]; then
+	usage >&2
+	exit 1
+fi
 
 if [ ! -e "$trashdir" ]; then
 	mkdir -p "$trashdir" || exit

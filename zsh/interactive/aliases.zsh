@@ -5,3 +5,4 @@ eval "$(alias -L ls)hGb" # alias options which i know exist elsewhere
 
 alias t=trash
 alias m='mv-safe -v'
+

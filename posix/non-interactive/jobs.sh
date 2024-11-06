@@ -6,7 +6,7 @@ if command -V local >/dev/null 2>&1; then
 		while :; do
 			case "$1" in
 				-h)
-					cat <<-EOS >&2
+					cat <<-EOS
 						usage: $0 [options] [--] fn [args ...]
 						options:
 						   -e      use expansion on 'args'
@@ -16,7 +16,7 @@ if command -V local >/dev/null 2>&1; then
 						           after '--'.
 						This command executes 'fn' once for each arg as background job
 					EOS
-					return 255 ;;
+					return 64 ;;
 				-e) expand=1 ;;
 				-X) skipchr= ;;
 				-x) skipchr="${1#-x}"; skipchr="${skipchr:-x}" ;;
