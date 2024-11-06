@@ -40,4 +40,4 @@ elif [ ! -d "$trashdir" ]; then
 fi
 
 # `exec` so we don't fork
-exec mv-safe -r -C -- "$@" "$trashdir"
+exec mv-safe --rename --no-clobber-empty -- "$@" "$trashdir"

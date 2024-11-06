@@ -1,8 +1,5 @@
 #!/bin/sh
 
-todo shortusage details
-todo return values
-
 ## mv-safe: Move files safely
 #
 # This file is nearly 100% POSIX-compliant with the 2024 edition. (AFAIK, it is
@@ -51,35 +48,32 @@ warn () {
    printf "${fmt}" "${scriptname}" "$@" >&2
 }
 
-## Prints a short usage message to stdout.
-shortusage () { cat <<EOS; }
+## Prints a short usage message
+shortusage () { cat; } <<SHORTUSAGE
 usage: ${scriptname} [-h/--help] ...
        ${scriptname} [options] [--] source target
        ${scriptname} [options] [--] source ... directory
-EOS
+SHORTUSAGE
 
-longusage () { shortusage; cat <<EOS; }
-options:
-   -h, --help              print help, then exit.
-   -i, --interactive       ask to overwrite files that exist (disables -n)
-   -n, --not-interactive   do not overwrite  not overwrite existing files at all (disables -i); default
-   -r, --rename            rename files to prevent conflicts mode
-   -R, --no-rename         disables '-r'
-   -c, --clobber-empty     overwrite empty files/folders
-   -C, --no-clobber-empty  disables '-c'
-   -v, --verbose           passed '-v' to underlying mv/rm commands; not posix-compliant
-   -V, --no-verbose        do not pass '-v' to underlying mv/rm commands
-returns: (for non-zero exit status, it's the last error status encountered.)
-   0   If everything was successful
-   2   There's a problem running 'mv' (or 'rm' when --clobber-empty is enabled)
-   3   If 'directory' is not actually a directory ((, or is not executable))
-   4   A 'source' does not exist
-   5   The 'source' and the destination are identical
-   253 not enough args were given
-   254 If an unknown argument was given
-   0 When -h or --help supplied provided
+## Prints out a longer usage message
+longusage () { cat; } <<LONGUSAGE
+OPTIONS
+   -h, --help               print help, then exit
+   -i, --interactive        ask to overwrite files that exist (disables -n)
+   -n, --not-interactive    dont overwrite existing files (disables -i; default)
+   -r, --[no-]rename        rename files to prevent conflicts mode
+   -c, --[no-]clobber-empty delete empty files/folders targets
+   -v, --[no-]verbose       print verbose output; not POSIX-compliant
 
-Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive).
+RETURNS (the most recent of 1 or 2 returns)
+   0  Everything was successful
+   1  The file to move didn't exist
+   2  There was a problem moving a file
+   64 There was a problem with a command-line argument
+
+DESCRIPTION
+Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive
+was given).
 
 If the '--clobber-empty' flag is given, then attempting to overwrite empty
 files/folders will succeed. (Note that this is susceptible to race conditions)
@@ -87,7 +81,7 @@ files/folders will succeed. (Note that this is susceptible to race conditions)
 If the '--rename' flag is given, then files will first be moved via 'mv -n',
 but if the target file exists, the the first 'num' where the path
 '<dir>/<base> <num><ext>' does not exist will be used instead.
-EOS
+LONGUSAGE
 
 ## Setup option variables
 # These are configurable via flags on the command line.
@@ -103,24 +97,24 @@ verbose_flag=  # either empty or a `v`.
 # to just avoid any oddities that may arise I just did a simple 'case' variant.
 while [ "$#" -ne 0 ]; do
    case "$1" in
-      ## Option toggles
-      -r | --rename)           do_rename=1 ;;
-      -R | --no-rename)        do_rename= ;;
-      -c | --clobber-empty)    clobber_empty=1 ;;
-      -C | --no-clobber-empty) clobber_empty= ;;
-      -n | --not-interactive)  move_flag=n ;;
-      -i | --interactive)      move_flag=i ;;
-      -v | --verbose)          verbose_flag=v ;;
-      -V | --no-verbose)       verbose_flag= ;;
-
-      ## Help commands.
-      # Note we exit `0` and dont print to stderr as these are what the user
-      # requested, and thus are not an abnormal execution path.
-      -h)     shortusage; exit 0 ;;
-      --help) longusage; exit 0 ;;
-
       ## Stop parsing options
       --) shift; break ;;
+
+      ## Option toggles
+      -n | --not-interactive)  move_flag=n ;;
+      -i | --interactive)      move_flag=i ;;
+      -r | --rename)           do_rename=1 ;;
+           --no-rename)        do_rename= ;;
+      -c | --clobber-empty)    clobber_empty=1 ;;
+           --no-clobber-empty) clobber_empty= ;;
+      -v | --verbose)          verbose_flag=v ;;
+           --no-verbose)       verbose_flag= ;;
+      -h | --help)
+         # Note we exit `0` and dont print to stderr as these are what the user
+         # requested, and thus are not an abnormal execution path.
+         shortusage
+         [ "$1" = --help ] && longusage
+         exit 0 ;;
 
       ## Support chaining short-form options
       -[^-]?*)
@@ -131,7 +125,7 @@ while [ "$#" -ne 0 ]; do
          continue ;;
 
       # Unknown options
-      -?*) warn 'unknown option: %s' "$1"; exit 254 ;;
+      -?*) warn 'unknown option: %s' "$1"; exit 2 ;;
 
       # Anything else is a filename to move, break out.
       *) break ;;
@@ -264,7 +258,7 @@ try_move () {
 ## If not enough arguments are given, then error out with the usage.
 if [ "$#" -le 1 ]; then
    shortusage >&2
-   exit 253
+   exit 2
 fi
 
 ## Handle the first command form (ie `mv-safe source target`): If exactly two
@@ -302,7 +296,7 @@ while [ "$#" -gt 1 ]; do
    # body of the `try_move`'s while loop for why we have to do this convoluted.
    base="$(basename -- "$1" && printf x)" || {
       warn 'unable to get basename of %s' "$2"
-      exit_status=2
+      exit_status=1
       continue
    }; base="${base%x}"
 
@@ -310,7 +304,7 @@ while [ "$#" -gt 1 ]; do
    # doing that, then set the last status to the exit code.
    try_move "$1" "${target_folder}/${base}" || exit_status=$?
 
-   ## Delete the argument and try again.
+   ## Delete the argument and go to the next one.
    shift
 done
 
