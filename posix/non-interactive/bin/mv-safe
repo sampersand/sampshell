@@ -57,21 +57,20 @@ SHORTUSAGE
 
 ## Prints out a longer usage message
 longusage () { cat; } <<LONGUSAGE
-OPTIONS
+options:
    -h, --help               print help, then exit
    -i, --interactive        ask to overwrite files that exist (disables -n)
    -n, --not-interactive    dont overwrite existing files (disables -i; default)
    -r, --[no-]rename        rename files to prevent conflicts mode
    -c, --[no-]clobber-empty delete empty files/folders targets
    -v, --[no-]verbose       print verbose output; not POSIX-compliant
+return value: (if both 1 and 2 occur, the last one encounterd is returned)
+   0  everything was successful
+   1  a source doesn't exist
+   2  there was a problem moving a file/removing a file to be clobbered.
+   3  internal error
+   64 invalid command-line options were supplied
 
-RETURNS (the most recent of 1 or 2 returns)
-   0  Everything was successful
-   1  The file to move didn't exist
-   2  There was a problem moving a file
-   64 There was a problem with a command-line argument
-
-DESCRIPTION
 Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive
 was given).
 
@@ -125,7 +124,7 @@ while [ "$#" -ne 0 ]; do
          continue ;;
 
       # Unknown options
-      -?*) warn 'unknown option: %s' "$1"; exit 2 ;;
+      -?*) warn 'unknown option: %s' "$1"; exit 64 ;;
 
       # Anything else is a filename to move, break out.
       *) break ;;
@@ -136,7 +135,7 @@ done
 
 ## The `try_move` function attempts to move files/directories to a target.
 # It is the meat of the program, responsible for attempting to moving files/
-# directories, along with the clobbering of empty files and renaming when needed.
+# directories, along with clobbering of empty files and renaming when needed.
 #
 # It takes two arguments, the first is the source, the second, the destination.
 #
@@ -151,7 +150,7 @@ try_move () {
    ## If the thing we're moving doesn't exist, then print an error and return.
    if [ ! -e "${source}" ]; then
       warn 'cannot move %s: No such file or directory' "${source}"
-      return 4
+      return 1
    fi
 
    ## If the paths are identical, print an error and return.
@@ -159,7 +158,7 @@ try_move () {
    # previous versions of POSIX might not run this...
    if [ "${source}" -ef "${target}" ]; then
       warn 'cannot move %s to %s: Paths are identical' "${source}" "${target}"
-      return 5
+      return 2
    fi
 
    ## Set the attempt number to one.
@@ -234,20 +233,20 @@ try_move () {
          # here because we haven't yet updated it.
          base="$(basename -- "${target}" && printf x)" || {
             warn 'unable to get basename of %s' "${target}"
-            return 2
+            return 3
          }; base="${base%x}"
          stem="${base%%.*}"
          ext="${base#"$stem"}" # quote `$stem` to prevent glob interpretation
          dir="$(dirname -- "${target}" && printf x)" || {
             warn 'unable to get dirname of %s' "${target}"
-            return 2
+            return 3
          }; dir="${dir%x}"
          root="$dir/$stem"
       fi
 
-      ## Set `target` to the newname---`<dir>/<stem> <attempt><ext>`---and increment
-      # the index while we're at it. This is why the index always starts at 1,
-      # so that `$((attempt=attempt+1))` will start at 2, and not 1.
+      ## Set `target` to the newname---`<dir>/<stem> <attempt><ext>`---and
+      # increment the index while we're at it. This is why the index always
+      # starts at 1, so that `$((attempt=attempt+1))` will start at 2, not 1.
       target="$root $((attempt=attempt+1))$ext"
    done
 
@@ -258,7 +257,7 @@ try_move () {
 ## If not enough arguments are given, then error out with the usage.
 if [ "$#" -le 1 ]; then
    shortusage >&2
-   exit 2
+   exit 64
 fi
 
 ## Handle the first command form (ie `mv-safe source target`): If exactly two
@@ -276,7 +275,7 @@ fi
 # POSIX has no way to get the last argument (unlike bash's `${!#}` or zsh's
 # `$@[#]`), which is unfortunate. Also note that `\${$#}` is used instead of
 # `\$$#`, as when `$#` is more than 9 you need braces (eg `${10}`).
-eval "target_folder=\${$#}" || return 2
+eval "target_folder=\${$#}" || exit 3
 
 # We do not check for permissions for the `target_folder`, as the `mv`/`rm`
 # functions we eventually run will error out if there's problems; why check for
@@ -296,7 +295,7 @@ while [ "$#" -gt 1 ]; do
    # body of the `try_move`'s while loop for why we have to do this convoluted.
    base="$(basename -- "$1" && printf x)" || {
       warn 'unable to get basename of %s' "$2"
-      exit_status=1
+      exit_status=3
       continue
    }; base="${base%x}"
 
