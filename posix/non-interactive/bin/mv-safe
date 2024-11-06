@@ -63,7 +63,9 @@ options:
    -n, --not-interactive    dont overwrite existing files (disables -i; default)
    -r, --[no-]rename        rename files to prevent conflicts mode
    -c, --[no-]clobber-empty delete empty files/folders targets
-   -v, --[no-]verbose       print verbose output; not POSIX-compliant
+   -v, --verbose            print verbose output
+   -q, --quiet              disable verbose output (default)
+   -vv,--very-verbose       print more verbose output; not POSIX-compliant
 return value: (if both 1 and 2 occur, the last one encounterd is returned)
    0  everything was successful
    1  a source doesn't exist
@@ -84,10 +86,10 @@ LONGUSAGE
 
 ## Setup option variables
 # These are configurable via flags on the command line.
-do_rename=     # nonempty means it's set
-clobber_empty= # nonempty means it's set
-move_flag=n    # should be an `X` that `mv -X` understands
-verbose_flag=  # either empty or a `v`. 
+do_rename=      # nonempty means it's set
+clobber_empty=  # nonempty means it's set
+move_flag=n     # should be an `X` that `mv -X` understands
+verbose_level=0 # verbosity level, should be an integer.
 
 ## Parse command line options.
 # I'm not using the POSIX-supplied `getopts` here, as it does not support long-
@@ -106,8 +108,11 @@ while [ "$#" -ne 0 ]; do
            --no-rename)        do_rename= ;;
       -c | --clobber-empty)    clobber_empty=1 ;;
            --no-clobber-empty) clobber_empty= ;;
-      -v | --verbose)          verbose_flag=v ;;
-           --no-verbose)       verbose_flag= ;;
+
+      -q  | --quiet) verbose_level=0;;
+      -v  | --verbose) verbose_level=1 ;;
+      -vv | --very-verbose) verbose_level=2 ;;
+
       -h | --help)
          # Note we exit `0` and dont print to stderr as these are what the user
          # requested, and thus are not an abnormal execution path.
@@ -132,6 +137,11 @@ while [ "$#" -ne 0 ]; do
 
    shift
 done
+
+## Post-command-line-arg processing
+verbose_flag=
+[ "${verbose_level}" -ge 2 ] && verbose_flag=v
+
 
 ## The `try_move` function attempts to move files/directories to a target.
 # It is the meat of the program, responsible for attempting to moving files/
@@ -218,7 +228,13 @@ try_move () {
       ## Since the original file still exists, and we're not renaming things,
       # then just return; returning 0 mimics the behaviour of `mv -n`, where
       # not moving files returns 0.
-      [ -z "${do_rename}" ] && return 0
+      if [ -z "${do_rename}" ]; then
+         if [ "${verbose_level}" -ge 1 ]; then
+            printf 'not overwriting %s\n' "${target}"
+         fi
+
+         return 0
+      fi
 
       # Now we attempt to find a new name for the file
 
