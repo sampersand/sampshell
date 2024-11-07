@@ -1,33 +1,34 @@
 # Prints out how many arguments were passed; used in testing expansion syntax.
 nargs () { echo "$#"; }
 
-ping () { curl --connect-timeout 10 ${1:-http://www.example.com}; }
-
 alias pargs=prargs
 prargs () {
 	SampShell_scratch=0
 
 	until [ "$#" = 0 ]; do
 		SampShell_scratch=$((SampShell_scratch + 1))
-		printf "%3d: %s\n" "$SampShell_scratch" "$1"
+		printf '%3d: %s\n' "$SampShell_scratch" "$1"
 		shift
 	done
 
 	unset -v SampShell_scratch
 }
 
+ping () { curl --connect-timeout 10 ${1:-http://www.example.com}; }
+
+
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
 clean_sh () {
-	[ -z "$TERM" ] && set -- "$@" "TERM=$TERM"
-	env -i SHELL=/bin/sh HOME="$HOME" "$@" /bin/sh
+	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
+	env -i SHELL=/bin/sh "HOME=$HOME" "$@" /bin/sh
 }
 
 SampShell_reload () {
-	if [ "$1" = '--' ]; then
+	if [ "$1" = -- ]; then
 		shift
-	elif [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+	elif [ "$1" = -h ] || [ "$1" = --help ]; then
 		cat <<-EOS
 		usage: $0 [--] [file=interactive.sh]
 		        Reloads samp shell. \$SampShell_ROOTDIR should be

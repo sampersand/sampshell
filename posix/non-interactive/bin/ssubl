@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# `ssubl` is exactly like `subl`, except it creates files that don't exist.
-exec subl -c "$@"

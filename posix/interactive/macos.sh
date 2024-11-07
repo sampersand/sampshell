@@ -1,14 +1,16 @@
 if command -V pbcopy >/dev/null 2>&1; then
 	# Same as `pbcopy` but will copy its arguments to the pastebin if given.
-	pbc () {
+	pbcopy () {
 		if [ "$#" = 0 ]; then
-			pbcopy
+			command pbcopy
 		else
-			echo "$*" | pbcopy
+			echo "$*" | command pbcopy
 		fi
 	}
 
-	# Pastes the pasteboard
+	# Shorthand aliases
+	pbcc () { "$@" | pbcopy; } # `pbcopy` execpt it runs a command
+	alias pbc=pbcopy
 	alias pbp=pbpaste
 fi
 

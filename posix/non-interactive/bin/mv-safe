@@ -250,13 +250,13 @@ try_move () {
          base="$(basename -- "${target}" && printf x)" || {
             warn 'unable to get basename of %s' "${target}"
             return 3
-         }; base="${base%x}"
+         }; base="${base%?x}"
          stem="${base%%.*}"
          ext="${base#"$stem"}" # quote `$stem` to prevent glob interpretation
          dir="$(dirname -- "${target}" && printf x)" || {
             warn 'unable to get dirname of %s' "${target}"
             return 3
-         }; dir="${dir%x}"
+         }; dir="${dir%?x}"
          root="$dir/$stem"
       fi
 
@@ -313,7 +313,7 @@ while [ "$#" -gt 1 ]; do
       warn 'unable to get basename of %s' "$2"
       exit_status=3
       continue
-   }; base="${base%x}"
+   }; base="${base%?x}"
 
    ## Attempt to move the argument into its destination; if there's any problems
    # doing that, then set the last status to the exit code.

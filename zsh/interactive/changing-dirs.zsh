@@ -9,8 +9,8 @@ setopt PUSHD_SILENT      # pushd no longer prints things out; So annoying, just 
 ## Setup named directory system
 function {SampShell-,}add-named-dir {
 	if [[ $1 = -h || $1 = --help ]]; then
-		echo "usage: $0 [name=basename(dir)] [dir=PWD]" >&2
-		return -1
+		echo "usage: $0 [name=basename(dir)] [dir=PWD]"
+		return 0
 	fi
 
 	local dir=${2:-${1:-$PWD}}

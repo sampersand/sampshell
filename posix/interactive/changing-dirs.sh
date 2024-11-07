@@ -1,5 +1,17 @@
-# Change directories to the one that contains a file.
-cdd () { cd "$(dirname "$1")"; }
+# Change directories to the one that contains a file
+# We have to do this `printf x` hack in case the dirname ends in a newline...
+cdd () {
+	if SampShell_scratch="$(dirname -- "${1:?need a directory}" && printf x)"; then
+		set -- "${SampShell_scratch%?}"
+		unset -v SampShell_scratch
+		cd -- "$1"
+	else
+		set -- "$?"
+		unset -v SampShell_scratch
+		return "$1"
+	fi
+}
+
 cdtmp () { cd "${SampShell_TMPDIR?}"; }
 
 # Aliases for going up directories
@@ -18,7 +30,7 @@ add_to_cd_path () {
 			printf 'add_to_cd_path: unable to get realpath of %s' "$1"
 			return 1
 		}
-		CDPATH=":${SampShell_scratch%x}${CDPATH}"
+		CDPATH=":${SampShell_scratch%?x}${CDPATH}"
 		shift
 	done
 

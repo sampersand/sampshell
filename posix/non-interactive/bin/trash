@@ -4,8 +4,12 @@ set -o nounset
 
 scriptname=${0##*/}
 
-warn () { msg="%s: $1"'\n'; shift; printf "$msg" "$scriptname" "$@" >&2; }
-die () { warn "$@"; exit 1; }
+die () {
+	fmt="%s: $1\\n";
+	shift
+	printf "$fmt" "$scriptname" "$@" >&2
+	exit 1
+}
 usage () { cat; } <<USAGE
 usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
    Moves files to the trash, possibly renaming them. The trash dir is
@@ -17,7 +21,7 @@ trashdir=${SampShell_TRASHDIR:-}
 until [ "$#" -eq 0 ]; do
 	case "$1" in
 		--) shift; break;;
-		-h|--help) usage; exit 0 ;;
+		-h | --help) usage; exit 0 ;;
 		-t*)
 			trashdir=${1#-t}
 			if [ -z "$trashdir" ]; then
@@ -37,7 +41,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 if [ ! -e "$trashdir" ]; then
-	mkdir -p "$trashdir" || exit
+	mkdir -p -- "$trashdir" || exit
 elif [ ! -d "$trashdir" ]; then
 	die "trashdir exists, but isn't a dir: %s" "$trashdir"
 fi
