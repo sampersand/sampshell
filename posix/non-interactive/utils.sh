@@ -1,3 +1,20 @@
+# Same as `.`, except only does it if the file exists.
+SampShell_source_if_exists () {
+	[ -e "${1:?}" ] && . "$@"
+}
+
+# Same as `.`, except warns if it doesn't exist.
+SampShell_source_or_warn () {
+	until [ "$#" = 0 ]; do
+		if [ -e "$1" ]; then
+			. "$1"
+		else
+			echo "[WARN] Unable to source file: $1" >&2
+		fi
+		shift
+	done
+}
+
 # Helper command used to see if all the commands given exist
 SampShell_command_exists () {
 	while [ "$#" -ne 0 ]; do
