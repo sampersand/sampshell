@@ -9,7 +9,7 @@
 # The file also accepts a single argument, which will be used as the value
 # for `SampShell_ROOTDIR`; if an argument isn't given, `SampShell_ROOTDIR` is
 # left empty.
-####
+###
 
 ################################################################################
 #                        Process Command-Line Arguments                        #
