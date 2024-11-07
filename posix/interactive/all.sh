@@ -1,5 +1,7 @@
 #!/bin/sh
 
+
+return
 # Check if a command exists or not
 SampShell_command_exists () { command -V "${1:?}" >/dev/null 2>&1; }
 
