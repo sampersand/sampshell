@@ -1,6 +1,6 @@
 ###
-# Basic definitions for both interactive and non-interactive shells that
-# _all_ POSIX-compliant shells should be able to parse.
+# Basic SampShell definitions for _all_ POSIX-complaint shells, in both
+# interactive and non-interactive mode.
 #
 # It's expected that this file can be `.`'d at any point, so only the bare-
 # minimum setup is done. This also means that all declarations start with the

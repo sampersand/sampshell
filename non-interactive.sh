@@ -21,5 +21,5 @@ export SampShell_ROOTDIR # make sure it's exported
 SampShell_noninteractive_loaded=1
 
 # Source the posix stuff
-[ -e "$SampShell_ROOTDIR/posix/setup.sh" ] && . "$SampShell_ROOTDIR/posix/setup.sh"
+[ -e "$SampShell_ROOTDIR/setup.sh" ] && . "$SampShell_ROOTDIR/setup.sh"
 [ -n "$ZSH_VERSION" ] && [ -e "$SampShell_ROOTDIR/zsh/non-interactive.sh" ] && . "$SampShell_ROOTDIR/zsh/non-interactive.zsh"
