@@ -16,6 +16,7 @@ All variables that are used by sampshell are prefixed with `SampShell_`; exporte
 | `SampShell_WORDS` | `/usr/share/dict/words` | Unused by SampShell, but I use it frequently. |
 | `SampShell_HISTDIR` | `$SampShell_ROOTDIR/.sampshell-history` | The folder where history commands go |
 
+
 REPORTTIME - 5 second default
 
 ## Unexported
@@ -27,6 +28,7 @@ REPORTTIME - 5 second default
 | `SampShell_git_branch_prefix` | `$(whoami)` | The username prefix on git branches. |
 | `SampShell_git_branch_prefix_pattern` | `$SampShell_git_branch_prefix/??-??-??` | The pattern for branch prefixes; used in PS1 in zsh. |
 | `SampShell_paralleize_it_skip_string` | `x` | The string to skip previous commands in `parallelize-it` |
+| `SampShell_dont_set_PS1` | (unset) | if set and nonempty, ps1 is not set |
 
 ## Misc
 `$words` is set if it's not already set.

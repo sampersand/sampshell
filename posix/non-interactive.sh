@@ -1,4 +1,4 @@
-# Ensure '$SampShell_ROOTDIR' is set, or default it.
+# Ensure '$SampShell_ROOTDIR' is set
 if [ -z "${SampShell_ROOTDIR+1}" ]; then
 	echo "[ERROR] Cannot initialize SampShell: \$SampShell_ROOTDIR is not set" >&2
 	return 1
@@ -13,7 +13,7 @@ case ":$PATH:" in
 	*) export PATH="$SampShell_ROOTDIR/posix/non-interactive/bin:$PATH" ;;
 esac
 
-# Load additionalconfig files
+# Load additional config files
 set -- "$SampShell_ROOTDIR"/posix/non-interactive/*.sh
 until [ "$#" = 0 ]; do
 	. "$1"

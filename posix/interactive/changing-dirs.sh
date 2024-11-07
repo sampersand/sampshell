@@ -1,16 +1,4 @@
-# Change directories to the one that contains a file
-# We have to do this `printf x` hack in case the dirname ends in a newline...
-cdd () {
-	if SampShell_scratch="$(dirname -- "${1:?need a directory}" && printf x)"; then
-		set -- "${SampShell_scratch%?}"
-		unset -v SampShell_scratch
-		cd -- "$1"
-	else
-		set -- "$?"
-		unset -v SampShell_scratch
-		return "$1"
-	fi
-}
+alias cdd=SampShell_cdd
 
 cdtmp () { cd "${SampShell_TMPDIR?}"; }
 

@@ -1,6 +1,13 @@
 # Prints out how many arguments were passed; used in testing expansion syntax.
 nargs () { echo "$#"; }
 
+alias cpu='top -o cpu'
+
+## Deleting files
+# `rm -d` is in safety.
+alias purge='command rm -ridP' ## Purge deletes something entirely
+ppurge () { echo "todo: parallelize purging"; }
+
 alias pargs=prargs
 prargs () {
 	SampShell_scratch=0

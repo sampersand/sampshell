@@ -1,6 +1,6 @@
-if command -V pbcopy >/dev/null 2>&1; then
+if SampShell_command_exists pbcopy; then
 	# Same as `pbcopy` but will copy its arguments to the pastebin if given.
-	pbcopy () {
+	pbc () {
 		if [ "$#" = 0 ]; then
 			command pbcopy
 		else
@@ -10,8 +10,7 @@ if command -V pbcopy >/dev/null 2>&1; then
 
 	# Shorthand aliases
 	pbcc () { "$@" | pbcopy; } # `pbcopy` execpt it runs a command
-	alias pbc=pbcopy
 	alias pbp=pbpaste
 fi
 
-echo 'todo: caffeinate'
+[ -n "${SampShell_print_todos-}" ] && echo 'todo: caffeinate'

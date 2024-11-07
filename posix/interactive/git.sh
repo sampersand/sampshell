@@ -1,3 +1,6 @@
+## Spellcheck
+alias gti=git
+
 alias g=git
 
 : "${SampShell_git_default_master_branch:=master}"

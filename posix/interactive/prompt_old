@@ -1,6 +1,7 @@
-export PS1='[?$? !!!] $0 ${PWD##"${HOME:+$HOME/}"} $ '
-
+## This file was my first attempt at a prompt in posix sh with colours.
+# I may attempt to revisit it eventually
 return 
+if false;
 
 # There's some tomfoolery going on with ZSH and not accepting prompt expansions that are
 # too long, so this stuff down here is ignored sadly
@@ -78,3 +79,5 @@ PS1+=' \$$reset '
 # }
 
 # alias make-ps1=make-prompt
+
+fi
