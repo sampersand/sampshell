@@ -15,24 +15,15 @@
 #                        Process Command-Line Arguments                        #
 ################################################################################
 
-if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
-	shift
-elif
-	[ "$#" -gt 1 ] || [ "$1" = -h ] || [ "$1" = --help ] || [ "$1" = -- ]
-then
-	if [ "$1" = -h ] || [ "$1" = --help ]; then
-		set -- 0
-	else
-		set -- 1
-	fi
-
-	echo 'usage: setup [-h/--help] [--] [new SampShell_ROOTDIR]'  >&"$(($1 + 1))"
-	return "$1"
-fi
-
 # If an argument is given, then set `SampShell_ROOTDIR` to it.
-[ -n "${1-}" ] && SampShell_ROOTDIR="$1"
-export SampShell_ROOTDIR # export it regardless of whether or not we set it.
+case "$#" in
+	0) ;;
+	1) SampShell_ROOTDIR="$1" ;;
+	*) echo "[FATAL] only 1 argument is accepted" >&2; return 1 ;;
+esac
+
+: "${SampShell_ROOTDIR=""}" # Ensure it's set so `set -u` won't fail
+export SampShell_ROOTDIR
 
 ################################################################################
 #                                  Setup PATH                                  #
@@ -75,17 +66,23 @@ export SampShell_HISTDIR
 #                                  Functions                                   #
 ################################################################################
 
+# Note we `unalias` these in case they're already aliased for some reason, and
+# do `|| :` in case the alias doesn't exit and `set -e` is enabled.
+
 # Same as `.`, except it only sources files if the first argument exists. 
+unalias SampShell_source_if_exists >/dev/null 2>&1 || :
 SampShell_source_if_exists () {
 	[ -e "${1:?'need file to source'}" ] && . "$@"
 }
 
 # Returns whether or not the given command exists.
+unalias SampShell_command_exists >/dev/null 2>&1 || :
 SampShell_command_exists () {
 	command -V "${1:?'need command to check'}" >/dev/null 2>&1
 }
 
 # CD's to the directory containing a file
+unalias SampShell_cdd >/dev/null 2>&1 || :
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
 		shift
@@ -116,6 +113,7 @@ SampShell_cdd () {
 ## Parallelize a function by making a new job once per argument given
 # Oh boy, it's far too annoying making this without `local`
 if SampShell_command_exists local; then
+	unalias SampShell_parallelize_it >/dev/null 2>&1 || :
 	SampShell_parallelize_it () {
 		local expand fn skipchr
 

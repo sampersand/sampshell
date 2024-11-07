@@ -1,3 +1,17 @@
+###
+# Basic SampShell definitions for _all_ interactive POSIX-complaint shells.
+#
+# It's expected that this file will be `.`'d at the start of a shell instance,
+# but it is possible that might be `.`'d later (such as if `source`da
+# It's expected that this file can be `.`'d at any point, so only the bare-
+# minimum setup is done. This also means that all declarations start with the
+# prefix `SampShell_` so as to not conflict with any extant identifiers.
+#
+# The file also accepts a single argument, which will be used as the value
+# for `SampShell_ROOTDIR`; if an argument isn't given, `SampShell_ROOTDIR` is
+# left empty.
+###
+
 ### Ensure that `SampShell_ROOTDIR` is setup
 # It should be set by the top-level `interactive.sh` file
 : "${SampShell_ROOTDIR:?}"
