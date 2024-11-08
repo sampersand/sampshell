@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+HISTSIZE=1000000     # Keep a lot so it's easy to refernece
 SAVEHIST=$HISTSIZE    # how many lines to save at the end
 
 ## History options

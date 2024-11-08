@@ -1,18 +1,16 @@
-# Make sure `fc` is even around.
-if SampShell_command_exists fc; then
-	if [ -n "${SampShell_setup_history-}" ]; then
-		# Set history argument sizes. I want them to be large so I can see them later.
-		# how many lines to load into history originally
-		HISTSIZE=1000000
-
-		# Setup the histfile only if it doesnt exist; if it exists and is empty,
-		# do not set it up.
-		if [ -z "${HISTFILE+1}" ]; then
-			HISTFILE=${SampShell_HISTDIR:-"$HOME"}/.sampshell_history
-		fi
-	fi
-
-	# Sets up `history` and `h` aliases
-	SampShell_command_exists history || alias history='fc -l'
-	alias h=history
+# Have the ability of opting-out of setting up history, in case custom history
+# stuff is already happening.
+if [ -n "${SampShell_always_setup_history-}" ]; then
+	unset HISTSIZE HISTFILE # TODO: is this the best strategy?
+	# HISTSIZE=
+	# HISTFILE=
 fi
+
+# Only setup things if they don't exist; if they exist and are empty, that can
+# be intentional.
+[ -z "${HISTSIZE+1}" ] && HISTSIZE=500 # How many history entries to keep
+[ -z "${HISTFILE+1}" ] && HISTFILE=${SampShell_HISTDIR:-$HOME}/.sampshell_history
+
+# Sets up `history` and `h` aliases
+SampShell_command_exists history || alias history='fc -l'
+alias h=history
