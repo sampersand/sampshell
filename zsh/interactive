@@ -17,8 +17,6 @@ add-named-dir ss ${SampShell_ROOTDIR?}
 
 reload () {
 	for file in ${ZDOTDIR:-$HOME}/.z{shenv,profile,shrc,login}; do
-		echo "before: $file"
 		SampShell_source_if_exists $file
-		echo "after: $file"
 	done
 }

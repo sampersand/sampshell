@@ -1,50 +1,112 @@
 #!/bin/sh
 
+#### trash -- a safer alternative to `rm`
+# Unlike `rm`, which completely deletes files, `trash` instead moves them to a
+# trash directory, so mistakenly trashed files can be retrieved in the future.
+#
+# This file is 100% POSIX-compliant, as it's intended to be usable in even the
+# most barebones of shells. Note that it does call `mv-safe`, which is only
+# POSIX-compliant with the 2024 edition (however, only via `-ef` which even
+# dash supports).
+#
+# This program is really just a wrapper around `mv-safe` that handles creating
+# the trash dir itself, along with the `--empty` argument.
+####
+
+## Safety first!
 set -o nounset
 
-scriptname=${0##*/}
+## Script variables
+scriptname=${0##*/}             # Used only in usage and error messages.
+trashdir=${SampShell_TRASHDIR-} # The trash directory; has no default
+empty_trash=                    # Whether to empty the trash
 
+## Utility functions
 die () {
 	fmt="%s: $1\\n";
 	shift
 	printf "$fmt" "$scriptname" "$@" >&2
 	exit 1
 }
-usage () { cat; } <<USAGE
-usage: $scriptname [-h/--help] [-tTRASHDIR] [--] [files ...]
-   Moves files to the trash, possibly renaming them. The trash dir is
-   controlled by the variable 'SampShell_TRASHDIR'
-USAGE
+shortusage () { cat <<SHORTUSAGE; }
+usage: $scriptname [options] [--] file [...]
+       $scriptname [options] --empty
+SHORTUSAGE
+longusage () { shortusage; cat <<LONGUSAGE; }
+options:
+	-h, --help           print this message, then exit
+	-tPATH, --trash=PATH set the trash directory
+In the first form, moves files to the trash, possibly renaming them; in the
+second, empties the trash directory. The trash dir is set by the environment
+variable \$SampShell_TRASHDIR, but can be overwritten by '-t'; it's an error if
+it's unspecified.
+LONGUSAGE
 
-trashdir=${SampShell_TRASHDIR:-}
-
-until [ "$#" -eq 0 ]; do
+## Parse options
+while [ "$#" -ne 0 ]; do
 	case "$1" in
+		# Stop parsing options
 		--) shift; break;;
-		-h | --help) usage; exit 0 ;;
-		-t*)
-			trashdir=${1#-t}
-			if [ -z "$trashdir" ]; then
-				shift
-				trashdir=${1-}
-				[ -z "$trashdir" ] && die 'missing trash directory for -t'
-			fi ;;
+		
+		# Print help
+		-h) shortusage; exit 0;;
+		--help) longusage; exit 0;;
+
+		# Set the trash directory
+		-t* | --trash | --trash=*)
+			trash=${1#--trash=}
+			if [ "$trash" = "$1" ]; then
+				trash=${1#-t}
+				[ "$trash" = "$1" ] && trash=${1#--trash}
+				[ -z "$trash" ] && { shift; trash=${1-}; }
+			fi
+			[ -z "$trash" ] && die 'missing required argument for --trash' ;;
+
+		# Let users specify `--empty` in conjunction with other options, not just
+		# as the last argument; note there's no `-e` to make it slightly harder to
+		# empty the trash
+		--empty) empty_trash=1 ;;
+
+		# Abort on any other invalid options
+		-?*) die 'unrecognized option: %s' "$1" ;;
+
+		# Anything else is a filename, stop parsing options.
 		*) break ;;
 	esac
+
 	shift
 done
 
-[ -z "$trashdir" ] && die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
+## Ensure that the trashdir was somehow given; if not, that's a fatal error.
+if [ -z "$trashdir" ]; then
+	die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
+fi
+
+## Handle the second variant: emptying the trash directory.
+if [ -n "$empty_trash" ]; then
+	# Make sure `--empty` is not passed along with any positional arguments
+	[ "$#" -ne 0 ] && die 'arguments passed along with --empty'
+
+	# Recursively remove the trash directory; use `-f` to force the removal.
+	rm -rf -- "$trashdir"
+	exit
+fi
+
+## At least one argument is required; if none are given, print usage and exit.
 if [ "$#" -eq 0 ]; then
-	usage >&2
+	shortusage >&2
 	exit 1
 fi
 
+## Create the trashdir if it doesn't exist.
 if [ ! -e "$trashdir" ]; then
 	mkdir -p -- "$trashdir" || exit
+
+## If the trashdir exists, but isn't a directory, that's a problem; quit.
 elif [ ! -d "$trashdir" ]; then
 	die "trashdir exists, but isn't a dir: %s" "$trashdir"
 fi
 
-# `exec` so we don't fork
+## Call `mv-safe` with all the arguments. Note we `exec` so we don't need to
+# fork and spawn a new process.
 exec mv-safe --rename --no-clobber-empty -- "$@" "$trashdir"
