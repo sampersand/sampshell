@@ -40,6 +40,8 @@ test -d "$SampShell_ROOTDIR" || return 2
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
-test -n "$ZSH_VERSION" && . "$SampShell_ROOTDIR/zsh/interactive"
+if test -n "${ZSH_VERSION-}"; then
+	. "$SampShell_ROOTDIR/zsh/interactive" || return
+fi
 
-# TODO: add more shell configs when i eventually need them.
+# TODO: add more shell configs when i eventually need them., like bash

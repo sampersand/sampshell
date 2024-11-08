@@ -18,9 +18,9 @@ then
 fi
 
 # Load `env``
-. "$SampShell_ROOTDIR/env"
+. "$SampShell_ROOTDIR/env" || return
 
 # Load `interactive`` if we're interacitve
 case "$-" in
-	*i*) . "$SampShell_ROOTDIR/interactive"
+	*i*) . "$SampShell_ROOTDIR/interactive" || return
 esac

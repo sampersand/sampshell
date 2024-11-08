@@ -75,7 +75,7 @@ then
 	# If we're interactive, then print out the warning
 	if ! case $- in *i*) false; esac; then
 		printf '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-			"${SampShell_ROOTDIR}" >&2
+			"$SampShell_ROOTDIR" >&2
 	fi
 
 	return 2
@@ -96,6 +96,8 @@ export SampShell_ROOTDIR
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
-test -n "${ZSH_VERSION-}" && . "$SampShell_ROOTDIR/zsh/env"
+if test -n "${ZSH_VERSION-}"; then
+	. "$SampShell_ROOTDIR/zsh/env" || return
+fi
 
-# TODO: add more shell configs when i eventually need them.
+# TODO: add more shell configs when i eventually need them, like bash
