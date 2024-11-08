@@ -204,7 +204,7 @@ try_move () {
          # `ls` is fraught with danger. However, in this case, since we're just
          # checking if _anything_ was outputted (via `grep -q .`), then it's
          # fine.
-         # 
+         #
          # If somehow `ls` fails, then the `pipefile` that was set at the start
          # of the program will cause the entire `! ls | grep` to be false, and
          # the `rm` command will not be run.
@@ -226,7 +226,7 @@ try_move () {
       ## Now, after moving it, does the source still exist? ...
       [ -e "${source}" ]
    do
-      # ... It does still exist! 
+      # ... It does still exist!
 
       ## Since the original file still exists, and we're not renaming things,
       # then just return; returning 0 mimics the behaviour of `mv -n`, where

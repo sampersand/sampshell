@@ -131,7 +131,7 @@ gnita () { gaa && gnit; }
 gcl () {
 	git clone "${1?'must supply a repo'}" || return "$?"
 	set -- "$(basename "$1")"
-	cd "${1%%.*}"
+	cd -- "${1%%.*}"
 }
 
 alias gl='git log'

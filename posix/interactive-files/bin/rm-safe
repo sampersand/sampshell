@@ -7,7 +7,7 @@ scriptname=$(basename "$0")
 
 # This function is equivalent to `rm -i`, except it will remove
 # files/folders that are empty. If the first argument starts with `-` (and isn't `--`),
-# then it's forwarded 
+# then it's forwarded
 # `rm`, except safer:
 #   For every argument given on the command line, if it refers to an
 #   a file or directory, prompt for deletion. However, if it's empty,

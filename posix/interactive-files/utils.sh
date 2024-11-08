@@ -21,8 +21,6 @@ prargs () {
 	unset -v SampShell_scratch
 }
 
-ping () { curl --connect-timeout 10 ${1:-http://www.example.com}; }
-
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 

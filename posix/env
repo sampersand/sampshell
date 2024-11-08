@@ -57,7 +57,7 @@ esac
 # Note we `unalias` these in case they're already aliased for some reason, and
 # do `|| :` in case the alias doesn't exist and `set -e` is enabled.
 
-# Same as `.`, except it only sources files if the first argument exists. 
+# Same as `.`, except it only sources files if the first argument exists.
 unalias SampShell_unalias_always >/dev/null 2>&1 || :
 SampShell_unalias_always () {
 	unalias "${1:?}" >/dev/null 2>&1 || :

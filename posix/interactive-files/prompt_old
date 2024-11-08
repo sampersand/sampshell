@@ -1,6 +1,6 @@
 ## This file was my first attempt at a prompt in posix sh with colours.
 # I may attempt to revisit it eventually
-return 
+return
 if false;
 
 # There's some tomfoolery going on with ZSH and not accepting prompt expansions that are
@@ -55,7 +55,7 @@ PS1+=' \$$reset '
 #     PS1+='%B%F{blue}]%b%f'                                 # ]
 
 #     # Add in the hostname, if applicable
-#     PS1+=$(_samp_shell_ps1_hostname_username "$show_login_info" "$username" "$hostname") 
+#     PS1+=$(_samp_shell_ps1_hostname_username "$show_login_info" "$username" "$hostname")
 
 #     # Add ~path, possibly limiting it if $pathlen is nonzero
 #     [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
