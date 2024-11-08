@@ -1,3 +1,13 @@
+#!/bin/sh
+
+###
+# This is the entry point for _all_ interactive shells.
+#
+# This will load the config that is universal for all POSIX-compliant shells,
+# located within `posix/`. Afterwards, any additional shell-specific config is
+# started up (eg `zsh/`).
+###
+
 # Make sure `SampShell_ROOTDIR` is set.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# If it's not set, and we're using ZSH, it's easy to find it.

@@ -1,0 +1,89 @@
+#!sh
+
+#### The entry point for _all_ shells, interactive and non-interactive.
+#
+# This will first check for `$SampShell_ROOTDIR` (see below), and then load the
+# config that is universal for all POSIX-compliant shells, located within the
+# `posix/` folder. After, additional shell-specific config will be executed.
+#
+#
+# POSIX-compliant
+# ===============
+# Since this is the entry point for _all_ shells, it must be kept pristine and
+# strictly POSIX-compliant. Additionally, since it's expected that this file
+# might also be sourced from within a script at any point, options such as
+# `set -u nounset` must also be respected.
+#
+#
+# $SampShell_ROOTDIR
+# ==================
+# As there's no way in POSIX to get the location of a `.`'d file within it, this
+# script expects that `SampShell_ROOTDIR` is set prior to invocation, and is set
+# to the folder that encloses this file. tl;dr, in the `~/.whatever`` file, put:
+#
+#   SampShell_ROOTDIR=/some/path/to/sampshell
+#   . "$SampShell_ROOTDIR/init"
+#
+# If it's not set, then it defaults to `$HOME/.sampshell`, and a warning is
+# emitted. (However, if zsh is detected---`ZSH_VERSION` exists---then the root
+# directory is inferred as `${0:P:h}`, and no warning is emitted.).
+#
+# Regardless of how `$SampShell_ROOTDIR` was set, if `$SampShell_ROOTDIR` does
+# not exist/isn't a directory, then an error message is printed and the rest of
+# the startup process is aborted.
+#
+####
+
+
+# This is used within `interactive` to only source this file if it hasn't been
+# sourced beforehand.
+SampShell_noninteractive_loaded=1
+
+
+################################################################################
+#                  Ensure $SampShell_ROOTDIR is set and valid                  #
+################################################################################
+
+# Make sure `SampShell_ROOTDIR` is set.
+if test -z "${SampShell_ROOTDIR-}"
+then
+	# If it's not set, and we're using ZSH, it's easy to find it.
+	if test -n "${ZSH_VERSION-}"
+	then
+		# We need to use `eval` in case shells don't understand `${0:P:h}`.
+		eval "SampShell_ROOTDIR=\"\${0:P:h}\""
+	else
+		# Whelp, we can't rely on `$0`, let's just guess and hope?
+		SampShell_ROOTDIR="$HOME/.sampshell"
+		printf '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
+	fi
+fi
+
+# Make sure that it's actually a directory
+if ! test -d "$SampShell_ROOTDIR"
+then
+	printf '[FATAL] Not initializing SampShell: $SampShell_ROOTDIR does not exist, or isnt a dir: %s\n' \
+		"${SampShell_ROOTDIR}" >&2
+	return 1
+fi
+
+# Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
+export SampShell_ROOTDIR
+
+
+################################################################################
+#                        Source POSIX-Compliant Config                         #
+################################################################################
+
+# Note we don't check for whether the file exists; if it doesn't we're already
+# done for, so we might as well just error out. 
+. "$SampShell_ROOTDIR/posix/init" || return
+
+
+################################################################################
+#                         Source Shell-Specific Config                         #
+################################################################################
+
+test -n "${ZSH_VERSION-}" && . "$SampShell_ROOTDIR/zsh/init"
+
+# TODO: add more shell configs when i eventually need them.
