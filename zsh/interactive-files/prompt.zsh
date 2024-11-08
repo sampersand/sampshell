@@ -92,7 +92,7 @@ function make-prompt {
     [[ (-z $username || -z $hostname) && -z $show_login_info ]] && show_login_info=1
 
     # PS1+='%F{cyan}%D{%_m\/%d %_I:%M:%S %p}%f' # time
-    export PS1=
+    PS1= # Don't export it if it's not already exported.
     PS1+='%B%F{blue}[%b'                                   # [
     PS1+='%F{cyan}%D{%_I:%M:%S %p}%f'                      #    time
     PS1+=' %U%!%u'                                         #    history
