@@ -1,8 +1,39 @@
 #!sh
 
+###
+# Basic SampShell definitions for _all_ interactive POSIX-complaint shells.
+#
+# This file must be strictly POSIX-compliant, as it will be loaded for POSIX-
+# compliant shells. However, unlike the `env` file, we don't expect this file to
+# be `.`d in the middle of scripts with arbitrary settings. As such, we can
+# relax the restrictions somewhat (eg, we don't need to do `${var-}` in case
+# the `set -u` is enabled).
+#
+# It's expected that this file will be `.`d after `env` is; as such, all of the
+# definitions within `env` are expected to be visible here.
+###
+
+: "${SampShell_ROOTDIR:?}" # Sanity check; Should've already been set in `env`.
+
+################################################################################
+#                               Load Other Files                               #
+################################################################################
+
+# Note that we "dot if exists" here so that if for some reason the "extended"
+# files aren't here, we won't do anything.
+
+# Load the git config, if git is found
+if SampShell_command_exists git; then
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/git.sh"
+fi
+
+# Load experimental changes, if experimental is defined
+if [ -n "$SampShell_experimental" ]; then
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/experimental.sh"
+fi
+
+
 . "$SampShell_ROOTDIR/posix/extended/editor.sh"
-. "$SampShell_ROOTDIR/posix/extended/experimental.sh"
-. "$SampShell_ROOTDIR/posix/extended/git.sh"
 
 ################################################################################
 #                                    Safety                                    #

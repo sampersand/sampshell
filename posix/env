@@ -1,81 +1,129 @@
 #!/bin/sh
 
-###
-# Basic SampShell definitions for _all_ POSIX-complaint shells, in both
-# interactive and non-interactive mode.
+#### Basic SampShell definitions for _all_ POSIX-complaint shells
+# This file is intended to be `.`able from anywhere, be it from interactive
+# shells, or from within scripts.
 #
-# This file can be `.`'d without any other environment variables being defined.
+# This file is strictly POSIX-compliant, as it'll be loaded for every shell.
 #
-# It's expected that this file can be `.`'d at any point, so only the bare-
-# minimum setup is done. This also means that all declarations start with the
-# prefix `SampShell_` so as to not conflict with any extant identifiers.
-###
-
-: "${SampShell_ROOTDIR:?}" # Sanity check, it should already have been done
+#
+# Order of Operations
+# ===================
+#   1. Create `Sampshell_XXX` variables (if they dont exist), and export them.
+#   2. Setup `SampShell_xxx functions.
+#   3. If `$SampShell_ROOTDIR` is set, add POSIX-compliant utilites to `$PATH`.
+#
+#
+# Required Variables
+# ==================
+# This script makes no assumptions about what variables are present. When
+# creating `SampShell_XXX` variables, unset (and empty for some; see their
+# definitions) variables are populated with a default value.
+#
+# The `$SampShell_ROOTDIR` variable is not set by this script. If it was set
+# before this script, it is used for adding POSIX-compliant utilites to `$PATH`
+#
+#
+# Safety
+# ======
+# Since this is intended to be `.`able from within scripts, numerous safe
+# been done:
+#
+#   * All variables and functions are prefixed with `SampShell_` to prevent
+#     naming collisions.
+#   * No `alias`es are added.
+#   * The `set -eux` options from POSIX are respected, in case they're present
+#
+# Additionally, to make it easy to transfer this file around, and paste it
+# directly into terminals, some other things are done:
+#
+#   * Line-continuation (`\` at the end of a line) is never done.
+#   * Lines are limited to 80 characters when possible
+#   * Only spaces are used for indentation (makes it easy to copy-paste)
+####
 
 ################################################################################
 #                           Exported Shell Variables                           #
 ################################################################################
 
+# Note regardless of whether we set the value to a default, we always export the
+# variables. This ensures that we can see them from within other utilities, like
+# our POSIX ones.
+
 # The editor to open files with via the `subl` command
-[ -n "${SampShell_EDITOR-}" ] || SampShell_EDITOR=sublime4
+if [ -z "${SampShell_EDITOR-}" ]; then
+	SampShell_EDITOR=sublime4
+fi
 export SampShell_EDITOR
 
 # Where all files that sampshell uses should by default be placed at.
-[ -n "${SampShell_GENERATED_DIR-}" ] || SampShell_GENERATED_DIR="$HOME"
+if [ -z "${SampShell_GENERATED_DIR-}" ]; then
+	SampShell_GENERATED_DIR="${HOME:-/tmp}" # Wack, who wouldnt have `$HOME` set
+fi
 export SampShell_GENERATED_DIR
 
 # Where files moved from the `trash` command should go
-[ -n "${SampShell_TRASHDIR-}" ] || SampShell_TRASHDIR="$SampShell_GENERATED_DIR/.sampshell-trash"
+if [ -z "${SampShell_TRASHDIR-}" ]; then
+	SampShell_TRASHDIR="$SampShell_GENERATED_DIR/.sampshell-trash"
+fi
 export SampShell_TRASHDIR
 
-# Where temporary files by SampShell Go.
-[ -n "${SampShell_TMPDIR-}" ] || SampShell_TMPDIR="$SampShell_GENERATED_DIR/.sampshell-tmp"
+# Where temporary files by SampShell go.
+if [ -z "${SampShell_TMPDIR-}" ]; then
+	SampShell_TMPDIR="$SampShell_GENERATED_DIR/.sampshell-tmp"
+fi
 export SampShell_TMPDIR
 
-# Where history files go; note that this is allowed to be empty, which means
-# we shouldn't be storing history
-[ -n "${SampShell_HISTDIR-}" ] || SampShell_HISTDIR="$SampShell_GENERATED_DIR/.sampshell-history"
+# Where history files go. Note that unlike other variables, a default won't be
+# added if `$SampShell_HISTDIR` is empty, as that indicates no history.
+if [ -z "${SampShell_HISTDIR+1}" ]; then
+	SampShell_HISTDIR="$SampShell_GENERATED_DIR/.sampshell-history"
+fi
 export SampShell_HISTDIR
 
-################################################################################
-#                                  Setup PATH                                  #
-################################################################################
-
-# Ensure that `$PATH` includes the `$SampShell_ROOTDIR/posix/bin` folder. (But,
-# only once, so as to not pollute it.) We add `:`s to the both side of `$PATH`
-# to simplify the case conditions.
-case ":${PATH-}:" in
-	*:"$SampShell_ROOTDIR/posix/bin":*) : ;; # It already exists, don't add it.
-	*) PATH="$SampShell_ROOTDIR/posix/bin${PATH:+:}$PATH"; export PATH ;;
-esac
+# Whether or not SampShell should be verbose. If it's unset, then we set it to
+# true if we're in interactive mode.
+if [ -z "${SampShell_VERBOSE+1}" ]; then
+	case "$-" in
+		*i*) SampShell_VERBOSE=1 ;;
+		*) SampShell_VERBOSE= ;;
+	esac
+fi
+export SampShell_VERBOSE
 
 ################################################################################
 #                                  Functions                                   #
 ################################################################################
 
-# Note we `unalias` these in case they're already aliased for some reason, and
-# do `|| :` in case the alias doesn't exist and `set -e` is enabled.
-
-# Same as `.`, except it only sources files if the first argument exists.
-unalias SampShell_unalias_always >/dev/null 2>&1 || :
-SampShell_unalias_always () {
-	unalias "${1:?}" >/dev/null 2>&1 || :
+## Logs a message if `$SampShell_VERBOSE` is enabled; It forwards all its args
+# to printf, except it adds a newline to the end of the format argument.
+SampShell_log () {
+	[ -z "${SampShell_VERBOSE-}" ] && return 0
+	SampShell_scratch="${1:?need a fmt}"
+	shift
+	set -- "$SampShell_scratch\\n" "$@"
+	unset -v SampShell_scratch
+	printf -- "$@"
 }
 
-unalias SampShell_source_if_exists >/dev/null 2>&1 || :
-SampShell_source_if_exists () {
-	[ -e "${1:?need file to source}" ] && . "$@"
+## Same as `.`, except it only sources files if the first argument exists; will
+# return `0` if the file doesn't exist.
+SampShell_dot_if_exists () {
+	if [ -e "${1:?need file to source}" ]; then
+		. "$@"
+	else
+		SampShell_log 'Not sourcing non-existent file: %s' "$1"
+	fi
+
+	return 0
 }
 
-# Returns whether or not the given command exists.
-unalias SampShell_command_exists >/dev/null 2>&1 || :
+## Returns whether or not the given command exists.
 SampShell_command_exists () {
 	command -V "${1:?need command to check}" >/dev/null 2>&1
 }
 
-# CD's to the directory containing a file
-unalias SampShell_cdd >/dev/null 2>&1 || :
+## CD's to the directory containing a file
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
 		shift
@@ -106,7 +154,6 @@ SampShell_cdd () {
 ## Parallelize a function by making a new job once per argument given
 # Oh boy, it's far too annoying making this without `local`
 if SampShell_command_exists local; then
-	unalias SampShell_parallelize_it >/dev/null 2>&1 || :
 	SampShell_parallelize_it () {
 		local expand fn skipchr
 
@@ -164,3 +211,30 @@ if SampShell_command_exists local; then
 	}
 fi
 
+
+################################################################################
+#                                  Setup PATH                                  #
+################################################################################
+
+## Add POSIX-compliant bin scripts to the `$PATH`.
+# They're only added if `$SampShell_ROOTDIR` is set. A warning is logged if the
+# `$SampShell_ROOTDIR` is not a directory (ie doesn't exist or is a file), but
+# the scripts are still added.
+#
+# Ensure also ensures that that `$SampShell_ROOTDIR/posix/bin` is only added
+# once, so as to not pollute the `$PATH`
+#
+# Note that we allow `$SampShell_ROOTDIR` to be empty, in case the files are
+# stored under `/posix/bin`.
+if [ -n "${SampShell_ROOTDIR+1}" ]; then
+	if ! [ -d "$SampShell_ROOTDIR/posix/bin" ]; then
+		SampShell_log '[WARN] POSIX bin location (%s/posix/bin) does not exist; still adding it to $PATH though' "$SampShell_ROOTDIR"
+	fi
+
+	# Ensure that `$SampShell_ROOTDIR/posix/bin` is only added in once, so as to
+	# not pollute the `$PATH`
+	case ":${PATH-}:" in
+		*:"$SampShell_ROOTDIR/posix/bin":*) : ;;
+		*) PATH="$SampShell_ROOTDIR/posix/bin${PATH:+:}$PATH"; export PATH ;;
+	esac
+fi
