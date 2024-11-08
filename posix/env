@@ -58,6 +58,11 @@ esac
 # do `|| :` in case the alias doesn't exist and `set -e` is enabled.
 
 # Same as `.`, except it only sources files if the first argument exists. 
+unalias SampShell_unalias_always >/dev/null 2>&1 || :
+SampShell_unalias_always () {
+	unalias "${1:?}" >/dev/null 2>&1 || :
+}
+
 unalias SampShell_source_if_exists >/dev/null 2>&1 || :
 SampShell_source_if_exists () {
 	[ -e "${1:?need file to source}" ] && . "$@"
@@ -87,7 +92,7 @@ SampShell_cdd () {
 		return "$1"
 	fi
 
-	SampShell_scratch="$(dirname -- "$1" && printf x)" || {
+	SampShell_scratch=$(dirname -- "$1" && printf x) || {
 		set -- "$?"
 		unset -v SampShell_scratch
 		return "$1"

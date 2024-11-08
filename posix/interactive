@@ -18,7 +18,6 @@ esac
 # Setup the config files
 
 set -- "$SampShell_ROOTDIR"/posix/interactive-files/*.sh
-
 until [ "$#" -eq 0 ]; do
 	. "$1"
 	shift

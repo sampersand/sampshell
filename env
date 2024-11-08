@@ -57,7 +57,7 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 		eval "SampShell_ROOTDIR=\"\${0:P:h}\""
 
 	# If we're not interactive, then just return 1
-	elif case $- in *i*) false; esac; then
+	elif case "$-" in *i*) false; esac; then
 		return 1
 
 	# We are interactive, default it and warn
