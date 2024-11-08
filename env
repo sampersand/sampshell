@@ -78,7 +78,7 @@ then
 			"${SampShell_ROOTDIR}" >&2
 	fi
 
-	return 1
+	return 2
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.

@@ -1,8 +1,11 @@
 #!sh
 
-##
-# This is a helper script that can be sourced for shells which don't support
-# both interactive and non-interactive shell scripts.
+## Helper script to run both `env` and `interactive`
+# This is intended for shells that don't support multiple startup files for
+# interactive or non-interactive instances.
+#
+# Note that this script is not as bulletproof with regards to determining the
+# `$SampShell_ROOTDIR` as `env` is; when in doubt, just source that first.
 ##
 
 # Assume we're not using zsh (as it has both interactive and noninteractive)
@@ -14,10 +17,10 @@ then
 	return 1
 fi
 
-# Load the init files
-. "$SampShell_ROOTDIR/init"
+# Load `env``
+. "$SampShell_ROOTDIR/env"
 
-# Load the init-interactive files
-case $- in
-	*i*) . "$SampShell_ROOTDIR/init-interactive"
+# Load `interactive`` if we're interacitve
+case "$-" in
+	*i*) . "$SampShell_ROOTDIR/interactive"
 esac
