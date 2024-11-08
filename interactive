@@ -12,9 +12,11 @@
 # `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
 # to sanity check, let's just confirm.
 if test -z "${SampShell_ROOTDIR-}"
+then
 	echo '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR not set' >&2
 	return 1
 elif ! test -d "${SampShell_ROOTDIR-}"
+then
 	printf >&2 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
 		"${SampShell_ROOTDIR}"
 	return 1
