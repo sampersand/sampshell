@@ -1,26 +1,32 @@
 #!sh
 
-###
-# This is the entry point for _all_ interactive shells.
+#### Basic config universal to _all_ interactive POSIX-compliant shells
+# Interactive shells should `.` this file after `.`ing the `env` file, as that
+# contains key definitions (such as `$SampShell_ROOTDIR`, updating `$PATH`,
+# etc.)
 #
-# This will load the config that is universal for all POSIX-compliant shells,
-# located within `posix/`. Afterwards, any additional shell-specific config is
-# started up (eg `zsh/`).
+#
+# Overview
+# ========
+# This file does the following things:
+# 1. Check for `$SampShell_ROOTDIR` (see below
+# 2. Load the universal config for all POSIX-compliant shells
+# 3. Load shell-specific config
+#
+#
+# POSIX-compliant
+# ===============
+# Since this is the entry point for _all_ interactive shells, it must be kept
+# pristine and strictly POSIX-compliant. However, unlike `env`, it's not
+# expected that this file will be sourced at any point, so options like the
+# `set -o nounset` don't need to be respected.
 ###
 
-# At this point, we can assume the `init` file has been run, and as such that
+# At this point, we can assume the `env` file has been run, and as such that
 # `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
-# to sanity check, let's just confirm.
-if test -z "${SampShell_ROOTDIR-}"
-then
-	echo '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR not set' >&2
-	return 1
-elif ! test -d "${SampShell_ROOTDIR-}"
-then
-	printf >&2 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-		"${SampShell_ROOTDIR}"
-	return 1
-fi
+# let's just check for sanity's sake.
+test -n "$SampShell_ROOTDIR" || return 1
+test -d "$SampShell_ROOTDIR" || return 2
 
 ################################################################################
 #                        Source POSIX-Compliant Config                         #
@@ -34,6 +40,6 @@ fi
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
-test -n "${ZSH_VERSION-}" && . "$SampShell_ROOTDIR/zsh/interactive"
+test -n "$ZSH_VERSION" && . "$SampShell_ROOTDIR/zsh/interactive"
 
 # TODO: add more shell configs when i eventually need them.
