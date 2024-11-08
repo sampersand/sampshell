@@ -1,6 +1,6 @@
 #!/bin/sh
 
-## Subl -- open files in an `$SampShell_EDITOR`
+#### subl -- open files in an `$SampShell_EDITOR`
 #
 # This file is POSIX-compliant, not because I expect it to be used in barebones
 # POSIX-only environments, but because I want it to work regardless of what
@@ -16,7 +16,7 @@
 # It's named `subl` as I use the "Sublime Text" editor. Sadly, Sublime Text has
 # come out with its own `subl` command, but I still use this because cause im so
 # used to it
-##
+####
 
 ## Safety first
 set -o nounset
@@ -25,7 +25,6 @@ set -o nounset
 scriptname=${0##*/}                  # Scriptname; used in usage and warnings.
 editor=${SampShell_EDITOR:-TextEdit} # The editor to use
 create=                              # Whether to create missing files
-open_command=open                    # The command to use when opening files.
 
 ## Die prints a message and then exits the script
 die () {
@@ -35,14 +34,17 @@ die () {
 	exit 1
 }
 
-shortusage () { printf 'usage: %s [options] [--] [file ...]\n' "$scriptname"; }
+## Usage functions
+shortusage () {
+	printf 'usage: %s [-h/--help] [options] [--] [file ...]\n' "$scriptname"
+}
 longusage () { shortusage; cat <<USAGE; }
 options:
 	-h, --help            print help, and then exit
 	-c, --create          creates non-existing files/dirs
 	-C, --no-create       disables creation
 	-eNAME, --editor=NAME sets the editor; overrides \$SampShell_EDITOR.
-	-oPROG, --open=PROG   the open program; overrides default 'open'
+When no files are given, the current directory is used.
 USAGE
 
 ## Parse command-line arguments
@@ -64,30 +66,18 @@ while [ "$#" -ne 0 ]; do
 			editor=${1#--editor=}
 			if [ "$editor" = "$1" ]; then
 				editor=${1#-e}
-				[ "$editor" == "$1" ] && editor=${1#--editor}
+				[ "$editor" = "$1" ] && editor=${1#--editor}
 				[ -z "$editor" ] && { shift; editor=${1-}; }
 			fi
-			[ -z "$editor" ] && die 'missing required argument for --editor'
-			;;
-
-		-o* | --open-command=*)
-			open_command=${1#--open-command=}
-			if [ "$open_command" = "$1" ]; then
-				open_command=${1#-e}
-				[ "$open_command" == "$1" ] && open_command=${1#--open-command}
-				[ -z "$open_command" ] && { shift; open_command=${1-}; }
-			fi
-			[ -z "$open_command" ] && die 'missing required argument for --open-command'
-			;;
+			[ -z "$editor" ] && die 'missing required argument for --editor' ;;
 
 		# Support chaining short-form options
-		-[^-]?*)
+		-[!-]?*)
 			rest2="${1#-?}"
 			rest1="${1%"$rest2"}"
 			shift
 			set -- "$rest1" "-$rest2" "$@"
 			continue ;;
-
 
 		# Abort on any other invalid options
 		-?*) die 'unrecognized option: %s' "$1" ;;
@@ -99,24 +89,29 @@ while [ "$#" -ne 0 ]; do
 	shift
 done
 
-# If no arguments are given, use the pwd.
+## If no arguments are given, use the pwd.
 [ "$#" = 0 ] && set -- "$PWD"
 
-# Create files
+## Create files if `-n` is requested.
 if [ -n "$create" ]; then
-	for file; do
-		[ -z "$file" ] && continue # Don't create empty files
-		[ -e "$file" ] && continue # File exists, no need to make it.
+	for filepath; do
+		[ -z "$filepath" ] && continue # Don't create empty files
+		[ -e "$filepath" ] && continue # File exists, no need to make it.
 
-		# If the file ends with `/`, then it's a directory and we create it.
-		if [ "${file%/}" != "$file" ]; then
-			mkdir -p -- "$fil}" || exit
-		else
-			{ dir="$(dirname -- "$file" && echo x)" && \
-				mkdir -p -- "${dir%?x}" && \
-				touch -- "$file"; } || exit
+		# Create directories if the filepath ends in a `/`
+		if [ "${filepath%/}" != "$filepath" ]; then
+			mkdir -p -- "$filepath" || exit
+			continue
 		fi
+
+		# Create parent directories
+		dir="$(dirname -- "$filepath" && echo x)" || exit
+		mkdir -p -- "${dir%?x}" || exit
+
+		# 'touch' the file to create it if it doesn't exist
+		touch -- "$filepath" || exit
 	done
 fi
 
-exec "$open_command" -a "$editor" -- "$@"
+## Now that all the files are created, go ahead and open them.
+exec open -a "$editor" -- "$@"

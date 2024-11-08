@@ -1,6 +1,6 @@
 #!/bin/sh
 
-##### mv-safe: Move files safely
+#### mv-safe: Move files safely
 # This file is nearly 100% POSIX-compliant with the 2024 edition. (AFAIK, it is
 # compatible with older versions as well, except for the usage of the `-ef`
 # in a `[` within `try_move` to see if file paths are identical). The only non-
@@ -23,7 +23,7 @@
 # Unlike most other files, this file explicitly uses spaces instead of tabs, so
 # that pasting it into dumber shells won't have them interpret tabs as a part of
 # autocompletion.
-#####
+####
 
 ## Safety first!
 # - `nounset` ensures that using any unset variables will cause the program to
@@ -124,7 +124,7 @@ while [ "$#" -ne 0 ]; do
          exit 0 ;;
 
       ## Support chaining short-form options
-      -[^-]?*)
+      -[!-]?*)
          rest2="${1#-?}"
          rest1="${1%"${rest2}"}"
          shift # delete the option we just split apart
