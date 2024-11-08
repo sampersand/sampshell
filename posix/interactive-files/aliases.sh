@@ -15,3 +15,6 @@ alias ll='ls -l'   # Shorthand for `ls -al`
 
 ## Misc
 alias '%= ' # Let you paste prompts in; zsh lets you alias `$` too.
+
+alias parallelize_it=SampShell_parallelize_it
+alias cdd=SampShell_cdd

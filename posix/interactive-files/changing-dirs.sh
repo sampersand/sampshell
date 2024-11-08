@@ -1,5 +1,3 @@
-alias cdd=SampShell_cdd
-
 cdtmp () { cd "${SampShell_TMPDIR?}"; }
 
 # Aliases for going up directories

@@ -88,7 +88,7 @@ export SampShell_ROOTDIR
 ################################################################################
 
 # Note we don't check for whether the file exists; if it doesn't we're already
-# done for, so we might as well just error out. 
+# done for...
 . "$SampShell_ROOTDIR/posix/env" || return
 
 ################################################################################

@@ -11,15 +11,11 @@
 # prefix `SampShell_` so as to not conflict with any extant identifiers.
 ###
 
+: "${SampShell_ROOTDIR:?}" # Sanity check, it should already have been done
+
 ################################################################################
 #                           Exported Shell Variables                           #
 ################################################################################
-
-# The root directory for everything relating to `SampShell`. Set to empty
-# by default, as we have no idea of where it could be, but we need it set to
-# _some_ value.
-[ -n "${SampShell_ROOTDIR-}" ] || SampShell_ROOTDIR=""
-export SampShell_ROOTDIR
 
 # The editor to open files with via the `subl` command
 [ -n "${SampShell_EDITOR-}" ] || SampShell_EDITOR=sublime4
@@ -46,10 +42,10 @@ export SampShell_HISTDIR
 #                                  Setup PATH                                  #
 ################################################################################
 
-# If `$SampShell_ROOTDIR` is set, then ensure that `$PATH` includes the
-# `$SampShell_ROOTDIR/posix/bin` folder. (But only once, so as to not pollute
-# it). We add `:`s to the both side of `$PATH` to simplify the case conditions.
-[ -n "${SampShell_ROOTDIR}" ] && case ":${PATH-}:" in
+# Ensure that `$PATH` includes the `$SampShell_ROOTDIR/posix/bin` folder. (But,
+# only once, so as to not pollute it.) We add `:`s to the both side of `$PATH`
+# to simplify the case conditions.
+case ":${PATH-}:" in
 	*:"$SampShell_ROOTDIR/posix/bin":*) : ;; # It already exists, don't add it.
 	*) PATH="$SampShell_ROOTDIR/posix/bin${PATH:+:}$PATH"; export PATH ;;
 esac
@@ -59,7 +55,7 @@ esac
 ################################################################################
 
 # Note we `unalias` these in case they're already aliased for some reason, and
-# do `|| :` in case the alias doesn't exit and `set -e` is enabled.
+# do `|| :` in case the alias doesn't exist and `set -e` is enabled.
 
 # Same as `.`, except it only sources files if the first argument exists. 
 unalias SampShell_source_if_exists >/dev/null 2>&1 || :
