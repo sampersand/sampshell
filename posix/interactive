@@ -13,14 +13,14 @@
 # definitions within `env` are expected to be visible here.
 ###
 
-: "${SampShell_ROOTDIR:?}" # Sanity check; Should've already been set in `env`.
-
 ################################################################################
 #                               Load Other Files                               #
 ################################################################################
 
-# Note that we "dot if exists" here so that if for some reason the "extended"
-# files aren't here, we won't do anything.
+## Load files that aren't "core" to SampShell, but are nice to have.
+# These files are loaded only if some precondition is met, such as only loading
+# the "git" config if the `git` command is found.
+#
 
 # Load the git config, if git is found
 if SampShell_command_exists git; then
@@ -32,8 +32,9 @@ if [ -n "$SampShell_experimental" ]; then
 	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/experimental.sh"
 fi
 
-
-. "$SampShell_ROOTDIR/posix/extended/editor.sh"
+if [ -n "$SampShell_EDITOR" ]; then
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/editor.sh"
+fi
 
 ################################################################################
 #                                    Safety                                    #
@@ -93,7 +94,7 @@ cdtmp () {
 
 ## CD to sampshell; if an arg is given it's the suffix to also go to
 cdss () {
-	CDPATH= cd -- "${SampShell_ROOTDIR:?}/${1-}";
+	CDPATH= cd -- "${SampShell_ROOTDIR?}/${1-}";
 }
 
 # Make sure that CDPATH always starts with `:`, so we won't cd elsewhere on accident.
@@ -209,12 +210,12 @@ SampShell_reload () {
 		return 64
 	fi
 
-	: "${SampShell_ROOTDIR:?SampShell_ROOTDIR must be supplied}"
+	: "${SampShell_ROOTDIR?SampShell_ROOTDIR must be supplied}"
 
 	# If we're given an argument, then that's the only thing to reload; do that,
 	# and return.
 	if [ "$#" -ne 0 ]; then
-		set -- "${SampShell_ROOTDIR:?}/$1"
+		set -- "$SampShell_ROOTDIR/$1"
 		printf 'Reloading SampShell file: %s\n' "$1"
 		. "$1"
 		return
