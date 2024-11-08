@@ -50,9 +50,9 @@
 ################################################################################
 
 # Make sure `SampShell_ROOTDIR` is set.
-if test -z "${SampShell_ROOTDIR-}"; then
+if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# If we're using ZSH, just use the builtin `${0:P:h}` to find it.
-	if test -n "${ZSH_VERSION-}"; then
+	if [ -n "${ZSH_VERSION-}" ]; then
 		# We need to use `eval` in case shells don't understand `${0:P:h}`.
 		eval "SampShell_ROOTDIR=\"\${0:P:h}\""
 
@@ -70,8 +70,7 @@ if test -z "${SampShell_ROOTDIR-}"; then
 fi
 
 # Make sure that it's actually a directory
-if ! test -d "$SampShell_ROOTDIR"
-then
+if ! [ -d "$SampShell_ROOTDIR" ]; then
 	# If we're interactive, then print out the warning
 	if ! case $- in *i*) false; esac; then
 		printf '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
@@ -96,7 +95,7 @@ export SampShell_ROOTDIR
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
-if test -n "${ZSH_VERSION-}"; then
+if [ -n "${ZSH_VERSION-}" ]; then
 	. "$SampShell_ROOTDIR/zsh/env" || return
 fi
 

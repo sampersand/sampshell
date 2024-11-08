@@ -25,8 +25,8 @@
 # At this point, we can assume the `env` file has been run, and as such that
 # `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
 # let's just check for sanity's sake.
-test -n "$SampShell_ROOTDIR" || return 1
-test -d "$SampShell_ROOTDIR" || return 2
+[ -n "$SampShell_ROOTDIR" ] || return 1
+[ -d "$SampShell_ROOTDIR" ] || return 2
 
 ################################################################################
 #                        Source POSIX-Compliant Config                         #
@@ -40,7 +40,7 @@ test -d "$SampShell_ROOTDIR" || return 2
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
-if test -n "${ZSH_VERSION-}"; then
+if [ -n "${ZSH_VERSION-}" ]; then
 	. "$SampShell_ROOTDIR/zsh/interactive" || return
 fi
 

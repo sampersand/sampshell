@@ -10,8 +10,7 @@
 
 # Assume we're not using zsh (as it has both interactive and noninteractive)
 : "${SampShell_ROOTDIR:=$HOME/.sampshell}"
-if ! test -d "$SampShell_ROOTDIR"
-then
+if ! [ -d "$SampShell_ROOTDIR" ]; then
 	printf '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
 		"${SampShell_ROOTDIR}" >&2
 	return 1
@@ -20,7 +19,7 @@ fi
 # Load `env``
 . "$SampShell_ROOTDIR/env" || return
 
-# Load `interactive`` if we're interacitve
+# Load `interactive`` if we're interactive
 case "$-" in
 	*i*) . "$SampShell_ROOTDIR/interactive" || return
 esac
