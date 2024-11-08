@@ -1,48 +1,98 @@
 #!/bin/sh
 
-# Safety first
+## Subl -- open files in an `$SampShell_EDITOR`
+#
+# This file is POSIX-compliant, not because I expect it to be used in barebones
+# POSIX-only environments, but because I want it to work regardless of what
+# machine I stick it on, as I can only be guaranteed that POSIX will exist.
+#
+# This program opens up all of its (non-option) command-line arguments in the
+# editor `$SampShell_EDITOR`, which (if is unset/empty) defaults to `TextEdit`.
+#
+# This intentionally doesn't interact with the `$EDITOR` environment variable,
+# it's generally set to a command-line editor, not an external program like
+# Sublime Text.
+#
+# It's named `subl` as I use the "Sublime Text" editor. Sadly, Sublime Text has
+# come out with its own `subl` command, but I still use this because cause im so
+# used to it
+##
+
+## Safety first
 set -o nounset
 
-scriptname=${0##*/} # Scriptname is used for usage
-editor=${SampShell_EDITOR:-TextEdit} # What program to open
-create= # Whether or not to create missing files/folders
+## Script variables
+scriptname=${0##*/}                  # Scriptname; used in usage and warnings.
+editor=${SampShell_EDITOR:-TextEdit} # The editor to use
+create=                              # Whether to create missing files
+open_command=open                    # The command to use when opening files.
 
-warn () { fmt="$1"; shift; printf "%s: $fmt\\n" "$scriptname" "$@" >&2; }
-die () { warn "$@"; exit 1; }
+## Die prints a message and then exits the script
+die () {
+	fmt="%s: $1\\n"
+	shift
+	printf "$fmt" "$scriptname" "$@" >&2
+	exit 1
+}
 
-usage () { cat; } <<USAGE
-usage: $scriptname [options] [--] [file ...]"
+shortusage () { printf 'usage: %s [options] [--] [file ...]\n' "$scriptname"; }
+longusage () { shortusage; cat <<USAGE; }
 options:
 	-h, --help            print help, and then exit
 	-c, --create          creates non-existing files/dirs
 	-C, --no-create       disables creation
 	-eNAME, --editor=NAME sets the editor; overrides \$SampShell_EDITOR.
+	-oPROG, --open=PROG   the open program; overrides default 'open'
 USAGE
 
+## Parse command-line arguments
 while [ "$#" -ne 0 ]; do
-	case "$1" in 
+	case "$1" in
+		# Stop parsing options
 		--) shift; break ;;
-		-h | --help) usage; exit 0 ;;
+
+		# Print help
+		-h) shortusage; exit 0;;
+		--help) longusage; exit 0 ;;
+
+		# Whether to create missing files
 		-c | --create) create=1 ;;
 		-C | --no-create) create= ;;
-		-e* | --editor*)
-			editor=${1#-e}
-			[ "$editor" = "$1" ] && editor=${1#--editor}
 
-			if [ -z "$editor" ]; then
-				editor=${2-}
-				[ -z "$editor" ] && die 'missing required argument for %s' "$1"
-				shift
+		# Override the `$SampShell_EDITOR` variable
+		-e* | --editor | --editor=*)
+			editor=${1#--editor=}
+			if [ "$editor" = "$1" ]; then
+				editor=${1#-e}
+				[ "$editor" == "$1" ] && editor=${1#--editor}
+				[ -z "$editor" ] && { shift; editor=${1-}; }
 			fi
+			[ -z "$editor" ] && die 'missing required argument for --editor'
 			;;
 
-      -[^-]?*) # Support `-abc` options
-         rest2="${1#-?}"
-         rest1="${1%"$rest2"}"
-         shift
-         set -- "$rest1" "-$rest2" "$@"
-         continue ;;
-      -?*) die 'unknown option: %s' "$1" ;;
+		-o* | --open-command=*)
+			open_command=${1#--open-command=}
+			if [ "$open_command" = "$1" ]; then
+				open_command=${1#-e}
+				[ "$open_command" == "$1" ] && open_command=${1#--open-command}
+				[ -z "$open_command" ] && { shift; open_command=${1-}; }
+			fi
+			[ -z "$open_command" ] && die 'missing required argument for --open-command'
+			;;
+
+		# Support chaining short-form options
+		-[^-]?*)
+			rest2="${1#-?}"
+			rest1="${1%"$rest2"}"
+			shift
+			set -- "$rest1" "-$rest2" "$@"
+			continue ;;
+
+
+		# Abort on any other invalid options
+		-?*) die 'unrecognized option: %s' "$1" ;;
+
+		# Anything else is a filename, stop parsing options.
 		*) break ;;
 	esac
 
@@ -69,4 +119,4 @@ if [ -n "$create" ]; then
 	done
 fi
 
-exec open -a "$editor" -- "$@"
+exec "$open_command" -a "$editor" -- "$@"
