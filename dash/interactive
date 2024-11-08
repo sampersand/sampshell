@@ -1,0 +1,4 @@
+#!/bin/dash
+
+# Dash doesn't support `!`, sadly.
+PS1='[?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '

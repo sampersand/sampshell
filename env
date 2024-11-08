@@ -96,7 +96,8 @@ export SampShell_ROOTDIR
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/env" || return
+	. "$SampShell_ROOTDIR/zsh/env"
+	return
 fi
 
 # TODO: add more shell configs when i eventually need them, like bash
