@@ -29,7 +29,8 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 
 clean_sh () {
 	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
-	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" "${clean_sh_shell:-/bin/sh}"
+	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" \
+		"${clean_sh_shell:-/bin/sh}" ${clean_sh_args}
 }
 
 SampShell_reload () {
