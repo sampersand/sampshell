@@ -1,11 +1,14 @@
 #!sh
 
-#### The entry point for _all_ shells, interactive and non-interactive.
+#### Basic config universal to _all_ POSIX-compliant shells
+# This file should be `.`'d by both interactive and non-interactive shells.
+# However, interactive shells should also `.` the `interactive` file as well,
+# after this one.
 #
-# This will first check for `$SampShell_ROOTDIR` (see below), and then load the
-# config that is universal for all POSIX-compliant shells, located within the
-# `posix/` folder. After, additional shell-specific config will be executed.
-#
+# This file does the following things:
+# 1. Check for `$SampShell_ROOTDIR` (see below
+# 2. Load the universal config for all POSIX-compliant shells
+# 3. Load shell-specific config
 #
 # POSIX-compliant
 # ===============
@@ -34,12 +37,6 @@
 #
 ####
 
-
-# This is used within `interactive` to only source this file if it hasn't been
-# sourced beforehand.
-SampShell_noninteractive_loaded=1
-
-
 ################################################################################
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
 ################################################################################
@@ -62,14 +59,13 @@ fi
 # Make sure that it's actually a directory
 if ! test -d "$SampShell_ROOTDIR"
 then
-	printf '[FATAL] Not initializing SampShell: $SampShell_ROOTDIR does not exist, or isnt a dir: %s\n' \
+	printf '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
 		"${SampShell_ROOTDIR}" >&2
 	return 1
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
 export SampShell_ROOTDIR
-
 
 ################################################################################
 #                        Source POSIX-Compliant Config                         #
@@ -78,7 +74,6 @@ export SampShell_ROOTDIR
 # Note we don't check for whether the file exists; if it doesn't we're already
 # done for, so we might as well just error out. 
 . "$SampShell_ROOTDIR/posix/init" || return
-
 
 ################################################################################
 #                         Source Shell-Specific Config                         #

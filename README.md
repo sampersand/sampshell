@@ -1,6 +1,7 @@
 # sampshell
 My startup shell files
 
+`case $- in *i*) . "$SampShell_ROOTDIR/init-interactive"; esac`
 
 
 # SampShell Variables

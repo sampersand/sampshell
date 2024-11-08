@@ -1,0 +1,37 @@
+#!sh
+
+###
+# This is the entry point for _all_ interactive shells.
+#
+# This will load the config that is universal for all POSIX-compliant shells,
+# located within `posix/`. Afterwards, any additional shell-specific config is
+# started up (eg `zsh/`).
+###
+
+# At this point, we can assume the `init` file has been run, and as such that
+# `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
+# to sanity check, let's just confirm.
+if test -z "${SampShell_ROOTDIR-}"
+	echo '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR not set' >&2
+	return 1
+elif ! test -d "${SampShell_ROOTDIR-}"
+	printf >&2 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
+		"${SampShell_ROOTDIR}"
+	return 1
+fi
+
+################################################################################
+#                        Source POSIX-Compliant Config                         #
+################################################################################
+
+# Note we don't check for whether the file exists; if it doesn't we're already
+# done for, so we might as well just error out. 
+. "$SampShell_ROOTDIR/posix/interactive" || return
+
+################################################################################
+#                         Source Shell-Specific Config                         #
+################################################################################
+
+test -n "${ZSH_VERSION-}" && . "$SampShell_ROOTDIR/zsh/interactive"
+
+# TODO: add more shell configs when i eventually need them.
