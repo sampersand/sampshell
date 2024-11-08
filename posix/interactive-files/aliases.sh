@@ -25,3 +25,6 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
 
+# set -m; echo 'todo: set -m'
+alias j=jobs
+alias k+='kill %+'
