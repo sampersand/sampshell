@@ -180,7 +180,7 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 
 clean_sh () {
 	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
-	env -i SHELL=/bin/sh "HOME=$HOME" "$@" /bin/sh
+	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" "${clean_sh_shell:-/bin/sh}"
 }
 
 SampShell_reload () {

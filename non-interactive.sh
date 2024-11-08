@@ -11,7 +11,7 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 fi
 
 if [ ! -d "$SampShell_ROOTDIR" ]; then
-	printf '[FATAL] Not initializing SampShell: \$SampShell_ROOTDIR does not exist, or isnt a dir: %s\n' \
+	printf '[FATAL] Not initializing SampShell: $SampShell_ROOTDIR does not exist, or isnt a dir: %s\n' \
 		"${SampShell_ROOTDIR}" >&2
 	return 1
 fi

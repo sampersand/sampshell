@@ -5,25 +5,38 @@
 # It's expected that this file can be `.`'d at any point, so only the bare-
 # minimum setup is done. This also means that all declarations start with the
 # prefix `SampShell_` so as to not conflict with any extant identifiers.
-#
-# The file also accepts a single argument, which will be used as the value
-# for `SampShell_ROOTDIR`; if an argument isn't given, `SampShell_ROOTDIR` is
-# left empty.
 ###
 
 ################################################################################
-#                        Process Command-Line Arguments                        #
+#                           Exported Shell Variables                           #
 ################################################################################
 
-# If an argument is given, then set `SampShell_ROOTDIR` to it.
-case "$#" in
-	0) ;;
-	1) SampShell_ROOTDIR="$1" ;;
-	*) echo "[FATAL] only 1 argument is accepted" >&2; return 1 ;;
-esac
-
-: "${SampShell_ROOTDIR=""}" # Ensure it's set so `set -u` won't fail
+# The root directory for everything relating to `SampShell`. Set to empty
+# by default, as we have no idea of where it could be, but we need it set to
+# _some_ value.
+[ -n "${SampShell_ROOTDIR-}" ] || SampShell_ROOTDIR=""
 export SampShell_ROOTDIR
+
+# The editor to open files with via the `subl` command
+[ -n "${SampShell_EDITOR-}" ] || SampShell_EDITOR=sublime4
+export SampShell_EDITOR
+
+# Where all files that sampshell uses should by default be placed at.
+[ -n "${SampShell_GENERATED_DIR-}" ] || SampShell_GENERATED_DIR="$HOME"
+export SampShell_GENERATED_DIR
+
+# Where files moved from the `trash` command should go
+[ -n "${SampShell_TRASHDIR-}" ] || SampShell_TRASHDIR="$SampShell_GENERATED_DIR/.sampshell-trash"
+export SampShell_TRASHDIR
+
+# Where temporary files by SampShell Go.
+[ -n "${SampShell_TMPDIR-}" ] || SampShell_TMPDIR="$SampShell_GENERATED_DIR/.sampshell-tmp"
+export SampShell_TMPDIR
+
+# Where history files go; note that this is allowed to be empty, which means
+# we shouldn't be storing history
+[ -n "${SampShell_HISTDIR-}" ] || SampShell_HISTDIR="$SampShell_GENERATED_DIR/.sampshell-history"
+export SampShell_HISTDIR
 
 ################################################################################
 #                                  Setup PATH                                  #
@@ -34,33 +47,8 @@ export SampShell_ROOTDIR
 # it). We add `:`s to the both side of `$PATH` to simplify the case conditions.
 [ -n "${SampShell_ROOTDIR}" ] && case ":${PATH-}:" in
 	*:"$SampShell_ROOTDIR/posix/bin":*) : ;; # It already exists, don't add it.
-	*) PATH="$SampShell_ROOTDIR/posix/bin:$PATH"; export PATH ;;
+	*) PATH="$SampShell_ROOTDIR/posix/bin${PATH:+:}$PATH"; export PATH ;;
 esac
-
-################################################################################
-#                           Exported Shell Variables                           #
-################################################################################
-
-# The editor to open files with via the `subl` command
-: "${SampShell_EDITOR:=sublime4}"
-export SampShell_EDITOR
-
-# Where all files that sampshell uses should by default be placed at.
-: "${SampShell_GENERATED_DIR:="$HOME"}"
-export SampShell_GENERATED_DIR
-
-# Where files moved from the `trash` command should go
-: "${SampShell_TRASHDIR:="$SampShell_GENERATED_DIR/.sampshell-trash"}"
-export SampShell_TRASHDIR
-
-# Where temporary files by SampShell Go.
-: "${SampShell_TMPDIR:="$SampShell_GENERATED_DIR/.sampshell-tmp"}"
-export SampShell_TMPDIR
-
-# Where history files go; note that this is allowed to be empty, which means
-# we shouldn't be storing history
-: "${SampShell_HISTDIR="$SampShell_GENERATED_DIR/.sampshell-history"}"
-export SampShell_HISTDIR
 
 ################################################################################
 #                                  Functions                                   #
@@ -72,13 +60,13 @@ export SampShell_HISTDIR
 # Same as `.`, except it only sources files if the first argument exists. 
 unalias SampShell_source_if_exists >/dev/null 2>&1 || :
 SampShell_source_if_exists () {
-	[ -e "${1:?'need file to source'}" ] && . "$@"
+	[ -e "${1:?need file to source}" ] && . "$@"
 }
 
 # Returns whether or not the given command exists.
 unalias SampShell_command_exists >/dev/null 2>&1 || :
 SampShell_command_exists () {
-	command -V "${1:?'need command to check'}" >/dev/null 2>&1
+	command -V "${1:?need command to check}" >/dev/null 2>&1
 }
 
 # CD's to the directory containing a file
