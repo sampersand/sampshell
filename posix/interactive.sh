@@ -16,7 +16,6 @@
 # It should be set by the top-level `interactive.sh` file
 : "${SampShell_ROOTDIR:?}"
 
-
 if [ ! -d "$SampShell_ROOTDIR" ]; then
 	cat <<WARNING >&2
 [WARNING] \$SampShell_ROOTDIR ($SampShell_ROOTDIR) is not a directory.
