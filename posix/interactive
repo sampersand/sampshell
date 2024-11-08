@@ -13,8 +13,7 @@
 ###
 
 ### Ensure that `SampShell_ROOTDIR` is setup
-# It should be set by the top-level `interactive.sh` file
-: "${SampShell_ROOTDIR:?}"
+: "${SampShell_ROOTDIR:?SampShell_ROOTDIR should be set, not continuing...}"
 
 if [ ! -d "$SampShell_ROOTDIR" ]; then
 	cat <<WARNING >&2
@@ -25,13 +24,13 @@ fi
 
 # Ensure that the posix bin is included.
 case ":$PATH:" in
-	*:"$SampShell_ROOTDIR/posix/interactive/bin":*) ;;
-	*) export PATH="$SampShell_ROOTDIR/posix/interactive/bin:$PATH" ;;
+	*:"$SampShell_ROOTDIR/posix/interactive-files/bin":*) ;;
+	*) export PATH="$SampShell_ROOTDIR/posix/interactive-files/bin:$PATH" ;;
 esac
 
 # Setup the config files
 
-set -- "$SampShell_ROOTDIR"/posix/interactive/*.sh
+set -- "$SampShell_ROOTDIR"/posix/interactive-files/*.sh
 
 until [ "$#" -eq 0 ]; do
 	. "$1"

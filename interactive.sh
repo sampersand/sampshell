@@ -23,7 +23,7 @@ export SampShell_ROOTDIR
 [ -z "${SampShell_noninteractive_loaded-}" ] && . "$SampShell_ROOTDIR/non-interactive.sh"
 
 # Source all POSIX-compliant stuff
-SampShell_source_if_exists "$SampShell_ROOTDIR/posix/interactive.sh"
+SampShell_source_if_exists "$SampShell_ROOTDIR/posix/interactive"
 
 # If ZSH is defined, also source ZSH
 [ -n "${ZSH_VERSION-}" ] && SampShell_source_if_exists "$SampShell_ROOTDIR/zsh/interactive.zsh"
