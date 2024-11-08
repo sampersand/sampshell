@@ -1,24 +1,209 @@
 #!sh
 
-###
-# Basic SampShell definitions for _all_ interactive POSIX-complaint shells.
-#
-# This file isn't expected to be `.`'d directly, but rather by the top-level
-# `interactive` script.
-###
+. "$SampShell_ROOTDIR/posix/extended/editor.sh"
+. "$SampShell_ROOTDIR/posix/extended/experimental.sh"
+. "$SampShell_ROOTDIR/posix/extended/git.sh"
 
-: "${SampShell_ROOTDIR:?}" # Sanity check, it should already have been done
+################################################################################
+#                                    Safety                                    #
+################################################################################
 
-# Ensure that the posix bin is included.
-case ":$PATH:" in
-	*:"$SampShell_ROOTDIR/posix/interactive-files/bin":*) ;;
-	*) export PATH="$SampShell_ROOTDIR/posix/interactive-files/bin:$PATH" ;;
-esac
+# Don't clobber files with `>`; must use `>|`
+set -o noclobber
 
-# Setup the config files
+# Override builtins with safer versions.
+alias rm='rm -i'
+alias mv='mv -i'
+alias cp='cp -i'
 
-set -- "$SampShell_ROOTDIR"/posix/interactive-files/*.sh
-until [ "$#" -eq 0 ]; do
+## Shorthand aliases for the "safer" options
+alias r=trash
+alias m=mv-safe
+
+# Still let you do the builtins
+alias rmm='rm -f'
+alias mvv='mv -f'
+alias cpp='cp -f'
+
+################################################################################
+#                                   Aliases                                    #
+################################################################################
+## Listing files
+alias ls='ls -AFq' # Always print out `.` files, and for longform, human-readable sizes, and colours
+alias ll='ls -l'   # Shorthand for `ls -al`
+
+## Misc
+alias '%= ' # Let you paste prompts in; zsh lets you alias `$` too.
+
+alias parallelize_it=SampShell_parallelize_it
+alias cdd=SampShell_cdd
+
+# Aliases for going up directories
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+
+# set -m; echo 'todo: set -m'
+alias j=jobs
+
+################################################################################
+#                             Changing Directories                             #
+################################################################################
+
+## Changes to the SampShell tmp directory, creating it unless it exists already.
+cdtmp () {
+	if ! [ -e "${SampShell_TMPDIR:?}" ]; then
+		mkdir -p -- "$SampShell_TMPDIR" || return
+	fi
+
+	CPATH= cd -- "$SampShell_TMPDIR/${1-}"
+}
+
+## CD to sampshell; if an arg is given it's the suffix to also go to
+cdss () {
+	CDPATH= cd -- "${SampShell_ROOTDIR:?}/${1-}";
+}
+
+# Make sure that CDPATH always starts with `:`, so we won't cd elsewhere on accident.
+add_to_cd_path () {
+	if [ "$#" -eq 0 ]; then
+		echo 'usage: add_to_cd_path path [more ...]' >&2
+		return 64
+	fi
+
+	SampShell_scratch=
+	while [ "$#" -ne 0 ]; do
+		SampShell_scratch=$(realpath -- "$1" && printf x) || {
+			printf 'add_to_cd_path: unable to get realpath of %s' \
+				"$1" >&2
+			return 1
+		}
+		CDPATH=":${SampShell_scratch%?x}${CDPATH}"
+		shift
+	done
+
+	unset -v SampShell_scratch
+	return 0
+}
+
+################################################################################
+#                                 Command Line                                 #
+################################################################################
+
+# Clear the screen; also uses the `clear` command if it exists
+cls () {
+	SampShell_command_exists clear && { clear || return; }
+	printf '\ec\e[3J'
+}
+
+PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
+
+################################################################################
+#                                   History                                    #
+################################################################################
+
+# Have the ability of opting-out of setting up history, in case custom history
+# stuff is already happening.
+if [ -n "${SampShell_always_setup_history-}" ]; then
+	unset HISTSIZE HISTFILE # TODO: is this the best strategy?
+	# HISTSIZE=
+	# HISTFILE=
+fi
+
+# Only setup things if they don't exist; if they exist and are empty, that can
+# be intentional.
+[ -z "${HISTSIZE+1}" ] && HISTSIZE=500 # How many history entries to keep
+[ -z "${HISTFILE+1}" ] && HISTFILE=${SampShell_HISTDIR:-$HOME}/.sampshell_history
+
+# Sets up `history` and `h` aliases
+SampShell_command_exists history || alias history='fc -l'
+alias h=history
+
+################################################################################
+#                                    Utils                                     #
+################################################################################
+# Prints out how many arguments were passed; used in testing expansion syntax.
+nargs () { echo "$#"; }
+
+alias cpu='top -o cpu'
+
+## Deleting files
+# `rm -d` is in safety.
+alias purge='command rm -ridP' ## Purge deletes something entirely
+ppurge () { echo "todo: parallelize purging"; }
+
+alias pargs=prargs
+prargs () {
+	SampShell_scratch=0
+
+	until [ "$#" = 0 ]; do
+		SampShell_scratch=$((SampShell_scratch + 1))
+		printf '%3d: %s\n' "$SampShell_scratch" "$1"
+		shift
+	done
+
+	unset -v SampShell_scratch
+}
+
+export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
+[ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
+
+clean_sh () {
+	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
+	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" \
+		"${clean_sh_shell:-/bin/sh}" ${clean_sh_args}
+}
+
+## Reloads all configuration files
+# This is the same as `SampShell_reload` so that it's easy to replace, as
+# opposed to an alias.
+reload () { SampShell_reload "$@"; }
+
+## Reloads SampShell.
+# If given an argument, it `.`s `$SampShell_ROOTDIR/<arg>` and returns. If
+# given no arguments, it first `.`s `$ENV` if it exists, and then will `.` all
+# of SampShell (via `$SampShell_ROOTDIR/both`).
+SampShell_reload () {
+	if [ "$1" = -- ]; then
+		shift
+	elif [ "$1" = -h ] || [ "$1" = --help ]; then
+		cat <<-'EOS'
+		usage: SampShell_reload [--] path
+		       SampShell_reload [-h/--help]
+
+		In the first form, sources '$SampShell_ROOTDIR/<path>' and returns.
+		In the second, sources '$ENV' if it exists, then '$SampShell_ROOTDIR/both'
+		EOS
+		return 64
+	fi
+
+	: "${SampShell_ROOTDIR:?SampShell_ROOTDIR must be supplied}"
+
+	# If we're given an argument, then that's the only thing to reload; do that,
+	# and return.
+	if [ "$#" -ne 0 ]; then
+		set -- "${SampShell_ROOTDIR:?}/$1"
+		printf 'Reloading SampShell file: %s\n' "$1"
+		. "$1"
+		return
+	fi
+
+	set -- "$SampShell_ROOTDIR/both"
+
+	# We've been given no arguments. First off, reload `$ENV` if it's present.
+	if  [ -n "$ENV" ]; then
+		# On the off chance that `$ENV` is `$SampShell_ROOTDIR/both`, don't reload
+		# SampShell twice.
+		if [ "$1" -ef "$ENV" ]; then
+			echo 'Not loading $ENV; same as SampShell'
+		else
+			printf 'Reloading $ENV: %s\n' "$ENV"
+			. "$ENV" || return
+		fi
+	fi
+
+	# Now reload all of sampshell
+	printf 'Reloading SampShell: %s\n' "$1"
 	. "$1"
-	shift
-done
+}

@@ -2,6 +2,8 @@
 
 ping () { curl --connect-timeout 10 "${1:-http://www.example.com}"; }
 
+alias k+='kill %+'
+
 ## Creating files
 alias touchd='mkdir -p' # alias incase i ever end up using it
 
