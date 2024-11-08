@@ -1,7 +1,7 @@
 # Make sure `SampShell_ROOTDIR` is set.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# If it's not set, and we're using ZSH, it's easy to find it.
-	if [ -n "$ZSH_VERSION" ]; then
+	if [ -n "${ZSH_VERSION-}" ]; then
 		SampShell_ROOTDIR="${0:P:h}"
 	else
 		# Looks like we don't know what shell we're using
@@ -26,4 +26,4 @@ export SampShell_ROOTDIR
 SampShell_source_if_exists "$SampShell_ROOTDIR/posix/interactive.sh"
 
 # If ZSH is defined, also source ZSH
-[ -n "$ZSH_VERSION" ] && SampShell_source_if_exists "$SampShell_ROOTDIR/zsh/interactive.zsh"
+[ -n "${ZSH_VERSION-}" ] && SampShell_source_if_exists "$SampShell_ROOTDIR/zsh/interactive.zsh"

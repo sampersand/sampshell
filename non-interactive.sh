@@ -1,7 +1,7 @@
 # Make sure `SampShell_ROOTDIR` is set.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# If it's not set, and we're using ZSH, it's easy to find it.
-	if [ -n "$ZSH_VERSION" ]; then
+	if [ -n "${ZSH_VERSION-}" ]; then
 		SampShell_ROOTDIR="${0:P:h}"
 	else
 		# Looks like we don't know what shell we're using; hope it exists here.
@@ -22,4 +22,4 @@ SampShell_noninteractive_loaded=1
 
 # Source the posix stuff
 [ -e "$SampShell_ROOTDIR/posix/setup.sh" ] && . "$SampShell_ROOTDIR/posix/setup.sh"
-[ -n "$ZSH_VERSION" ] && [ -e "$SampShell_ROOTDIR/zsh/non-interactive.sh" ] && . "$SampShell_ROOTDIR/zsh/non-interactive.zsh"
+[ -n "${ZSH_VERSION-}" ] && [ -e "$SampShell_ROOTDIR/zsh/non-interactive.sh" ] && . "$SampShell_ROOTDIR/zsh/non-interactive.zsh"
