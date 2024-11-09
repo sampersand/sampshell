@@ -20,7 +20,6 @@
 ## Load files that aren't "core" to SampShell, but are nice to have.
 # These files are loaded only if some precondition is met, such as only loading
 # the "git" config if the `git` command is found.
-#
 
 # Load the git config, if git is found
 if SampShell_command_exists git; then
@@ -32,6 +31,7 @@ if [ -n "$SampShell_experimental" ]; then
 	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/experimental.sh"
 fi
 
+# Setup the editor if it exists
 if [ -n "$SampShell_EDITOR" ]; then
 	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/editor.sh"
 fi
@@ -97,7 +97,8 @@ cdss () {
 	CDPATH= cd -- "${SampShell_ROOTDIR?}/${1-}";
 }
 
-# Make sure that CDPATH always starts with `:`, so we won't cd elsewhere on accident.
+## Adds the arguments to the `CDPATH`. This function makes sure that `CDPATH`
+# always starts with a `:`, so we won't accidentally cd elsewhere on accident.
 add_to_cd_path () {
 	if [ "$#" -eq 0 ]; then
 		echo 'usage: add_to_cd_path path [more ...]' >&2
@@ -107,8 +108,7 @@ add_to_cd_path () {
 	SampShell_scratch=
 	while [ "$#" -ne 0 ]; do
 		SampShell_scratch=$(realpath -- "$1" && printf x) || {
-			printf 'add_to_cd_path: unable to get realpath of %s' \
-				"$1" >&2
+			printf 'add_to_cd_path: unable to get realpath of %s' "$1" >&2
 			return 1
 		}
 		CDPATH=":${SampShell_scratch%?x}${CDPATH}"
@@ -135,22 +135,27 @@ PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
 #                                   History                                    #
 ################################################################################
 
-# Have the ability of opting-out of setting up history, in case custom history
-# stuff is already happening.
-if [ -n "${SampShell_always_setup_history-}" ]; then
-	unset HISTSIZE HISTFILE # TODO: is this the best strategy?
-	# HISTSIZE=
-	# HISTFILE=
+# Only default the history-related variables if they're unset; if they're set
+# to an empty value, that indicates that history usage isn't desired.
+
+if [ -z "${HISTSIZE+1}" ]; then
+	HISTSIZE=500 # How many history entries to keep
+elif [ -z "$HISTSIZE" ]; then
+	SampShell_log '[INFO] Not defaulting HISTSIZE; it is set to the empty string'
 fi
 
-# Only setup things if they don't exist; if they exist and are empty, that can
-# be intentional.
-[ -z "${HISTSIZE+1}" ] && HISTSIZE=500 # How many history entries to keep
-[ -z "${HISTFILE+1}" ] && HISTFILE=${SampShell_HISTDIR:-$HOME}/.sampshell_history
+if [ -z "${HISTFILE+1}" ]; then
+	if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
+		SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
+	else
+		HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+	fi
+else
+	SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
+fi
 
-# Sets up `history` and `h` aliases
-SampShell_command_exists history || alias history='fc -l'
-alias h=history
+SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
+h () { history "$(( -${1:-16} ))"; } # Support `h 0` for all history
 
 ################################################################################
 #                                    Utils                                     #
@@ -183,8 +188,7 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 
 clean_sh () {
 	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
-	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" \
-		"${clean_sh_shell:-/bin/sh}" ${clean_sh_args}
+	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" "${clean_sh_shell:-/bin/sh}" ${clean_sh_args}
 }
 
 ## Reloads all configuration files
