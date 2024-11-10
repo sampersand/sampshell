@@ -31,10 +31,11 @@
 #
 # If `$SampShell_ROOTDIR` is not set, and we're not in an interactive shell (ie
 # `$-` doesn't contain `i`), then the script simply returns `1`. Otherwise, it
-# defaults to `$HOME/.sampshell` and emits a warning. As a special case, if zsh
-# is detected (by `$ZSH_VERSION` being nonempty), then `$SampShell_ROOTDIR` will
-# default to `${0:P:h}`, even in non-interactive shells, and no warnings/early
-# returns happen.
+# defaults to `$HOME/.sampshell` and emits a warning.
+#
+# Some shells (currently just ZSH and Bash) can omit `$SampShell_ROOTDIR`, and
+# it'll be inferred by automatically to be the folder containing this file. If
+# this is done, then no warnings are emitted and the file doesn't return early.
 #
 # If `$SampShell_ROOTDIR` isn't a directory (ie it points to a non-extant path,
 # or to a file), then the script returns 2 (printing an error if we're in an
@@ -53,6 +54,9 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 	if [ -n "${ZSH_VERSION-}" ]; then
 		# We need to use `eval` in case shells don't understand `${0:P:h}`.
 		eval "SampShell_ROOTDIR=\"\${0:P:h}\""
+	elif [ -n "${BASH_VERSION-}" ] && [ -n "${BASH_SOURCE-}" ]; then
+		SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
+		SampShell_ROOTDIR=${SampShell_ROOTDIR#?x}
 
 	# If we're not interactive, then just return 1
 	elif case "$-" in *i*) false; esac; then
