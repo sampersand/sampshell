@@ -2,42 +2,90 @@
 
 [[	$TRACE == 1 ]] && set -o xtrace
 
-die () { echo "$@" >&2; exit 1; }
-
+scriptname=${0:t}
+die () { printf "%s: $1\\n" $scriptname $@[2,$#] >&2; exit 1; }
 
 shellname=
 sampshell_vars=1
-normal_vars=1
+required_vars=1
+include_path=$PATH
+dont_include_path=
+verbose_mode=
 
 typeset -a env_vars
 
+shortusage () { cat; } <<EOS
+usage: $scriptname [options] [--] [shell=\$SHELL] [shell options]
+EOS
+
+longusage () { cat; } <<EOS
+options: (any time '=' is present after an argname, you can omit and put a space)
+   -h, --help show this message
+
+   -E, --env[=VAL]  same as --var ENV=VAL; VAL defaults to \$ENV (err if env doesnt exist); -E always uses \$ENV
+   --shell=PROG     sets the shell; if unset, assumed to be the first non-positional arg
+   -s               set shell to /bin/sh
+
+   -n, --none clear all current variables for export; keeps -R though
+   -N, --absolutely-none same as -n, except also clears -R
+   -P, --[no-]path[=PATH] includes path in the output
+   -R, --[no-]required-vars set (or dont) all the "required" variables (eg TERM/HOME/SHLVL)
+   -S, --[no-]sampshell-vars add all sampshell (or dont) vars to the variables to export
+   -v, --verbose print out the invocation before running it
+
+   -vVAR=VAL, --var VAR=VAL   sets VAR=VAL in the shell to execute
+   -vVAR, --var VAR           same as --var VAR=\$VAR; VAR must be defined
+EOS
+
 while [[ $# > 0 ]]; do
-	case $1 in
-		-h) die 'short help' ;;
-		--help) die 'long help' ;;
-
-
-		--shell=*) shellname=${1#--shell=} ;;
-
-		--normal-vars) normal_vars=1 ;;
-		--sampshell-vars) sampshell_vars=1 ;;
-		--no-builtin-vars) sampshell_vars= normal_vars= ;;
-
-		--env) env_vars+=(ENV=${ENV?}) ;;
-		--env=*) env_vars+=(ENV=${1#--env=}) ;;
-
-		-v?*) set -- -v ${1#-v} $@[2,$#] ;&
-		-v | --var) # don't support --var=a=b
-			[[ ! -v 2 ]] && die 'need an argument for -v/--var'
-			case $2 in
-				*=*) env_vars+=($1) ;;
-				*) env_vars+=($1=${(P)1}) ;;
-			esac
-			;;
-		--) shift; break;;
-		*) break ;;
-	esac
+	option=$1
 	shift
+	case $option in
+		-h | --help) shortusage; [[ $option == --help ]] && longusage; exit ;;
+		-s) shellname=/bin/sh ;;
+
+		--shell=*) set -- ${option#--shell=} $@ ;&
+		--shell)
+			[[ -z $1 ]] && die 'need an argument for %s' $option
+			shellname=$1 ;;
+
+		--no-path) dont_include_path=1 ;;
+		-P | --path) dont_include_path= include_path=$PATH ;;
+		--path=*) dont_include_path= include_path=${option#--path=} ;;
+
+		-V | --verbose) verbose_mode=1;;
+
+		--no-required-vars) required_vars= ;;
+		-R | --required-vars) required_vars=1 ;;
+
+		--no-sampshell-vars) sampshell_vars= ;;
+		-S | --sampshell-vars) sampshell_vars=1 ;;
+
+		-N | --absolutely-none) required_vars= ;&
+		-n | --none) dont_include_path=1 sampshell_vars= env_vars=() ;;
+
+		-E | --env)
+			[[ -z $ENV ]] && die 'need an ENV defined for --env; try --env=FOO'
+			option=--env=$ENV ;&
+		--env=*)
+			env_vars+=ENV=${option#--env=} ;;
+
+		# Support `-vFOO` and friends by just deleting the `-v`, and adding it to
+		# the start of the list of options
+		-v?*) set -- ${option#-v} $@ ;&
+		-v | --var) # don't support --var=a=b
+			[[ ! -v 1 ]] && die 'need an argument for -v/--var'
+			if [[ $1 = *=* ]]; then
+				env_vars+=$1
+			else
+				env_vars+=$1=${(P)1}
+			fi ;;
+
+		# Support chaining `-abc` options
+		-[^-]?*) set -- $option[1,2] -${option#-?} $@ ;;
+		--) break;;
+		*) set -- $option $@; break ;;
+	esac
 done
 
 if [[ -z $shellname ]]; then
@@ -45,17 +93,23 @@ if [[ -z $shellname ]]; then
 	: ${shellname:=${SHELL:?no shell provided, and no SHELL in scope}}
 fi
 
-## Setup normal variables, if that's defined.
-if [[ -n $normal_vars ]]; then
+## Setup required variables, if that's defined.
+if [[ -n $required_vars ]]; then
 	env_vars[1,0]=SHELL=$shellname
 	[[ -v TERM ]] && env_vars[1,0]=TERM=$TERM
 	[[ -v HOME ]] && env_vars[1,0]=HOME=$HOME
 	[[ -v SHLVL ]] && env_vars[1,0]=SHLVL=$((SHLVL-1))
 fi
 
-if [ -n "$sampshell_vars" ]; then
-	# TODO: set other variables
-	[[ -v SampShell_ROOTDIR ]] && env_vars[1,0]=SampShell_ROOTDIR=$SampShell_ROOTDIR
+if [[ -z $dont_include_path ]]; then
+	env_vars[1,0]=PATH=$include_path
 fi
 
+if [ -n "$sampshell_vars" ]; then
+	for param in ${parameters[(I)SampShell_*]}; do
+		[[ $parameters[$param] = scalar-export ]] && env_vars[1,0]=$param=${(P)param}
+	done
+fi
+
+[[ -n $verbose_mode ]] && set -o xtrace
 exec env -i $env_vars $shellname $@

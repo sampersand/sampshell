@@ -4,6 +4,7 @@ for file in "${SampShell_ROOTDIR:-${0:A:h}}"/zsh/interactive-files/*.zsh; do
 	source $file
 done
 
+alias clsh=clean-shell
 
 ## Others
 setopt BAD_PATTERN # This is crazy not to have lol
