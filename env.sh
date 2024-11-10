@@ -97,13 +97,10 @@ export SampShell_ROOTDIR
 #                         Setup PATH from other shells                         #
 ################################################################################
 
-if [ -n "$SampShell_ROOTDIR" ]; then
-	# add `zsh` bin files to the PATH if zsh exists.
-	if SampShell_command_exists zsh; then
-		SampShell_add_to_path "$SampShell_ROOTDIR/zsh/bin"
-	fi
+# add `zsh` bin files to the PATH if zsh exists.
+if SampShell_command_exists zsh; then
+	SampShell_add_to_path "$SampShell_ROOTDIR/zsh/bin"
 fi
-
 
 ################################################################################
 #                         Source Shell-Specific Config                         #

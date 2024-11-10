@@ -89,6 +89,14 @@ if [ -z "${SampShell_VERBOSE+1}" ]; then
 fi
 export SampShell_VERBOSE
 
+# Whether to enable `set -o xtrace` in scripts. It's important that this is
+# exported, so that scripts can see it.
+if [ -z "${SampShell_TRACE-}" ]; then
+	SampShell_TRACE=
+fi
+export SampShell_TRACE
+
+
 ################################################################################
 #                                  Functions                                   #
 ################################################################################
