@@ -155,7 +155,10 @@ else
 fi
 
 SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
-h () { history "$(( -${1:-16} ))"; } # Support `h 0` for all history
+
+# `h` is a shorthand for listing out history; we negate the arg because it goes
+# from the end.
+h () { fc -l "$(( -${1:-16} ))"; }
 
 ################################################################################
 #                                    Utils                                     #
@@ -186,9 +189,12 @@ prargs () {
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
-clean_sh () {
-	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
-	env -i SHELL="${clean_sh_shell:-/bin/sh}" "HOME=$HOME" "$@" "${clean_sh_shell:-/bin/sh}" ${clean_sh_args}
+clean_shell () {
+	[ "$#" -eq 0 ] && set -- /bin/sh
+	[ -n "${TERM+1}" ] && set -- "TERM=$TERM" "$@"
+	[ -n "${HOME+1}" ] && set -- "HOME=$HOME" "$@"
+	[ -n "${SHLVL+1}" ] && set -- "SHLVL=$SHLVL" "$@"
+	env -i "$@"
 }
 
 ## Reloads all configuration files
