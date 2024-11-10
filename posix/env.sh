@@ -121,6 +121,17 @@ SampShell_command_exists () {
 	command -V "${1:?need command to check}" >/dev/null 2>&1
 }
 
+## Adds its argument to the start of '$PATH' if it doesnt already exist; same as
+# PATH="$PATH:$1", except it handles the case when PATH does't exist, and makes
+# sure to not add $1 if it already exists; note that this doesn't export PATH.
+# Notably this doesn't export the path.
+SampShell_add_to_path () {
+	case ":${PATH-}:" in
+		*:"${1:?need a path to add to PATH}":*) : ;;
+		*) PATH="$1${PATH:+:}$PATH" ;;
+	esac
+}
+
 ## CD's to the directory containing a file
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
@@ -229,10 +240,6 @@ if [ -n "${SampShell_ROOTDIR+1}" ]; then
 		SampShell_log '[WARN] POSIX bin location (%s/posix/bin) does not exist; still adding it to $PATH though' "$SampShell_ROOTDIR"
 	fi
 
-	# Ensure that `$SampShell_ROOTDIR/posix/bin` is only added in once, so as to
-	# not pollute the `$PATH`
-	case ":${PATH-}:" in
-		*:"$SampShell_ROOTDIR/posix/bin":*) : ;;
-		*) PATH="$SampShell_ROOTDIR/posix/bin${PATH:+:}$PATH"; export PATH ;;
-	esac
+	SampShell_add_to_path "$SampShell_ROOTDIR/posix/bin"
+	export PATH
 fi

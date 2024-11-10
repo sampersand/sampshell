@@ -90,6 +90,18 @@ export SampShell_ROOTDIR
 . "$SampShell_ROOTDIR/posix/env.sh" || return
 
 ################################################################################
+#                         Setup PATH from other shells                         #
+################################################################################
+
+if [ -n "$SampShell_ROOTDIR" ]; then
+	# add `zsh` bin files to the PATH if zsh exists.
+	if SampShell_command_exists zsh; then
+		SampShell_add_to_path "$SampShell_ROOTDIR/zsh/bin"
+	fi
+fi
+
+
+################################################################################
 #                         Source Shell-Specific Config                         #
 ################################################################################
 

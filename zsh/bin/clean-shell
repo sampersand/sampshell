@@ -1,18 +1,9 @@
 #!/usr/bin/env zsh
 
-[[	$TRACE == 1 ]] && set -o xtrace
+[[	$SampShell_TRACE == 1 ]] && set -o xtrace
 
 scriptname=${0:t}
 die () { printf "%s: $1\\n" $scriptname $@[2,$#] >&2; exit 1; }
-
-shellname=
-sampshell_vars=1
-required_vars=1
-include_path=$PATH
-dont_include_path=
-verbose_mode=
-
-typeset -a env_vars
 
 shortusage () { cat; } <<EOS
 usage: $scriptname [options] [--] [shell=\$SHELL] [shell options]
@@ -36,6 +27,17 @@ options: (any time '=' is present after an argname, you can omit and put a space
    -vVAR=VAL, --var VAR=VAL   sets VAR=VAL in the shell to execute
    -vVAR, --var VAR           same as --var VAR=\$VAR; VAR must be defined
 EOS
+
+
+shellname=
+sampshell_vars=1
+required_vars=1
+include_path=$PATH
+dont_include_path=
+verbose_mode=
+
+typeset -a env_vars
+
 
 while [[ $# > 0 ]]; do
 	option=$1

@@ -18,6 +18,9 @@
 # used to it
 ####
 
+## Respect the 'SampShell_TRACE' environment variable
+[ "${SampShell_TRACE-}" = 1  ] && set -o xtrace
+
 ## Safety first
 set -o nounset
 

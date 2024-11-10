@@ -13,6 +13,9 @@
 # the trash dir itself, along with the `--empty` argument.
 ####
 
+## Respect the 'SampShell_TRACE' environment variable
+[ "${SampShell_TRACE-}" = 1  ] && set -o xtrace
+
 ## Safety first!
 set -o nounset
 

@@ -25,6 +25,9 @@
 # autocompletion.
 ####
 
+## Respect the 'SampShell_TRACE' environment variable
+[ "${SampShell_TRACE-}" = 1  ] && set -o xtrace
+
 ## Safety first!
 # - `nounset` ensures that using any unset variables will cause the program to
 #             abort (and is equivalent to `set -u`, but I like being explicit).

@@ -1,5 +1,7 @@
 # TODO: make sure the "use posix $0" is not set when it's not around
 
+# emulate sh -c '. "${(e)ENV}"'
+
 for file in "${SampShell_ROOTDIR:-${0:A:h}}"/zsh/interactive-files/*.zsh; do
 	source $file
 done
