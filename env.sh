@@ -1,5 +1,3 @@
-#!sh
-
 #### Basic config universal to _all_ POSIX-compliant shells
 # This file should be `.`'d by both interactive and non-interactive shells.
 # However, interactive shells should also `.` the `interactive` file as well,
@@ -29,7 +27,7 @@
 # to the folder that encloses this file. tl;dr, in the `~/.whatever`` file, put:
 #
 #   SampShell_ROOTDIR=/some/path/to/sampshell
-#   . "$SampShell_ROOTDIR/env"
+#   . "$SampShell_ROOTDIR/env.sh"
 #
 # If `$SampShell_ROOTDIR` is not set, and we're not in an interactive shell (ie
 # `$-` doesn't contain `i`), then the script simply returns `1`. Otherwise, it
@@ -89,14 +87,14 @@ export SampShell_ROOTDIR
 
 # Note we don't check for whether the file exists; if it doesn't we're already
 # done for...
-. "$SampShell_ROOTDIR/posix/env" || return
+. "$SampShell_ROOTDIR/posix/env.sh" || return
 
 ################################################################################
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/env"
+	. "$SampShell_ROOTDIR/zsh/env.zsh"
 	return
 fi
 

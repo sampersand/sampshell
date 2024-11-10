@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 #### trash -- a safer alternative to `rm`
 # Unlike `rm`, which completely deletes files, `trash` instead moves them to a

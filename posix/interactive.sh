@@ -1,16 +1,14 @@
-#!sh
-
 ###
 # Basic SampShell definitions for _all_ interactive POSIX-complaint shells.
 #
 # This file must be strictly POSIX-compliant, as it will be loaded for POSIX-
-# compliant shells. However, unlike the `env` file, we don't expect this file to
-# be `.`d in the middle of scripts with arbitrary settings. As such, we can
-# relax the restrictions somewhat (eg, we don't need to do `${var-}` in case
-# the `set -u` is enabled).
+# compliant shells. However, unlike `env.sh`, we don't expect this file to be
+# `.`d in the middle of scripts with arbitrary settings. As such, we can relax
+# the restrictions somewhat (eg, we don't need to do `${var-}` in case the
+# `set -u` is enabled).
 #
-# It's expected that this file will be `.`d after `env` is; as such, all of the
-# definitions within `env` are expected to be visible here.
+# It's expected that this file will be `.`d after `env.sh` is; as such, all of
+# the definitions within `env.sh` are expected to be visible here.
 ###
 
 ################################################################################

@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #### Basic SampShell definitions for _all_ POSIX-complaint shells
 # This file is intended to be `.`able from anywhere, be it from interactive
 # shells, or from within scripts.

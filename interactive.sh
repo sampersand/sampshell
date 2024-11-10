@@ -1,8 +1,6 @@
-#!sh
-
 #### Basic config universal to _all_ interactive POSIX-compliant shells
-# Interactive shells should `.` this file after `.`ing the `env` file, as that
-# contains key definitions (such as `$SampShell_ROOTDIR`, updating `$PATH`,
+# Interactive shells should `.` this file after `.`ing the `env.sh` file, as
+# that contains key definitions (such as `$SampShell_ROOTDIR`, updating `$PATH`,
 # etc.)
 #
 #
@@ -17,12 +15,12 @@
 # POSIX-compliant
 # ===============
 # Since this is the entry point for _all_ interactive shells, it must be kept
-# pristine and strictly POSIX-compliant. However, unlike `env`, it's not
+# pristine and strictly POSIX-compliant. However, unlike `env.sh`, it's not
 # expected that this file will be sourced at any point, so options like the
 # `set -o nounset` don't need to be respected.
 ###
 
-# At this point, we can assume the `env` file has been run, and as such that
+# At this point, we can assume the `env.sh` file has been run, and as such that
 # `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
 # let's just check for sanity's sake.
 [ -n "$SampShell_ROOTDIR" ] || return 1
@@ -34,14 +32,14 @@
 
 # Note we don't check for whether the file exists; if it doesn't we're already
 # done for, so we might as well just error out. 
-. "$SampShell_ROOTDIR/posix/interactive" || return
+. "$SampShell_ROOTDIR/posix/interactive.sh" || return
 
 ################################################################################
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/interactive"
+	. "$SampShell_ROOTDIR/zsh/interactive.zsh"
 	return
 fi
 
@@ -49,6 +47,6 @@ fi
 # `$0` and hope, lol.
 case "$0" in
 	dash | */dash)
-		. "$SampShell_ROOTDIR/dash/interactive"
+		. "$SampShell_ROOTDIR/dash/interactive.dash"
 		return
 esac

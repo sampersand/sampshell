@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 #### subl -- open files in an `$SampShell_EDITOR`
 #

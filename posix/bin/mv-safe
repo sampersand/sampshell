@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 #### mv-safe: Move files safely
 # This file is nearly 100% POSIX-compliant with the 2024 edition. (AFAIK, it is
