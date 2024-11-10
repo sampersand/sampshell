@@ -17,6 +17,14 @@ function {SampShell-,}add-named-dir {
 	local dir=${2:-${1:-$PWD}}
 	local name=${${1:-$dir}:t}
 
+	if [[ -z $dir ]]; then
+		SampShell_log '%s: cannot add empty directories as named dirs' $0
+		return 1
+	elif [[ ! -d $dir ]]; then
+		SampShell_log '%s: cannot add named dir, as given directory (%q) is not a dir' $0 $dir
+		return 1
+	fi
+
 	builtin hash -d $name=$dir
 }
 
