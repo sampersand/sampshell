@@ -53,20 +53,20 @@ This is incredibly useful, especially for shells which don't have separate start
 # SampShell Variables
 All config variables that're used within SampShell are prefixed with `SampShell_`; exported variables are all-caps (eg `SampShell_ROOTDIR`), and unexported ones are lower-case (eg `SampShell_git_default_master_branch`).
 
-## Universal Variables, `env`
-| Variable Name | Default | Description |
-|:--------------|---------|-------------|
-| `SampShell_ROOTDIR` | (special; see `env.sh`) | The root directory of where SampShell is located. |
-| `SampShell_GENERATED_DIR` | `$HOME` (or if unset, `/tmp`) | The directory where "sampshell" files/folders are created. |
-| `SampShell_TRASHDIR` | `$SampShell_GENERATED_DIR/.sampshell-trash` | The default directory for the `trash` command. |
-| `SampShell_TMPDIR` | `$SampShell_GENERATED_DIR/tmp` | The directory for temp files for SampShell, and the `cdtmp` cmd. |
-| `SampShell_HISTDIR` | `SampShell_GENERATED_DIR/.sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. Also, in ZSH, where to store all the "log-all-commands" files. |
-| `SampShell_EDITOR` | `sublime4` | The default editor for `subl`. |
-| `SampShell_VERBOSE` | `1` if interactive, (empty) otherwise | Whether to log verbose messages (used in `SampShell_log`). |
-| `SampShell_TRACE` | (empty) | If set to `1`, all SampShell scripts will enable `set -o xtrace` at the very start. |
-| `SampShell_scratch` | N | N/A | Used within POSIX-compliant shell functions; always unset upon exit. |
+## POSIX Variables, `env`
+| Variable Name        | Default                                | Description                                                                        |
+|:---------------------|----------------------------------------|:-----------------------------------------------------------------------------------|
+| `SampShell_ROOTDIR`  | (see `env.sh`)                         | The root directory of where SampShell is located.                                  |
+| `SampShell_GENDIR`   | `$HOME` (or if unset, `/tmp`)          | The directory where "sampshell" files/folders are created.                         |
+| `SampShell_TRASHDIR` | `$SampShell_GENDIR/.sampshell-trash`   | The default directory for the `trash` command.                                     |
+| `SampShell_TMPDIR`   | `$SampShell_GENDIR/tmp`                | The directory for temp files for SampShell, and the `cdtmp` cmd.                   |
+| `SampShell_HISTDIR`  | `$SampShell_GENDIR/.sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. (Also used in ZSH.) |
+| `SampShell_EDITOR`   | `sublime4`                             | The default editor for `subl`.                                                     |
+| `SampShell_VERBOSE`  | `1` if interactive, (empty) otherwise  | Whether to log verbose messages (used in `SampShell_log`).                         |
+| `SampShell_TRACE`    | (empty)                                | If set to `1`, all SampShell scripts will `set -o xtrace` at the very start.       |
+| `SampShell_scratch`  | N/A                                    | Used within POSIX-compliant shell functions; always unset upon exit.               |
 
-## Universal Variables, `interactive`
+## POSIX Variables, `interactive`
 | Variable Name | Default | Description |
 |:--------------|---------|-------------|
 | `SampShell_experimental` | (empty) | Whether to enable "experimental" features I'm not quite sure about yet.
@@ -79,3 +79,4 @@ All config variables that're used within SampShell are prefixed with `SampShell_
 | Variable Name | Default | Description |
 |---------------|---------|-------------|
 | `SampShell_nosave_hist` | (unset) | Used internally within the `{disable,enable}-history` functions. |
+| `SampShell_HISTDIR`  | (see "POSIX Variables") | If set, history commands are also stored here (in addition to the main shell history)|

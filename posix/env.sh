@@ -55,27 +55,27 @@ fi
 export SampShell_EDITOR
 
 # Where all files that sampshell uses should by default be placed at.
-if [ -z "${SampShell_GENERATED_DIR-}" ]; then
-	SampShell_GENERATED_DIR="${HOME:-/tmp}" # Wack, who wouldnt have `$HOME` set
+if [ -z "${SampShell_GENDIR-}" ]; then
+	SampShell_GENDIR="${HOME:-/tmp}" # Wack, who wouldnt have `$HOME` set
 fi
-export SampShell_GENERATED_DIR
+export SampShell_GENDIR
 
 # Where files moved from the `trash` command should go
 if [ -z "${SampShell_TRASHDIR-}" ]; then
-	SampShell_TRASHDIR="$SampShell_GENERATED_DIR/.sampshell-trash"
+	SampShell_TRASHDIR="$SampShell_GENDIR/.sampshell-trash"
 fi
 export SampShell_TRASHDIR
 
 # Where temporary files by SampShell go.
 if [ -z "${SampShell_TMPDIR-}" ]; then
-	SampShell_TMPDIR="$SampShell_GENERATED_DIR/tmp"
+	SampShell_TMPDIR="$SampShell_GENDIR/tmp"
 fi
 export SampShell_TMPDIR
 
 # Where history files go. Note that unlike other variables, a default won't be
 # added if `$SampShell_HISTDIR` is empty, as that indicates no history.
 if [ -z "${SampShell_HISTDIR+1}" ]; then
-	SampShell_HISTDIR="$SampShell_GENERATED_DIR/.sampshell-history"
+	SampShell_HISTDIR="$SampShell_GENDIR/.sampshell-history"
 fi
 export SampShell_HISTDIR
 
