@@ -68,7 +68,7 @@ export SampShell_TRASHDIR
 
 # Where temporary files by SampShell go.
 if [ -z "${SampShell_TMPDIR-}" ]; then
-	SampShell_TMPDIR="$SampShell_GENERATED_DIR/.sampshell-tmp"
+	SampShell_TMPDIR="$SampShell_GENERATED_DIR/tmp"
 fi
 export SampShell_TMPDIR
 
