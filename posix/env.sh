@@ -183,29 +183,37 @@ SampShell_parallelize_it () {
 	# Support for when the shell is ZSH, when we explicitly have `-e`.
 	[ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
 
-	SampShell_scratch=
 	if [ "${1-}" = -- ]; then
-		SampShell_scratch=0
 		shift
 	elif [ "${1-}" = -e ]; then
 		SampShell_scratch=1
 		shift
+	elif [ "$#" = 0 ] || [ "$1" = -h ] || [ "$1" = --help ]; then
+		if [ "$1" = -h ] || [ "$1" = --help ]; then
+			set -- 0
+		else
+			set -- 64
+		fi
+		{
+			echo "usage: SampShell_parallelize_it [-e] [--] fn [args ...]"
+			echo "(-e does shell expansion on args; without it, args are quoted)"
+		} >&"$((1 + (! $1) ))"
+		return "$1"
 	fi
 
-	# Only support `-h` if `--` wasn't given
-	if [ -z "${1-}" ] || { [ "$SampShell_scratch" != 0 ] && [ "$1" = -h ]; }; then
-		echo "usage: SampShell_parallelize_it [-e] [--] fn [args ...]" >&2
-		echo "(-e does shell expansion on args; without it, args are quoted)"
-		unset -v SampShell_scratch
+	# Make sure a function was given
+	if ! command -v "$1" >/dev/null 2>&1; then
+		echo 'SampShell_parallelize_it: no function given' >&2
+		unset -v SampShell_parallelize_it
 		return 1
 	fi
 
+	# Make sure the function is executable
 	if ! command -v "$1" >/dev/null 2>&1; then
 		printf 'SampShell_parallelize_it: fn is not executable: %s\n' "$1" >&2
 		return 1
 	fi
 
-	[ "$SampShell_scratch" = 0 ] && SampShell_scratch=
 
 	while [ "$#" -gt 1 ]; do
 		# If we're expanding...
