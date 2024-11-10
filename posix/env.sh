@@ -140,6 +140,16 @@ SampShell_add_to_path () {
 	esac
 }
 
+## Enable all debugging capabilities of SampShell, as well as the current shell
+SampShell_debug () {
+	export SampShell_VERBOSE=1 && export SampShell_TRACE=1 && set -o xtrace && set -o verbose
+}
+
+## Disable all debugging capabilities of SampShell, as well as the current shell
+SampShell_undebug () {
+	unset -v SampShell_VERBOSE && unset -v SampShell_TRACE && set +o xtrace && set +o verbose
+}
+
 ## CD's to the directory containing a file
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then

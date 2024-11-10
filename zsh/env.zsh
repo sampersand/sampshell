@@ -12,3 +12,11 @@ setopt GLOB_STAR_SHORT        # **.c is an alias for **/*.c
 false && setopt NO_ALIAS_FUNC_DEF MARK_DIRS noMULTI_FUNC_DEF # do we want no multi fn?
 setopt NO_GLOB_ASSIGN # `a=*` won't expand out the `*
 false && setopt warn_create_global warn_nested_var
+
+function SampShell-debug {
+	SampShell_debug && setopt {SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
+}
+
+function {SampShell-,}undebug {
+	SampShell_undebug && setopt NO_{SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
+}

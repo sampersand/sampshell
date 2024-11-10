@@ -67,6 +67,8 @@ alias '%= ' # Let you paste prompts in; zsh lets you alias `$` too.
 
 alias parallelize_it=SampShell_parallelize_it
 alias cdd=SampShell_cdd
+alias debug=SampShell_debug
+alias undebug=SampShell_undebug
 
 # Aliases for going up directories
 alias ..='cd ..'

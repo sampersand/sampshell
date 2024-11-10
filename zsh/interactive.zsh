@@ -21,3 +21,6 @@ reload () {
 		SampShell_dot_if_exists $file
 	done
 }
+
+alias debug=SampShell-debug
+alias undebug=SampShell-undebug
