@@ -1,337 +1,61 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
-setopt NOUNSET
+[[	$TRACE == 1 ]] && set -o xtrace
 
-# set -o nounset
-
-# die () { echo "$@"; exit 1; }
+die () { echo "$@" >&2; exit 1; }
 
 
-# scriptname=${0##*/}
-# shellname=
-# normal_vars=1
-# sampshell_vars=1
-# shellargs=
+shellname=
+sampshell_vars=1
+normal_vars=1
 
-# set -- "$@" SampShell_clean_shell_done
-# while option="$1"; shift; [ "$option" != SampShell_clean_shell_done ]; do
-# 	echo "[$@] $option"
-# 	case "$option" in
-# 		-h) die 'short help' ;;
-# 		--help) die 'long help' ;;
+typeset -a env_vars
 
-# 		--shell=*) shellname="${option#--shell=}" ;;
-# 		--shell-arg=*)
-# 			tmp=$(printf %sx "${option#--shell-arg=}" | sed 's/./\\&/g') || return
-# 			tmp=${tmp%\\x}
-# 			shellargs="$shellargs${shellargs:+ }$tmp"
-# 			printf %s\\n "$shellargs"
-# 			;;
-		
-# 		--normal-vars) normal_vars=1 ;;
-# 		--sampshell-vars) sampshell_vars=1 ;;
-# 		--no-builtin-vars) sampshell_vars= normal_vars= ;;
-
-# 		--env=*) set -- "$@" "ENV=${option#--env=}" ;;
-		
-# 		# Shorthand
-# 		-v?*) set -- --var "${option#-v}" "$@" ;;
-# 		--var | -v) # don't support `--var=a=b`
-# 			case "$1" in
-# 				*=*) set -- "$@" "$1" ;;
-# 				[!A-Za-z_]* | *[!a-zA-Z0-9_]*) die 'invalid variable name: ' "$1" ;;
-# 				*) eval "set -- \"\$@\" \"$1=\$$1\"" ;;
-# 			esac
-# 			shift
-# 			;;
-# 		--) break;;
-# 		*)
-# 			if [ -z "$shellname" ]; then
-# 				shellname=$option
-# 			fi
-# 			set -- "$@" "$option"
-# 			until 
-# 				set -- "$@" "$option" 
-# 			fi
-# 			set -- "$option" "$@"
-# 			break ;;
-# 			 # die 'unknown arg:' "$option" ;;
-# 	esac
-# done
-
-# ## Setup normal variables, if that's defined.
-# if [ -n "$normal_vars" ]; then
-# 	[ -n "${TERM+1}" ] && set -- TERM="$TERM" "$@"
-# 	[ -n "${HOME+1}" ] && set -- HOME="$HOME" "$@"
-# 	set -- SHLVL="${SHLVL:-2}" "$@"
-# fi
-
-# if [ -n "$sampshell_vars" ]; then
-# 	# TODO: set other variables
-# 	set -- SampShell_ROOTDIR="$SampShell_ROOTDIR" "$@"
-# fi
-
-# echo $SHELL $0
-# set -x
-
-# exec env -i "$@" "$shellname" $shellargs
-
-# # if [ -z "$shellname" ]; then
-# # 	if [ "$#" -ne 0 ]; then
-# # 		shellname=$1
-# # 		shift
-# # 	else
-# # 		shellname=${SHELL:?need SHELL set if shellname isnt}
-# # 	fi
-# # fi
-
-# # if [ -n "$normal_vars" ]; then
-# # 	[ -n "${TERM+1}" ] && set -- TERM="$TERM" "$@"
-# # 	[ -n "${HOME+1}" ] && set -- HOME="$HOME" "$@"
-# # 	echo 'todo: shlvl'
-# # 	set -- "$@" SHLVL="${SHLVL:-2}"
-# # fi
-
-# # if [ -n "$sampshell_vars" ]; then
-# # 	# TODO: set other variables
-# # 	set -- "SampShell_ROOTDIR=$SampShell_ROOTDIR" "$@"
-# # fi
-
-# # set -- SHELL=$shellname "$@"
+while [[ $# > 0 ]]; do
+	case $1 in
+		-h) die 'short help' ;;
+		--help) die 'long help' ;;
 
 
-# #- --
-# # typeset -a env_vars=()
+		--shell=*) shellname=${1#--shell=} ;;
 
-# # usage () { cat <<USAGE; }
-# # usage: $scriptname [options] [--] args
-# # options:
-# # 	-h, --help                 print usage
-# # 	-E, --env      same as -vENV
-# # 		 --env=PATH same as -vENV=PATH
-# # 	-S, --sampshell export all sampshell variables
-# # 	-N, --normal    export expected critical variables
-# # 	-n, --none export no variables
+		--normal-vars) normal_vars=1 ;;
+		--sampshell-vars) sampshell_vars=1 ;;
+		--no-builtin-vars) sampshell_vars= normal_vars= ;;
 
-# # 	-vVAR=VAL, --var VAR=VAL adds VAR (with value VAL) to the list of new shell vars
-# # 	-vVAR, --var VAR         same as -v"VAR=\$VAR"
+		--env) env_vars+=(ENV=${ENV?}) ;;
+		--env=*) env_vars+=(ENV=${1#--env=}) ;;
 
-# # 	-a
+		-v?*) set -- -v ${1#-v} $@[2,$#] ;&
+		-v | --var) # don't support --var=a=b
+			[[ ! -v 2 ]] && die 'need an argument for -v/--var'
+			case $2 in
+				*=*) env_vars+=($1) ;;
+				*) env_vars+=($1=${(P)1}) ;;
+			esac
+			;;
+		--) shift; break;;
+		*) break ;;
+	esac
+	shift
+done
 
-# # 	-n, --none  dont use any arguments
-# # 	--normal
-# # 	-s, --sampshell use sampshell arguments
-# # 	-S, --no-sampshell dont use sampshell arguments
+if [[ -z $shellname ]]; then
+	[[ $1 = [^-]* ]] && { shellname=$1; shift; }
+	: ${shellname:=${SHELL:?no shell provided, and no SHELL in scope}}
+fi
 
-# # 	-sSHELL, --shell=SHELL The shell to use
-# # 	-s, --shell            same as --shell=/bin/sh
-# # 	-vVAR=VAL, --var VAR=VAL adds VAR (with value VAL) to the list of new shell vars
-# # 	-vVAR              same as -v"VAR=\$VAR"
-# # USAGE
-# # # set -- "$@" SampShell_clean_shell_end_of_arguments
+## Setup normal variables, if that's defined.
+if [[ -n $normal_vars ]]; then
+	env_vars[1,0]=SHELL=$shellname
+	[[ -v TERM ]] && env_vars[1,0]=TERM=$TERM
+	[[ -v HOME ]] && env_vars[1,0]=HOME=$HOME
+	[[ -v SHLVL ]] && env_vars[1,0]=SHLVL=$((SHLVL-1))
+fi
 
-# # while [ "$#" -ne 0 ]; do
-# # # until [ "$1" = SampShell_clean_shell_end_of_arguments ]; do
-# # 	case "$1" in
-# # 		-h | --help) die 'todo' ;;
-		
-# # 		--shell=?*) shellname=${1#--shellname=} ;;
-# # 		--shell=) die 'need an argument for --shell' ;;
-# # 		-s?*) shellname=${1#-s} ;;
-# # 		-s | --shell) shellname=/bin/sh ;;
+if [ -n "$sampshell_vars" ]; then
+	# TODO: set other variables
+	[[ -v SampShell_ROOTDIR ]] && env_vars[1,0]=SampShell_ROOTDIR=$SampShell_ROOTDIR
+fi
 
-# # 		-N) normal_vars=1 ;;
-# # 		-n) normal_vars= sampshell_vars= ;;
-
-# # 		-v=* | --var=*) die 'need a name for -v' ;;
-# # 		--var)
-# # 			[ "$#" -eq 1 ] && die 'need an arg for --var'
-# # 			var="-v$2"
-# # 			shift 2
-# # 			set -- "$var" "$@"
-# # 			continue ;;
-# # 		-v*=*)
-# # 			prefix=${1%%=*}
-# # 			value=${1#"$prefix"}
-# # 			var=${prefix#-v}
-# # 			env_vars+=("$var=$value")
-# # 			;;
-# # 		-v?*)
-# # 			var=${1#-v}
-# # 			case $var in *[!a-zA-Z_0-9]*) die 'invalid!'; esac
-# # 			eval "value=\"\$$var\""
-# # 			env_vars+=("$var=$value")
-# # 			;;
-# # 		-v)
-# # 			var="-v${2:?need an argument for -v}"
-# # 			shift 2
-# # 			set -- "$var" "$@"
-# # 			continue
-# # 			;;
-
-# # 		-a*) shellargs=${1#-a} ;;
-# # 		--) break;;
-# # 		-[!-]?*)
-# #          rest2="${1#-?}"
-# #          rest1="${1%"${rest2}"}"
-# #          shift # delete the option we just split apart
-# #          set -- "${rest1}" "-${rest2}" "$@" # add the split options back
-# #          continue ;;
-			
-# # 		*=*) die 'todo' ;;
-# # 		*)
-# # 			if [ -z "$shellname" ]; then
-# # 				shellname=$1
-# # 				shift
-# # 				continue
-# # 			fi
-
-# # 			break
-# # 	esac
-
-# # 	shift
-# # done
-
-# # echo ${(kv)env_vars}
-
-# # if [ -z "$shellname" ]; then
-# # 	if [ "$#" -ne 0 ]; then
-# # 		shellname=$1
-# # 		shift
-# # 	else
-# # 		shellname=${SHELL:?need SHELL set if shellname isnt}
-# # 	fi
-# # fi
-
-# # if [ -n "$normal_vars" ]; then
-# # 	[ -n "${TERM+1}" ] && set -- TERM="$TERM" "$@"
-# # 	[ -n "${HOME+1}" ] && set -- HOME="$HOME" "$@"
-# # 	echo 'todo: shlvl'
-# # 	set -- "$@" SHLVL="${SHLVL:-2}"
-# # fi
-
-# # if [ -n "$sampshell_vars" ]; then
-# # 	# TODO: set other variables
-# # 	set -- "SampShell_ROOTDIR=$SampShell_ROOTDIR" "$@"
-# # fi
-
-# # set -- SHELL=$shellname "$@"
-
-# # set -xv
-# # exec env -i "$@" "$shellname" $shellargs
-
-# # # if [ -n "${env_path+1}" ]; then
-# # # 	[ -z "$env_path" ] && samp_vars=1
-# # # 	set -- "$@" ENV="${env_path:-"${SampShell_ROOTDIR?}/interactive.sh"}"
-# # # fi
-
-
-# # # exit
-# # # echo 3
-
-# # # clean_shell () {
-# # # 	: "${1:?first argument must be a shell}"
-# # # 	[ -n "$TERM" ] && set -- "TERM=$TERM" "$@"
-# # # 	env -i \
-# # # 		SHELL="${clean_sh_shell:-/bin/sh}" \
-# # # 		"HOME=$HOME" \
-# # # 		"$@" \
-# # # 		"${clean_sh_shell:-/bin/sh}" \
-# # # 		${clean_sh_args}
-# # # }
-
-# # # #!/bin/sh
-
-# # # clear_all=1
-# # # : "${shell_path="/bin/sh"}"
-# # # normal_vars=1
-# # # env_path=
-# # # samp_vars=1
-
-# # # if [ -n "${normal_vars+1}" ]; then
-# # # 	[ -n "${TERM+1}" ] && set -- "$@" TERM="$TERM"
-# # # 	[ -n "${HOME+1}" ] && set -- "$@" HOME="$HOME"
-# # # 	[ -n "${SHLVL+1}" ] && set -- "$@" SHLVL="$SHLVL"
-# # # fi
-
-# # # if [ -n "${env_path+1}" ]; then
-# # # 	[ -z "$env_path" ] && samp_vars=1
-# # # 	set -- "$@" ENV="${env_path:-"${SampShell_ROOTDIR?}/interactive.sh"}"
-# # # fi
-
-# # # if [ -n "$samp_vars" ]; then
-# # # 	set -- "$@" SampShell_ROOTDIR="$SampShell_ROOTDIR"
-# # # fi
-
-# # # if [ -n "$clear_all" ]; then
-# # # 	set -- -i "$@"
-# # # fi
-
-# # # echo exec env "$@" "$shell_path"
-
-# # # # until [ "$#" = 0 ]
-# # # # do
-# # # # 	case "$1" in
-# # # # 		-h)
-# # # # 			cat <<EOS >&2
-# # # # usage: clean_sh [options] [--] [var=val [...]]
-# # # # options:
-# # # # 	-h show help
-# # # # 	-i export no environment variables
-# # # # 	-I export all environment variables
-# # # # 	-v[VAL] export expected variables; if val is given, SHELL is set to it.
-# # # # 	-s export sampshell variables;
-# # # # 	-e[path] set ENV on startup; defaults to \$SampShell_ROOTDIR/interactive.sh
-# # # # 	-SPATH set the path to sh; defaults to /bin/sh.
-# # # # EOS
-# # # # 			exit 255 ;;
-
-# # # # 		-i) clear_all=1 ;;
-# # # # 		-I) clear_all= ;;
-
-# # # # 		-e*)
-# # # # 			env_path="${1#-e}"
-# # # # 			env_path="${env_path:-"${SampShell_ROOTDIR?}/interactive.sh"}"
-# # # # 			;;
-
-# # # # 		-s) samp_vars=1 ;;
-
-# # # # 		-p*)
-# # # # 			SampShell_scratch="${1#-p}"
-# # # # 			set -- "$@" PATH="${SampShell_scratch:-"$PATH"}"
-# # # # 			;;
-
-# # # # 		-n*)
-# # # # 			normal_vars=1
-# # # # 			# SampShell_scratch="${1#-v}"
-# # # # 			# set -- "$@" SHELL="${SampShell_scratch:-/bin/sh}"
-# # # # 			# unset -v SampShell_scratch
-# # # # 			;;
-# # # # 		--) shift; break ;;
-# # # # 		*=*) break ;;
-# # # # 		-*) echo "unknown option: $1" >&2; exit 1 ;;
-# # # # 	esac
-# # # # 	shift
-# # # # done
-
-
-# # # # set -- "$@" SampShell_clean_shell_end_of_options
-# # # # until [ "$1" = 'SampShell_clean_shell_end_of_options' ]; do
-# # # # 	case "$1" in
-# # # # 		*=*) set -- "$@" "$1" ;;
-# # # # 		*) set -- "$@" "$1=$(eval echo \$"$1")" ;;
-# # # # 	esac
-# # # # 	shift
-# # # # done
-# # # # shift
-
-# # # # if [ "$clear_all" = 1 ]; then
-# # # # 	set -- -i "$@"
-# # # # fi
-
-# # # # case "$shell_path" in
-# # # # 	*=*) echo "oops, shell path has a '=' in it! setting '--' and hopefully it works?"
-# # # # 		set -- "$@" --
-# # # # 		;;
-# # # # esac
-# # # # echo exec env "$@" "$shell_path"
+exec env -i $env_vars $shellname $@
