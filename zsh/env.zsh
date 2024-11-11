@@ -1,6 +1,6 @@
 typeset -Uxg path # make sure `path` is unique, and then export it
 
-path+=(${0:P:h}/bin)
+path+=${0:P:h}/bin
 
 for file in "${0:P:h}"/non-interactive/*.zsh; do
 	source $file
