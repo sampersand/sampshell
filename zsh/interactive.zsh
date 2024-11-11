@@ -24,3 +24,10 @@ reload () {
 
 alias debug=SampShell-debug
 alias undebug=SampShell-undebug
+
+#---
+setopt HIST_SUBST_PATTERN
+echo 'todo: HIST_SUBST_PATTERN'
+setopt MAGIC_EQUAL_SUBST
+
+setopt NO_UNSET # I use this fairly frequently
