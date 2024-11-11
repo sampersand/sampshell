@@ -53,7 +53,7 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# If we're using ZSH, just use the builtin `${0:P:h}` to find it.
 	if [ -n "${ZSH_VERSION-}" ]; then
 		# We need to use `eval` in case shells don't understand `${0:P:h}`.
-		eval "SampShell_ROOTDIR=\"\${0:P:h}\""
+		eval 'SampShell_ROOTDIR="${0:P:h}"'
 	elif [ -n "${BASH_VERSION-}" ] && [ -n "${BASH_SOURCE-}" ]; then
 		SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
 		SampShell_ROOTDIR=${SampShell_ROOTDIR#?x}
