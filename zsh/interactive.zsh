@@ -1,3 +1,4 @@
+## TODO: Maybe also have a `.zprofile`?
 . ${0:P:h}/old/interactive.zsh
 
 for file in ${0:P:h}/interactive/*.zsh; do

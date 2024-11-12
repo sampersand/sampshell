@@ -1,4 +1,4 @@
-### Git Control
+### Git
 # This file is for ZSH config relating to git
 ###
 
