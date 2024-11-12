@@ -47,7 +47,7 @@ alias mv='mv -i'
 alias cp='cp -i'
 
 ## Shorthand aliases for the "safer" options
-alias r=trash
+alias t=trash
 alias m=mv-safe
 
 # Still let you do the builtins
