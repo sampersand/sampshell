@@ -10,6 +10,23 @@ done
 
 source ${0:P:h}/scripting-or-interactive.zsh
 
+####################################################################################################
+#                                            Functions                                             #
+####################################################################################################
+
+reload () {
+	# TODO: should we also load in the system config?
+	for file in ${ZDOTDIR:-$HOME}/.z{shenv,profile,shrc,login}; do
+		SampShell_dot_if_exists $file
+	done
+}
+
+
+
+####################################################################################################
+#                                    old stuff to sift through                                     #
+####################################################################################################
+
 # TODO: `CLOBBER_EMPTY` with `mv-safe` and defaults?
 
 ## Default options that really should be enabled. TODO: should i always set these?
@@ -57,3 +74,4 @@ echo 'todo: ZLE'
 DIRSTACKSIZE=30 # If it goes above this it's kinda hard to see.
 histchars[2]=, # as `^` is too far away lol
 REPORTTIME=3 # Report the time of commands that take more than N seconds
+

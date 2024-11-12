@@ -16,12 +16,6 @@ add-named-dir d ~/Desktop
 add-named-dir dl ~/Downloads
 add-named-dir ss $SampShell_ROOTDIR
 
-reload () {
-	for file in ${ZDOTDIR:-$HOME}/.z{shenv,profile,shrc,login}; do
-		SampShell_dot_if_exists $file
-	done
-}
-
 alias debug=SampShell-debug
 alias undebug=SampShell-undebug
 
