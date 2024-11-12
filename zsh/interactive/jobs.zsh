@@ -10,7 +10,7 @@ setopt CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 setopt HUP                # When the shell closes, send SIGUP to all jobs.
 
 ## Create the shorthand for `parallelize-it`
-parallelize-it () SampShell_parallelize_it $@
+function parallelize-it { SampShell_parallelize_it $@ }
 
 ## Experimental changes
 if [[ -n $SampShell_experimental ]]; then

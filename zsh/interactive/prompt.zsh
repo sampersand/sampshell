@@ -1,8 +1,13 @@
-setopt PROMPT_SUBST   # allows you to use variable substitutions in prompts
-setopt PROMPT_PERCENT # Allow `%` to be read properly
-setopt NO_PROMPT_BANG # Don't treat `!` specially, like posix does
+### Prompting in ZSH
 
-alias prp='print -P'
+# `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
+function prp { print -P $@ }
+
+## Options for the prompt
+setopt NO_PROMPT_BANG # Don't treat `!` specially, like POSIX does. We have our own prompts.
+setopt PROMPT_{CR,SP} # When a line before prompt doesn't end with a newline, print the inverted "%"
+setopt PROMPT_PERCENT # Enable `%` escapes in prompts.
+setopt PROMPT_SUBST   # Allows you to use variable substitutions in prompts
 
 function _samp_shell_ps1_hostname_username () {
     case $1 in
@@ -32,6 +37,7 @@ function _samp_shell_ps1_git_branch {
     fi
 }
 
+# TODO: handle rebasing and stuff
 function _samp_shell_rps1_git_status {
     local stat=0
     local line

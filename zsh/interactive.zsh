@@ -47,11 +47,6 @@ setopt HIST_NO_STORE # don't store history commands
 setopt CORRECT # Correct commands!
 setopt INTERACTIVE_COMMENTS # Suuuper useful, I do this all the time.
 
-## 16.2.8 Prompting
-# setopt PROMPT_BANG # Would be relevant if we were using just posix's PS1.
-setopt PROMPT_PERCENT # DEFAULT; interpret %-sequences within prompts
-setopt PROMPT_SUBST # allow interpolation within prompts
-
 ## 16.2.9 Scripts and Functions
 setopt MULTI_FUNC_DEF # unset what's in `env.zsh`, as i do this enough on the cmd line
 
