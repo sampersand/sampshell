@@ -2,6 +2,17 @@
 
 # TODO: `CLOBBER_EMPTY` with `mv-safe` and defaults?
 
+## Default options that really should be enabled. TODO: should i always set these?
+if true || [[ -n $SampShell_set_defaults_i_want_set ]]; then
+	setopt UNSET # allow variables to be empty
+	setopt BANG_HIST # DEFAULT; do `!`-style history expansion
+	setopt ALIASES # DEFAULT; I use them
+	setopt NO_IGNORE_EOF # DEFAULT;I use ctrl+d a lot
+	setopt NO_RM_STAR_SILENT # DEFAULT; make sure to ask for `rm *`
+	setopt CHECK_{,RUNNING_}JOBS # DEFUALT; make sure we dont exit with stuff
+	setopt PROMPT_SP # DEFAULT; print `%` on non-full lines
+fi
+
 ## 16.2.1 Changing Directories
 setopt AUTO_CD # cd to directories without using `cd`
 setopt AUTO_PUSHD # always push dirs onto the stack
@@ -14,10 +25,8 @@ echo 'todo: completion'
 
 ## 16.2.3 Expansion and Globbing
 setopt MAGIC_EQUAL_SUBST # Any arguments in the form `foo=expr` does `~`/`=` expansion on expr
-setopt UNSET # DEFAULT; allow variables to be empty
 
 ## 16.2.4 History
-setopt BANG_HIST # DEFAULT; do `!`-style history expansion
 [[ -n $SampShell_experimental ]] && setopt EXTENDED_HISTORY # store thigns in extended history
 setopt HIST_ALLOW_CLOBBER # Add `|` to history entries, so you can clobber things
 echo 'todo: more histories'
@@ -25,21 +34,16 @@ setopt HIST_IGNORE_SPACE # don't keep spaces
 setopt HIST_NO_STORE # don't store history commands
 
 ## 16.2.6 Input/Output
-setopt ALIASES # DEFAULT; I use them
 setopt NO_CLOBBER # Don't clobber files! safety first lol
 setopt CLOBBER_EMPTY # Lets you clobber empty files.
 setopt CORRECT # Correct commands!
-setopt NO_IGNORE_EOF # DEFAULT;I use ctrl+d a lot
 setopt INTERACTIVE_COMMENTS # Suuuper useful, I do this all the time.
-setopt NO_RM_STAR_SILENT # DEFAULT; make sure to ask for `rm *`
 
 ## 16.2.7 Job Control
 [[ -n $SampShell_experimental ]] && setopt AUTO_CONTINUE  # maybe? idk why its nto default
-setopt CHECK_{,RUNNING_}JOBS # DEFUALT; make sure we dont exit with stuff
 
 ## 16.2.8 Prompting
 # setopt PROMPT_BANG # Would be relevant if we were using just posix's PS1.
-setopt PROMPT_SP # DEFAULT; print `%` on non-full lines
 setopt PROMPT_PERCENT # DEFAULT; interpret %-sequences within prompts
 setopt PROMPT_SUBST # allow interpolation within prompts
 
@@ -48,3 +52,8 @@ setopt MULTI_FUNC_DEF # unset what's in `env.zsh`, as i do this enough on the cm
 
 ## 16.2.12 Zle
 echo 'todo: ZLE'
+
+## Variables
+DIRSTACKSIZE=30 # If it goes above this it's kinda hard to see.
+histchars[2]=, # as `^` is too far away lol
+REPORTTIME=3 # Report the time of commands that take more than N seconds
