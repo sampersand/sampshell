@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
-
-[[	$SampShell_TRACE == 1 ]] && set -o xtrace
+SampShell-use-strict
 
 scriptname=${0:t}
 die () { printf "%s: $1\\n" $scriptname $@[2,$#] >&2; exit 1; }

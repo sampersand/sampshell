@@ -31,3 +31,20 @@ _ <S>
 
     The last argument of the previous command. Also, this parameter is set in the environment of every command executed to the full pathname of the command. 
     uh its not set?
+
+### These were borrowed from someone, and i want to look into using them myself
+SampShell_exec-or-edit () if [[ -x $1 ]]; then
+    $1
+else
+    subl $1
+fi
+
+alias -s {sh,zsh,py}=SampShell_exec-or-edit
+alias -s {txt,json,ini,toml,yml,yaml,xml,html,md,lock,snap,rst,cpp,h,rs}=subl
+alias -s {log,csv}=bat
+alias -s git='git clone'
+alias -s o='nm --demangle'
+alias -s so='ldd'
+###
+
+location=$(readlink -f ${(%):-%N}) what lol
