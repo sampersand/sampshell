@@ -44,8 +44,6 @@ setopt HIST_IGNORE_SPACE # don't keep spaces
 setopt HIST_NO_STORE # don't store history commands
 
 ## 16.2.6 Input/Output
-setopt NO_CLOBBER # Don't clobber files! safety first lol
-setopt CLOBBER_EMPTY # Lets you clobber empty files.
 setopt CORRECT # Correct commands!
 setopt INTERACTIVE_COMMENTS # Suuuper useful, I do this all the time.
 

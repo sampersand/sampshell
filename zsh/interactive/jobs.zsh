@@ -2,7 +2,7 @@
 # This file is for config relating to jobs in ZSH.
 ###
 
-## Enable options
+## Enable options. Note the `CHECK_XXX_JOBS` options could technically be in safety.zsh
 setopt MONITOR            # Enable job control, in case it's not already sent
 setopt AUTO_CONTINUE      # Always sent `SIGCONT` when disowning jobs, so they run again.
 setopt CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
