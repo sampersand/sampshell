@@ -26,7 +26,10 @@
 ####
 
 ## Respect the 'SampShell_TRACE' environment variable
-[ "${SampShell_TRACE-}" = 1  ] && set -o xtrace
+if [ "${SampShell_TRACE-}" = 1  ]; then
+   set -o xtrace
+   export SampShell_TRACE
+fi
 
 ## Safety first!
 # - `nounset` ensures that using any unset variables will cause the program to

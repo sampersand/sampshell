@@ -293,5 +293,4 @@ fi
 # in this file, so that we don't print the traces for the other setup.
 if [ -n "$SampShell_TRACE" ]; then
 	set -o xtrace
-	set -o verbose
 fi
