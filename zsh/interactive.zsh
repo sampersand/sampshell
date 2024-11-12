@@ -1,5 +1,7 @@
 . ${0:P:h}/old/interactive.zsh
 
+source ${0:P:h}/scripting-or-interactive.zsh
+
 # TODO: `CLOBBER_EMPTY` with `mv-safe` and defaults?
 
 ## Default options that really should be enabled. TODO: should i always set these?

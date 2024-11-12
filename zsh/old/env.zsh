@@ -21,13 +21,13 @@ setopt BAD_PATTERN # Bad patterns error out, instead of just silently accepting 
 
 hash -d ss=$SampShell_ROOTDIR
 
-function SampShell-debug {
-	SampShell_debug && setopt {SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
-}
+# function SampShell-debug {
+# 	SampShell_debug && setopt {SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
+# }
 
-function {SampShell-,}undebug {
-	SampShell_undebug && setopt NO_{SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
-}
+# function {SampShell-,}undebug {
+# 	SampShell_undebug && setopt NO_{SOURCE_TRACE,UNSET,WARN_CREATE_GLOBAL,WARN_NESTED_VAR}
+# }
 
 
 setopt NO_IGNORE{_CLOSE,}_BRACES # Allow `}` to also be a `;`, also 

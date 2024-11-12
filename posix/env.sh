@@ -10,6 +10,7 @@
 #   1. Create `Sampshell_XXX` variables (if they dont exist), and export them.
 #   2. Setup `SampShell_xxx functions.
 #   3. If `$SampShell_ROOTDIR` is set, add POSIX-compliant utilites to `$PATH`.
+#   4. If `$SampShell_TRACE` is set, enable `xtrace` and `verbose`.
 #
 #
 # Required Variables
@@ -101,8 +102,12 @@ export SampShell_TRACE
 #                                  Functions                                   #
 ################################################################################
 
+# Note that we `unalias` all these functions right before defining them, just
+# on the off chance that they were `alias`ed.
+
 ## Logs a message if `$SampShell_VERBOSE` is enabled; It forwards all its args
 # to printf, except it adds a newline to the end of the format argument.
+unalias SampShell_log >/dev/null 2>&1
 SampShell_log () {
 	[ -z "${SampShell_VERBOSE-}" ] && return 0
 	SampShell_scratch="${1:?need a fmt}"
@@ -114,6 +119,7 @@ SampShell_log () {
 
 ## Same as `.`, except it only sources files if the first argument exists; will
 # return `0` if the file doesn't exist.
+unalias SampShell_dot_if_exists >/dev/null 2>&1
 SampShell_dot_if_exists () {
 	if [ -e "${1:?need file to source}" ]; then
 		. "$@"
@@ -125,6 +131,7 @@ SampShell_dot_if_exists () {
 }
 
 ## Returns whether or not the given command exists.
+unalias SampShell_command_exists >/dev/null 2>&1
 SampShell_command_exists () {
 	command -V "${1:?need command to check}" >/dev/null 2>&1
 }
@@ -133,6 +140,7 @@ SampShell_command_exists () {
 # PATH="$PATH:$1", except it handles the case when PATH does't exist, and makes
 # sure to not add $1 if it already exists; note that this doesn't export PATH.
 # Notably this doesn't export the path.
+unalias SampShell_add_to_path >/dev/null 2>&1
 SampShell_add_to_path () {
 	case ":${PATH-}:" in
 		*:"${1:?need a path to add to PATH}":*) : ;;
@@ -141,16 +149,19 @@ SampShell_add_to_path () {
 }
 
 ## Enable all debugging capabilities of SampShell, as well as the current shell
+unalias SampShell_debug >/dev/null 2>&1
 SampShell_debug () {
 	export SampShell_VERBOSE=1 && export SampShell_TRACE=1 && set -o xtrace && set -o verbose
 }
 
 ## Disable all debugging capabilities of SampShell, as well as the current shell
+unalias SampShell_undebug >/dev/null 2>&1
 SampShell_undebug () {
 	unset -v SampShell_VERBOSE && unset -v SampShell_TRACE && set +o xtrace && set +o verbose
 }
 
 ## CD's to the directory containing a file
+unalias SampShell_cdd >/dev/null 2>&1
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
 		shift
@@ -179,6 +190,7 @@ SampShell_cdd () {
 }
 
 ## Parallelize a function by making a new job once per argument given
+unalias SampShell_parallelize_it >/dev/null 2>&1
 SampShell_parallelize_it () {
 	# Support for when the shell is ZSH, when we explicitly have `-e`.
 	[ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
@@ -270,4 +282,16 @@ if [ -n "${SampShell_ROOTDIR+1}" ]; then
 
 	SampShell_add_to_path "$SampShell_ROOTDIR/posix/bin"
 	export PATH
+fi
+
+################################################################################
+#                           Respect SampShell_TRACE                            #
+################################################################################
+
+## Respect `SampShell_TRACE` in all scripts that `.`` this file, regardless of
+# whether they're a SampShell script or not. Note we want this as the last thing
+# in this file, so that we don't print the traces for the other setup.
+if [ -n "$SampShell_TRACE" ]; then
+	set -o xtrace
+	set -o verbose
 fi
