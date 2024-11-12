@@ -1,12 +1,14 @@
-. ${0:P:h}/old/env.zsh
+# NOTE: this file should probably be kept as a single file, so we aren't doing a ton of stuff for
+# every single zsh invocation.
+
+. ${0:P:h}/old/env.zsh # TODO: remove me
 
 ####################################################################################################
 #                                            Setup Path                                            #
 ####################################################################################################
 
 typeset -xgU path # Ensure `path` is unique, and export it.
-
-path+=${0:P:h}/bin # add the ZSH bin in.
+path+=${0:P:h}/bin # Add our ZSH-only shell functions in 
 
 ####################################################################################################
 #                                        Universal Options                                         #
@@ -17,7 +19,8 @@ setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
 setopt RC_QUOTES       # Let you do type `''` within single quotes, eg `'let''s go to the store!'`
 
 ## Default options that really should be enabled. TODO: should i always set these?
-if true || [[ -n $SampShell_set_defaults_i_want_set ]]; then
+if [[ -o interactive ]] || [[ -n $SampShell_set_defaults_i_want_set ]]; then
+	SampShell_log 'todo: do we always want to set these defaults? or just in interactive mode'
 	setopt BAD_PATTERN     # bad patterns error out
 	setopt NOMATCH         # non-matching globs error out.
 	setopt EQUALS          # Do `=` expansion
@@ -67,4 +70,3 @@ if [[ -n $SampShell_TRACE ]]; then
 	setopt SOURCE_TRACE XTRACE VERBOSE
 	export SampShell_TRACE # in case it's not already exported for some weird reason
 fi
-
