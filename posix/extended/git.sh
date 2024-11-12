@@ -144,12 +144,13 @@ gm () {
 
 alias gdm='gd "$(SampShell_master_branch)"'
 gd () {
-	[ "$#" = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff "$@"
 }
 
 alias gddm='gdd "$(SampShell_master_branch)"'
 gdd () {
-	[ "$#" = 0 ] && set -- '@{-1}'
+	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff --name-status "$@"
 }
+alias gdol=gdd
