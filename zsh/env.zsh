@@ -23,7 +23,7 @@ alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
 # the `xtrace` option only persists within the function that sets it, so we can't actually use a
 # function for `SampShell_debug` or `SampShell_undebug`, and we're stuck with aliases... If there's
 # a better option for this i'd be _all_ ears.
-unfunction SampShell_debug SampShell_undebug
+unfunction SampShell_debug SampShell_undebug >/dev/null 2>&1
 alias SampShell_debug='{
 	export SampShell_{VERBOSE,TRACE}=1 &&
 	setopt SOURCE_TRACE XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR;
