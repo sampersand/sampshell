@@ -1,3 +1,4 @@
+return
 alias d=dirs
 alias '$= ' # Make sure an `$` at the beginning of a line will be ignored.
 
