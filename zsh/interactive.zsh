@@ -7,12 +7,12 @@ source ${0:P:h}/scripting-or-interactive.zsh
 ## Default options that really should be enabled. TODO: should i always set these?
 if true || [[ -n $SampShell_set_defaults_i_want_set ]]; then
 	setopt UNSET # allow variables to be empty
-	setopt BANG_HIST # DEFAULT; do `!`-style history expansion
-	setopt ALIASES # DEFAULT; I use them
-	setopt NO_IGNORE_EOF # DEFAULT;I use ctrl+d a lot
-	setopt NO_RM_STAR_SILENT # DEFAULT; make sure to ask for `rm *`
+	setopt BANG_HIST # do `!`-style history expansion
+	setopt ALIASES # I use them
+	setopt NO_IGNORE_EOF #  use ctrl+d a lot
+	setopt NO_RM_STAR_SILENT # make sure to ask for `rm *`
 	setopt CHECK_{,RUNNING_}JOBS # DEFUALT; make sure we dont exit with stuff
-	setopt PROMPT_SP # DEFAULT; print `%` on non-full lines
+	setopt PROMPT_SP # print `%` on non-full lines
 fi
 
 ## 16.2.1 Changing Directories

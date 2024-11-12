@@ -1,4 +1,5 @@
 ## Options I want enabled for scripts I write. This should be sourced at the top of every script
+# im thinking of removing this
 
 ## include the interactive-or-scripting config, ie stuff we don't want for _all_ scripts, but just
 # sampshell scripts.
