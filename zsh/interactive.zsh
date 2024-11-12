@@ -1,5 +1,9 @@
 . ${0:P:h}/old/interactive.zsh
 
+for file in ${0:P:h}/interactive/*.zsh; do
+	source $file
+done
+
 source ${0:P:h}/scripting-or-interactive.zsh
 
 # TODO: `CLOBBER_EMPTY` with `mv-safe` and defaults?
@@ -40,9 +44,6 @@ setopt NO_CLOBBER # Don't clobber files! safety first lol
 setopt CLOBBER_EMPTY # Lets you clobber empty files.
 setopt CORRECT # Correct commands!
 setopt INTERACTIVE_COMMENTS # Suuuper useful, I do this all the time.
-
-## 16.2.7 Job Control
-[[ -n $SampShell_experimental ]] && setopt AUTO_CONTINUE  # maybe? idk why its nto default
 
 ## 16.2.8 Prompting
 # setopt PROMPT_BANG # Would be relevant if we were using just posix's PS1.
