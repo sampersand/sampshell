@@ -9,7 +9,7 @@ setopt PROMPT_{CR,SP} # When a line before prompt doesn't end with a newline, pr
 setopt PROMPT_PERCENT # Enable `%` escapes in prompts.
 setopt PROMPT_SUBST   # Allows you to use variable substitutions in prompts
 
-function _samp_shell_ps1_hostname_username () {
+function SampShell_ps1_hostname_username () {
     case $1 in
         (0)
             return ;;
@@ -25,7 +25,7 @@ function _samp_shell_ps1_hostname_username () {
 }
 
 
-function _samp_shell_ps1_git_branch {
+function SampShell_ps1_git_branch {
     local br=${"$(git branch --show-current 2>&-)":gs/%/%%} # branches can have `%` in them
 
     if [[ $1 = 1 ]]; then
@@ -38,7 +38,7 @@ function _samp_shell_ps1_git_branch {
 }
 
 # TODO: handle rebasing and stuff
-function _samp_shell_rps1_git_status {
+function SampShell_rps1_git_status {
     local stat=0
     local line
     git status --porcelain 2>&- | while IFS= read -r line; do
@@ -115,7 +115,7 @@ function make-prompt {
     PS1+='%B%F{blue}]%b%f'                                 # ]
 
     # Add in the hostname, if applicable
-    PS1+="$(_samp_shell_ps1_hostname_username "$show_login_info" "$username" "$hostname")"
+    PS1+="$(SampShell_ps1_hostname_username "$show_login_info" "$username" "$hostname")"
 
     # Add ~path, possibly limiting it if $pathlen is nonzero
     [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
@@ -124,10 +124,10 @@ function make-prompt {
     [[ $pathlen != 0 ]] && PS1+='%<<'
 
     # Add git branch in
-    PS1+="%F{043}\$(_samp_shell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
+    PS1+="%F{043}\$(SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
 
     # git status
-    PS1+='$(_samp_shell_rps1_git_status)'
+    PS1+='$(SampShell_rps1_git_status)'
 
     # Trailing %
     PS1+='%b %F{8}'
