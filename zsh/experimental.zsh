@@ -2,6 +2,7 @@
 setopt CASE_GLOB CASE_PATHS # case-insensitive globbing??
 
 setopt GLOB_ASSIGN # what's this
+setopt NO_GLOB_ASSIGN # `a=*` will set a to *, not expand out *; use `a=(*)` for that.
 setopt HIST_SUBST_PATTERN # TODO
 
 setopt HIST_LEX_WORDS # Look into that

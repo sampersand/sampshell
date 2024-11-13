@@ -54,8 +54,8 @@ function enable-history { fc -P && SampShell_nosave_hist= && echo 'History savin
 
 # Don't store enable-history or disable-history
 zshaddhistory_functions[1,0]=(SampShell-nosave-enable-disable-history) # Put before record-every-command
-function SampShell-nosave-enable-disable-history { [[ "${1%$'\n'}" != ((en|dis)able-history ]] }
-
+function SampShell-nosave-enable-disable-history { [[ "${1%$'\n'}" != ((en|dis)able-history) ]] }
+exit
 
 ####################################################################################################
 #                                            Functions                                             #

@@ -9,3 +9,4 @@ setopt EQUALS          # Do `=` expansion
 setopt GLOB            # Why wouldnt you
 setopt NO_{IGNORE_BRACES,IGNORE_CLOSE_BRACES} # make `a () { b }` valid.
 setopt SHORT_LOOPS     # I use this semi-frequently
+setopt RC_QUOTES       # Let you do type `''` within single quotes, eg `'let''s go to the store!'`
