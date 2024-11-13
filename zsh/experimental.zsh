@@ -4,6 +4,8 @@ setopt CASE_GLOB CASE_PATHS # case-insensitive globbing??
 setopt GLOB_ASSIGN # what's this
 setopt HIST_SUBST_PATTERN # TODO
 
+setopt HIST_LEX_WORDS # Look into that
+
 setopt MARK_DIRS
 setopt APPEND_HISTORY
 setopt PATH_DIRS
@@ -48,3 +50,4 @@ alias -s so='ldd'
 ###
 
 location=$(readlink -f ${(%):-%N}) what lol
+HISTFILESIZE=??
