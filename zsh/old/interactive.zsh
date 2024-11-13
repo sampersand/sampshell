@@ -11,11 +11,18 @@ alias clsh=clean-shell
 ## Others
 setopt BAD_PATTERN # This is crazy not to have lol
 
-[[ -n $SampShell_TMPDIR ]] && add-named-dir tmp $SampShell_TMPDIR
-add-named-dir d ~/Desktop
-add-named-dir dl ~/Downloads
-add-named-dir ss $SampShell_ROOTDIR
+# [[ -n $SampShell_TMPDIR ]] && add-named-dir tmp $SampShell_TMPDIR
+# add-named-dir d ~/Desktop
+# add-named-dir dl ~/Downloads
+# add-named-dir ss $SampShell_ROOTDIR
 
+function debug {
+	if [[ $# = 0 ]]; then
+		SampShell_VERBOSE=1 SampShell_TRACE=1 $@
+	else
+		SampShell_debug
+	fi
+}
 alias debug=SampShell-debug
 alias undebug=SampShell-undebug
 

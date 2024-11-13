@@ -8,6 +8,13 @@ for file in ${0:P:h}/interactive/*.zsh; do
 	source $file
 done
 
+### Add named directories
+[[ -n $SampShell_ROOTDIR ]] && add-named-dir ss $SampShell_ROOTDIR
+[[ -n $SampShell_TMPDIR ]] && add-named-dir tmp $SampShell_TMPDIR
+[[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
+[[ -d ~/Desktop ]] && add-named-dir d ~/Desktop
+[[ -d ~/Downloads ]] && add-named-dir dl ~/Downloads
+
 source ${0:P:h}/scripting-or-interactive.zsh
 
 ####################################################################################################

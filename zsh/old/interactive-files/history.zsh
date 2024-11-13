@@ -12,7 +12,7 @@ echo 'todo:L HIST_IGNORE_ALL_DUPS'
 setopt HIST_IGNORE_SPACE    # Don't record lines that start with spaces
 setopt NO_HIST_IGNORE_DUPS  # Just to declutter `setopt`
 setopt HIST_LEX_WORDS       # We don't store enough for it to matter.
-setopt HIST_NO_FUNCTIONS    # Don't put functions in the history, they're a pain.
+setopt NO_HIST_NO_FUNCTIONS    # Don't put functions in the history, they're a pain.
 setopt HIST_NO_STORE        # Don't store `history`/`fc` commands
 
 ## Make `zshaddhistory_functions` a unique array.
