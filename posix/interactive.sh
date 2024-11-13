@@ -63,8 +63,6 @@ alias ls='ls -AFq' # Always print out `.` files, and for longform, human-readabl
 alias ll='ls -l'   # Shorthand for `ls -al`
 
 ## Misc
-alias '%= ' # Let you paste prompts in; zsh lets you alias `$` too.
-
 alias parallelize_it=SampShell_parallelize_it
 alias cdd=SampShell_Cdd
 alias debug=SampShell_debug

@@ -9,6 +9,13 @@ for file in ${0:P:h}/interactive/*.zsh; do
 	source $file
 done
 
+## Add commonly-used aliases
+[[ $VENDOR != apple ]] && eval "$(alias -L ls)hGb" # add more options to `ls` which I know macOS supports
+alias '%= ' '$= ' # `$` or `%` alone at he start of a line is ignored; lets you paste commands in.
+alias d=dirs
+alias clsh=clean-shell
+
+
 ### Add named directories
 [[ -n $SampShell_ROOTDIR ]] && add-named-dir ss $SampShell_ROOTDIR
 [[ -n $SampShell_TMPDIR ]] && add-named-dir tmp $SampShell_TMPDIR
@@ -31,7 +38,6 @@ function reload {
 
 ## Adds in "clean shell" functions, and the clsh alias
 setopt EQUALS
-alias clsh=clean-shell
 function clean-sh { clean-shell --shell =sh $@ }
 function clean-zsh { clean-shell --shell =zsh $@ }
 SampShell_command_exists dash && function clean-dash { clean-shell --shell =dash $@ }
