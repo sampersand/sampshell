@@ -4,6 +4,7 @@
 # TODO: can you autoload multiple times? if so stick this in individual files, eg macos.zsh
 autoload -U compinit; compinit
 
+## Load in all the setup that's in separate files.
 for file in ${0:P:h}/interactive/*.zsh; do
 	source $file
 done
@@ -15,25 +16,31 @@ done
 [[ -d ~/Desktop ]] && add-named-dir d ~/Desktop
 [[ -d ~/Downloads ]] && add-named-dir dl ~/Downloads
 
-source ${0:P:h}/scripting-or-interactive.zsh
 
 ####################################################################################################
 #                                            Functions                                             #
 ####################################################################################################
 
-reload () {
-	# TODO: should we also load in the system config?
+# Reloads the shell by rerunning all the ~/.zxxx` scripts.
+# TODO: should we also load in the system config?
+function reload {
 	for file in ${ZDOTDIR:-$HOME}/.z{shenv,profile,shrc,login}; do
 		SampShell_dot_if_exists $file
 	done
 }
 
-
+## Adds in "clean shell" functions, and the clsh alias
+setopt EQUALS
+alias clsh=clean-shell
+function clean-sh { clean-shell --shell =sh $@ }
+function clean-zsh { clean-shell --shell =zsh $@ }
+SampShell_command_exists dash && function clean-dash { clean-shell --shell =dash $@ }
 
 ####################################################################################################
-#                                    old stuff to sift through                                     #
+#                                              TODOS                                               #
 ####################################################################################################
 
+. ${0:P:h}/scripting-or-interactive.zsh
 # TODO: `CLOBBER_EMPTY` with `mv-safe` and defaults?
 
 ## Default options that really should be enabled. TODO: should i always set these?

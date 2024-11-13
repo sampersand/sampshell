@@ -14,8 +14,8 @@ options: (any time '=' is present after an argname, you can omit and put a space
    -h, --help show this message
 
    -E, --env[=VAL]  same as --var ENV=VAL; VAL defaults to \$ENV (err if env doesnt exist); -E always uses \$ENV
-   --shell=PROG     sets the shell; if unset, assumed to be the first non-positional arg
-   -s               set shell to /bin/sh
+   -sSHELL, --shell=PROG  sets the shell; if unset, assumed to be the first non-positional arg
+   -s                     same -s/bin/sh
 
    -n, --none clear all current variables for export; keeps -R though
    -N, --absolutely-none same as -n, except also clears -R
@@ -38,12 +38,13 @@ verbose_mode=
 
 typeset -a env_vars
 
-
 while [[ $# > 0 ]]; do
 	option=$1
 	shift
 	case $option in
 		-h | --help) shortusage; [[ $option == --help ]] && longusage; exit ;;
+
+		-s?*) set -- --shell ${option#-s} $@; continue ;;
 		-s) shellname=/bin/sh ;;
 
 		--shell=*) set -- ${option#--shell=} $@ ;&
