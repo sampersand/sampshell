@@ -80,6 +80,7 @@ setopt HIST_ALLOW_CLOBBER # Add `|` to history entries, so you can clobber thing
 echo 'todo: more histories'
 setopt HIST_IGNORE_SPACE # don't keep spaces
 setopt HIST_NO_STORE # don't store history commands
+setopt histreduceblanks
 
 ## 16.2.6 Input/Output
 setopt CORRECT # Correct commands!

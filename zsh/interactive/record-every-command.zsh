@@ -4,7 +4,6 @@
 # this file's job is to hook into ZSH's "add history" mechanism, and to output every line that'd be
 # stored to ZSH's history _also_ to a separate file.
 
-
 ## Make `zshaddhistory_functions` a unique array, in case it's not already
 # This prevents `SampShell-record-every-command` from being recorded twice (eg if we `reload`)
 typeset -agU zshaddhistory_functions
@@ -16,8 +15,12 @@ typeset -agU zshaddhistory_functions
 # it's ok.
 zshaddhistory_functions+=SampShell-record-every-command
 
-# Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
+## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
 typeset +x -gH SampShell_nosave_hist
+
+## Global, non-exported variable that's the current history file; let's you do
+# `tail SampShell_current_record_all_history_file`. I might shorten its name later.
+typeset +x -g SampShell_current_record_all_history_file 
 
 ## Record all commands entered interactively
 # This function is called every time the user enters a command on the command line. It saves each
@@ -31,6 +34,9 @@ typeset +x -gH SampShell_nosave_hist
 # line should be stored, or if we're the last, then to store it.) We always want to return 0, as we
 # don't want errors in this function to prevent lines being stored---this function is an observer.
 #
+# This input line usually ends in the `\n` that's given to the command prompt. It is always trimmed.
+# If the option `HIST_REDUCE_BLANKS` is set, then _all_ leading and trailing whitespace is removed.
+#
 # This function is called for _every_ input line, regardless of what history options are set. While
 # we could store every input line, I think it's useful to respect those options---eg, if the option
 # `HIST_IGNORE_SPACE` is set (lines starting with a space aren't stored), then we probably don't
@@ -38,43 +44,45 @@ typeset +x -gH SampShell_nosave_hist
 # other options, are checked against.
 #
 # If we've determined we want to store the command, then the directory at `$SampShell_HISTDIR` is
-# made if it doesn't exist already. Then, the file `$SampShell_HISTDIR/<DATE>.sampshell-history` has
-# the command appended to it in the format `<time>| <cmd>`, where cmd has all of its leading and
-# trailing whitespace stripped, and all remaining newlines are have a tab added after them (to make
-# it easier to parse later on)
+# made if it doesn't exist already. Next, we store output in one of two ways: if the `jq` command is
+# found, then we actually store a json with the command, time, and some other details. However, if
+# `jq` is not found, then it's stored in the format `<datetime>| <newline>\n`, where `newline` is
+# just `line`, but where all newlines have a tab added after them (to make it easier to parse).
 #
 # We rotate the file we store it in each day, so as to not have one massive history file.
 SampShell-record-every-command () {
 	## Setup
 	local -A opts=("${(kv@)options}") # Store options, so we can check for hist options later.
-	emulate -L zshEXTENDED_GLOB       # Reset all options (until fn return), then set `EXTENDED_GLOB`
+	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
 	## Return early if we're not saving history, or there isn't even a place to store history.
 	[[ -n $SampShell_nosave_hist || -z $SampShell_HISTDIR ]] && return 0
 
-	## Remove leading/trailing blanks, and then add tabs after all remaining newlines
-	local line=$1
-	line=${line##[[:space:]]}   # Strip leading whitespace
-	line=${line%%[[:space:]]}   # Strip tailing whitespace
-	line=${line//$'\n'/$'\n\t'} # Replace all newlines with a newline-tab
+
+	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines
+	local line=${1%$'\n'}
+	if [[ $opts[histreduceblanks] = on ]]; then
+		line=${line##[[:space:]]#} # Strip leading whitespace
+		line=${line%%[[:space:]]#} # Strip tailing whitespace
+	fi
 
 	## Check to make sure we actually want to store th elien
 	if [[ -z $line ]]; then
 		# Ignore blank lines; Since we've stripped whitespace, this includes just whitespace lines too
 		return 0
-	elif [[ $opts[interactivecomments] = yes && -n $histchars[3] && $line[1] = $histchars[3] ]]; then
+	elif [[ $opts[interactivecomments] = on && -n $histchars[3] && $line[1] = $histchars[3] ]]; then
 		# Ignore a commented line if: (1) The `INTERCATIVE_COMMENTS` option is set (without this, 
 		# there's no comments in interactive shells), (2) a "comment char" is even set (ZSH lets you
 		# change the comment char from `#`), and (3) the line starts with that character (we stripped
 		# whitespace, so we can just check the first character of `$line`.). Note that the history
 		# char has to be ASCII, so no need to worry about multibytes.
 		return 0
-	elif [[ $opts[histignorespace] = yes && $1[1] = ' ' ]]; then
+	elif [[ $opts[histignorespace] = on && $1[1] = ' ' ]]; then
 		# If the `HIST_IGNORE_SPACE` option is set, ZSH won't store lines that start with a space. We
 		# also won't then. Note that we compare against `$1` and not `$line` here, as `$line` will
 		# have had the space stripped.
 		return 0
-	elif [[ $opts[histnostore] = yes && "$line " = ((history|fc) *) ]]; then
+	elif [[ $opts[histnostore] = on && "$line " = ((history|fc) *) ]]; then
 		# If the `HIST_NO_STORE` option is set, then don't record commands which start with `history`
 		# or `fc`. (We add the space after the `$line` to make the parsing easier.)
 		return 0
@@ -99,10 +107,24 @@ SampShell-record-every-command () {
 	fi
 
 	## The file we'll be storing the command in. 
-	local histfile="$SampShell_HISTDIR/$(date +%F).sampshell-history"
+	SampShell_current_record_all_history_file="$SampShell_HISTDIR/$(date +%F).sampshell-history"
+	local date="$(date '+%F %H %z')"
 
-	## Append the line `<datetime>| <cmd>\n` to `$histfile`.
-	printf '%s| %s\n' "$(date '+%F %r %z')" $line >> $histfile
+	## Print the history line to the history file; note the redirect at the end of `fi`
+	if SampShell_command_exists jq; then
+		# If `jq` is found, then let's print out the original line (no stripping,
+		# other than a single trailing `\n`, as we can strip it later) along with
+		# some other details in json format.
+		jq --null-input --compact-output --monochrome-output \
+			--arg date $date \
+			--arg pwd $PWD \
+			--arg line $line \
+			'{date:$date,pwd:$pwd,line:$line}'
+	else
+		# `jq` isn't found, alas, fall back on the basic method.
+		line=${line//$'\n'/$'\n\t'} # Replace all newlines with a newline-tab
+		printf '%s| %s\n' $date $line
+	fi >>$SampShell_current_record_all_history_file
 
 	## Everything's successful! Let's return.
 	return 0
