@@ -1,5 +1,4 @@
 ## TODO: Maybe also have a `.zprofile`?
-. ${0:P:h}/old/interactive.zsh
 
 # TODO: can you autoload multiple times? if so stick this in individual files, eg macos.zsh
 autoload -U compinit; compinit
@@ -130,3 +129,5 @@ echo 'todo: ZLE'
 DIRSTACKSIZE=30 # If it goes above this it's kinda hard to see.
 histchars[2]=, # as `^` is too far away lol
 REPORTTIME=3 # Report the time of commands that take more than N seconds
+
+# emulate sh -c '. "${(e)ENV}"'
