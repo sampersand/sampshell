@@ -50,7 +50,8 @@ while [[ $# > 0 ]]; do
 		--shell=*) set -- ${option#--shell=} $@ ;&
 		--shell)
 			[[ -z $1 ]] && die 'need an argument for %s' $option
-			shellname=$1 ;;
+			shellname=$1; shift
+			;;
 
 		--no-path) dont_include_path=1 ;;
 		-P | --path) dont_include_path= include_path=$PATH ;;
