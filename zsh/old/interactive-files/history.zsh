@@ -14,6 +14,7 @@ setopt NO_HIST_IGNORE_DUPS  # Just to declutter `setopt`
 setopt HIST_LEX_WORDS       # We don't store enough for it to matter.
 setopt NO_HIST_NO_FUNCTIONS    # Don't put functions in the history, they're a pain.
 setopt HIST_NO_STORE        # Don't store `history`/`fc` commands
+setopt NO_SHARE_HISTORY     # Dont' sahre history between shell invocations?
 
 ## Make `zshaddhistory_functions` a unique array.
 typeset -aU zshaddhistory_functions
