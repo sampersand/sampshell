@@ -16,9 +16,8 @@ alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
 function reload {
-	for file in ${ZDOTDIR:-$HOME}/.z{shenv,profile,shrc,login}; do
-		SampShell_dot_if_exists $file
-	done
+	setopt -L LOCAL_TRAPS
+	trap 'for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do source ${file:P}; done' EXIT
 }
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
