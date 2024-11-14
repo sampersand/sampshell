@@ -13,6 +13,7 @@ unsetopt UNSET            # Unset variables are errors
 unsetopt ALIASES          # Do not use aliases at all.
 unsetopt ALIAS_FUNC_DEF   # `alias a=b; a () ...`  will still define the function `a`, not `b`.
 unsetopt MULTI_FUNC_DEF   # Disables `a b c () { ... }`; use `function x y z { ... }` instead.
+unsetopt GLOB_ASSIGN      # `a=*` sets `a` to `*` (ie doesnt expand). That's the default behaviour.
 
 ## Enable options that might have been disabled for some bizarre reason
 setopt SHORT_LOOPS  # Allow short-forms

@@ -1,3 +1,9 @@
+#### Basic SampShell definitions for interactive ZSH shell instances.
+
+
+# Load "experimental" options---things I'm not sure yet about
+[[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
+
 ####################################################################################################
 #                                      Functions and Aliases                                       #
 ####################################################################################################
