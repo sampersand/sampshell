@@ -97,6 +97,12 @@ if [ -z "${SampShell_TRACE-}" ]; then
 fi
 export SampShell_TRACE
 
+## Disable homebrew analytics. This is in `env.sh` not `interactive.sh` in case
+# any config scripts decide to use brew, this ensures that they won't
+# accidentally end up sending analytics to brew. Note that while we _could_
+# check to see if homebrew is installed or not, there's no harm in setting it.
+HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_ANALYTICS
 
 ################################################################################
 #                                  Functions                                   #
