@@ -34,12 +34,12 @@ done
 ####################################################################################################
 #                                        Named Directories                                         #
 ####################################################################################################
-source ${0:P:h}/extended/named-directories.zs
+source ${0:P:h}/extended/named-directories.zsh
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
 [[ -n $SampShell_TMPDIR   ]] && add-named-dir tmp   $SampShell_TMPDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
 [[ -d ~/Desktop           ]] && add-named-dir d     ~/Desktop
-[[ -d ~/Downloads         ]] && add-named-dir dl     ~/Downloads
+[[ -d ~/Downloads         ]] && add-named-dir dl    ~/Downloads
 
 ####################################################################################################
 #                                             History                                              #
@@ -73,24 +73,15 @@ zshaddhistory_functions[1,0]=(SampShell-nosave-enable-disable-history) # Put bef
 function SampShell-nosave-enable-disable-history { [[ "${1%$'\n'}" != ((en|dis)able-history) ]] }
 
 ####################################################################################################
-#                                           Command Line                                           #
+#                                        Entering Commands                                         #
 ####################################################################################################
-## Command line
-setopt INTERACTIVE_COMMENTS # I use this all the time
-setopt RC_QUOTES            # Let you do '' to mean a single `'` within a `'` string
+setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
+setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
 setopt BANG_HIST            # Lets you do `!!` and friends
 
-## Inline history stuff
-histchars[2]=, # because `^` is a pain
-
-## Autocompletion
-setopt AUTO_PARAM_KEYS      # The character added after autocomplete can be autodeleted
-setopt AUTO_REMOVE_SLASH    # same with trailing `/`
-# echo 'todo: autocompletion'
-
-## Report times of commands that go long (cpu-wise); if it's unset then default to 5s.
-: ${REPORTTIME=5}
+histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
+: "${REPORTTIME=4}" # Print the duration of commands that take more than 4s of CPU time
 
 ####################################################################################################
 #                                               Jobs                                               #
