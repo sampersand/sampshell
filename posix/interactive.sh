@@ -64,7 +64,7 @@ alias ll='ls -l'   # Shorthand for `ls -al`
 
 ## Misc
 alias parallelize_it=SampShell_parallelize_it
-alias cdd=SampShell_Cdd
+alias cdd=SampShell_cdd
 alias debug=SampShell_debug
 alias undebug=SampShell_undebug
 

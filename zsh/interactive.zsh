@@ -1,5 +1,8 @@
 ## Outline
 
+. ${0:P:h}/all.zsh
+return
+
 ## Load in all the setup that's in separate files.
 for file in ${0:P:h}/interactive/*.zsh; do
 	source $file

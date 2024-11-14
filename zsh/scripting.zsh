@@ -3,8 +3,6 @@
 
 ## include the interactive-or-scripting config, ie stuff we don't want for _all_ scripts, but just
 # sampshell scripts.
-source ${0:P:h}/scripting-or-interactive.zsh
-
 unalias SampShell-script # Should only be set once per script, so no reason to keep it around.
 
 typeset -g +x SampShell_scripting=1 # used within `undebug`

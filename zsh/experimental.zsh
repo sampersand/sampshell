@@ -65,3 +65,13 @@ alias -s so='ldd'
 
 location=$(readlink -f ${(%):-%N}) what lol
 HISTFILESIZE=??
+
+## DO we want these always enabled?
+## Default options that really should be enabled. 
+setopt BAD_PATTERN     # bad patterns error out
+setopt NOMATCH         # non-matching globs error out.
+setopt EQUALS          # Do `=` expansion
+setopt GLOB            # Why wouldnt you
+setopt NO_{IGNORE_BRACES,IGNORE_CLOSE_BRACES} # make `a () { b }` valid.
+setopt SHORT_LOOPS     # I use this semi-frequently
+setopt RC_QUOTES       # Let you do type `''` within single quotes, eg `'let''s go to the store!'`
