@@ -3,6 +3,7 @@ My shell startup files.
 
 This repo contains all the standard definitions and configuration I use for my shells; It's 100% usable from any POSIX-compliant shell!
 
+
 # Quick Start
 Add the following to the shell's startup files (`~/.zshrc`, `~/.bash_profile`, etc.):
 ```sh
@@ -37,6 +38,12 @@ add-named-dir ~/me
 add-named-dir ~/code
 make-prompt --show-login-info=1
 ```
+
+# Other things you might want to set
+Here's a list of other things that you might want to set in your `~/.zshrc`
+- `KEYBOARD_HACK=\'` --- ignore an odd-number of `'`s
+
+
 
 # The Distinction between `env` and `interactive`
 SampShell actually has two separate set of config files: those for interactive-and-non-interactive shells (the `env.EXT` files), and those exclusively interactive shells (the `interactive.EXT` files). The top-level `env.sh` and `interactive.sh` files are designed so that `.`ing them will load all relevant env/interactive config; there's no need to `.` _any_ files below the top-level.

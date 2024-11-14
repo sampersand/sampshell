@@ -1,6 +1,5 @@
 #### Basic SampShell definitions for interactive ZSH shell instances.
 
-
 # Load "experimental" options---things I'm not sure yet about
 [[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
 
@@ -72,8 +71,9 @@ setopt CHASE_LINKS       # Ensure we always resolve symlinks to their real value
 source ${0:P:h}/extended/record-every-command.zsh
 
 ## `HISTFILE` is already set by POSIX-compliant stuff.
-HISTSIZE=1000000   # Keep a lot so it's easy to refernece
-SAVEHIST=$HISTSIZE # How many lines to save at the end
+HISTSIZE=1000000                # Keep a lot so it's easy to refernece
+SAVEHIST=$HISTSIZE              # How many lines to save at the end
+# HISTORY_IGNORE='(cmd1|cmd2*)' # Disable storing history for anything that matches the pattern.
 
 ## History options
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
@@ -101,6 +101,7 @@ function SampShell-nosave-enable-disable-history { [[ "${1%$'\n'}" != ((en|dis)a
 
 ## Set the prompt
 source ${0:P:h}/extended/prompt.zsh
+alias make-ps1=make-prompt
 make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 
 ## Set interactive options
@@ -111,8 +112,9 @@ setopt BANG_HIST            # Lets you do `!!` and friends
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
 setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty files
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
-# setopt AUTO_RESUME        # Like `AUTO_CD`, except for jobs. IDK how useful it is.
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
+unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
+
 
 ## Update variables ZSH uses in interactive mode.
 histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
@@ -125,6 +127,9 @@ if [[ $VENDOR = apple ]]; then
 	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
 fi
 
+## ZLE; this might be its own category if i get more int o ZLE
+# WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
+
 ####################################################################################################
 #                                               Jobs                                               #
 ####################################################################################################
@@ -136,3 +141,4 @@ setopt CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 setopt HUP                # When the shell closes, send SIGUP to all jobs.
 # setopt LONG_LIST_JOBS   # This only prints out the PID too, which I don't find too helpful.
 # unsetopt BG_NICE        # When set (the default), all bg jobs are run at lower priority. IDK how useful this is, as i dont use job control a lot
+# setopt AUTO_RESUME      # Like `AUTO_CD`, except for jobs. IDK how useful it is.

@@ -108,7 +108,7 @@ SampShell-record-every-command () {
 
 	## The file we'll be storing the command in. 
 	SampShell_current_record_all_history_file="$SampShell_HISTDIR/$(date +%F).sampshell-history"
-	local date="$(date '+%F %H %z')"
+	local date="$(date '+%F %T %z')"
 
 	## Print the history line to the history file; note the redirect at the end of `fi`
 	if SampShell_command_exists jq; then
