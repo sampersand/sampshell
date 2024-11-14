@@ -5,13 +5,18 @@
 # sampshell scripts.
 unalias SampShell-script # Should only be set once per script, so no reason to keep it around.
 
-typeset +x -gH SampShell_scripting=1 # used within `undebug`
-
 ## Enable "guardrails". These provide sanity checks
 setopt WARN_CREATE_GLOBAL # Warn when an assignment in a function creates a global variable
 setopt WARN_NESTED_VAR    # Warn when an assignment to a function clobbers an enclosing one.
-setopt NO_GLOBAL_EXPORT   # `typeset -x foo` no longer makes variables global.
-setopt NO_UNSET           # Unset variables are errors
-setopt NO_ALIASES         # Do not use aliases at all.
-setopt NO_ALIAS_FUNC_DEF  # `alias a=b; a () ...`  will still define the function `a`, not `b`.
-setopt NO_MULTI_FUNC_DEF  # Disables `a b c () { ... }`; use `function x y z { ... }` instead.
+unsetopt GLOBAL_EXPORT    # `typeset -x foo` no longer makes variables global.
+unsetopt UNSET            # Unset variables are errors
+unsetopt ALIASES          # Do not use aliases at all.
+unsetopt ALIAS_FUNC_DEF   # `alias a=b; a () ...`  will still define the function `a`, not `b`.
+unsetopt MULTI_FUNC_DEF   # Disables `a b c () { ... }`; use `function x y z { ... }` instead.
+
+## Enable options that might have been disabled for some bizarre reason
+setopt SHORT_LOOPS  # Allow short-forms
+unsetopt GLOB_SUBST # when set, requires quoting everything like bash
+
+## Todo, should this always be used?
+[[ -n $SampShell_experimental ]] && hash -d ss=$SampShell_ROOTDIR

@@ -1,62 +1,76 @@
-##
-# Note that since this file is going to be `.`d from within _all_ ZSH scripts, including anything
-# that we may have accidentally installed, we want to make sure we do the bare minimum possible here
-# 
+#### Basic SampShell definitions for _all_ ZSH shell instances.
+# While this file is usually `.`d from the top-level `env.sh` file, it can be `.`d on its own.
+#
+# Since this file is going to be `source`d for _every_ zsh instance, it should be kept short. Not
+# only will this make it faster to load (which speeds up execution of scripts), but also keeps our
+# config minimal. Again, this file is `source`d` for EVERY SINGLE ZSH INSTANCE, including scripts
+# that we didn't write, so we don't want to do anything that's potentially disruptive!
+####
 
-## Setup the path
-typeset -xgU path # Ensure `path` is unique, and export it.
+####################################################################################################
+#                                           Setup $PATH                                            #
+####################################################################################################
+
+typeset -xgU path  # Ensure `path` is unique, and export it.
 path+=${0:P:h}/bin # Add our ZSH-only shell functions in 
 
-## Options that are universal 
+####################################################################################################
+#                                        Universal Options                                         #
+####################################################################################################
+
+## Options that should always be set. While this _could_ theoretically break scripts I download, I
+# think it's really their fault if they break on these two super simple options.
 setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
 setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
 
-## Define the `SampShell-script` function; It's intended to be put at the very top of all SampShell
-# scripts. It turns on a lot of "guardrail" options, as well as some util functions, that we don't
-# always want turned on (e.g. in case 3rd party apps dont expect it)
-[[ ! -o interactive ]] && alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
+####################################################################################################
+#                                         SampShell-script                                         #
+####################################################################################################
 
-# ZSH is annoying, in that `set -o xtrace` doesn't actually propagate out of the function that calls it.
-# These functions are fairly fundementally flawed in zsh, as it always unsets XTRACE upon leaving a fn.
+## Define the `SampShell-script` alias, which is intended to be put at the very top of all scripts I
+# write. It ensures some sane default options, turns on a lot of "guardrail" options, and provides 
+# some util functions. See `zsh/scripting.zsh` for details.
+#
+# This is only enabled in non-interactive shells, as interactive shells aren't scripts.
+[[ ! -o INTERACTIVE ]] && alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
+
+####################################################################################################
+#                                       SampShell_{un,}debug                                       #
+####################################################################################################
+
+## Re-define the `SampShell_debug` and `SampShell_undebug` functions that were previously declared
+# in `posix/env.sh`. Because ZSH has more debugging options, we want to make sure we use the same
+# name so that POSIX-compliant scripts run under ZSH will automatically use the enhanced debug fns.
+#
+# ZSH is annoying, however, as `setopt XTRACE` only lasts until the end of the function it's set in,
+# and there's literally no way to change that. The best "solution" I have found is to set an EXIT
+# trap, which are run within the calling function's context, and in the trap set the XTRACE option.
+# Not great, especially since when the calling function returns `XTRACE` is unset :-/. Alas, ZSH.
+# (We actually set all the options in the trap, as we `setopt LOCAL_OPTIONS` so we can have local
+# traps.)
+#
+# Note that, just like the POSIX versions of these, these will not restore the options in their
+# surrounding environment when `undebug` is called. While I could maybe do that one day (eg by using
+# a stack for old options or something), I haven't used the `debug`/`undebug` functions enough to
+# warrant delving into that. Possible future TODO?
 function SampShell_debug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-
 	export SampShell_VERBOSE=1 SampShell_TRACE=1
 	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
-
 function SampShell_undebug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-
-	# TODO: clean these up?
 	unset SampShell_VERBOSE SampShell_TRACE
-	trap '{
-		unsetopt XTRACE VERBOSE
-		[[ -n "${SampShell_scripting-}" ]] && unsetopt WARN_CREATE_GLOBAL WARN_NESTED_VAR
-	}' EXIT
+	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 
-# Experimental stuff. These are all TODOS.
-if [[ -n $SampShell_experimental ]]; then
-	hash -d ss=$SampShell_ROOTDIR
-	false && setopt NO_ALIAS_FUNC_DEF MARK_DIRS noMULTI_FUNC_DEF # do we want no multi fn?
-	false && setopt warn_create_global warn_nested_var
+####################################################################################################
+#                                     Respect SampShell_TRACE                                      #
+####################################################################################################
 
-	setopt NO_KSH_GLOB
-	setopt NO_PATH_DIRS # don't searrch subdirs of `PATH` for commands if `a/b` is specified.
-	setopt SHORT_LOOPS # Why would this be disabled? Also `SHORT_REPEAT`?
-	setopt NO_GLOB_SUBST # huzzah, this is osmething we shouldn't have anyumore!
-	setopt NO_ALIAS_FUNC_DEF
-	false && setopt CHASE_LINKS # TODO: would this be bad?
-	false && setopt NO_POSIX_CD       # Disable posix-cd features
-	false && setopt SH_GLOB GLOBAL_EXPORT NOMATCH
-fi
-
-
-## Respect `SampShell_TRACE` in all scripts, regardless of whether they're a SampShell script or not
-# Note we want this as the last thing in this file, so that we don't print the traces for the other
-# setup.
+## Respect `SampShell_TRACE` in all scripts, regardless of whether they're a SampShell script.
+# We want this as the last thing in this file, so we don't print traces for the other setup config.
 if [[ -n $SampShell_TRACE ]]; then
-	setopt SOURCE_TRACE XTRACE VERBOSE
 	export SampShell_TRACE # in case it's not already exported for some weird reason
+	setopt SOURCE_TRACE XTRACE VERBOSE
 fi

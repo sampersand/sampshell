@@ -4,7 +4,7 @@ setopt MULTI_FUNC_DEF # unset what's in `env.zsh`, as i do this enough on the cm
 setopt UNSET         # DEFAULT; allow variables to be empty
 setopt ALIASES       # DEFAULT; I use them
 setopt NO_IGNORE_EOF # DEFAULT;  use ctrl+d a lot;
-
+setopt NOMATCH
 # emulate sh -c '. "${(e)ENV}"'
 
 

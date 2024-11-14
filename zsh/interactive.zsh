@@ -106,6 +106,7 @@ setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables
 setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty files
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
 # setopt AUTO_RESUME        # Like `AUTO_CD`, except for jobs. IDK how useful it is.
+unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 
 ## Update variables ZSH uses in interactive mode.
 histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
