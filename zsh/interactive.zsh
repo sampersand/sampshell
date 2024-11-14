@@ -1,8 +1,3 @@
-## TODO: Maybe also have a `.zprofile`?
-
-# TODO: can you autoload multiple times? if so stick this in individual files, eg macos.zsh
-autoload -U compinit; compinit
-
 ## Load in all the setup that's in separate files.
 for file in ${0:P:h}/interactive/*.zsh; do
 	source $file
