@@ -21,7 +21,7 @@ setopt CHASE_LINKS # Ensure we always resolve symlinks to their real value when 
 setopt PUSHD_IGNORE_DUPS # dont put multiple copies onto the dir stack.
 
 ## 16.2.2 Completion
-echo 'todo: completion'
+# echo 'todo: completion'
 
 ## 16.2.3 Expansion and Globbing
 setopt MAGIC_EQUAL_SUBST # Any arguments in the form `foo=expr` does `~`/`=` expansion on expr
@@ -34,7 +34,7 @@ setopt INTERACTIVE_COMMENTS # Suuuper useful, I do this all the time.
 setopt MULTI_FUNC_DEF # unset what's in `env.zsh`, as i do this enough on the cmd line
 
 ## 16.2.12 Zle
-echo 'todo: ZLE'
+# echo 'todo: ZLE'
 # setopt HIST_FIND_NO_DUPS; par tof line editor
 
 ## Variables

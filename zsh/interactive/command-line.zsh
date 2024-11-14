@@ -12,7 +12,7 @@ histchars[2]=, # because `^` is a pain
 ## Autocompletion
 setopt AUTO_PARAM_KEYS      # The character added after autocomplete can be autodeleted
 setopt AUTO_REMOVE_SLASH    # same with trailing `/`
-echo 'todo: autocompletion'
+# echo 'todo: autocompletion'
 
 ## Report times of commands that go long (cpu-wise); if it's unset then default to 5s.
 : ${REPORTTIME=5}

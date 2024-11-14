@@ -3,6 +3,7 @@
 - `gclear`
 - `ppurge`
 - cleanup `clean-shell`
+- autocompletion and ZLE
 
 ## TODO: Maybe also have a `.zprofile`?
 

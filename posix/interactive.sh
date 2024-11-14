@@ -132,22 +132,18 @@ PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
 #                                   History                                    #
 ################################################################################
 
-# Only default the history-related variables if they're unset; if they're set
-# to an empty value, that indicates that history usage isn't desired.
+HISTSIZE=500 # How many history entries for the editor to keep.
 
-if [ -z "${HISTSIZE+1}" ]; then
-	HISTSIZE=500 # How many history entries to keep
-elif [ -z "$HISTSIZE" ]; then
-	SampShell_log '[INFO] Not defaulting HISTSIZE; it is set to the empty string'
-fi
-
+# Only default `HISTFILE` if it's unset; if it's set to an empty value, it
+# indicates we don't want to store history.
 if [ -z "${HISTFILE+1}" ]; then
 	if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
 		SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
 	else
 		HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+		# TODO: do we want to export histfie for subshells
 	fi
-else
+elif [[ -z ${HISTFILE} ]]; then
 	SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 
