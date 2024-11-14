@@ -6,6 +6,7 @@
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias d=dirs
 alias mk=mkdir
+alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
@@ -17,7 +18,12 @@ function reload {
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # `i` will leak.
-function { local i; for (( i = 0; i < 10; i++ )); do alias -g "@-$i=@{-$i}"; done }
+() {
+	local i
+	for (( i = 0; i < 10; i++ )); do
+		alias -g "@-$i=@{-$i}"
+	done
+}
 
 ## Adds in "clean shell" functions, and the clsh alias
 function clean-sh   { clean-shell --shell =sh $@ } # use which in case EQUALS is unset,
@@ -25,7 +31,11 @@ function clean-zsh  { clean-shell --shell =zsh $@ } # even though it's set by de
 function clean-bash { clean-shell --shell =bash $@ }
 SampShell_command_exists dash && function clean-dash { clean-shell --shell =dash $@ }
 alias clsh=clean-shell
-function clzsh { clean-zsh --n -- -fd $@ } # Don't set SampShell variables, only $TERM/$HOME,etc
+function clzsh { clean-zsh --none -- -fd $@ } # Don't set SampShell variables, only $TERM/$HOME,etc
+
+# Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
+rd () { builtin rm -f -- ${1:?need a dir}/.DS_Store && builtin rmdir -- $1 }
+md () { builtin mkdir -p -- "${1:?missing a directory}" && builtin cd -- "$1" }
 
 
 ####################################################################################################
@@ -95,6 +105,7 @@ setopt BANG_HIST            # Lets you do `!!` and friends
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
 setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty files
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
+# setopt AUTO_RESUME        # Like `AUTO_CD`, except for jobs. IDK how useful it is.
 
 ## Update variables ZSH uses in interactive mode.
 histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
@@ -112,18 +123,9 @@ fi
 ####################################################################################################
 ## Enable options. Note the `CHECK_XXX_JOBS` options could technically be in safety.zsh
 setopt MONITOR            # Enable job control, in case it's not already sent
-setopt AUTO_CONTINUE      # Always sent `SIGCONT` when disowning jobs, so they run again.
+setopt AUTO_CONTINUE      # Always send `SIGCONT` when disowning jobs, so they run again.
 setopt CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
 setopt CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 setopt HUP                # When the shell closes, send SIGUP to all jobs.
-
-## Create the shorthand for `parallelize-it`
-alias parallelize-it=SampShell_parallelize_it
-
-## Experimental changes
-if [[ -n $SampShell_experimental ]]; then
-	# setopt BG_NICE # <-- we don't have much of an opinion on this.
-	setopt AUTO_RESUME # Single words can be used to resume commands; IDK how useful this is
-	setopt LONG_LIST_JOBS # long-format; do i need this?
-	setopt NOTIFY # Immediately report when jobs are done, instead of waiting. I'm not sure whether i want to wait or not, so that's why this is here.
-fi
+# setopt LONG_LIST_JOBS   # This only prints out the PID too, which I don't find too helpful.
+# unsetopt BG_NICE        # When set (the default), all bg jobs are run at lower priority. IDK how useful this is, as i dont use job control a lot

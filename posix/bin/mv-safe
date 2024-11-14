@@ -81,6 +81,9 @@ return value: (if both 1 and 2 occur, the last one encounterd is returned)
    2  there was a problem moving a file/removing a file to be clobbered.
    3  internal error
    64 invalid command-line options were supplied
+bug:
+   This currently has a bug where 'mv-safe folder1 folder2' will not overwrite
+   folder2, but instead will move 'folder1' as 'folder1/folder2'. RIP.
 
 Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive
 was given).
@@ -206,6 +209,9 @@ try_move () {
             rm "-f${verbose_flag}" -- "${target}" || return 2
 
          ## If the target is a folder, and there's nothing in it, delete it.
+         # On macOS, we consider folders that just contain `.DS_Store` empty as
+         # well, so we go ahead and delete the `.DS_Store`.
+         #
          # Note that `ls | grep` is usually a bad idea, as parsing the output of
          # `ls` is fraught with danger. However, in this case, since we're just
          # checking if _anything_ was outputted (via `grep -q .`), then it's
@@ -214,11 +220,23 @@ try_move () {
          # If somehow `ls` fails, then the `pipefile` that was set at the start
          # of the program will cause the entire `! ls | grep` to be false, and
          # the `rm` command will not be run.
-         elif [ -d "${target}" ] && ! ls -A1q -- "${target}" | grep -q .; then
+         elif [ -d "${target}" ] && {
+            # On macOS, we allow "empty folders" to contain `.DS_Store`. With
+            # bizarre race conditions, it might end up where the `.DS_Store` is
+            # deleted, but not the folder it was in. However, it's remote enough
+            # that it's not worth bothering with. (Also, I dont really use
+            # `.DS_Store` a lot, so it's not big deal if it gets removed.)
+            [ "$(uname)" -eq Darwin ] && rm -f -- "${target}/.DS_Store"
+
+            # Now check to see if it's empty
+            ! ls -A1q -- "${target}" | grep -q .
+         }; then
             rm "-fd${verbose_flag}" -- "${target}" || return 2
 
          ## Otherwise, the target is non-empty; we will defer to the `mv`
          # command on what to do.
+         else
+            :
          fi
       fi
 
