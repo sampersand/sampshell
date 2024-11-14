@@ -2,6 +2,7 @@
 - Maybe also have a `profile.zsh`  file?
 - `gclear`
 - `ppurge`
+- cleanup `clean-shell`
 
 ## TODO: Maybe also have a `.zprofile`?
 

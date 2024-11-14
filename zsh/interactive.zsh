@@ -1,3 +1,5 @@
+## Outline
+
 ## Load in all the setup that's in separate files.
 for file in ${0:P:h}/interactive/*.zsh; do
 	source $file
@@ -5,9 +7,10 @@ done
 
 
 ## Add commonly-used aliases
-[[ $VENDOR != apple ]] && eval "$(alias -L ls)hGb" # add more options to `ls` which I know macOS supports
+[[ $VENDOR == apple ]] && eval "${$(alias -L ls)/ls/l}hGb" # add the `l` alias more options to `ls` which I know macOS supports
 alias '%= ' '$= ' # `$` or `%` alone at he start of a line is ignored; lets you paste commands in.
 alias d=dirs
+alias mk=mkdir
 
 
 ### Add named directories
