@@ -1,3 +1,16 @@
+## Actual options i know about, but idk if i want
+setopt CORRECT # Correct commands!
+setopt MULTI_FUNC_DEF # unset what's in `env.zsh`, as i do this enough on the cmd line
+setopt UNSET         # DEFAULT; allow variables to be empty
+setopt ALIASES       # DEFAULT; I use them
+setopt NO_IGNORE_EOF # DEFAULT;  use ctrl+d a lot;
+
+# emulate sh -c '. "${(e)ENV}"'
+
+
+
+# TODO optoins to look into
+
 ## 16.2.3 Expansion and Globbing
 setopt CASE_GLOB CASE_PATHS # case-insensitive globbing??
 
