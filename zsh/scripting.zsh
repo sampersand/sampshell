@@ -5,7 +5,7 @@
 # sampshell scripts.
 unalias SampShell-script # Should only be set once per script, so no reason to keep it around.
 
-typeset -g +x SampShell_scripting=1 # used within `undebug`
+typeset +x -gH SampShell_scripting=1 # used within `undebug`
 
 ## Enable "guardrails". These provide sanity checks
 setopt WARN_CREATE_GLOBAL # Warn when an assignment in a function creates a global variable

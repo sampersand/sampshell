@@ -14,23 +14,26 @@ setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
 ## Define the `SampShell-script` function; It's intended to be put at the very top of all SampShell
 # scripts. It turns on a lot of "guardrail" options, as well as some util functions, that we don't
 # always want turned on (e.g. in case 3rd party apps dont expect it)
-alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
-
+[[ ! -o interactive ]] && alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
 
 # ZSH is annoying, in that `set -o xtrace` doesn't actually propagate out of the function that calls it.
 # These functions are fairly fundementally flawed in zsh, as it always unsets XTRACE upon leaving a fn.
 function SampShell_debug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
 
-	export SampShell_{VERBOSE,TRACE}=1
+	export SampShell_VERBOSE=1 SampShell_TRACE=1
 	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 
 function SampShell_undebug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
 
-	unset SampShell_{VERBOSE,TRACE}
-	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
+	# TODO: clean these up?
+	unset SampShell_VERBOSE SampShell_TRACE
+	trap '{
+		unsetopt XTRACE VERBOSE
+		[[ -n "${SampShell_scripting-}" ]] && unsetopt WARN_CREATE_GLOBAL WARN_NESTED_VAR
+	}' EXIT
 }
 
 # Experimental stuff. These are all TODOS.
