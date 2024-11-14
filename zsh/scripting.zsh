@@ -12,13 +12,13 @@ setopt WARN_CREATE_GLOBAL # Warn when an assignment in a function creates a glob
 setopt WARN_NESTED_VAR    # Warn when an assignment to a function clobbers an enclosing one.
 setopt NO_ALIASES         # Do not use aliases at all when scripting. 
 setopt NO_MULTI_FUNC_DEF  # Disables `a b c () { ... }`; use `function x y z { ... }` instead.
+setopt NO_SHORT_LOOPS     # Disallow short-forms of commands in scripts.
 unsetopt NOMATCH          # Print an error if globbing fails, instead of silently just leaving it.
 unsetopt GLOBAL_EXPORT    # `typeset -x foo` no longer makes variables global.
 unsetopt UNSET            # Unset variables are errors
 unsetopt ALIAS_FUNC_DEF   # `alias a=b; a () ...`  will still define the function `a`, not `b`.
 unsetopt GLOB_ASSIGN      # `a=*` sets `a` to `*` (ie doesnt expand). That's the default behaviour.
 unsetopt GLOB_SUBST       # When set, requires quoting everything like bash
-unsetopt NO_SHORT_LOOPS   # Allow short-forms of loops
 unsetopt NO_BAD_PATTERN   # Bad patterns error out, instead of silently being left around.
 unsetopt NO_EQUALS        # Do `=` expansion
 unsetopt NO_GLOB          # Enable globbing

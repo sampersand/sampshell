@@ -138,6 +138,5 @@ setopt AUTO_CONTINUE      # Always send `SIGCONT` when disowning jobs, so they r
 setopt CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
 setopt CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 setopt HUP                # When the shell closes, send SIGUP to all jobs.
-# setopt LONG_LIST_JOBS   # This only prints out the PID too, which I don't find too helpful.
 # unsetopt BG_NICE        # When set (the default), all bg jobs are run at lower priority. IDK how useful this is, as i dont use job control a lot
 # setopt AUTO_RESUME      # Like `AUTO_CD`, except for jobs. IDK how useful it is.
