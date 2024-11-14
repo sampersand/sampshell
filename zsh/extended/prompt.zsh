@@ -26,6 +26,7 @@ function SampShell_ps1_hostname_username () {
 
 
 function SampShell_ps1_git_branch {
+    setopt -L NO_XTRACE NO_VERBOSE # Don't trace this function, otherwise printing prompts gets noisy.
     local br=${"$(git branch --show-current 2>&-)":gs/%/%%} # branches can have `%` in them
 
     if [[ $1 = 1 ]]; then
@@ -39,6 +40,7 @@ function SampShell_ps1_git_branch {
 
 # TODO: handle rebasing and stuff
 function SampShell_rps1_git_status {
+    setopt -L NO_XTRACE NO_VERBOSE # Don't trace this function, otherwise printing prompts gets noisy.
     local stat=0
     local line
     git status --porcelain 2>&- | while IFS= read -r line; do
