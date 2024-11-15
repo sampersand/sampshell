@@ -1,5 +1,5 @@
 ## Options I'm not sure if I want to set or not.
-emulate sh -c '. "${(e)ENV}"'
+[[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
 
 setopt CORRECT              # Correct commands when executing.
 setopt RM_STAR_WAIT         # Wait 10 seconds before accepting the `y` in `rm *`

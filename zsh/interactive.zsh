@@ -127,6 +127,7 @@ if [[ $VENDOR = apple ]]; then
 fi
 
 ## ZLE; this might be its own category if i get more int o ZLE
+source ${0:P:h}/extended/bindkey.zsh
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
 
 ####################################################################################################
