@@ -1,0 +1,23 @@
+#!zsh
+
+# Stripping leading space off.
+case ${1:-1} in
+	0) ;; # do nothing
+	1) BUFFER=${BUFFER##[[:space:]]#} ;; # strip all leading space
+	2)
+		# Keep a space at the front if `hist_ignore_space` is enabled
+		[[ -o HIST_IGNORE_SPACE && $BUFFER[1] = ' ' ]]
+		add_space=$?
+		BUFFER=${BUFFER##[[:space:]]#}
+		(( add_space == 0 )) && BUFFER=" $BUFFER" ;;
+esac
+
+# Strip trailing space off, but also let `\` escapes work
+(( ${2:-1} )) && while true; do
+	case $BUFFER in
+		((\\\\)#\\?*) break ;;
+		(*\\?) break ;;
+		(*[[:space:]]) BUFFER=${BUFFER%?} ;;
+		(*) break ;;
+	esac
+done
