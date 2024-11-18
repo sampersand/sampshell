@@ -4,6 +4,14 @@
 [[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
 
 ####################################################################################################
+#                                        Universal Options                                         #
+####################################################################################################
+
+## Options that should always be set. 
+setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
+setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
+
+####################################################################################################
 #                                      Functions and Aliases                                       #
 ####################################################################################################
 

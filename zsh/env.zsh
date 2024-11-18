@@ -15,15 +15,6 @@ typeset -xgU path  # Ensure `path` is unique, and export it.
 path+=${0:P:h}/bin # Add our ZSH-only shell functions in 
 
 ####################################################################################################
-#                                        Universal Options                                         #
-####################################################################################################
-
-## Options that should always be set. While this _could_ theoretically break scripts I download, I
-# think it's really their fault if they break on these two super simple options.
-setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
-setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
-
-####################################################################################################
 #                                         SampShell-script                                         #
 ####################################################################################################
 
