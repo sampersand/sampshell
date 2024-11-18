@@ -1,26 +1,24 @@
-### Add keybindings
+## All this is experimental
+alias bk='noglob bindkey'
+alias bkg='bindkey | noglob fgrep -ie'
 
-## Creating a new keybinding named `SampShell_keymap` based off emacs, then set it as the main one.
-setopt EMACS
 bindkey -N SampShell_keymap emacs
 bindkey -A SampShell_keymap main
 
-## Remove trailing newlines from lines that are "accepted" (ie when we hit enter)
-function SampShell-zle-accept-line {
-	# Strip out trailing whitespace. Note that we don't need to set `EXTENDED_GLOB` (or use the `(*)`
-	# parameter) as ZLE ensures it's always set.
-	BUFFER=${BUFFER%%[[:space:]]#}
+bindkey '^x^z' undo
+bindkey '^xz' undo
+bindkey Ω undo
+bindkey ¥ redo
 
-	# Call the builtin `accept-line` instead of this anything that may overwrite it (ie this fn).
-	zle .accept-line
-}
-# Replace the builtin `accept-line` with our new one, so now enter & co (eg `^J`) strip blanks
+## Whenever we accept a line, make sure to remove trailing newlines
+function SampShell-zle-accept-line { BUFFER=${(*)BUFFER%%$'\n'#}; zle .accept-line }
 zle -N accept-line SampShell-zle-accept-line
+# ^^ OMG this is amazing, it actually even affects enter
 
-
-## Make `clear-screen` use the `cls` builtin; by default `^L` (ctrl+L)
+## Make `clear-screen` use the `cls` builtin
 function SampShell-zle-clear-screen { cls && zle reset-prompt }
 zle -N clear-screen SampShell-zle-clear-screen
+bindkey '^L' clear-screen  # this is the default anyways
 
 ## Make `pound-insert` use the histchar character, and add a space too
 function SampShell-zle-pound-insert { BUFFER="$histchars[3] $BUFFER"; zle accept-line }

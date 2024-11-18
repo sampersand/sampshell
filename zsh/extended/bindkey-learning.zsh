@@ -94,3 +94,7 @@ may-start-using '^[G' '^[g' #get-line, todo what is the buffer stack
 ^ TODO what is the buffer stack
 
 should-start-using '^Q' '^[Q' '^[q' # push-line, pushes a line into the buffer of commands, and will read it after your current command
+
+echo hi
+
+
