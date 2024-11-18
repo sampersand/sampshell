@@ -41,6 +41,7 @@ function clzsh { clean-zsh --none -- -fd $@ } # Don't set SampShell variables, o
 rd () { builtin rm -f -- ${1:?need a dir}/.DS_Store && builtin rmdir -- $1 }
 md () { builtin mkdir -p -- "${1:?missing a directory}" && builtin cd -- "$1" }
 
+source ${0:P:h}/extended/utils.zsh
 
 ####################################################################################################
 #                                       Changing Directories                                       #
