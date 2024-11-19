@@ -119,6 +119,7 @@ setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` e
 setopt BANG_HIST            # Lets you do `!!` and friends
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
 setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty files
+setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands

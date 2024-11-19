@@ -17,13 +17,10 @@ hitting `^r` multiple times lets you go back further, woah
 
 $_
 $ZSH_ARGZERO
-DIRSTACKSIZE
-FLOW_CONTROL
+DIRSTACKSIZE <-- no need to, why limit it?
 CORRECT
-NO_PUSHD_TO_HOME
-PUSHD_IGNORE_DUPS
+NO_PUSHD_TO_HOME <-- dont need it so i wont remember either way
 CASE_GLOB
-HIST_SUBST_PATTERN
 NUMERIC_GLOB_SORT
 `$ <foo` reads foo in 
 
