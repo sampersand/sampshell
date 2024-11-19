@@ -49,6 +49,7 @@ function SampShell_debug {
 	export SampShell_VERBOSE=1 SampShell_TRACE=1
 	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
+
 function SampShell_undebug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
 	unset SampShell_VERBOSE SampShell_TRACE
@@ -62,6 +63,6 @@ function SampShell_undebug {
 ## Respect `SampShell_TRACE` in all scripts, regardless of whether they're a SampShell script.
 # We want this as the last thing in this file, so we don't print traces for the other setup config.
 if [[ -n $SampShell_TRACE ]]; then
-	export SampShell_TRACE # in case it's not already exported for some weird reason
+	export SampShell_TRACE # in case it's not already exported for some reason
 	setopt SOURCE_TRACE XTRACE VERBOSE
 fi

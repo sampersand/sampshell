@@ -32,8 +32,8 @@ setopt NO_SHORT_LOOPS     # Disallow short-forms of commands in scripts, as they
 setopt NO_GLOBAL_EXPORT   # Exporting variables via `typeset -x foo` doesn't also make them global in the script.
 setopt WARN_CREATE_GLOBAL # Warn when an assignment in a function creates a global variable
 setopt WARN_NESTED_VAR    # Warn when an assignment to a function clobbers an enclosing one.
-# setopt NO_UNSET         # Unset variables are errors; I use this often enough it's better to not set it.
 setopt LOCAL_LOOPS        # Disallow `break`/`continue` from propagating to the parent scope
+# setopt NO_UNSET         # Unset variables are errors; I use this often enough it's better to not set it.
 
 
 ####################################################################################################

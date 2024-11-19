@@ -4,10 +4,10 @@
 function prp { print -P $@ }
 
 ## Options for the prompt
-setopt NO_PROMPT_BANG # Don't treat `!` specially, like POSIX does. We have our own prompts.
-setopt PROMPT_{CR,SP} # When a line before prompt doesn't end with a newline, print the inverted "%"
-setopt PROMPT_PERCENT # Enable `%` escapes in prompts.
-setopt PROMPT_SUBST   # Allows you to use variable substitutions in prompts
+setopt PROMPT_SUBST                # Lets you use variables and $(...) in prompts.
+unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do this with %!.
+unsetopt NO_PROMPT_PERCENT         # Ensure `%` escapes in prompts are enabled.
+unsetopt NO_PROMPT_CR NO_PROMPT_SP # Ensure the inverted `%` is printed
 
 function SampShell_ps1_hostname_username () {
     case $1 in

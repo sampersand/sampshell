@@ -91,9 +91,11 @@ setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't commands that are duplicates of the immediately preceding one.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
-setopt EXTENDED_HISTORY       # When saving, write the start time and duration as well.
+setopt EXTENDED_HISTORY       # When saving, write the start time and duration as well; not really require
 unsetopt HIST_IGNORE_ALL_DUPS # In case it's set; I like having non-contiguous dups
 unsetopt HIST_SAVE_NO_DUPS    # In case it's set; This is just HIST_IGNORE_ALL_DUPS but for saving.
+unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
+unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
 
 ## Enable and disable history
 function disable-history { fc -p && SampShell_nosave_hist=1 && echo 'History saving disabled.' }
@@ -116,13 +118,13 @@ make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
-setopt BANG_HIST            # Lets you do `!!` and friends
+setopt CLOBBER_EMPTY        # With `NO_CLOBBER`, this Lets you clobber empty files
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
-setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty files
 setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
+unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
 [[ -n $SampShell_experimental ]] && setopt COMPLETE_IN_WORD
 
 
@@ -142,10 +144,8 @@ source ${0:P:h}/extended/bindkey.zsh
 #                                               Jobs                                               #
 ####################################################################################################
 ## Enable options. Note the `CHECK_XXX_JOBS` options could technically be in safety.zsh
-setopt MONITOR            # Enable job control, in case it's not already sent
-setopt AUTO_CONTINUE      # Always send `SIGCONT` when disowning jobs, so they run again.
-setopt CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
-setopt CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
-setopt HUP                # When the shell closes, send SIGUP to all jobs.
-# unsetopt BG_NICE        # When set (the default), all bg jobs are run at lower priority. IDK how useful this is, as i dont use job control a lot
-# setopt AUTO_RESUME      # Like `AUTO_CD`, except for jobs. IDK how useful it is.
+setopt MONITOR                 # Enable job control, in case it's not already sent
+setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
+unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
+unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
+unsetopt NO_HUP                # When the shell closes, send SIGUP to all jobs.
