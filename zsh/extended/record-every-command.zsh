@@ -5,7 +5,7 @@
 # stored to ZSH's history _also_ to a separate file.
 
 ## Make `zshaddhistory_functions` a unique array, in case it's not already
-# This prevents `SampShell-record-every-command` from being recorded twice (eg if we `reload`)
+# This prevents `_SampShell-record-every-command` from being recorded twice (eg if we `reload`)
 typeset -agU zshaddhistory_functions
 
 ## Add the record history function to the end.
@@ -13,10 +13,10 @@ typeset -agU zshaddhistory_functions
 # functions have passed. However, it's not critical for it to be the last one (as this is just used
 # for statistical purposes, and nothing mission-critical), so that if functions are added after it,
 # it's ok.
-zshaddhistory_functions+=SampShell-record-every-command
+zshaddhistory_functions+=_SampShell-record-every-command
 
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
-typeset +x -gH SampShell_nosave_hist
+typeset +x -gH _SampShell_nosave_hist
 
 ## Global, non-exported variable that's the current history file; let's you do
 # `tail SampShell_current_record_all_history_file`. I might shorten its name later.
@@ -25,7 +25,7 @@ typeset +x -g SampShell_current_record_all_history_file
 ## Record all commands entered interactively
 # This function is called every time the user enters a command on the command line. It saves each
 # command that isn't skipped to a file. Note that you can entirely disable this function by setting
-# `$SampShell_nosave_hist` to a nonempty value, or by making `$SampShell_HISTDIR` empty.
+# `$_SampShell_nosave_hist` to a nonempty value, or by making `$SampShell_HISTDIR` empty.
 #
 # History functions are always given a single argument, the entire input line, unadulterated (except
 # for alias expansion). Their return status indicates what should happen with the line; non-zero
@@ -50,7 +50,7 @@ typeset +x -g SampShell_current_record_all_history_file
 # just `line`, but where all newlines have a tab added after them (to make it easier to parse).
 #
 # We rotate the file we store it in each day, so as to not have one massive history file.
-SampShell-record-every-command () {
+_SampShell-record-every-command () {
 	## Setup
 	# Note we do `setopt -L ...` first, before `emulate -L zsh`, so that we can disable
 	# `xtrace` for the `local -A` line (which is quite noisy)
@@ -59,7 +59,7 @@ SampShell-record-every-command () {
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
 	## Return early if we're not saving history, or there isn't even a place to store history.
-	[[ -n $SampShell_nosave_hist || -z $SampShell_HISTDIR ]] && return 0
+	[[ -n $_SampShell_nosave_hist || -z $SampShell_HISTDIR ]] && return 0
 
 
 	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines

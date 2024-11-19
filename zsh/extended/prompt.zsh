@@ -9,7 +9,7 @@ unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do t
 unsetopt NO_PROMPT_PERCENT         # Ensure `%` escapes in prompts are enabled.
 unsetopt NO_PROMPT_CR NO_PROMPT_SP # Ensure the inverted `%` is printed
 
-function SampShell_ps1_hostname_username () {
+function _SampShell_ps1_hostname_username {
     case $1 in
         (0)
             return ;;
@@ -25,7 +25,7 @@ function SampShell_ps1_hostname_username () {
 }
 
 
-function SampShell_ps1_git_branch {
+function _SampShell_ps1_git_branch {
     setopt -L NO_XTRACE NO_VERBOSE # Don't trace this function, otherwise printing prompts gets noisy.
     local br=${"$(git branch --show-current 2>&-)":gs/%/%%} # branches can have `%` in them
 
@@ -39,7 +39,7 @@ function SampShell_ps1_git_branch {
 }
 
 # TODO: handle rebasing and stuff
-function SampShell_rps1_git_status {
+function _SampShell_rps1_git_status {
     setopt -L NO_XTRACE NO_VERBOSE # Don't trace this function, otherwise printing prompts gets noisy.
     local stat=0
     local line
@@ -117,7 +117,7 @@ function make-prompt {
     PS1+='%B%F{blue}]%b%f'                                 # ]
 
     # Add in the hostname, if applicable
-    PS1+="$(SampShell_ps1_hostname_username "$show_login_info" "$username" "$hostname")"
+    PS1+="$(_SampShell_ps1_hostname_username "$show_login_info" "$username" "$hostname")"
 
     # Add ~path, possibly limiting it if $pathlen is nonzero
     [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
@@ -126,10 +126,10 @@ function make-prompt {
     [[ $pathlen != 0 ]] && PS1+='%<<'
 
     # Add git branch in
-    PS1+="%F{043}\$(SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
+    PS1+="%F{043}\$(_SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
 
     # git status
-    PS1+='$(SampShell_rps1_git_status)'
+    PS1+='$(_SampShell_rps1_git_status)'
 
     # Trailing %
     PS1+='%b %F{8}'
