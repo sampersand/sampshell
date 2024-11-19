@@ -149,3 +149,8 @@ setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so t
 unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
 unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGUP to all jobs.
+
+####################################################################################################
+#                                      Functions and Aliases                                       #
+####################################################################################################
+. ${0:P:h}/interactive/utils.zsh
