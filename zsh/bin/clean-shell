@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
 SampShell-script
-setopt unset # todo: fix the code so this isnt needed
 
 shortusage () { cat; } <<EOS
 usage: ${ZSH_SCRIPT:t} [options] [--] [shell=\$SHELL] [shell options]
