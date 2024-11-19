@@ -1,5 +1,8 @@
 # TODO optoins to look into
 
+ESC[?47l    restore screen
+ESC[?47h    save screen
+
 ## 16.2.3 Expansion and Globbing
 setopt HIST_SUBST_PATTERN # TODO
 setopt HIST_LEX_WORDS # Look into that

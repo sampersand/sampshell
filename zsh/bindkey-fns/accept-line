@@ -3,8 +3,9 @@
 ## Remove trailing newlines from lines that are "accepted" (ie when we hit enter)
 # Strip out trailing whitespace. Note that we don't need to set `EXTENDED_GLOB` (or use the `(*)`
 # parameter) as ZLE ensures it's always set.
-
-zle SampShell-strip-whitespace -- 2 1
+if zstyle -T 'zle:accept-line' strip-whitespace; then
+	zle SampShell-strip-whitespace -- 2 1
+fi
 
 # Call the builtin `accept-line` instead of this anything that may overwrite it (ie this fn).
 zle .accept-line

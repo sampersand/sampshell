@@ -15,7 +15,7 @@ setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
 #                                      Functions and Aliases                                       #
 ####################################################################################################
 
-[[ $VENDOR == apple ]] && eval "${$(alias -L ls)/ls/l}hGb" # add the `l` alias more options to `ls` which I know macOS supports
+[[ $VENDOR == apple ]] && eval "${$(alias -L ls)}hGb" # add the `l` alias more options to `ls` which I know macOS supports
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias d=dirs
 alias mk=mkdir
@@ -122,6 +122,7 @@ setopt CLOBBER_EMPTY        # With `NOCLOBBER`, this Lets you clobber empty file
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
+[[ -n $SampShell_experimental ]] && setopt COMPLETE_IN_WORD
 
 
 ## Update variables ZSH uses in interactive mode.
@@ -130,10 +131,7 @@ histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so f
 # DIRSTACKSIZE=30   # I just started using dirstack more, if it ever grows unwieldy I can set this.
 
 ## Zstyles; this might be its own category if I get more into zstyle.
-autoload -U compinit; compinit
-if [[ $VENDOR = apple ]]; then
-	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
-fi
+source ${0:P:h}/extended/completion.zsh
 
 ## ZLE; this might be its own category if i get more int o ZLE
 source ${0:P:h}/extended/bindkey.zsh
