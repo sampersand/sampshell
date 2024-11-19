@@ -2,11 +2,8 @@
 SampShell-script
 setopt unset # todo: fix the code so this isnt needed
 
-scriptname=${0:t}
-die () { printf "%s: $1\\n" $scriptname $@[2,$#] >&2; exit 1; }
-
 shortusage () { cat; } <<EOS
-usage: $scriptname [options] [--] [shell=\$SHELL] [shell options]
+usage: ${ZSH_SCRIPT:t} [options] [--] [shell=\$SHELL] [shell options]
 EOS
 
 longusage () { cat; } <<EOS
@@ -49,7 +46,7 @@ while [[ $# > 0 ]]; do
 
 		--shell=*) set -- ${option#--shell=} $@ ;&
 		--shell)
-			[[ -z $1 ]] && die 'need an argument for %s' $option
+			[[ -z $1 ]] && die "need an argument for $option"
 			shellname=$1; shift
 			;;
 

@@ -11,7 +11,7 @@
 #                                           Setup $PATH                                            #
 ####################################################################################################
 
-typeset -xgU path  # Ensure `path` is unique, and export it.
+typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't already).
 path+=${0:P:h}/bin # Add our ZSH-only shell functions in 
 
 ####################################################################################################
