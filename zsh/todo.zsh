@@ -10,7 +10,6 @@ setopt MARK_DIRS
 setopt APPEND_HISTORY
 setopt PATH_DIRS
 setopt FUNCTION_ARGZERO # DEFAULT; when to set this?
-setopt LOCAL_LOOPS # ?? should this be set or not?
 setopt LOCAL_PATTERNS # <-- look into
 
 CORRECT_IGNORE=
