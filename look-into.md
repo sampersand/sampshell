@@ -211,3 +211,40 @@ https://zsh.sourceforge.io/Doc/Release/Shell-Builtin-Commands.html:
 -H
 
     Hide value: specifies that typeset will not display the value of the parameter when listing parameters; the display for such parameters is always as if the ‘+’ flag had been given. Use of the parameter is in other respects normal, and the option does not apply if the parameter is specified by name, or by pattern with the -m option. This is on by default for the parameters in the zsh/parameter and zsh/mapfile modules. Note, however, that unlike the -h flag this is also useful for non-special parameters.
+---
+# TODO optoins to look into
+
+ESC[?47l    restore screen
+ESC[?47h    save screen
+
+## 16.2.3 Expansion and Globbing
+setopt HIST_SUBST_PATTERN # TODO
+setopt HIST_LEX_WORDS # Look into that
+setopt MARK_DIRS
+setopt APPEND_HISTORY
+setopt PATH_DIRS
+setopt FUNCTION_ARGZERO # DEFAULT; when to set this?
+setopt LOCAL_PATTERNS # <-- look into
+
+CORRECT_IGNORE=
+CORRECT_IGNORE_FILE=
+LISTMAX=30 # the default, i think; ask when listing more than this
+TIMEFMT=$TIMEFMT # look into this
+return
+
+### These were borrowed from someone, and i want to look into using them myself
+SampShell_exec-or-edit () if [[ -x $1 ]]; then
+    $1
+else
+    subl $1
+fi
+
+alias -s {sh,zsh,py}=SampShell_exec-or-edit
+alias -s {txt,json,ini,toml,yml,yaml,xml,html,md,lock,snap,rst,cpp,h,rs}=subl
+alias -s {log,csv}=bat
+alias -s git='git clone'
+alias -s o='nm --demangle'
+alias -s so='ldd'
+###
+
+location=$(readlink -f ${(%):-%N}) what lol
