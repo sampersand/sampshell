@@ -4,14 +4,6 @@
 [[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
 
 ####################################################################################################
-#                                        Universal Options                                         #
-####################################################################################################
-
-## Options that should always be set. 
-setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
-setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
-
-####################################################################################################
 #                                       Changing Directories                                       #
 ####################################################################################################
 
@@ -23,27 +15,30 @@ source ${0:P:h}/extended/named-directories.zsh
 [[ -d ~/Desktop           ]] && add-named-dir d     ~/Desktop
 [[ -d ~/Downloads         ]] && add-named-dir dl    ~/Downloads
 
-## Default `dirs` to `dirs -v`; passing in any argument disables this.
-function dirs { builtin dirs ${@:--v} }
+## Default `dirs` to `dirs -v` (which lists line numbers). Passing in any argument disables this.
+function dirs { builtin dirs ${@:-v} }
 
-## Add `cd` options
-setopt AUTO_CD           # `foo` is the same as `cd foo` if `foo` isn't a command
-setopt CDABLE_VARS       # `cd var` is a shorthand for `cd $var` and `cd ~var`
-setopt AUTO_PUSHD        # Have `cd` push directories onto the directory stack
-setopt PUSHD_IGNORE_DUPS # Delete duplicate entries on the cd stack.
-setopt CHASE_LINKS       # Ensure we always resolve symlinks to their real value when cding
+## Enable `cd` options
+setopt AUTO_CD           # Enables `dir` to be shorthand for `cd dir` if `dir` isn't a valid command
+setopt CDABLE_VARS       # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
+setopt AUTO_PUSHD        # Have `cd` push directories onto the directory stack like `pushd`
+setopt PUSHD_IGNORE_DUPS # Delete old duplicate entries on the directory stack when adding new ones.
+setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing directories.
 
 ####################################################################################################
 #                                             History                                              #
 ####################################################################################################
+
+## Enables the "record-every-command" feature, which I can use for looking at previous commands later.
 source ${0:P:h}/extended/record-every-command.zsh
 
-## `HISTFILE` is already set by POSIX-compliant stuff.
-HISTSIZE=1000000                # Keep a lot so it's easy to refernece
-SAVEHIST=$HISTSIZE              # How many lines to save at the end
-# HISTORY_IGNORE='(cmd1|cmd2*)' # Disable storing history for anything that matches the pattern.
+## Setup history parameters
+HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
+SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
+# HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
+# HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
 
-## History options
+## Enable History options
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments
 setopt HIST_ALLOW_CLOBBER     # Add `|` to `>` and `>>`, so that re-running the command can clobber.
@@ -76,11 +71,17 @@ source ${0:P:h}/extended/prompt.zsh
 alias make-ps1=make-prompt
 make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 
+## Options that should always be set. 
+setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
+setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
+unsetopt NO_EQUALS     # I use this alot
+
 ## Set interactive options
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
 setopt CLOBBER_EMPTY        # With `NO_CLOBBER`, this Lets you clobber empty files
+setopt HIST_SUBST_PATTERN   # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
 setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
@@ -88,7 +89,6 @@ unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting ever
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
 unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
 [[ -n $SampShell_experimental ]] && setopt COMPLETE_IN_WORD
-
 
 ## Update variables ZSH uses in interactive mode.
 histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
