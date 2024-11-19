@@ -147,11 +147,16 @@ elif [[ -z ${HISTFILE} ]]; then
 	SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 
-SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
+if SampShell_command_exists history; then
+	alias h='history -16'
+else
+	history () { fc -l "$@"; }
 
-# `h` is a shorthand for listing out history; we negate the arg because it goes
-# from the end.
-h () { fc -l "$(( -${1:-16} ))"; }
+	# `h` is a shorthand for listing out history; we negate the arg because it goes
+	# from the end.
+	h () { fc -l "$(( -${1:-16} ))"; }
+fi
+
 
 ################################################################################
 #                                    Utils                                     #

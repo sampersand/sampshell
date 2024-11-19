@@ -1,4 +1,8 @@
 #### Basic SampShell definitions for interactive ZSH shell instances.
+#
+# Note that `setopt` is used for setting new options, whereas `unsetopt` is used to set options back
+# to their default, in case something else changed them. They're functionally the same, but it's
+# easier for me to look at and figure out why i'm doing something one way
 
 # Load "experimental" options---things I'm not sure yet about
 [[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
@@ -29,7 +33,7 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 #                                             History                                              #
 ####################################################################################################
 
-## Enables the "record-every-command" feature, which I can use for looking at previous commands later.
+## Enables the "record-every-command" feature, which stores nearly every command for later analysis.
 source ${0:P:h}/extended/record-every-command.zsh
 
 ## Setup history parameters
@@ -39,25 +43,25 @@ SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to en
 # HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
 
 ## Enable History options
+setopt EXTENDED_HISTORY       # (For fun) When writing cmds, write their start time & duration too.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
-setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments
+setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
 setopt HIST_ALLOW_CLOBBER     # Add `|` to `>` and `>>`, so that re-running the command can clobber.
 setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
-setopt HIST_IGNORE_DUPS       # Don't commands that are duplicates of the immediately preceding one.
+setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
-setopt EXTENDED_HISTORY       # When saving, write the start time and duration as well; not really require
-unsetopt HIST_IGNORE_ALL_DUPS # In case it's set; I like having non-contiguous dups
-unsetopt HIST_SAVE_NO_DUPS    # In case it's set; This is just HIST_IGNORE_ALL_DUPS but for saving.
+unsetopt HIST_IGNORE_ALL_DUPS # Ensure that non-contiguous duplicates are kept around.
+unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for saving.)
 unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
 unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
 
-## Enable and disable history
+## Enable and disable history. These also enable/disable record-every-command
 function disable-history { fc -p && _SampShell_nosave_hist=1 && echo 'History saving disabled.' }
 function enable-history  { fc -P && _SampShell_nosave_hist=  && echo 'History saving enabled.'  }
 
-## Don't store enable-history or disable-history
-zshaddhistory_functions[1,0]=(_SampShell-nosave-enable-disable-history) # Put before record-every-command
+## Don't store enable-history or disable-history. This should go before record-every-command.
+zshaddhistory_functions[1,0]=(_SampShell-nosave-enable-disable-history)
 function _SampShell-nosave-enable-disable-history {
 	[[ "${1%$'\n'}" != ((en|dis)able-history) ]] # Use `!=` so we return `1` in case of success
 }
