@@ -76,7 +76,7 @@ All config variables that're used within SampShell are prefixed with `SampShell_
 ## POSIX Variables, `interactive`
 | Variable Name | Default | Description |
 |:--------------|---------|-------------|
-| `SampShell_experimental` | (empty) | Whether to enable "experimental" features I'm not quite sure about yet.
+| `SampShell_no_experimental` | (unset) | If set to a nonempty value, enables "experimental features" I'm not quite sure about yet. |
 | `SampShell_git_default_master_branch` | `master` | Used in git commands when a master branch can't be automatically determined. |
 | `SampShell_git_branch_prefix` | `swesterman` | The username to use in git branches (which are in the format `<prefix>/YY-MM-DD/branch-name`) |
 | `SampShell_WORDS` | `/usr/share/dict/words` | A word list; not actually used within SampShell, but I find it useful. |

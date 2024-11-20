@@ -11,7 +11,7 @@
 ####
 
 ## Todo, should this always be used? or even be here?
-[[ -n ${SampShell_experimental-} && -n $SampShell_ROOTDIR ]] && hash -d ss=$SampShell_ROOTDIR
+[[ -n ${SampShell_no_experimental-} && -n $SampShell_ROOTDIR ]] && hash -d ss=$SampShell_ROOTDIR
 
 ####################################################################################################
 #                                            Reset ZSH                                             #

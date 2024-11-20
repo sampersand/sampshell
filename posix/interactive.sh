@@ -25,7 +25,7 @@ if SampShell_command_exists git; then
 fi
 
 # Load experimental changes, if experimental is defined
-if [ -n "$SampShell_experimental" ]; then
+if [ -z "${SampShell_no_experimental-}" ]; then
 	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
 fi
 
