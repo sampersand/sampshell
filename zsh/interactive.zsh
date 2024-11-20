@@ -42,10 +42,6 @@ SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to en
 # HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
 # HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
 
-## What commands should even be saved
-## Modify commands that should be saved
-## How to save history
-
 ## Setup history options
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
@@ -95,39 +91,46 @@ make-ps1
 #                                        Entering Commands                                         #
 ####################################################################################################
 
-## Setup options that modify valid syntax
+## Interactive history options
+histchars[2]=,            # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
+setopt HIST_SUBST_PATTERN # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
+unsetopt NO_BANG_HIST     # Lets you do `!!` and friends on the command line.
+
+## Options that modify valid syntax 
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
-setopt HIST_SUBST_PATTERN   # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
-histchars[2]=,              # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
-unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
-setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
 setopt GLOB_STAR_SHORT      # Enable the `**.c` shorthand for `**/*.c`
+setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
 unsetopt NO_EQUALS          # Enables `=foo`, which expands to the full path eg `/bin/foo`
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands, eg `for x in *; echo $x`
-setopt CLOBBER_EMPTY        # With `NO_CLOBBER`, this Lets you clobber empty files
-setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
-setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
-unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
-unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 
-## Zstyles; this might be its own category if I get more into zstyle.
-source ${0:P:h}/helpers/completion.zsh
+## "Safety" options
+setopt NO_CLOBBER       # Technically redundant, should've been set by posix/interactive.sh.
+setopt CLOBBER_EMPTY    # With `NO_CLOBBER`, this Lets you clobber empty files
+unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask for confirmation
+# note that `CHECK_JOBS` and `CHECK_RUNNING_JOBS` are set in the "Jobs" section.
 
-## ZLE; this might be its own category if i get more int o ZLE
+####################################################################################################
+#                                           Key Bindings                                           #
+####################################################################################################
 source ${0:P:h}/helpers/bindkey.zsh
-# WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
+
+####################################################################################################
+#                                           Autocomplete                                           #
+####################################################################################################
+source ${0:P:h}/helpers/completion.zsh
 
 ####################################################################################################
 #                                       Experimental Config                                        #
 ####################################################################################################
 
-# Load "experimental" options---things I'm not sure yet about
+## Load "experimental" options---things I'm not sure yet about.
 [[ -z $SampShell_no_experimental ]] && source ${0:P:h}/interactive/experimental.zsh
-
 
 ####################################################################################################
 #                                      Functions and Aliases                                       #
 ####################################################################################################
-. ${0:P:h}/interactive/utils.zsh
+
+## All helper functions and aliases should be defined here.
+source ${0:P:h}/interactive/utils.zsh
