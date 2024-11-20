@@ -1,11 +1,11 @@
 #### Basic SampShell definitions for interactive ZSH shell instances.
 #
+# The definitions in these files aren't really ever meant to be touched; they're stuff I doubt i'll
+# ever change. For stuff that I may change, checkout `interactive/experimental.zsh`
+#
 # Note that `setopt` is used for setting new options, whereas `unsetopt` is used to set options back
 # to their default, in case something else changed them. They're functionally the same, but it's
 # easier for me to look at and figure out why i'm doing something one way
-
-# Load "experimental" options---things I'm not sure yet about
-[[ -n $SampShell_experimental ]] && source ${0:P:h}/experimental.zsh
 
 ####################################################################################################
 #                                       Changing Directories                                       #
@@ -104,7 +104,6 @@ unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to a
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
 unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
-[[ -n $SampShell_experimental ]] && setopt COMPLETE_IN_WORD
 
 ## Update variables ZSH uses in interactive mode.
 histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
@@ -117,6 +116,14 @@ source ${0:P:h}/helpers/completion.zsh
 ## ZLE; this might be its own category if i get more int o ZLE
 source ${0:P:h}/helpers/bindkey.zsh
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
+
+####################################################################################################
+#                                       Experimental Config                                        #
+####################################################################################################
+
+# Load "experimental" options---things I'm not sure yet about
+[[ -z $SampShell_no_experimental ]] && source ${0:P:h}/interactive/experimental.zsh
+
 
 ####################################################################################################
 #                                      Functions and Aliases                                       #
