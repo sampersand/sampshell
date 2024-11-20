@@ -24,23 +24,23 @@ set +o nounset
 
 # Load the git config, if git is found
 if SampShell_command_exists git; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/git.sh"
+   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/git.sh"
 fi
 
 # Load experimental changes, if experimental is defined
 if [ -z "$SampShell_no_experimental" ]; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
+   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
 fi
 
 # Setup the editor if it exists
 if [ -n "$SampShell_EDITOR" ]; then
-	alias s=subl
-	alias ss=ssubl
-	alias ssubl='subl --create'
+   alias s=subl
+   alias ss=ssubl
+   alias ssubl='subl --create'
 
-	## Spellchecks
-	alias sbul=subl
-	alias ssbul=ssubl
+   ## Spellchecks
+   alias sbul=subl
+   alias ssbul=ssubl
 fi
 
 ################################################################################
@@ -94,40 +94,40 @@ alias j=jobs
 ## Changes to the SampShell tmp directory, creating it unless it exists already.
 SampShell_unalias cdtmp
 cdtmp () {
-	if ! [ -e "${SampShell_TMPDIR:?}" ]; then
-		mkdir -p -- "$SampShell_TMPDIR" || return
-	fi
+   if ! [ -e "${SampShell_TMPDIR:?}" ]; then
+      mkdir -p -- "$SampShell_TMPDIR" || return
+   fi
 
-	CPATH= cd -- "$SampShell_TMPDIR/$1"
+   CPATH= cd -- "$SampShell_TMPDIR/$1"
 }
 
 ## CD to sampshell; if an arg is given it's the suffix to also go to
 SampShell_unalias cdss
 cdss () {
-	CDPATH= cd -- "${SampShell_ROOTDIR?}/$1";
+   CDPATH= cd -- "${SampShell_ROOTDIR?}/$1";
 }
 
 ## Adds the arguments to the `CDPATH`. This function makes sure that `CDPATH`
 # always starts with a `:`, so we won't accidentally cd elsewhere on accident.
 SampShell_unalias add_to_cd_path
 add_to_cd_path () {
-	if [ "$#" -eq 0 ]; then
-		echo 'usage: add_to_cd_path path [more ...]' >&2
-		return 64
-	fi
+   if [ "$#" -eq 0 ]; then
+      echo 'usage: add_to_cd_path path [more ...]' >&2
+      return 64
+   fi
 
-	SampShell_scratch=
-	while [ "$#" -ne 0 ]; do
-		SampShell_scratch=$(realpath -- "$1" && printf x) || {
-			printf 'add_to_cd_path: unable to get realpath of %s' "$1" >&2
-			return 1
-		}
-		CDPATH=":${SampShell_scratch%?x}${CDPATH}"
-		shift
-	done
+   SampShell_scratch=
+   while [ "$#" -ne 0 ]; do
+      SampShell_scratch=$(realpath -- "$1" && printf x) || {
+         printf 'add_to_cd_path: unable to get realpath of %s' "$1" >&2
+         return 1
+      }
+      CDPATH=":${SampShell_scratch%?x}${CDPATH}"
+      shift
+   done
 
-	unset -v SampShell_scratch
-	return 0
+   unset -v SampShell_scratch
+   return 0
 }
 
 ################################################################################
@@ -137,8 +137,8 @@ add_to_cd_path () {
 # Clear the screen; also uses the `clear` command if it exists
 SampShell_unalias cls
 cls () {
-	SampShell_command_exists clear && { clear || return; }
-	printf '\ec\e[3J'
+   SampShell_command_exists clear && { clear || return; }
+   printf '\ec\e[3J'
 }
 
 PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
@@ -152,14 +152,14 @@ HISTSIZE=500 # How many history entries for the editor to keep.
 # Only default `HISTFILE` if it's unset; if it's set to an empty value, it
 # indicates we don't want to store history.
 if [ -z "${HISTFILE+1}" ]; then
-	if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
-		SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
-	else
-		HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
-		# TODO: do we want to export histfie for subshells
-	fi
+   if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
+      SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
+   else
+      HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+      # TODO: do we want to export histfie for subshells
+   fi
 elif [[ -z ${HISTFILE} ]]; then
-	SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
+   SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 
 ## Ensure we have the `history` command if it doesnt exist already.
@@ -184,15 +184,15 @@ ppurge () { echo "todo: parallelize purging"; }
 alias pargs=prargs
 SampShell_unalias prargs
 prargs () {
-	SampShell_scratch=0
+   SampShell_scratch=0
 
-	while [ "$#" != 0 ]; do
-		SampShell_scratch=$((SampShell_scratch + 1))
-		printf '%3d: %s\n' "$SampShell_scratch" "$1"
-		shift
-	done
+   while [ "$#" != 0 ]; do
+      SampShell_scratch=$((SampShell_scratch + 1))
+      printf '%3d: %s\n' "$SampShell_scratch" "$1"
+      shift
+   done
 
-	unset -v SampShell_scratch
+   unset -v SampShell_scratch
 }
 
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
@@ -200,11 +200,11 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 
 SampShell_unalias clean_shell
 clean_shell () {
-	[ "$#" -eq 0 ] && set -- /bin/sh
-	[ -n "${TERM+1}"  ] && set -- "TERM=$TERM"   "$@"
-	[ -n "${HOME+1}"  ] && set -- "HOME=$HOME"   "$@"
-	[ -n "${SHLVL+1}" ] && set -- "SHLVL=$SHLVL" "$@"
-	env -i "$@"
+   [ "$#" -eq 0 ] && set -- /bin/sh
+   [ -n "${TERM+1}"  ] && set -- "TERM=$TERM"   "$@"
+   [ -n "${HOME+1}"  ] && set -- "HOME=$HOME"   "$@"
+   [ -n "${SHLVL+1}" ] && set -- "SHLVL=$SHLVL" "$@"
+   env -i "$@"
 }
 
 ## Reloads all configuration files
@@ -219,45 +219,45 @@ reload () { SampShell_reload "$@"; }
 # of SampShell (via `$SampShell_ROOTDIR/both`).
 SampShell_unalias SampShell_reload
 SampShell_reload () {
-	if [ "$1" = -- ]; then
-		shift
-	elif [ "$1" = -h ] || [ "$1" = --help ]; then
-		cat <<-'EOS'
-		usage: SampShell_reload [--] path
-		       SampShell_reload [-h/--help]
+   if [ "$1" = -- ]; then
+      shift
+   elif [ "$1" = -h ] || [ "$1" = --help ]; then
+      cat <<-'EOS'
+      usage: SampShell_reload [--] path
+             SampShell_reload [-h/--help]
 
-		In the first form, sources '$SampShell_ROOTDIR/<path>' and returns.
-		In the second, sources '$ENV' if it exists, then '$SampShell_ROOTDIR/both'
-		EOS
-		return 64
-	fi
+      In the first form, sources '$SampShell_ROOTDIR/<path>' and returns.
+      In the second, sources '$ENV' if it exists, then '$SampShell_ROOTDIR/both'
+      EOS
+      return 64
+   fi
 
-	: "${SampShell_ROOTDIR?SampShell_ROOTDIR must be supplied}"
+   : "${SampShell_ROOTDIR?SampShell_ROOTDIR must be supplied}"
 
-	# If we're given an argument, then that's the only thing to reload; do that,
-	# and return.
-	if [ "$#" -ne 0 ]; then
-		set -- "$SampShell_ROOTDIR/$1"
-		printf 'Reloading SampShell file: %s\n' "$1"
-		. "$1"
-		return
-	fi
+   # If we're given an argument, then that's the only thing to reload; do that,
+   # and return.
+   if [ "$#" -ne 0 ]; then
+      set -- "$SampShell_ROOTDIR/$1"
+      printf 'Reloading SampShell file: %s\n' "$1"
+      . "$1"
+      return
+   fi
 
-	set -- "$SampShell_ROOTDIR/both"
+   set -- "$SampShell_ROOTDIR/both"
 
-	# We've been given no arguments. First off, reload `$ENV` if it's present.
-	if  [ -n "$ENV" ]; then
-		# On the off chance that `$ENV` is `$SampShell_ROOTDIR/both`, don't reload
-		# SampShell twice.
-		if [ "$1" -ef "$ENV" ]; then
-			echo 'Not loading $ENV; same as SampShell'
-		else
-			printf 'Reloading $ENV: %s\n' "$ENV"
-			. "$ENV" || return
-		fi
-	fi
+   # We've been given no arguments. First off, reload `$ENV` if it's present.
+   if  [ -n "$ENV" ]; then
+      # On the off chance that `$ENV` is `$SampShell_ROOTDIR/both`, don't reload
+      # SampShell twice.
+      if [ "$1" -ef "$ENV" ]; then
+         echo 'Not loading $ENV; same as SampShell'
+      else
+         printf 'Reloading $ENV: %s\n' "$ENV"
+         . "$ENV" || return
+      fi
+   fi
 
-	# Now reload all of sampshell
-	printf 'Reloading SampShell: %s\n' "$1"
-	. "$1"
+   # Now reload all of sampshell
+   printf 'Reloading SampShell: %s\n' "$1"
+   . "$1"
 }
