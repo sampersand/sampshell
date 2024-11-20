@@ -28,7 +28,7 @@ fpath[1,0]=(~ss/zsh/bindkey-fns)
 }
 
 bindkey '^[/' pound-insert # comment a line out
-bindkey '^S' SampShell-strip-whitespace && stty -ixon # need `-ixon` to use `^S`
+bindkey '^S' SampShell-strip-whitespace && # stty -ixon # need `-ixon` to use `^S`
 
 bindkey -s '^gs' '^Qgit status^M'
 bindkey -s '^gaa' '^Qgit add --all^M'

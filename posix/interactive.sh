@@ -11,6 +11,9 @@
 # the definitions within `env.sh` are expected to be visible here.
 ###
 
+## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
+set +o nounset
+
 ################################################################################
 #                               Load Other Files                               #
 ################################################################################
@@ -25,13 +28,19 @@ if SampShell_command_exists git; then
 fi
 
 # Load experimental changes, if experimental is defined
-if [ -z "${SampShell_no_experimental-}" ]; then
+if [ -z "$SampShell_no_experimental" ]; then
 	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
 fi
 
 # Setup the editor if it exists
 if [ -n "$SampShell_EDITOR" ]; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/editor.sh"
+	alias s=subl
+	alias ss=ssubl
+	alias ssubl='subl --create'
+
+	## Spellchecks
+	alias sbul=subl
+	alias ssbul=ssubl
 fi
 
 ################################################################################
@@ -41,14 +50,14 @@ fi
 # Don't clobber files with `>`; must use `>|`
 set -o noclobber
 
+## Shorthand aliases for the "safer" options
+alias t=trash
+alias m=mv-safe
+
 # Override builtins with safer versions.
 alias rm='rm -i'
 alias mv='mv -i'
 alias cp='cp -i'
-
-## Shorthand aliases for the "safer" options
-alias t=trash
-alias m=mv-safe
 
 # Still let you do the builtins
 alias rmm='rm -f'
@@ -58,22 +67,24 @@ alias cpp='cp -f'
 ################################################################################
 #                                   Aliases                                    #
 ################################################################################
+
 ## Listing files
-alias ls='ls -AFq' # Always print out `.` files, and for longform, human-readable sizes, and colours
+alias ls='ls -AFq' # Print out `.` files, longform, metric sizes, and colours.
 alias ll='ls -l'   # Shorthand for `ls -al`
 
-## Misc
+## Renaming sampshell methods
 alias parallelize_it=SampShell_parallelize_it
 alias cdd=SampShell_cdd
 alias debug=SampShell_debug
 alias undebug=SampShell_undebug
 
-# Aliases for going up directories
+## Aliases for going up directories
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
 
+## Shorthands
 alias j=jobs
 
 ################################################################################
@@ -81,21 +92,24 @@ alias j=jobs
 ################################################################################
 
 ## Changes to the SampShell tmp directory, creating it unless it exists already.
+SampShell_unalias cdtmp
 cdtmp () {
 	if ! [ -e "${SampShell_TMPDIR:?}" ]; then
 		mkdir -p -- "$SampShell_TMPDIR" || return
 	fi
 
-	CPATH= cd -- "$SampShell_TMPDIR/${1-}"
+	CPATH= cd -- "$SampShell_TMPDIR/$1"
 }
 
 ## CD to sampshell; if an arg is given it's the suffix to also go to
+SampShell_unalias cdss
 cdss () {
-	CDPATH= cd -- "${SampShell_ROOTDIR?}/${1-}";
+	CDPATH= cd -- "${SampShell_ROOTDIR?}/$1";
 }
 
 ## Adds the arguments to the `CDPATH`. This function makes sure that `CDPATH`
 # always starts with a `:`, so we won't accidentally cd elsewhere on accident.
+SampShell_unalias add_to_cd_path
 add_to_cd_path () {
 	if [ "$#" -eq 0 ]; then
 		echo 'usage: add_to_cd_path path [more ...]' >&2
@@ -121,6 +135,7 @@ add_to_cd_path () {
 ################################################################################
 
 # Clear the screen; also uses the `clear` command if it exists
+SampShell_unalias cls
 cls () {
 	SampShell_command_exists clear && { clear || return; }
 	printf '\ec\e[3J'
@@ -147,35 +162,31 @@ elif [[ -z ${HISTFILE} ]]; then
 	SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 
-if SampShell_command_exists history; then
-	alias h='history -16'
-else
-	history () { fc -l "$@"; }
-
-	# `h` is a shorthand for listing out history; we negate the arg because it goes
-	# from the end.
-	h () { fc -l "$(( -${1:-16} ))"; }
-fi
-
+## Ensure we have the `history` command if it doesnt exist already.
+SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
+alias h=history # Shorthand alias
 
 ################################################################################
 #                                    Utils                                     #
 ################################################################################
 # Prints out how many arguments were passed; used in testing expansion syntax.
+SampShell_unalias nargrs
 nargs () { echo "$#"; }
 
 alias cpu='top -o cpu'
 
 ## Deleting files
 # `rm -d` is in safety.
+SampShell_unalias purge
 alias purge='command rm -ridP' ## Purge deletes something entirely
 ppurge () { echo "todo: parallelize purging"; }
 
 alias pargs=prargs
+SampShell_unalias prargs
 prargs () {
 	SampShell_scratch=0
 
-	until [ "$#" = 0 ]; do
+	while [ "$#" != 0 ]; do
 		SampShell_scratch=$((SampShell_scratch + 1))
 		printf '%3d: %s\n' "$SampShell_scratch" "$1"
 		shift
@@ -187,10 +198,11 @@ prargs () {
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
+SampShell_unalias clean_shell
 clean_shell () {
 	[ "$#" -eq 0 ] && set -- /bin/sh
-	[ -n "${TERM+1}" ] && set -- "TERM=$TERM" "$@"
-	[ -n "${HOME+1}" ] && set -- "HOME=$HOME" "$@"
+	[ -n "${TERM+1}"  ] && set -- "TERM=$TERM"   "$@"
+	[ -n "${HOME+1}"  ] && set -- "HOME=$HOME"   "$@"
 	[ -n "${SHLVL+1}" ] && set -- "SHLVL=$SHLVL" "$@"
 	env -i "$@"
 }
@@ -198,12 +210,14 @@ clean_shell () {
 ## Reloads all configuration files
 # This is the same as `SampShell_reload` so that it's easy to replace, as
 # opposed to an alias.
+SampShell_unalias reload
 reload () { SampShell_reload "$@"; }
 
 ## Reloads SampShell.
 # If given an argument, it `.`s `$SampShell_ROOTDIR/<arg>` and returns. If
 # given no arguments, it first `.`s `$ENV` if it exists, and then will `.` all
 # of SampShell (via `$SampShell_ROOTDIR/both`).
+SampShell_unalias SampShell_reload
 SampShell_reload () {
 	if [ "$1" = -- ]; then
 		shift

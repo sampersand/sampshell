@@ -50,35 +50,25 @@
 # our POSIX ones.
 
 # The editor to open files with via the `subl` command
-if [ -z "${SampShell_EDITOR-}" ]; then
-	SampShell_EDITOR=sublime4
-fi
-export SampShell_EDITOR
+export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 
 # Where all files that sampshell uses should by default be placed at.
-if [ -z "${SampShell_GENDIR-}" ]; then
-	SampShell_GENDIR="${HOME:-/tmp}" # Wack, who wouldnt have `$HOME` set
-fi
-export SampShell_GENDIR
+# Technically this ultimately relies upon `/tmp` being defined
+export SampShell_GENDIR="${SampShell_GENDIR:-${HOME:-/tmp}}"
 
 # Where files moved from the `trash` command should go
-if [ -z "${SampShell_TRASHDIR-}" ]; then
-	SampShell_TRASHDIR="$SampShell_GENDIR/.sampshell-trash"
-fi
-export SampShell_TRASHDIR
+export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_GENDIR/.sampshell-trash}"
 
 # Where temporary files by SampShell go.
-if [ -z "${SampShell_TMPDIR-}" ]; then
-	SampShell_TMPDIR="$SampShell_GENDIR/tmp"
-fi
-export SampShell_TMPDIR
+export SampShell_TMPDIR="${SampShell_TMPDIR:-$SampShell_GENDIR/tmp}"
 
 # Where history files go. Note that unlike other variables, a default won't be
 # added if `$SampShell_HISTDIR` is empty, as that indicates no history.
-if [ -z "${SampShell_HISTDIR+1}" ]; then
-	SampShell_HISTDIR="$SampShell_GENDIR/.sampshell-history"
-fi
-export SampShell_HISTDIR
+export SampShell_HISTDIR="${SampShell_GENDIR-$SampShell_GENDIR/.sampshell-history}"
+
+# Whether to enable `set -o xtrace` in scripts. It's important that this is
+# exported, so that scripts can see it.
+export SampShell_TRACE="${SampShell_TRACE-}"
 
 # Whether or not SampShell should be verbose. If it's unset, then we set it to
 # true if we're in interactive mode.
@@ -90,19 +80,11 @@ if [ -z "${SampShell_VERBOSE+1}" ]; then
 fi
 export SampShell_VERBOSE
 
-# Whether to enable `set -o xtrace` in scripts. It's important that this is
-# exported, so that scripts can see it.
-if [ -z "${SampShell_TRACE-}" ]; then
-	SampShell_TRACE=
-fi
-export SampShell_TRACE
-
 ## Disable homebrew analytics. This is in `env.sh` not `interactive.sh` in case
 # any config scripts decide to use brew, this ensures that they won't
 # accidentally end up sending analytics to brew. Note that while we _could_
 # check to see if homebrew is installed or not, there's no harm in setting it.
-HOMEBREW_NO_ANALYTICS=1
-export HOMEBREW_NO_ANALYTICS
+export HOMEBREW_NO_ANALYTICS=1
 
 ################################################################################
 #                                  Functions                                   #
@@ -110,10 +92,22 @@ export HOMEBREW_NO_ANALYTICS
 
 # Note that we `unalias` all these functions right before defining them, just
 # on the off chance that they were `alias`ed.
+unalias SampShell_unalias >/dev/null 2>&1
+SampShell_unalias () {
+	if [ "$#" = 0 ]; then
+		echo 'usage: SampShell_unalias name [name ...]' >&2
+		return 1
+	fi
+
+	while [ "$#" != 0 ]; do
+		unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we succeed always
+		shift
+	done
+}
 
 ## Logs a message if `$SampShell_VERBOSE` is enabled; It forwards all its args
 # to printf, except it adds a newline to the end of the format argument.
-unalias SampShell_log >/dev/null 2>&1
+SampShell_unalias SampShell_log
 SampShell_log () {
 	[ -z "${SampShell_VERBOSE-}" ] && return 0
 	SampShell_scratch="${1:?need a fmt}"
@@ -125,7 +119,7 @@ SampShell_log () {
 
 ## Same as `.`, except it only sources files if the first argument exists; will
 # return `0` if the file doesn't exist.
-unalias SampShell_dot_if_exists >/dev/null 2>&1
+SampShell_unalias SampShell_dot_if_exists
 SampShell_dot_if_exists () {
 	if [ -e "${1:?need file to source}" ]; then
 		. "$@"
@@ -137,7 +131,7 @@ SampShell_dot_if_exists () {
 }
 
 ## Returns whether or not the given command exists.
-unalias SampShell_command_exists >/dev/null 2>&1
+SampShell_unalias SampShell_command_exists
 SampShell_command_exists () {
 	command -V "${1:?need command to check}" >/dev/null 2>&1
 }
@@ -146,7 +140,7 @@ SampShell_command_exists () {
 # PATH="$PATH:$1", except it handles the case when PATH does't exist, and makes
 # sure to not add $1 if it already exists; note that this doesn't export PATH.
 # Notably this doesn't export the path.
-unalias SampShell_add_to_path >/dev/null 2>&1
+SampShell_unalias SampShell_add_to_path
 SampShell_add_to_path () {
 	case ":${PATH-}:" in
 		*:"${1:?need a path to add to PATH}":*) : ;;
@@ -155,19 +149,19 @@ SampShell_add_to_path () {
 }
 
 ## Enable all debugging capabilities of SampShell, as well as the current shell
-unalias SampShell_debug >/dev/null 2>&1
+SampShell_unalias SampShell_debug
 SampShell_debug () {
 	export SampShell_VERBOSE=1 && export SampShell_TRACE=1 && set -o xtrace && set -o verbose
 }
 
 ## Disable all debugging capabilities of SampShell, as well as the current shell
-unalias SampShell_undebug >/dev/null 2>&1
+SampShell_unalias SampShell_undebug
 SampShell_undebug () {
 	unset -v SampShell_VERBOSE && unset -v SampShell_TRACE && set +o xtrace && set +o verbose
 }
 
 ## CD's to the directory containing a file
-unalias SampShell_cdd >/dev/null 2>&1
+SampShell_unalias SampShell_cdd
 SampShell_cdd () {
 	if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
 		shift
@@ -196,7 +190,7 @@ SampShell_cdd () {
 }
 
 ## Parallelize a function by making a new job once per argument given
-unalias SampShell_parallelize_it >/dev/null 2>&1
+SampShell_unalias SampShell_parallelize_it
 SampShell_parallelize_it () {
 	# Support for when the shell is ZSH, when we explicitly have `-e`.
 	[ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
@@ -294,7 +288,7 @@ fi
 #                           Respect SampShell_TRACE                            #
 ################################################################################
 
-## Respect `SampShell_TRACE` in all scripts that `.`` this file, regardless of
+## Respect `SampShell_TRACE` in all scripts that `.` this file, regardless of
 # whether they're a SampShell script or not. Note we want this as the last thing
 # in this file, so that we don't print the traces for the other setup.
 if [ -n "$SampShell_TRACE" ]; then

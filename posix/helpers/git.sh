@@ -8,10 +8,12 @@ alias g=git
 # : "${SampShell_git_branch_prefix_pattern:='$SampShell_git_branch_prefix/??-??-??'}"
 
 alias master-branch=SampShell_master_branch
+SampShell_unalias SampShell_master_branch
 SampShell_master_branch () {
 	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
+SampShell_unalias SampShell_git_branch_prefix
 SampShell_git_branch_prefix () {
 	if [ -z "$1" ]; then
 		set -- "${date:-"$(date +%y-%m-%d)"}"
@@ -44,6 +46,7 @@ alias gstp='git stash pop'
 #####################
 
 # Create a new branch; date is optional.
+SampShell_unalias gnb
 gnb () {
 	if [ "$#" = 0 ]; then
 		echo "[date=YY-MM-DD] $0 (branch name here)" >&2
@@ -54,12 +57,14 @@ gnb () {
 }
 
 alias gswm='gsw "$(SampShell_master_branch)"'
+SampShell_unalias gsw
 gsw () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git switch "$@"
 }
 alias gbr='git branch'
 
+SampShell_unalias gdb
 gdb () {
 	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
 	git branch --delete "$@"
@@ -74,6 +79,7 @@ alias gbrmv=grename
 ##########################
 
 # Squash all commits down lightly.
+SampShell_unalias gsquash
 gsquash () {
 	if [ "$#" != 1 ]; then
 		echo "usage: $0 <branch-or-commit>"
@@ -84,11 +90,13 @@ gsquash () {
 }
 
 # Fixup code
+SampShell_unalias goops
 goops () {
 	[ "$#" = 0 ] && set -- '--all'
 	git add "$@" && git commit --amend --no-edit && git push --force
 }
 
+SampShell_unalias gclear
 gclear () {
 	# git add --all && git stash push && git status
 	echo 'todo'
@@ -96,11 +104,13 @@ gclear () {
 }
 
 # Adds everything and prints out the status
+SampShell_unalias gaa
 gaa () {
 	git add --all && git status
 }
 
 # Commits untracked files; all arguments are joined with a space.
+SampShell_unalias gcm
 gcm () {
 	if [ "$#" = 0 ]; then
 		git commit
@@ -126,8 +136,11 @@ alias gcp='git cherry-pick'
 alias gg='git grep'
 alias ginit='git init'
 alias gnit='git commit --amend --no-edit'
+
+SampShell_unalias gnita
 gnita () { gaa && gnit; }
 
+SampShell_unalias gcl
 gcl () {
 	git clone "${1?'must supply a repo'}" || return "$?"
 	set -- "$(basename "$1")"
@@ -137,18 +150,21 @@ gcl () {
 alias gl='git log'
 
 alias gmm='gm "$(SampShell_master_branch)"'
+SampShell_unalias gm
 gm () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git merge "$@"
 }
 
 alias gdm='gd "$(SampShell_master_branch)"'
+SampShell_unalias gdm
 gd () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff "$@"
 }
 
 alias gddm='gdd "$(SampShell_master_branch)"'
+SampShell_unalias gdd
 gdd () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff --name-status "$@"
