@@ -1,11 +1,17 @@
 #### Basic SampShell definitions for interactive ZSH shell instances.
+# This file shouldn't be sourced directly; instead, the top-level `interactive.sh` file sources it.
 #
-# The definitions in these files aren't really ever meant to be touched; they're stuff I doubt i'll
-# ever change. For stuff that I may change, checkout `interactive/experimental.zsh`
+# The definitions in this file aren't really meant to be changed, as they codify how I use ZSH. Any
+# options I'm not certain about go into `interactive/experimental.zsh`, which is `source`d unless
+# the `$SampShell_no_experimental` variable is set to a nonempty value.
+#
+# This file is not the location for functions I normally use, as those change a bit more often.
+# those go into `interactive/utils.zsh` instead.
 #
 # Note that `setopt` is used for setting new options, whereas `unsetopt` is used to set options back
 # to their default, in case something else changed them. They're functionally the same, but it's
 # easier for me to look at and figure out why i'm doing something one way
+#####
 
 ####################################################################################################
 #                                       Changing Directories                                       #
