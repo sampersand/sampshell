@@ -3,7 +3,7 @@
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ }
 
-## Options for the prompt
+## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST                # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_PERCENT         # Ensure `%` escapes in prompts are enabled.
@@ -54,7 +54,7 @@ function _SampShell_rps1_git_status {
     # TODO: rebasing and stuff
 }
 
-function make-prompt {
+function make-prompt make-ps1 { #} <-- `#}` is needed by sublime to not freak out... lol
     local -A opts=(
         --pwd-max-len 65
         --branch-pattern '[[:alnum:]]##/??-??-??/'

@@ -42,8 +42,11 @@ SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to en
 # HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
 # HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
 
+## What commands should even be saved
+## Modify commands that should be saved
+## How to save history
+
 ## Setup history options
-setopt EXTENDED_HISTORY       # (For fun) When writing cmds, write their start time & duration too.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
 setopt HIST_ALLOW_CLOBBER     # Add `|` to `>` and `>>`, so that re-running the command can clobber.
@@ -70,7 +73,7 @@ function _SampShell-nosave-enable-disable-history {
 ####################################################################################################
 #                                               Jobs                                               #
 ####################################################################################################
-
+	
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
 setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
 unsetopt NO_MONITOR            # Enable job control, in case it's not already sent
@@ -79,13 +82,18 @@ unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ####################################################################################################
-#                                        Entering Commands                                         #
+#                                            The Prompt                                            #
 ####################################################################################################
 
-## Set the prompt
+## Load in the prompt creator. This also sets up prompt options for us, as they're required for it.
 source ${0:P:h}/helpers/prompt.zsh
-alias make-ps1=make-prompt
-make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
+
+## Create the prompt with default options
+make-ps1
+
+####################################################################################################
+#                                        Entering Commands                                         #
+####################################################################################################
 
 ## Setup options that modify valid syntax
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
