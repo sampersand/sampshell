@@ -87,28 +87,22 @@ source ${0:P:h}/helpers/prompt.zsh
 alias make-ps1=make-prompt
 make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 
-## Options that should always be set. 
-setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
-setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
-unsetopt NO_EQUALS     # Enables `=foo`, which expands to the full path eg `/bin/foo`
-
-## Set interactive options
+## Setup options that modify valid syntax
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
-setopt CLOBBER_EMPTY        # With `NO_CLOBBER`, this Lets you clobber empty files
 setopt HIST_SUBST_PATTERN   # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
+histchars[2]=,              # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
+unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
+setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
+setopt GLOB_STAR_SHORT      # Enable the `**.c` shorthand for `**/*.c`
+unsetopt NO_EQUALS          # Enables `=foo`, which expands to the full path eg `/bin/foo`
+unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands, eg `for x in *; echo $x`
+setopt CLOBBER_EMPTY        # With `NO_CLOBBER`, this Lets you clobber empty files
 setopt NO_CLOBBER           # (`posix/interactive.sh` should've set it) Disables clobbering files.
 setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
 unsetopt RM_STAR_SILENT     # In case it's accidentally unset, force `rm *` to ask for confirmation
 unsetopt GLOB_SUBST         # (unset is default) When set, requires quoting everything like bash.
-unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands
-unsetopt NO_BANG_HIST       # Lets you do `!!` and friends
-
-## Update variables ZSH uses in interactive mode.
-histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
-: "${REPORTTIME=4}" # Print the duration of commands that take more than 4s of CPU time
-# DIRSTACKSIZE=30   # I just started using dirstack more, if it ever grows unwieldy I can set this.
 
 ## Zstyles; this might be its own category if I get more into zstyle.
 source ${0:P:h}/helpers/completion.zsh
