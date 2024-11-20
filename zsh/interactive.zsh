@@ -90,7 +90,7 @@ make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 ## Options that should always be set. 
 setopt EXTENDED_GLOB   # Always have extended globs enabled, without needing to set it.
 setopt GLOB_STAR_SHORT # Enable the `**.c` shorthand for `**/*.c`
-unsetopt NO_EQUALS     # I use this alot
+unsetopt NO_EQUALS     # Enables `=foo`, which expands to the full path eg `/bin/foo`
 
 ## Set interactive options
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
