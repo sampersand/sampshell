@@ -22,7 +22,7 @@ source ${0:P:h}/extended/named-directories.zsh
 ## Default `dirs` to `dirs -v` (which lists line numbers). Passing in any argument disables this.
 function dirs { builtin dirs ${@:-v} }
 
-## Enable `cd` options
+## Setup `cd` options
 setopt AUTO_CD           # Enables `dir` to be shorthand for `cd dir` if `dir` isn't a valid command
 setopt CDABLE_VARS       # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
 setopt AUTO_PUSHD        # Have `cd` push directories onto the directory stack like `pushd`
@@ -42,7 +42,7 @@ SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to en
 # HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
 # HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
 
-## Enable History options
+## Setup history options
 setopt EXTENDED_HISTORY       # (For fun) When writing cmds, write their start time & duration too.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
@@ -60,11 +60,23 @@ unsetopt SHARE_HISTORY        # Don't constantly share history across interactiv
 function disable-history { fc -p && _SampShell_nosave_hist=1 && echo 'History saving disabled.' }
 function enable-history  { fc -P && _SampShell_nosave_hist=  && echo 'History saving enabled.'  }
 
-## Don't store enable-history or disable-history. This should go before record-every-command.
+## Ensure we don't store enable-history or disable-history.
+# Stick it before whatever `record-every-command` sets, otherwise we'll record (en|dis)able-history.
 zshaddhistory_functions[1,0]=(_SampShell-nosave-enable-disable-history)
 function _SampShell-nosave-enable-disable-history {
 	[[ "${1%$'\n'}" != ((en|dis)able-history) ]] # Use `!=` so we return `1` in case of success
 }
+
+####################################################################################################
+#                                               Jobs                                               #
+####################################################################################################
+
+## Setup job options (jobs programs in the background, started by eg `echo hi &`)
+setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
+unsetopt NO_MONITOR            # Enable job control, in case it's not already sent
+unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
+unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
+unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ####################################################################################################
 #                                        Entering Commands                                         #
@@ -105,16 +117,6 @@ source ${0:P:h}/extended/completion.zsh
 ## ZLE; this might be its own category if i get more int o ZLE
 source ${0:P:h}/extended/bindkey.zsh
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
-
-####################################################################################################
-#                                               Jobs                                               #
-####################################################################################################
-## Enable options. Note the `CHECK_XXX_JOBS` options could technically be in safety.zsh
-setopt MONITOR                 # Enable job control, in case it's not already sent
-setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
-unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
-unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
-unsetopt NO_HUP                # When the shell closes, send SIGUP to all jobs.
 
 ####################################################################################################
 #                                      Functions and Aliases                                       #
