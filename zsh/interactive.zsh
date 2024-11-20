@@ -12,7 +12,7 @@
 ####################################################################################################
 
 ## Add named directories
-source ${0:P:h}/extended/named-directories.zsh
+source ${0:P:h}/helpers/named-directories.zsh
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
 [[ -n $SampShell_TMPDIR   ]] && add-named-dir tmp   $SampShell_TMPDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
@@ -34,7 +34,7 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 ####################################################################################################
 
 ## Enables the "record-every-command" feature, which stores nearly every command for later analysis.
-source ${0:P:h}/extended/record-every-command.zsh
+source ${0:P:h}/helpers/record-every-command.zsh
 
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
@@ -83,7 +83,7 @@ unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remai
 ####################################################################################################
 
 ## Set the prompt
-source ${0:P:h}/extended/prompt.zsh
+source ${0:P:h}/helpers/prompt.zsh
 alias make-ps1=make-prompt
 make-prompt # Set the prompt, which `prompt.zsh` doesn't do for us by default.
 
@@ -112,10 +112,10 @@ histchars[2]=,      # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so f
 # DIRSTACKSIZE=30   # I just started using dirstack more, if it ever grows unwieldy I can set this.
 
 ## Zstyles; this might be its own category if I get more into zstyle.
-source ${0:P:h}/extended/completion.zsh
+source ${0:P:h}/helpers/completion.zsh
 
 ## ZLE; this might be its own category if i get more int o ZLE
-source ${0:P:h}/extended/bindkey.zsh
+source ${0:P:h}/helpers/bindkey.zsh
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
 
 ####################################################################################################

@@ -21,17 +21,17 @@
 
 # Load the git config, if git is found
 if SampShell_command_exists git; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/git.sh"
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/git.sh"
 fi
 
 # Load experimental changes, if experimental is defined
 if [ -n "$SampShell_experimental" ]; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/experimental.sh"
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
 fi
 
 # Setup the editor if it exists
 if [ -n "$SampShell_EDITOR" ]; then
-	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/extended/editor.sh"
+	SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/editor.sh"
 fi
 
 ################################################################################
