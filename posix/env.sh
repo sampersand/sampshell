@@ -1,9 +1,10 @@
-#### Basic SampShell definitions for _all_ POSIX-complaint shells
-# This file is intended to be `.`able from anywhere, be it from interactive
-# shells, or from within scripts.
+#### POSIX-compliant SampShell definitions both scripts and interactive shells.
+# This file is designed to be `.`able from nearly anywhere, including at the top
+# of all POSIX-compliant shell scripts (including ones I haven't written), as
+# it introduces important definitions (such as `$PATH`, or `$SampShell_EDITOR`)
+# that should always be present.
 #
-# This file is strictly POSIX-compliant, as it'll be loaded for every shell.
-#
+# Because of this, this file is strictly POSIX-compliant.
 #
 # Order of Operations
 # ===================
@@ -42,14 +43,13 @@
 ####
 
 ################################################################################
-#                           Exported Shell Variables                           #
+#                            Environment Variables                             #
 ################################################################################
 
-# Note regardless of whether we set the value to a default, we always export the
-# variables. This ensures that we can see them from within other utilities, like
-# our POSIX ones.
+# Note: We always export these variables, so that they're visible from scripts
+# too. (Also, `PATH` is set at the very end of this file)
 
-# The editor to open files with via the `subl` command
+## The editor to open files with via the `subl` command
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 
 # Where all files that sampshell uses should by default be placed at.
