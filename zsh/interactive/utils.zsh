@@ -1,5 +1,8 @@
 alias gcm='noglob gcm' # dont glob with gcm, eg dont have `!`s
 
+# `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
+function prp { print -P $@ }
+
 [[ $VENDOR == apple ]] && eval "${$(alias -L ls)}hGb" # add the `l` alias more options to `ls` which I know macOS supports
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias d=dirs

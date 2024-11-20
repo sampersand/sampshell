@@ -1,8 +1,5 @@
 ### Prompting in ZSH
 
-# `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
-function prp { print -P $@ }
-
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST                # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do this with %!.
@@ -101,6 +98,7 @@ function make-prompt make-ps1 { #} <-- `#}` is needed by sublime to not freak ou
 
     # PS1+='%F{cyan}%D{%_m\/%d %_I:%M:%S %p}%f' # time
     PS1= # Don't export it if it's not already exported.
+    PS1='%k'
     PS1+='%B%F{blue}[%b'                                   # [
     PS1+='%F{cyan}%D{%_I:%M:%S %p}%f'                      #    time
     PS1+=' %U%!%u'                                         #    history
@@ -136,3 +134,8 @@ function make-prompt make-ps1 { #} <-- `#}` is needed by sublime to not freak ou
 
     PS1+='%#%f '                                   # ending %
 }
+
+typeset -aU preexec_functions
+preexec_functions+=(_SampShell-preexec-clear-formatting)
+function _SampShell-preexec-clear-formatting { print -nP '%b%u%s%f' } # Reset formatting, though i cant figure out how to unset background colours
+

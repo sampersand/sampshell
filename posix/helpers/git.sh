@@ -61,7 +61,7 @@ gsw () {
 alias gbr='git branch'
 
 gdb () {
-	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- '@{-1}'
+	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
 	git branch --delete "$@"
 }
 alias grename='git branch --move'
