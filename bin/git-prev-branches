@@ -1,4 +1,40 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env ruby
+BEGIN {
+	Dir.chdir '/Users/sampersand/.sampshell'
+	$* << '-U'
+}
+
+require 'set'
+
+if $*.first == '-U'
+	dirs = Set.new
+	$*.shift
+end
+
+remaining = Integer($*.shift || 10, exception: false) or abort "usage: #$0 [-U] [amnt=10]"
+i = 1
+
+AMOUNT_OF_BRANCHES = remaining * 10
+
+while remaining.nonzero? && i < 10_0
+	$stdin.close rescue nil
+
+	$stdin = IO.popen(
+		p(['git', 'rev-parse', '--symbolic-full-name', *(i..i+AMOUNT_OF_BRANCHES).map{|x| "@{-#{x}}" }]),
+		err: :close
+	)
+
+	while gets && (i+=1; remaining.nonzero?)
+		next if ~/\A@{-\d+}\Z/
+		$_.delete_prefix! 'refs/head/'
+		dirs.add? $_ or next if dirs
+
+		puts "%-3d %s" % [i, $_]
+		remaining -= 1
+	end
+end
+
+__END__
 SampShell-script
 
 # TODO: help

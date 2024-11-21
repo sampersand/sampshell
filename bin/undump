@@ -1,0 +1,4 @@
+#!ruby -n
+BEGIN { DONT_PRINT_NEWLINE=$*[0] == '-n' and $*.shift }
+print x = %|"#{$_.gsub(/[#'"]/, '\\\\&')}"|.undump
+END { unless x.end_with?("\n") then DONT_PRINT_NEWLINE || puts end }

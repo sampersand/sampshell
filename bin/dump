@@ -1,0 +1,17 @@
+#!/bin/sh
+exec ruby -nsx -- "$0" "$@"
+#! ruby
+BEGIN {
+  # `-l` is line oriented, `-n` will suppress newlines at the end
+  $h || $_help and (puts <<USAGE; exit)
+usage: #$0 [-h|--help] [-ln] [--] [files...]
+omit `files` for, or specify as `-`, for stdin.
+USAGE
+  $ln || $nl and ($l = $n = true) # in case `-ln` or `-nl` was specified
+}
+END { $l || $n or puts }
+
+$_.replace ($l ? chomp : $_).dump[1..-2]
+gsub /\\([#'"])/, '\1'
+print
+puts if $l
