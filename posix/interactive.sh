@@ -133,7 +133,6 @@ alias j=jobs
 ################################################################################
 
 ## Changes to the SampShell tmp directory, creating it unless it exists already.
-SampShell_unalias cdtmp
 cdtmp () {
    if ! [ -e "${SampShell_TMPDIR:?}" ]; then
       mkdir -p -- "$SampShell_TMPDIR" || return
@@ -143,14 +142,12 @@ cdtmp () {
 }
 
 ## CD to sampshell; if an arg is given it's the suffix to also go to
-SampShell_unalias cdss
 cdss () {
    CDPATH= cd -- "${SampShell_ROOTDIR?}/$1";
 }
 
 ## Adds the arguments to the `CDPATH`. This function makes sure that `CDPATH`
 # always starts with a `:`, so we won't accidentally cd elsewhere on accident.
-SampShell_unalias add_to_cd_path
 add_to_cd_path () {
    if [ "$#" -eq 0 ]; then
       echo 'usage: add_to_cd_path path [more ...]' >&2
@@ -176,7 +173,6 @@ add_to_cd_path () {
 ################################################################################
 
 # Clear the screen; also uses the `clear` command if it exists
-SampShell_unalias cls
 cls () {
    SampShell_command_exists clear && { clear || return; }
    printf '\ec\e[3J'
@@ -218,19 +214,16 @@ SampShell_cdd () {
 #                                    Utils                                     #
 ################################################################################
 # Prints out how many arguments were passed; used in testing expansion syntax.
-SampShell_unalias nargrs
 nargs () { echo "$#"; }
 
 alias cpu='top -o cpu'
 
 ## Deleting files
 # `rm -d` is in safety.
-SampShell_unalias purge
 alias purge='command rm -ridP' ## Purge deletes something entirely
 ppurge () { echo "todo: parallelize purging"; }
 
 alias pargs=prargs
-SampShell_unalias prargs
 prargs () {
    SampShell_scratch=0
 
@@ -246,7 +239,6 @@ prargs () {
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
-SampShell_unalias clean_shell
 clean_shell () {
    [ "$#" -eq 0 ] && set -- /bin/sh
    [ -n "${TERM+1}"  ] && set -- "TERM=$TERM"   "$@"
@@ -258,14 +250,12 @@ clean_shell () {
 ## Reloads all configuration files
 # This is the same as `SampShell_reload` so that it's easy to replace, as
 # opposed to an alias.
-SampShell_unalias reload
 reload () { SampShell_reload "$@"; }
 
 ## Reloads SampShell.
 # If given an argument, it `.`s `$SampShell_ROOTDIR/<arg>` and returns. If
 # given no arguments, it first `.`s `$ENV` if it exists, and then will `.` all
 # of SampShell (via `$SampShell_ROOTDIR/both`).
-SampShell_unalias SampShell_reload
 SampShell_reload () {
    if [ "$1" = -- ]; then
       shift
@@ -311,7 +301,6 @@ EOS
 }
 
 ## Parallelize a function by making a new job once per argument given
-SampShell_unalias SampShell_parallelize_it
 SampShell_parallelize_it () {
    # Support for when the shell is ZSH, when we explicitly have `-e`.
    [ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT

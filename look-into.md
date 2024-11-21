@@ -1,3 +1,5 @@
+- `SHELL_SESSIONS_DISABLE` in macos
+
 disable -p, to disable patterns!
 --
 `\ex + where-is`
