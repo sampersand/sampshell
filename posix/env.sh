@@ -161,14 +161,14 @@ SampShell_add_to_path () {
 # This enables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
 SampShell_debug () {
-   export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace && set -o verbose
+   export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace -o verbose
 }
 
 ## Enables debugging mode
 # This disables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
 SampShell_undebug () {
-   unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace && set +o verbose
+   unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace +o verbose
 }
 
 ################################################################################
