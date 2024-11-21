@@ -228,7 +228,7 @@ SampShell_reload () {
 
       In the first form, sources '$SampShell_ROOTDIR/<path>' and returns.
       In the second, sources '$ENV' if it exists, then '$SampShell_ROOTDIR/both'
-      EOS
+EOS
       return 64
    fi
 
@@ -260,4 +260,75 @@ SampShell_reload () {
    # Now reload all of sampshell
    printf 'Reloading SampShell: %s\n' "$1"
    . "$1"
+}
+
+## Parallelize a function by making a new job once per argument given
+SampShell_unalias SampShell_parallelize_it
+SampShell_parallelize_it () {
+   # Support for when the shell is ZSH, when we explicitly have `-e`.
+   [ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
+
+   if [ "${1-}" = -- ]; then
+      shift
+   elif [ "${1-}" = -e ]; then
+      SampShell_scratch=1
+      shift
+   elif [ "$#" = 0 ] || [ "$1" = -h ] || [ "$1" = --help ]; then
+      if [ "$1" = -h ] || [ "$1" = --help ]; then
+         set -- 0
+      else
+         set -- 64
+      fi
+      {
+         echo "usage: SampShell_parallelize_it [-e] [--] fn [args ...]"
+         echo "(-e does shell expansion on args; without it, args are quoted)"
+      } >&"$((1 + (! $1) ))"
+      return "$1"
+   fi
+
+   # Make sure a function was given
+   if ! command -v "$1" >/dev/null 2>&1; then
+      echo 'SampShell_parallelize_it: no function given' >&2
+      unset -v SampShell_parallelize_it
+      return 1
+   fi
+
+   # Make sure the function is executable
+   if ! command -v "$1" >/dev/null 2>&1; then
+      printf 'SampShell_parallelize_it: fn is not executable: %s\n' "$1" >&2
+      return 1
+   fi
+
+
+   while [ "$#" -gt 1 ]; do
+      # If we're expanding...
+      if [ -n "${SampShell_scratch-}" ]; then
+         # Unset `SampShell_scratch` so the child process doesn't see it
+         unset -v SampShell_scratch
+
+         # Run the function
+         "$1" $2 &
+
+         # Remove argument #2
+         SampShell_scratch=$1
+         shift 2
+         set -- "$SampShell_scratch" "$@"
+
+         # Set it so we'll go into this block next time.
+         SampShell_scratch=1
+      else
+         # Run the function
+         "$1" "$2" &
+
+         # Remove argument #2
+         SampShell_scratch=$1
+         shift 2
+         set -- "$SampShell_scratch" "$@"
+
+         # unset it so won't run the expand block.
+         unset -v SampShell_scratch
+      fi
+   done
+
+   unset -v SampShell_scratch
 }

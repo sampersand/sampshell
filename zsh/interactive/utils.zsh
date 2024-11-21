@@ -29,7 +29,10 @@ function reload {
 function clean-sh   { clean-shell --shell =sh $@ } # use which in case EQUALS is unset,
 function clean-zsh  { clean-shell --shell =zsh $@ } # even though it's set by default.
 function clean-bash { clean-shell --shell =bash $@ }
-SampShell_command_exists dash && function clean-dash { clean-shell --shell =dash $@ }
+SampShell_command_exists dash && {
+	function clean-dash { clean-shell --shell =dash $@ }
+	function cldash { clean-dash --none -- -l $@ }
+}
 alias clsh=clean-shell
 function clzsh { clean-zsh --none -- -fd $@ } # Don't set SampShell variables, only $TERM/$HOME,etc
 

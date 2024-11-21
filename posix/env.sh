@@ -1,10 +1,15 @@
-#### POSIX-compliant SampShell definitions both scripts and interactive shells.
+#### POSIX-compliant SampShell definitions for both scripts and interactive shells.
 # This file is designed to be `.`able from nearly anywhere, including at the top
 # of all POSIX-compliant shell scripts (including ones I haven't written), as
 # it introduces important definitions (such as `$PATH`, or `$SampShell_EDITOR`)
 # that should always be present.
 #
+# Technically this relies on `$HOME` for `SampShell_gendir`
+#
 # Because of this, this file is strictly POSIX-compliant.
+#
+# The environment variables here are also so if a process spawns another proc
+# which spawns a shell, we'll keep soem of the sme functionality
 #
 # Order of Operations
 # ===================
@@ -48,42 +53,64 @@
 
 # Note: We always export these variables, so that they're visible from scripts
 # too. (Also, `PATH` is set at the very end of this file)
+#
+# NOTE: These variables allhave default values. some variables will default on
+# both unset and empty, and some will only default on unset.
 
-## The editor to open files with via the `subl` command
-export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-
-# Where all files that sampshell uses should by default be placed at.
-# Technically this ultimately relies upon `/tmp` being defined
-export SampShell_GENDIR="${SampShell_GENDIR:-${HOME:-/tmp}}"
-
-# Where files moved from the `trash` command should go
-export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_GENDIR/.sampshell-trash}"
-
-# Where temporary files by SampShell go.
-export SampShell_TMPDIR="${SampShell_TMPDIR:-$SampShell_GENDIR/tmp}"
-
-# Where history files go. Note that unlike other variables, a default won't be
-# added if `$SampShell_HISTDIR` is empty, as that indicates no history.
-export SampShell_HISTDIR="${SampShell_GENDIR-$SampShell_GENDIR/.sampshell-history}"
-
-# Whether to enable `set -o xtrace` in scripts. It's important that this is
-# exported, so that scripts can see it.
-export SampShell_TRACE="${SampShell_TRACE-}"
-
-# Whether or not SampShell should be verbose. If it's unset, then we set it to
-# true if we're in interactive mode.
+## Whether to log SampShell diagnostic information.
+# (Diagnostic information is logged if `$SampShell_VERBOSE` is a nonempty value)
+#
+# This defaults to enabled only in interactive shells. However unlike most other
+# variables, this default is only used if `$SampShell_VERBOSE` is unset---if it
+# is set to the empty value, it's kept that way.
 if [ -z "${SampShell_VERBOSE+1}" ]; then
+   # `$-` is a string of single-char options in POSIX shells; `i` is interactive
    case "$-" in
       *i*) SampShell_VERBOSE=1 ;;
-      *) SampShell_VERBOSE= ;;
+      *)   SampShell_VERBOSE=  ;;
    esac
 fi
 export SampShell_VERBOSE
 
-## Disable homebrew analytics. This is in `env.sh` not `interactive.sh` in case
-# any config scripts decide to use brew, this ensures that they won't
-# accidentally end up sending analytics to brew. Note that while we _could_
-# check to see if homebrew is installed or not, there's no harm in setting it.
+## The editor to open files with via the `subl` command
+# This is exported so that applications like `irb` can run `subl`.
+export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
+
+## Where all files that SampShell uses should by default be placed at.
+# This is only used to set default values for the `SampShell_*DIR` variables, so
+# it's not exported (child processes don't care about how defaults were set).
+: "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
+
+## The default trash folder for the `trash` command (found in `posix/bin/trash`)
+export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
+
+## The temporary directory for SampShell.
+# This is distinct from the normal `$TMPDIR`; that directory is sometimes wiped
+# by the operating system, and I like having a folder full of scratch files that
+# I can play around with if needed.
+export SampShell_TMPDIR="${SampShell_TMPDIR:-$SampShell_gendir/.tmp}"
+
+## The default folder for saving the shell's history.
+# Note that unlike most other variables, this will not set a default if the
+# variable is set, but to an empty value. This indicates that we don't want to
+# store history at all.
+export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+
+## Whether to enable xtrace (`set -x`) in scripts.
+# (Tracing is enabled if `$SampShell_TRACE` is a non-empty value)
+#
+# When set, assuming all scripts are `.`ing this file, this should propagate
+# through _all_ files that are called, which lets you debug more easily. It's
+# important that this is exported, so scripts can see it.
+#
+# The `set -x` is actually done as the the end of this file.
+export SampShell_TRACE="${SampShell_TRACE-}"
+
+## Disable homebrew analytics.
+# If set, homebrew (the mac package manager) won't send any analytics. We set it
+# in `env.zsh` and not `interactive.sh` in case any config scripts decide to use
+# homebrew themselves. (We _could_ check to see if homebrew is installed, but
+# that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
 
 ################################################################################
@@ -110,11 +137,8 @@ SampShell_unalias () {
 SampShell_unalias SampShell_log
 SampShell_log () {
    [ -z "${SampShell_VERBOSE-}" ] && return 0
-   SampShell_scratch="${1:?need a fmt}"
-   shift
-   set -- "$SampShell_scratch\\n" "$@"
-   unset -v SampShell_scratch
-   printf -- "$@"
+   : "${1:?a format is needed}"
+   printf -- "$@" && echo # Make sure we print the trailing newline
 }
 
 ## Same as `.`, except it only sources files if the first argument exists; will
@@ -125,15 +149,14 @@ SampShell_dot_if_exists () {
       . "$@"
    else
       SampShell_log 'Not sourcing non-existent file: %s' "$1"
+      return 0 # Ensure a noznero status in the error case
    fi
-
-   return 0
 }
 
 ## Returns whether or not the given command exists.
 SampShell_unalias SampShell_command_exists
 SampShell_command_exists () {
-   command -V "${1:?need command to check}" >/dev/null 2>&1
+   command -v "${1:?need command to check}" >/dev/null 2>&1
 }
 
 ## Adds its argument to the start of '$PATH' if it doesnt already exist; same as
@@ -151,13 +174,13 @@ SampShell_add_to_path () {
 ## Enable all debugging capabilities of SampShell, as well as the current shell
 SampShell_unalias SampShell_debug
 SampShell_debug () {
-   export SampShell_VERBOSE=1 && export SampShell_TRACE=1 && set -o xtrace && set -o verbose
+   export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace && set -o verbose
 }
 
 ## Disable all debugging capabilities of SampShell, as well as the current shell
 SampShell_unalias SampShell_undebug
 SampShell_undebug () {
-   unset -v SampShell_VERBOSE && unset -v SampShell_TRACE && set +o xtrace && set +o verbose
+   unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace && set +o verbose
 }
 
 ## CD's to the directory containing a file
@@ -165,101 +188,27 @@ SampShell_unalias SampShell_cdd
 SampShell_cdd () {
    if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
       shift
-   elif [ "$#" -ne 1 ] || [ "$1" = -h ] || [ "$1" = --help ] || [ "$1" = -- ]
-   then
+   elif [ "$#" -ne 1 ] || [ "$1" = -h ] || [ "$1" = --help ] || [ "$1" = -- ]; then
       # Set exit status, and where to redirect
       if [ "$1" = -h ] || [ "$1" = --help ]; then
          set -- 0
       else
-         set -- 1
+         set -- 2
       fi
 
-      echo "usage: cdd [-h/--help] [--] directory" >&"$((1 + $1))"
+      echo 'usage: cdd [-h/--help] [--] directory' >&"$((1 + $1))"
       return "$1"
    fi
 
    SampShell_scratch=$(dirname -- "$1" && printf x) || {
-      set -- "$?"
       unset -v SampShell_scratch
-      return "$1"
+      return 1
    }
    set -- "${SampShell_scratch%?x}"
    unset -v SampShell_scratch
    [ "$1" = - ] && set -- ./-
    CDPATH= cd -- "$1"
 }
-
-## Parallelize a function by making a new job once per argument given
-SampShell_unalias SampShell_parallelize_it
-SampShell_parallelize_it () {
-   # Support for when the shell is ZSH, when we explicitly have `-e`.
-   [ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
-
-   if [ "${1-}" = -- ]; then
-      shift
-   elif [ "${1-}" = -e ]; then
-      SampShell_scratch=1
-      shift
-   elif [ "$#" = 0 ] || [ "$1" = -h ] || [ "$1" = --help ]; then
-      if [ "$1" = -h ] || [ "$1" = --help ]; then
-         set -- 0
-      else
-         set -- 64
-      fi
-      {
-         echo "usage: SampShell_parallelize_it [-e] [--] fn [args ...]"
-         echo "(-e does shell expansion on args; without it, args are quoted)"
-      } >&"$((1 + (! $1) ))"
-      return "$1"
-   fi
-
-   # Make sure a function was given
-   if ! command -v "$1" >/dev/null 2>&1; then
-      echo 'SampShell_parallelize_it: no function given' >&2
-      unset -v SampShell_parallelize_it
-      return 1
-   fi
-
-   # Make sure the function is executable
-   if ! command -v "$1" >/dev/null 2>&1; then
-      printf 'SampShell_parallelize_it: fn is not executable: %s\n' "$1" >&2
-      return 1
-   fi
-
-
-   while [ "$#" -gt 1 ]; do
-      # If we're expanding...
-      if [ -n "${SampShell_scratch-}" ]; then
-         # Unset `SampShell_scratch` so the child process doesn't see it
-         unset -v SampShell_scratch
-
-         # Run the function
-         "$1" $2 &
-
-         # Remove argument #2
-         SampShell_scratch=$1
-         shift 2
-         set -- "$SampShell_scratch" "$@"
-
-         # Set it so we'll go into this block next time.
-         SampShell_scratch=1
-      else
-         # Run the function
-         "$1" "$2" &
-
-         # Remove argument #2
-         SampShell_scratch=$1
-         shift 2
-         set -- "$SampShell_scratch" "$@"
-
-         # unset it so won't run the expand block.
-         unset -v SampShell_scratch
-      fi
-   done
-
-   unset -v SampShell_scratch
-}
-
 
 ################################################################################
 #                                  Setup PATH                                  #
@@ -291,6 +240,7 @@ fi
 ## Respect `SampShell_TRACE` in all scripts that `.` this file, regardless of
 # whether they're a SampShell script or not. Note we want this as the last thing
 # in this file, so that we don't print the traces for the other setup.
-if [ -n "$SampShell_TRACE" ]; then
-   set -o xtrace
-fi
+[ -n "${SampShell_TRACE-}" ] && set -o xtrace
+
+## Ensure the return value from this script is `0`, regardless of `set -o`.
+true 
