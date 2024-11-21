@@ -1,4 +1,4 @@
-#### POSIX-compliant SampShell definitions for both scripts and interactive shells.
+#### POSIX-compliant SampShell definitions for scripts and interactive shells.
 # This file is designed to be `.`able from nearly anywhere, including at the top
 # of all POSIX-compliant shell scripts (including ones I haven't written), as
 # it introduces important definitions (such as `$PATH`, or `$SampShell_EDITOR`)
@@ -117,113 +117,76 @@ export HOMEBREW_NO_ANALYTICS=1
 #                                  Functions                                   #
 ################################################################################
 
-# Note that we `unalias` all these functions right before defining them, just
-# on the off chance that they were `alias`ed.
-unalias SampShell_unalias >/dev/null 2>&1
-SampShell_unalias () {
-   if [ "$#" = 0 ]; then
-      echo 'usage: SampShell_unalias name [name ...]' >&2
-      return 1
-   fi
-
-   while [ "$#" != 0 ]; do
-      unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we succeed always
-      shift
-   done
-}
-
-## Logs a message if `$SampShell_VERBOSE` is enabled; It forwards all its args
-# to printf, except it adds a newline to the end of the format argument.
-SampShell_unalias SampShell_log
+## Logs a message only if `$SampShell_VERBOSE` is enabled.
+# If `$SampShell_VERBOSE` is nonempty, all arguments are forwarded to `printf`,
+# and a newline is appended at the end.
 SampShell_log () {
    [ -z "${SampShell_VERBOSE-}" ] && return 0
-   : "${1:?a format is needed}"
    printf -- "$@" && echo # Make sure we print the trailing newline
 }
 
-## Same as `.`, except it only sources files if the first argument exists; will
-# return `0` if the file doesn't exist.
-SampShell_unalias SampShell_dot_if_exists
+## The same as `.`, except it doesn't fail on missing files.
+# This will log (via `SampShell_log`) a message if the file doesn't exist.
+#
+# This returns an error if the `.` itself failed, or if the file doesn't exist
+# and `SampShell_log` failed for some reason.
 SampShell_dot_if_exists () {
    if [ -e "${1:?need file to source}" ]; then
       . "$@"
    else
-      SampShell_log 'Not sourcing non-existent file: %s' "$1"
-      return 0 # Ensure a noznero status in the error case
+      SampShell_log 'SampShell_dot_if_exists: Ignoring non-extant file: %s' "$1"
    fi
 }
 
 ## Returns whether or not the given command exists.
-SampShell_unalias SampShell_command_exists
+# This not only checks for functions, but also aliases, scripts via `$PATH`,
+# keywords, and anything else that's valid as a command.
 SampShell_command_exists () {
    command -v "${1:?need command to check}" >/dev/null 2>&1
 }
 
-## Adds its argument to the start of '$PATH' if it doesnt already exist; same as
-# PATH="$PATH:$1", except it handles the case when PATH does't exist, and makes
-# sure to not add $1 if it already exists; note that this doesn't export PATH.
-# Notably this doesn't export the path.
-SampShell_unalias SampShell_add_to_path
+## Prepends its argument to '$PATH', unless that argument is already in $PATH.
+# This ensures that each PATH entry is only added once, as there's no real
+# reason to have duplicates. This also handles the case where `$PATH` is empty.
+#
+# This notably does _not_ export `$PATH`; that's the caller's job.
 SampShell_add_to_path () {
-   case ":${PATH-}:" in
-      *:"${1:?need a path to add to PATH}":*) : ;;
-      *) PATH="$1${PATH:+:}$PATH" ;;
+   case :${PATH-}: in
+      *:"${1:?need a path to add to PATH}":*) : ;; # It's already there!
+      *) PATH="$1${PATH:+:}$PATH" ;; # It's not present; prepend it.
    esac
 }
 
-## Enable all debugging capabilities of SampShell, as well as the current shell
-SampShell_unalias SampShell_debug
+## Enables debugging mode
+# This enables all of SampShell_debug's debugging capabilities, as well as the
+# current shell; it's expected that this is overwritten in per-shell config.
 SampShell_debug () {
    export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace && set -o verbose
 }
 
-## Disable all debugging capabilities of SampShell, as well as the current shell
-SampShell_unalias SampShell_undebug
+## Enables debugging mode
+# This disables all of SampShell_debug's debugging capabilities, as well as the
+# current shell; it's expected that this is overwritten in per-shell config.
 SampShell_undebug () {
    unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace && set +o verbose
-}
-
-## CD's to the directory containing a file
-SampShell_unalias SampShell_cdd
-SampShell_cdd () {
-   if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
-      shift
-   elif [ "$#" -ne 1 ] || [ "$1" = -h ] || [ "$1" = --help ] || [ "$1" = -- ]; then
-      # Set exit status, and where to redirect
-      if [ "$1" = -h ] || [ "$1" = --help ]; then
-         set -- 0
-      else
-         set -- 2
-      fi
-
-      echo 'usage: cdd [-h/--help] [--] directory' >&"$((1 + $1))"
-      return "$1"
-   fi
-
-   SampShell_scratch=$(dirname -- "$1" && printf x) || {
-      unset -v SampShell_scratch
-      return 1
-   }
-   set -- "${SampShell_scratch%?x}"
-   unset -v SampShell_scratch
-   [ "$1" = - ] && set -- ./-
-   CDPATH= cd -- "$1"
 }
 
 ################################################################################
 #                                  Setup PATH                                  #
 ################################################################################
 
-## Add POSIX-compliant bin scripts to the `$PATH`.
-# They're only added if `$SampShell_ROOTDIR` is set. A warning is logged if the
-# `$SampShell_ROOTDIR` is not a directory (ie doesn't exist or is a file), but
-# the scripts are still added.
+## Add POSIX-compliant scripts to the `$PATH` if `$SampShell_ROOTDIR` is set.
+# (If `$SampShell_ROOTDIR` is unset, nothing happens.)
 #
-# Ensure also ensures that that `$SampShell_ROOTDIR/posix/bin` is only added
-# once, so as to not pollute the `$PATH`
+# This will export `PATH` if and only if `$SampShell_ROOTDIR` is set, so that we
+# don't muck with it if `$SampShell_ROOTDIR` isn't set before `.`ing this file.
+#
+# A warning is logged (via `SampShell_log`) if `$SampShell_ROOTDIR/posix/bin`
+# does not exist, or is not a directory. However, it's still added to the $PATH
+# regardless of this.
 #
 # Note that we allow `$SampShell_ROOTDIR` to be empty, in case the files are
-# stored under `/posix/bin`.
+# stored under `/posix/bin` for some reason.
 if [ -n "${SampShell_ROOTDIR+1}" ]; then
    if ! [ -d "$SampShell_ROOTDIR/posix/bin" ]; then
       SampShell_log '[WARN] POSIX bin location (%s/posix/bin) does not exist; still adding it to $PATH though' "$SampShell_ROOTDIR"
@@ -237,10 +200,14 @@ fi
 #                           Respect SampShell_TRACE                            #
 ################################################################################
 
-## Respect `SampShell_TRACE` in all scripts that `.` this file, regardless of
-# whether they're a SampShell script or not. Note we want this as the last thing
-# in this file, so that we don't print the traces for the other setup.
+## Enables xtrace mode if `SampShell_TRACE` is set.
+# This enables it in both scripts and interactive shells, as this allows us to
+# trace third-party scripts as well, if need be.
 [ -n "${SampShell_TRACE-}" ] && set -o xtrace
 
-## Ensure the return value from this script is `0`, regardless of `set -o`.
+################################################################################
+#                           Ensure Successful Return                           #
+################################################################################
+
+## Ensure that this script's return value is successful if we get here.
 true 

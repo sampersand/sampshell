@@ -167,6 +167,36 @@ SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
 alias h=history # Shorthand alias
 
 ################################################################################
+#                               Helper Functions                               #
+################################################################################
+
+## CD's to the directory containing a file
+SampShell_cdd () {
+   if [ "$#" -eq 2 ] && [ "$1" = -- ]; then
+      shift
+   elif [ "$#" -ne 1 ] || [ "$1" = -h ] || [ "$1" = --help ] || [ "$1" = -- ]; then
+      # Set exit status, and where to redirect
+      if [ "$1" = -h ] || [ "$1" = --help ]; then
+         set -- 0
+      else
+         set -- 2
+      fi
+
+      echo 'usage: cdd [-h/--help] [--] directory' >&"$((1 + $1))"
+      return "$1"
+   fi
+
+   SampShell_scratch=$(dirname -- "$1" && printf x) || {
+      unset -v SampShell_scratch
+      return 1
+   }
+   set -- "${SampShell_scratch%?x}"
+   unset -v SampShell_scratch
+   [ "$1" = - ] && set -- ./-
+   CDPATH= cd -- "$1"
+}
+
+################################################################################
 #                                    Utils                                     #
 ################################################################################
 # Prints out how many arguments were passed; used in testing expansion syntax.

@@ -1,3 +1,18 @@
+# Note that we `unalias` all these functions right before defining them, just
+# on the off chance that they were `alias`ed.
+# unalias SampShell_unalias >/dev/null 2>&1
+SampShell_unalias () {
+   if [ "$#" = 0 ]; then
+      echo 'usage: SampShell_unalias name [name ...]' >&2
+      return 1
+   fi
+
+   while [ "$#" != 0 ]; do
+      unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we succeed always
+      shift
+   done
+}
+
 SampShell_unalias ping
 ping () { curl --connect-timeout 10 "${1:-http://www.example.com}"; }
 
@@ -25,3 +40,4 @@ mkf () { mkdir -p ${@:h} && command touch $@; }
 symlink () {
 	ln -s ${1?need existing file name} ${2?need name of destination}
 }
+
