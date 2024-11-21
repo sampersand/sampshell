@@ -14,6 +14,47 @@
 ## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
 set +o nounset
 
+# Note that we `unalias` all these functions right before defining them, just
+# on the off chance that they were `alias`ed.
+# unalias SampShell_unalias >/dev/null 2>&1
+SampShell_unalias () {
+   if [ "$#" = 0 ]; then
+      echo 'usage: SampShell_unalias name [name ...]' >&2
+      return 1
+   fi
+
+   while [ "$#" != 0 ]; do
+      unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we succeed always
+      shift
+   done
+}
+
+
+################################################################################
+#                                   History                                    #
+################################################################################
+
+HISTSIZE=500 # How many history entries for the editor to keep.
+
+# Only default `HISTFILE` if it's unset; if it's set to an empty value, it
+# indicates we don't want to store history.
+if [ -z "${HISTFILE+1}" ]; then
+   if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
+      SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
+   else
+      HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+      # TODO: do we want to export histfie for subshells
+   fi
+elif [[ -z ${HISTFILE} ]]; then
+   SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
+fi
+
+## Ensure we have the `history` command if it doesnt exist already.
+SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
+alias h=history # Shorthand alias
+
+
+
 ################################################################################
 #                               Load Other Files                               #
 ################################################################################
@@ -142,29 +183,6 @@ cls () {
 }
 
 PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
-
-################################################################################
-#                                   History                                    #
-################################################################################
-
-HISTSIZE=500 # How many history entries for the editor to keep.
-
-# Only default `HISTFILE` if it's unset; if it's set to an empty value, it
-# indicates we don't want to store history.
-if [ -z "${HISTFILE+1}" ]; then
-   if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
-      SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
-   else
-      HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
-      # TODO: do we want to export histfie for subshells
-   fi
-elif [[ -z ${HISTFILE} ]]; then
-   SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
-fi
-
-## Ensure we have the `history` command if it doesnt exist already.
-SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
-alias h=history # Shorthand alias
 
 ################################################################################
 #                               Helper Functions                               #
