@@ -79,7 +79,8 @@ while [[ $# > 0 ]]; do
 				env_vars+=$1
 			else
 				env_vars+=$1=${(P)1}
-			fi ;;
+			fi
+			shift ;;
 
 		# Support chaining `-abc` options
 		-[^-]?*) set -- $option[1,2] -${option#-?} $@ ;;
