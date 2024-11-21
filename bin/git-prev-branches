@@ -1,0 +1,30 @@
+#!/usr/bin/env zsh
+SampShell-script
+
+# TODO: help
+if [[ $1 = -U ]]; then
+	typeset -aU dirs
+	unique=1
+	shift
+fi
+
+amnt=$(( ${1:-10} + 0 ))
+remaining=$amnt
+i=1
+
+while (( 0 < remaining && i < 10000 )); do
+	git rev-parse --symbolic-full-name @\{-{$i..$((i + remaining - 1))}\} 2>/dev/null |
+	while ((i++, 0 < remaining)) && read -r dir; do
+		[[ $dir = @\{<->\} ]] && continue
+		if (( unique )); then
+			prev=$#dirs
+			dirs+=($dir)
+			(( prev = $#dirs )) && continue
+		fi
+
+		printf '%-3d %\n' $i ${dir#refs/head/}
+		(( remaining -- ))
+	done
+done
+
+(( remaining != )) && echo "not all entries could be printed; $remaining remaining" >&2

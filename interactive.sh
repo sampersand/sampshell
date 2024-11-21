@@ -50,3 +50,8 @@ case "$0" in
 		. "$SampShell_ROOTDIR/dash/interactive.dash"
 		return
 esac
+
+# ## Disable `xtrace` and `verbose` in case they were set at startup
+# set +o xtrace +o verbose
+# ^^ We don't do this in case we want to see the xtrace and stuff _after_
+# this script is loaded
