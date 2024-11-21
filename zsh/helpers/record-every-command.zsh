@@ -52,9 +52,6 @@ typeset +x -g SampShell_current_record_all_history_file
 # We rotate the file we store it in each day, so as to not have one massive history file.
 _SampShell-record-every-command () {
 	## Setup
-	# Note we do `setopt -L ...` first, before `emulate -L zsh`, so that we can disable
-	# `xtrace` for the `local -A` line (which is quite noisy)
-	setopt -L NO_XTRACE NO_VERBOSE # Don't XTRACE or VERBOSE in this function.
 	local -A opts=("${(kv@)options}") # Store options, so we can check for hist options later.
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
