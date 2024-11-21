@@ -1,17 +1,18 @@
 #!/bin/sh
-exec ruby -nsx -- "$0" "$@"
-#! ruby
+exec ruby -lpsx -- "$0" "$@"; exit # Some shells like dash won't find `#!ruby`
+#!ruby
 BEGIN {
-  # `-l` is line oriented, `-n` will suppress newlines at the end
   $h || $_help and (puts <<USAGE; exit)
-usage: #$0 [-h|--help] [-ln] [--] [files...]
-omit `files` for, or specify as `-`, for stdin.
+usage: #$0 [-h] [-l] [-n] [--] [files...]
+escapes non-normal characters in the input. omit `files`, or specify one as `-`,
+to read from stdin. `-n` suppresses printing the trailing newline. `-l` will
+enable "line-oriented mode" which doesn't escape newlines and disables `-n`
 USAGE
-  $ln || $nl and ($l = $n = true) # in case `-ln` or `-nl` was specified
+  $/ = $\ = $l && "\n" # Set this because of `-l` for line-end processing.
 }
 END { $l || $n or puts }
 
-$_.replace ($l ? chomp : $_).dump[1..-2]
+# `dump` surrounds the output with `"`s, so we have to strip them. It also
+# escapes #, ', and ", so we unescape those as well.
+$_ = ($l ? chomp : $_).dump[1..-2]
 gsub /\\([#'"])/, '\1'
-print
-puts if $l
