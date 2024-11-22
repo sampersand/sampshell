@@ -1,4 +1,29 @@
-#!ruby -n
-BEGIN { DONT_PRINT_NEWLINE=$*[0] == '-n' and $*.shift }
-print x = %|"#{$_.gsub(/[#'"]/, '\\\\&')}"|.undump
-END { unless x.end_with?("\n") then DONT_PRINT_NEWLINE || puts end }
+#!/bin/sh
+exec ruby -x -- "$0" "$@"
+#!ruby -sn
+BEGIN {
+  $h || $_help and (puts <<USAGE; exit)
+usage: #{File.basename($0)} [-n] [--] [file ...]
+
+options:
+  -h,--help     print this message, then exit
+  -n            suppress printing the final newline
+
+This prints each line from 'file' (use '-' for stdin; no files
+defaults to '-'), replacing c-style escape sequences with their
+equivalents. 
+USAGE
+}
+# TODO: `-l` option, and how does it relate?
+
+END { $n or $L[-1] == "\n" or puts }
+# BEGIN { DONT_PRINT_NEWLINE=$*[0] == '-n' and $*.shift 
+chomp if $l
+gsub(/[#'"]/, '\\\\&')
+print $L = %|"#$_"|.undump
+# END { unless x.end_with?("\n") then DONT_PRINT_NEWLINE || puts end }
+
+# END { $l || $n or puts }
+# $stdout.flush
+# $_ = ($l ? chomp : $_).dump.slice! 1..-2
+# gsub /\\([#'"])/, '\1'
