@@ -1,18 +1,135 @@
 #!/bin/sh
-exec ruby -lpsx -- "$0" "$@"; exit # Some shells like dash won't find `#!ruby`
-#!ruby
+
+## Converts an input into c-style escapes
+# This program interprets all command-line arguments as filenames (or if none
+# are provided, will use stdin), and will print each line, with c-style escapes
+# replacing non-"normal" (ie anything that's not a space thru a `~`; However,
+# `\` _is_ abnormal) characters.
+#
+# Three flags are understood:
+# *   -h, --help   Prints out help
+# *   -n           Suppress printing a trailing newline at the end
+# *   -l           Don't escape newlines, and ensures there's a trailing one.
+##
+
+## This file, even though it's a Ruby file, will be started up as a shell script,
+# via the `/bin/sh` shebang. This is because we want to pass some flags to Ruby
+# (which you normally can do via `#!ruby -sp` at the top), but you're only able
+# to pass a single argument. The problem is some shells, like `dash`, can't find
+# `ruby`. The normal solution is to `#!/usr/bin/env ruby`, but _that_ won't work
+# because then we can't pass the flags we want to `ruby`.
+#
+# So, Ruby provides a `-x` flag that will cause Ruby to 100% ignore _all_ lines
+# until it finds one that starts with `#!` and contains the word `ruby` in it.
+# The upswing of this is that we can use shell code to pass flags into Ruby,
+# and then Ruby will 100 %ignore the shell code.
+#
+# Note that in macOS, and some newer versions of Linux, you can replace this
+# entire construct via `#!/usr/bin/env -S ruby -sp` to pass flags to `ruby`.
+##
+
+exec ruby -x -- "$0" "$@"
+
+#!ruby -sp
+
+## Once ruby finds a line that starts with `#!ruby`, the remaining flags are
+# interpreted as if they were passed directly on the command line. We use
+# the following flags:
+#
+# * -s    All command-line arguments to this script that start with `-` (until a
+#         non-`-`-leading argument or `--`) will be set as global variables. We
+#         use `$l` and `$n` in the script to see if the `-l` or `-n` flags were
+#         passed. (and `$h` / `$_help` for the usage)
+# * -p    Acts as if the script was `while $_ = gets; ...; print $_; end`. This
+#         means the main body of our script will be run once per line we read.
+#
+# When reading input via `gets` (which `-p` does), Ruby will interpret any
+# remaining command-line arguments as filenames, open them, and then iterate
+# over their lines. (If a filename is `-` or no files are given, stdin is used.)
+# Thus, we get the behaviour of `... | dump` and `dump file1 file2` acting the 
+# same for free :-)
+#
+# (A note on Ruby's `-l` flag: It changes the `gets` to `gets(chomp: true)`.
+# This is exactly what we want when the user would pass in `-l`, but it wouldn't
+# work for the normal case. We could set `$/=nil` in the non-`-l` case to solve
+# this, but then we'd read the _entire_ stdin all at once, which isn't great. We
+# also could do some preprocessing of the args before we call `exec ruby`, but I
+# don't really like that either. Instead, we just use `($l ? chomp : $_)`.)
+##
+
+## Since our code is wrapped in `while gets`, we use the `BEGIN` block to only
+# run our code once, at the very start of the program. Otherwise, this check for
+# usage and assigning `$\` would happen each time.
 BEGIN {
+  # If either `-h` or `--help` are passed on the command line, print the usage
+  # and exit.
   $h || $_help and (puts <<USAGE; exit)
-usage: #$0 [-h] [-l] [-n] [--] [files...]
-escapes non-normal characters in the input. omit `files`, or specify one as `-`,
-to read from stdin. `-n` suppresses printing the trailing newline. `-l` will
-enable "line-oriented mode" which doesn't escape newlines and disables `-n`
+usage: #{File.basename($0)} [-l|-n] [--] [file ...]
+
+options:
+  -h,--help     print this message, then exit
+  -n            suppress printing the final newline
+  -l            don't escape newlines. disables '-n'
+
+This prints each line from 'file' (use '-' for stdin; no files
+defaults to '-'), replacing non-printing characters (as well
+as '\\') with their c-style escape sequence. 
 USAGE
-  $/ = $\ = $l && "\n" # Set this because of `-l` for line-end processing.
+
+  # If `-l` was passed, then set the output record separator to the input record
+  # separator. `$\` is written after every `print` command, including the one
+  # that `-p` implicitly adds. Thus, we'll always write out `$/` (which defaults
+  # to a newline) after each argument.
+  $l and $\ = $/
 }
+
+## Once we're done processing all of the input, print a trailing new line if and
+# only if the user supplied neither `-n` (which explicitly disables this), nor
+# `-l` (which adds its own newlines at the end of each line)
 END { $l || $n or puts }
 
-# `dump` surrounds the output with `"`s, so we have to strip them. It also
-# escapes #, ', and ", so we unescape those as well.
-$_ = ($l ? chomp : $_).dump[1..-2]
+## Now this is the meat of the program. Everything here and below will be run
+# once per input line, which is set to the variable `$_`. When we run a program
+# with either `-n` or `-p` (which enables `-n`), four global methods are added:
+#
+# * `sub(...)`       equivalent to `$_ = $_.sub(...)`
+# * `gsub(...)`      equivalent to `$_ = $_.gsub(...)`
+# * `chop()`         equivalent to `$_.chop`
+# * `chomp(...)`     equivalent to `$_ = $_.chomp(...)`
+#
+# (Kinda wonky that only `chop` doesn't modify `$_`, isn't it?)
+# The idea behind them is that it makes it easier to write one-liners or small
+# scripts like this, so let's go ahead and use them!
+##
+
+## Ensure that the previous `print` has been fully written to stdout. We need
+# this for when we're not in line-oriented mode, as we won't be printing `\n`s
+# (which flushes on most systems) at all until we reach the very end of the
+# program. (If `-n` is specified, stdout will be flushed upon program exit.)
+$stdout.flush
+
+## Perform the escaping upon `$_`.
+#
+# First, delete the trailing `\n` if we're in line-oriented mode, so that it
+# won't be escaped. (The `$\ = $/` we did in the begin will ensure that a `\n`
+# will be appended when we print due to `-p`)
+#
+# Next `dump` does most of the escaping work for us. `String#dump` actually
+# converts its the string to a form where `eval`ing it won't cause any problems.
+# As such, there's a few extra things we have to do:
+#
+# (1) `String#dump`'s output is _always_ surrounded by `"`s. We need to remove
+#     them as they weren't a part of the original string. We use `slice!` here
+#     so that we modify the string `.dump` returned. There's no worry about it
+#     returning `nil` since, again, we know the output is surrounded by `"`s.
+# (2) Unescape `#`, `'`, and `"`. Since this is meant to be usable in `eval`,
+#     the dump function _also_ escapes characters special to Ruby. Most of these
+#     (such as `\` itself) we want escaped, but `#`, `'`, and `"` in particular
+#     we don't. As such, we use the special global-method `gsub(...)` to delete
+#     the `\`s.
+##
+$_ = ($l ? chomp : $_).dump.slice! 1..-2
 gsub /\\([#'"])/, '\1'
+
+## Now that we've reached the end of the script, since we supplied a `-p`, Ruby
+# will print out `$_` for us, and then start again!
