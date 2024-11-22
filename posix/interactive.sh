@@ -193,7 +193,7 @@ SampShell_cdd () {
       if [ "$1" = -h ] || [ "$1" = --help ]; then
          set -- 0
       else
-         set -- 2
+         set -- 1
       fi
 
       echo 'usage: cdd [-h/--help] [--] directory' >&"$((1 + $1))"
@@ -217,6 +217,9 @@ SampShell_cdd () {
 nargs () { echo "$#"; }
 
 alias cpu='top -o cpu'
+
+SampShell_command_exists pbcopy && alias pbc=pbcopy
+SampShell_command_exists pbpaste && alias pbc=pbpaste
 
 ## Deleting files
 # `rm -d` is in safety.

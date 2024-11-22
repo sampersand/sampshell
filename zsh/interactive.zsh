@@ -26,7 +26,7 @@ source ${0:P:h}/helpers/named-directories.zsh
 [[ -d ~/Downloads         ]] && add-named-dir dl    ~/Downloads
 
 ## Default `dirs` to `dirs -v` (which lists line numbers). Passing in any argument disables this.
-function dirs { builtin dirs ${@:-v} }
+function dirs { builtin dirs ${@:--v} }
 
 ## Setup `cd` options
 setopt AUTO_CD           # Enables `dir` to be shorthand for `cd dir` if `dir` isn't a valid command
