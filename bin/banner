@@ -1,0 +1,133 @@
+#!/bin/dash
+
+set -o nounset -o noglob -o errexit
+
+readonly scriptname="${0##*/}"
+
+die () {
+	fmt="%s: $1\\n"
+	shift
+	printf >&2 "$fmt" "$scriptname" "$@"
+	exit 1
+}
+
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] message here
+                   -m [options] [--] lines here
+options:
+	-wN, --width=N         total width of the line
+	-pN, --pre=N           Add N blank characters before the banner
+	-sC, --style=CHAR      print out in STYLE style
+	-m, --multiline        interpret each argument as a separate line, instead of just one line.
+	-b, --blank            Add a blank line before and after input
+USAGE
+
+width=80
+style=\#
+multiline=
+blank=
+pre=0
+post=0
+
+# set -- --line-width
+
+while [ "$#" -ne 0 ]; do
+	option=$1; shift
+
+	case $option in
+	# Usage
+	-h | --help)
+		usage
+		exit 0 ;;
+
+	# Flag options
+	-m | --multiline)
+		multiline=1 ;;
+	-b | --blank)
+		blank=1 ;;
+
+	# Numeric options
+	-w | --line-width)
+		width=$(printf %d "${1:?missing argument for -w}") || return
+		shift ;;
+	-p | --pre)
+		pre=$(printf %d "${1:?missing argument for -p}") || return
+		shift ;;
+
+	# Style options
+	-s?*) # Support `-sN...`, as style only takes a single charcater
+		rest=${option#-s?}
+		tmp=${option%"$rest"}
+		style=${tmp#-s}
+		set -- "-$rest" "$@" ;;
+	-s | --style)
+		style=${1:?style expects an argument}
+		shift ;;
+
+	# Convert `--a=b` into `--a b`
+	--*=*)
+		set -- "${option%%=*}" "${option#*=}" "$@" ;;
+
+	# Convert options which take arguments into the option and its arg.
+	-[wsp]?*)
+		value=${option#-?}
+		flag=${option%"$value"}
+		set -- "$flag" "$value" "$@" ;;
+
+	# Support `-abc`
+	-[!-]?*)
+		rest=${option#-?}
+		flag=${option%"$rest"}
+		set -- "$flag" "-$rest" "$@" ;;
+
+	--)
+		break ;;
+
+        -*)
+		die 'unknown option given: %s' "$option" ;;
+
+	*)
+		set -- "$option" "$@"
+		break 
+	esac
+done
+
+# for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo 
+
+[ $# -eq 0 ] && { usage >&2; exit 1; }
+
+[ $multiline ] || set -- "$*"
+[ $blank ] && set -- '' "$@" ''
+width=$((width - pre - post))
+
+print_lines () {
+	prefix=$1
+	suffix=$2
+	msg_width=$(($3 - ${#prefix} - ${#suffix}))
+	shift 3
+
+	for line
+	do
+		spacing=$(( (${#line} + msg_width) / 2  ))
+		remainder=$(( msg_width - spacing ))
+		printf "${prefix}%${spacing}s%${remainder}s${suffix}\\n" "$line"
+	done
+}
+
+case $style in
+	\#)
+		printf "%${pre}s"
+		printf "%${width}s\n" | tr ' ' '#"'
+		print_lines '#' '#' $width "$@"
+		printf "%${width}s\n" | tr ' ' '#"' ;;
+	/)
+		printf "%${width}s\n" | tr ' ' '/'
+		print_lines '//' '//' $width "$@"
+		printf "%${width}s\n" | tr ' ' '/' ;;
+	\*)
+		printf "/%$((width-2))s\n" | tr ' ' "$style"
+		print_lines ' *' '*' $((width - 1)) "$@"
+		printf ' '
+		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
+	*) die 'unknown style %s' "$style" ;;
+esac
