@@ -32,21 +32,26 @@ if [ "${SampShell_TRACE-}" = 1  ]; then
 fi
 
 ## Safety first!
-# - `nounset` ensures that using any unset variables will cause the program to
-#             abort (and is equivalent to `set -u`, but I like being explicit).
-# - `pipefail` makes pipes exit with a nonzero status if any of their components
-#              fail; makes `if a | b; ...` false if `a` failed too.
+# `set -o nounset` ensures that using any unset variables will cause the program
+# to abort (and is equivalent to `set -u`, but I like being explicit).
+#
+# `set -o noglob` Disables globbing. It shouldn't matter, but it's here as a
+# safety mechanism in case I screwed something up.
+#
+# `unset IFS` makes `$IFS` (which is used for word splitting) the default.
+#
 # Some people also like to set `errexit`, however this has a lot of edgecases,
 # and I'm not nearly learned enough to know how to deal with them. So, instead
 # I've just manually checked all commands that might fail and returned.
 set -o nounset
-set -o pipefail
+set -o noglob
+unset IFS 
 
 ## The name of the script
 # This is used in `usage` and `warn`. Note that this doesn't use the `basename`
 # hack (see the body of `try_move` for that), as this is just used for printing
 # out usages, and isn't critical if it's not exactly the name of the script.
-scriptname="${0##*/}"
+scriptname=${0##*/}
 
 ## Prints a message in the format `<scriptname>: ...` to stderr.
 # Note: `printf` is used instead of `echo`, as echo has a lot of weird issues
@@ -70,10 +75,12 @@ options:
    -h, --help               print help, then exit
    -i, --interactive        ask to overwrite files that exist (disables -n)
    -n, --not-interactive    dont overwrite existing files (disables -i; default)
-   -r, --[no-]rename        rename files to prevent conflicts mode
-   -c, --[no-]clobber-empty delete empty files/folders targets
-   -v, --verbose            print verbose output
+   -r, --rename             rename files to prevent conflicts mode
+   -R, --no-rename          disables -r
+   -c, --clobber-empty      delete empty files/folders targets
+   -C, --no-clobber-empty   disables -c
    -q, --quiet              disable verbose output (default)
+   -v, --verbose            print verbose output
    -vv,--very-verbose       print more verbose output; not POSIX-compliant
 return value: (if both 1 and 2 occur, the last one encounterd is returned)
    0  everything was successful
@@ -98,56 +105,58 @@ LONGUSAGE
 
 ## Setup option variables
 # These are configurable via flags on the command line.
-do_rename=      # nonempty means it's set
+rename=         # nonempty means it's set
 clobber_empty=  # nonempty means it's set
 move_flag=n     # should be an `X` that `mv -X` understands
 verbose_level=0 # verbosity level, should be an integer.
 
 ## Parse command line options.
 # I'm not using the POSIX-supplied `getopts` here, as it does not support long-
-# form options (ie `--foo`), and I thoroughly enough using them. Additionally,
-# more barebones shells may not support getopts/the support may be buggy, so
-# to just avoid any oddities that may arise I just did a simple 'case' variant.
-while [ "$#" -ne 0 ]; do
-   case "$1" in
+# form options (ie `--foo`) which I use.
+while [ $# -ne 0 ]; do
+   option=$1
+   shift
+   case $option in
       ## Stop parsing options
-      --) shift; break ;;
+      --) break ;;
 
       ## Option toggles
-      -n | --not-interactive)  move_flag=n ;;
-      -i | --interactive)      move_flag=i ;;
-      -r | --rename)           do_rename=1 ;;
-           --no-rename)        do_rename= ;;
-      -c | --clobber-empty)    clobber_empty=1 ;;
-           --no-clobber-empty) clobber_empty= ;;
+      -n | --not-interactive) move_flag=n ;;
+      -i | --interactive)     move_flag=i ;;
 
-      -q  | --quiet) verbose_level=0;;
-      -v  | --verbose) verbose_level=1 ;;
+      -r | --rename)    rename=1 ;;
+      -R | --no-rename) rename=  ;;
+
+      -c | --clobber-empty)    clobber_empty=1 ;;
+      -C | --no-clobber-empty) clobber_empty=  ;;
+
+      -q  | --quiet)        verbose_level=0 ;;
+      -v  | --verbose)      verbose_level=1 ;;
       -vv | --very-verbose) verbose_level=2 ;;
 
       -h | --help)
          # Note we exit `0` and dont print to stderr as these are what the user
          # requested, and thus are not an abnormal execution path.
          shortusage
-         [ "$1" = --help ] && longusage
+         [ "$option" = --help ] && longusage
          exit 0 ;;
 
       ## Support chaining short-form options
       -[!-]?*)
-         rest2="${1#-?}"
-         rest1="${1%"${rest2}"}"
-         shift # delete the option we just split apart
-         set -- "${rest1}" "-${rest2}" "$@" # add the split options back
-         continue ;;
+         rest=${option#-?}
+         flag=${option%"${rest}"}
+         set -- "${flag}" "-${rest}" "$@" ;;
 
       # Unknown options
-      -?*) warn 'unknown option: %s' "$1"; exit 64 ;;
+      -?*)
+         warn 'unknown option: %s' "$1"
+         exit 64 ;;
 
       # Anything else is a filename to move, break out.
-      *) break ;;
+      *)
+         set -- "$option" "$@"
+         break ;;
    esac
-
-   shift
 done
 
 ## Post-command-line-arg processing
@@ -166,11 +175,11 @@ verbose_flag=
 # of errors, and are the same as in the usage.
 try_move () {
    ## Use variables for clarity
-   source="$1"
-   target="$2"
+   source=$1
+   target=$2
 
    ## If the thing we're moving doesn't exist, then print an error and return.
-   if [ ! -e "${source}" ]; then
+   if ! [ -e "${source}" ]; then
       warn 'cannot move %s: No such file or directory' "${source}"
       return 1
    fi
@@ -205,7 +214,7 @@ try_move () {
       # is no good way to solve that...
       if [ -n "${clobber_empty}" ]; then
          ## If the target is a file and it's empty, then forcibly remove it.
-         if [ -f "${target}" ] && [ ! -s "${target}" ]; then
+         if [ -f "${target}" ] && ! [ -s "${target}" ]; then
             rm "-f${verbose_flag}" -- "${target}" || return 2
 
          ## If the target is a folder, and there's nothing in it, delete it.
@@ -255,7 +264,7 @@ try_move () {
       ## Since the original file still exists, and we're not renaming things,
       # then just return; returning 0 mimics the behaviour of `mv -n`, where
       # not moving files returns 0.
-      if [ -z "${do_rename}" ]; then
+      if [ -z "${rename}" ]; then
          if [ "${verbose_level}" -ge 1 ]; then
             printf 'not overwriting %s\n' "${target}"
          fi
@@ -274,17 +283,17 @@ try_move () {
          # all ending newlines. So by having `printf x`, we'll print out `x`,
          # which we can then strip via `%x`. Note that `$target` is safe to use
          # here because we haven't yet updated it.
-         base="$(basename -- "${target}" && printf x)" || {
+         base=$(basename -- "${target}" && printf x) || {
             warn 'unable to get basename of %s' "${target}"
             return 3
-         }; base="${base%?x}"
-         stem="${base%%.*}"
-         ext="${base#"$stem"}" # quote `$stem` to prevent glob interpretation
-         dir="$(dirname -- "${target}" && printf x)" || {
+         }; base=${base%?x}
+         stem=${base%%.*}
+         ext=${base#"$stem"} # quote `$stem` to prevent glob interpretation
+         dir=$(dirname -- "${target}" && printf x) || {
             warn 'unable to get dirname of %s' "${target}"
             return 3
-         }; dir="${dir%?x}"
-         root="$dir/$stem"
+         }; dir=${dir%?x}
+         root=$dir/$stem
       fi
 
       ## Set `target` to the newname---`<dir>/<stem> <attempt><ext>`---and
@@ -298,7 +307,7 @@ try_move () {
 }
 
 ## If not enough arguments are given, then error out with the usage.
-if [ "$#" -le 1 ]; then
+if [ $# -le 1 ]; then
    shortusage >&2
    exit 64
 fi
@@ -306,7 +315,7 @@ fi
 ## Handle the first command form (ie `mv-safe source target`): If exactly two
 # arguments are given, and the second is not a directory, then just attempt to
 # move the first to the second, and return the exit status of that `try_move`
-if [ "$#" -eq 2 ] && [ ! -d "$2" ]; then
+if [ $# -eq 2 ] && ! [ -d "$2" ]; then
    try_move "$1" "$2"
    exit
 fi
@@ -333,14 +342,14 @@ exit_status=0
 # a way to "pop" arguments off the end of `$@` (like zsh's `shift -p`), then we
 # could use a `for` loop. This is also why we have to go until we have one
 # argument left---it's the target folder.
-while [ "$#" -gt 1 ]; do
+while [ $# -gt 1 ]; do
    ## Get the basename of the file, used for moving it to the folder. Check the
    # body of the `try_move`'s while loop for why we have to do this convoluted.
-   base="$(basename -- "$1" && printf x)" || {
+   base=$(basename -- "$1" && printf x) || {
       warn 'unable to get basename of %s' "$2"
       exit_status=3
       continue
-   }; base="${base%?x}"
+   }; base=${base%?x}
 
    ## Attempt to move the argument into its destination; if there's any problems
    # doing that, then set the last status to the exit code.
