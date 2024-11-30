@@ -8,7 +8,6 @@ setopt EXTENDED_HISTORY       # (For fun) When writing cmds, write their start t
 setopt COMPLETE_IN_WORD
 setopt CORRECT              # Correct commands when executing.
 setopt RM_STAR_WAIT         # Wait 10 seconds before accepting the `y` in `rm *`
-setopt CSH_JUNKIE_LOOPS     # Allow loops to end in `end`; only loops tho not ifs
 setopt CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
 setopt NO_FLOW_CONTROL      # Modern terminals dont need control flow lol
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
@@ -39,3 +38,8 @@ if [[ $VENDOR == apple ]]; then
 	preexec_functions+=(_SampShell_enable_xtrace)
 fi
 
+
+# failed experiments:
+return
+setopt CSH_JUNKIE_LOOPS     # Allow loops to end in `end`; only loops tho not ifs. also doesnt let short-formofthings
+KEYBOARD_HACK=\' # ignore an odd-number of `'`s, but also on line continuation, ugh.
