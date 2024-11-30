@@ -219,7 +219,7 @@ nargs () { echo "$#"; }
 alias cpu='top -o cpu'
 
 SampShell_command_exists pbcopy && alias pbc=pbcopy
-SampShell_command_exists pbpaste && alias pbc=pbpaste
+SampShell_command_exists pbpaste && alias pbb=pbpaste
 
 ## Deleting files
 # `rm -d` is in safety.

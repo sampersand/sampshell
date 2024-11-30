@@ -100,7 +100,6 @@ export SampShell_ROOTDIR
 # Add generic "SampShell" bin files in
 export PATH="$SampShell_ROOTDIR/bin${PATH:+:}$PATH"
 
-
 ################################################################################
 #                         Source Shell-Specific Config                         #
 ################################################################################
