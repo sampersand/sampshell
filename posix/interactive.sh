@@ -51,7 +51,12 @@ fi
 
 ## Ensure we have the `history` command if it doesnt exist already.
 SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
-alias h=history # Shorthand alias
+h () {
+   # If no arguments are given, and we're not outputting to a tty, then
+   # default to printing all commands.
+   [ "$#" = 0 ] && [ ! -t 1 ] && set -- 0
+   history "$@"
+}
 
 
 
