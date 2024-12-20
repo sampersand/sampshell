@@ -18,7 +18,7 @@ bindkey -M isearch '^F' history-incremental-search-forward
 bindkey -M isearch '^G' history-incremental-search-forward
 
 # Add the keybinds to the list
-fpath[1,0]=(~ss/zsh/bindkey-fns)
+fpath+=(~ss/zsh/bindkey-fns)
 () {
 	local fn
 	for fn in ~ss/zsh/bindkey-fns/*(:t); do
@@ -27,8 +27,14 @@ fpath[1,0]=(~ss/zsh/bindkey-fns)
 	done
 }
 
-bindkey '^[/' pound-insert # comment a line out
+# Make `pound-insert` use the histchar character, and add a space too
+bindkey '^[#' pound-insert # comment a line out
 bindkey '^S' SampShell-strip-whitespace && # stty -ixon # need `-ixon` to use `^S`
+bindkey '^[/' delete-path-segment
+bindkey '^[=' delete-backto-char
+
+bindkey '^X^Z' redo
+bindkey '^X^Y' undo
 
 bindkey -s '^gs' '^Qgit status^M'
 bindkey -s '^gaa' '^Qgit add --all^M'
