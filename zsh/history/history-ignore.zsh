@@ -1,6 +1,7 @@
 ## List of patterns to ignore
 typeset -g -a -U -H _SampShell_histignore_patterns
 
+## Prepend to the start of `zshaddhistory_functions` so we go after "record-every-command"
 zshaddhistory_functions[1,0]=(_SampShell-histignore)
 
 ## Ignore commands that match any of `_SampShell_histignore_patterns`.
@@ -37,6 +38,6 @@ function history-ignore-glob {
 		return 1
 	fi
 
-	## NOTE: We wrap in `()` as a defensive measure ot make sure patterns dont escape.
+	## NOTE: We wrap in `()` as a defensive measure to make sure patterns dont escape.
 	_SampShell_histignore_patterns+=( "(${^@})" )
 }
