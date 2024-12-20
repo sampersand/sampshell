@@ -3,6 +3,20 @@ alias gti=git
 
 alias g=git
 
+ignore () {
+	if [ "$#" -eq 0 ]; then
+		printf >&2 'usage: ignore file [...]. Used to add files to gitignore'
+		return 1
+	fi
+
+	while [ "$#" -ne 0 ]; do
+		mv "$1" "$1.ignore"
+		shift
+	done
+}
+alias ig=ignore
+alias gignore=ignore
+
 : "${SampShell_git_default_master_branch:=master}"
 : "${SampShell_git_branch_prefix:="$(whoami)"}"
 # : "${SampShell_git_branch_prefix_pattern:='$SampShell_git_branch_prefix/??-??-??'}"
@@ -144,9 +158,10 @@ gm () {
 }
 
 alias gdm='gd "$(SampShell_master_branch)"'
-gd () {
+alias gd='git diff'
+gdh () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
-	git diff "$@"
+	gdh "$@"
 }
 
 alias gddm='gdd "$(SampShell_master_branch)"'

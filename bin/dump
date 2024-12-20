@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO: look into `od`
+
 ## Converts an input into c-style escapes
 # This program interprets all command-line arguments as filenames (or if none
 # are provided, will use stdin), and will print each line, with c-style escapes

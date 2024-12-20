@@ -1,0 +1,18 @@
+#!/bin/sh
+exec ruby -x -s -- "$0" "$@"
+#!ruby -n
+
+BEGIN {
+  lines=Hash.new 0
+}
+
+lines[chomp]+=1
+
+END{
+  lines = lines.sort_by(&:last)
+  num_digits = lines.last.last.digits.count
+  lines.reverse! if $r
+  lines.each{
+    printf "%#{num_digits}d %s\n", _2, _1
+  }
+}

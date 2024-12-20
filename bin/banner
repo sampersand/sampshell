@@ -57,9 +57,10 @@ while [ "$#" -ne 0 ]; do
 	# Style options
 	-s?*) # Support `-sN...`, as style only takes a single charcater
 		rest=${option#-s?}
-		tmp=${option%"$rest"}
+		tmp=${option#"$rest"}
 		style=${tmp#-s}
-		set -- "-$rest" "$@" ;;
+
+		[ -n "$rest" ] && set -- "-$rest" "$@" ;;
 	-s | --style)
 		style=${1:?style expects an argument}
 		shift ;;
@@ -69,7 +70,7 @@ while [ "$#" -ne 0 ]; do
 		set -- "${option%%=*}" "${option#*=}" "$@" ;;
 
 	# Convert options which take arguments into the option and its arg.
-	-[wsp]?*)
+	-[wp]?*)
 		value=${option#-?}
 		flag=${option%"$value"}
 		set -- "$flag" "$value" "$@" ;;

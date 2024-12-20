@@ -12,8 +12,12 @@ case ${1:-1} in
 		(( add_space == 0 )) && BUFFER=" $BUFFER" ;;
 esac
 
+print what
+print -r "<${(q)BUFFER}>"
+print is up
+
 # Strip trailing space off, but also let `\` escapes work
-(( ${2:-1} )) && while true; do
+(( ${2:-1} )) && [[ $BUFFER[1] != $histchars[2] ]] && while true; do
 	case $BUFFER in
 		((\\\\)#\\?*) break ;;
 		(*\\?) break ;;

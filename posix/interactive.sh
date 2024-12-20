@@ -218,7 +218,12 @@ nargs () { echo "$#"; }
 
 alias cpu='top -o cpu'
 
-SampShell_command_exists pbcopy && alias pbc=pbcopy
+SampShell_command_exists pbcopy && pbc () if [ "$#" = 0 ]; then
+   pbcopy
+else
+   echo "$*" | pbcopy
+fi
+
 SampShell_command_exists pbpaste && alias pbb=pbpaste
 
 ## Deleting files

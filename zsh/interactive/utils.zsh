@@ -55,3 +55,12 @@ RUBY
 function enable-wifi { networksetup -setairportpower en0 on }
 function disable-wifi { networksetup -setairportpower en0 off }
 function toggle-wifi { disable-wifi; sleep 2; enable-wifi }
+
+# Copies a previous command
+cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | pbcopy }
+b80 () { ~ss/bin/banner "$@" | pbcopy } # Annoying cause banner is a builtin on macos
+b100 () { ~ss/bin/banner -w100 "$@" | pbcopy }
+cc () { print -r $history[$(($#history - 0))] | pbcopy; }
+
+pr () print -zr -- $ZLE_LINE_ABORTED
+cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
