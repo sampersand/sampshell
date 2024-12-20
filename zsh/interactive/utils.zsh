@@ -64,3 +64,5 @@ cc () { print -r $history[$(($#history - 0))] | pbcopy; }
 
 pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
+
+alias banner='noglob ~ss/bin/banner'

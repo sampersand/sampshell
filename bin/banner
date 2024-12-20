@@ -96,7 +96,7 @@ while [ "$#" -ne 0 ]; do
 	esac
 done
 
-for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
+# for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
 
 # Expect at least one banner argument
 [ $# -eq 0 ] && { usage >&2; exit 1; }
@@ -121,7 +121,7 @@ print_lines () {
 		spacing=$(( (${#line} + msg_width) / 2  ))
 		remainder=$(( msg_width - spacing ))
 		printf "%${pre}s"
-		printf "${prefix}%${spacing}s%${remainder}s${suffix}\\n" "$line"
+		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
 	done
 }
 
@@ -142,8 +142,7 @@ case $style in
 		printf "%${pre}s"
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
 		print_lines ' *' '*' $((width - 1)) "$@"
-		printf ' '
-		printf "%${pre}s"
+		printf " %${pre}s"
 		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
 	*) die 'unknown style %s' "$style" ;;
 esac
