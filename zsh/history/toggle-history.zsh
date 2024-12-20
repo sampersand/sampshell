@@ -14,9 +14,9 @@ function disable-history {
 }
 
 ## Enables recording history again. Any commands that were entered since the `disable-history` was
-# run are
+# run are discarded (assuming HISTFILE/SAVEHIST weren't updated).
 function enable-history {
-	if [[ -n $_SampShell_dont_record_every_command ]] then
+	if [[ -z $_SampShell_dont_record_every_command ]] then
 		print 'History saving already enabled' >&2
 		return 1
 	fi

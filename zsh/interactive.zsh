@@ -41,8 +41,6 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 
 ## Enables the "record-every-command" feature, which stores nearly every command for later analysis.
 source ${0:P:h}/history/main.zsh
-source ${0:P:h}/history/record-every-command.zsh
-source ${0:P:h}/history/utils.zsh
 
 ####################################################################################################
 #                                               Jobs                                               #

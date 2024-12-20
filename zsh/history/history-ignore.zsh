@@ -14,7 +14,7 @@ function _SampShell-histignore {
 }
 
 ## Ignore lines that start with this commands arguments.
-function history-ignored {
+function history-ignore-command {
 	if [[ $1 == -h || $# == 0 ]] then
 		>&2 print "usage: $0 command [...commands]"
 		>&2 print
