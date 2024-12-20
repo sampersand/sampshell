@@ -1,5 +1,5 @@
 source ${0:P:h}/record-every-command.zsh
-source ${0:P:h}/utils.zsh
+source ${0:P:h}/history-ignore.zsh
 source ${0:P:h}/toggle-history.zsh
 
 
@@ -21,3 +21,6 @@ unsetopt HIST_IGNORE_ALL_DUPS # Ensure that non-contiguous duplicates are kept a
 unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for saving.)
 unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
 unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
+
+
+history-ignore pc cpc h
