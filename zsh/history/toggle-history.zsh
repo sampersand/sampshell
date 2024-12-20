@@ -25,7 +25,7 @@ function enable-history {
 }
 
 ## Either disables or enables history, depending on the `
-function toggle-history () {
+function toggle-history {
 	if [[ -n $_SampShell_dont_record_every_command ]] then
 		enable-history
 	else
