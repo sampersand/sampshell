@@ -40,37 +40,9 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 ####################################################################################################
 
 ## Enables the "record-every-command" feature, which stores nearly every command for later analysis.
-source ${0:P:h}/helpers/record-every-command.zsh
-
-## Setup history parameters
-HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
-SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
-# HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
-# HISTORY_IGNORE='(cmd1|cmd2*)' # If set, don't write lines that match to the HISTFILE when saving.
-
-## Setup history options
-setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
-setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
-setopt HIST_ALLOW_CLOBBER     # Add `|` to `>` and `>>`, so that re-running the command can clobber.
-setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
-setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
-setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
-setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
-unsetopt HIST_IGNORE_ALL_DUPS # Ensure that non-contiguous duplicates are kept around.
-unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for saving.)
-unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
-unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
-
-## Enable and disable history. These also enable/disable record-every-command
-function disable-history { fc -p && _SampShell_nosave_hist=1 && echo 'History saving disabled.' }
-function enable-history  { fc -P && _SampShell_nosave_hist=  && echo 'History saving enabled.'  }
-
-## Ensure we don't store enable-history or disable-history.
-# Stick it before whatever `record-every-command` sets, otherwise we'll record (en|dis)able-history.
-zshaddhistory_functions[1,0]=(_SampShell-nosave-enable-disable-history)
-function _SampShell-nosave-enable-disable-history {
-	[[ "${1%$'\n'}" != ((en|dis)able-history) ]] # Use `!=` so we return `1` in case of success
-}
+source ${0:P:h}/history/main.zsh
+source ${0:P:h}/history/record-every-command.zsh
+source ${0:P:h}/history/utils.zsh
 
 ####################################################################################################
 #                                               Jobs                                               #

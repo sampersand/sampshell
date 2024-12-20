@@ -56,7 +56,7 @@ _SampShell-record-every-command () {
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
 	## Return early if we're not saving history, or there isn't even a place to store history.
-	[[ -n $_SampShell_nosave_hist || -z $SampShell_HISTDIR ]] && return 0
+	[[ ${_SampShell_nosave_hist:-0} -eq 0 || -z $SampShell_HISTDIR ]] && return 0
 
 
 	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines
