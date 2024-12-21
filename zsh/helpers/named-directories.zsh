@@ -27,13 +27,14 @@ EOS
 	fi
 
 	if [[ -z $name ]]; then
-		printf '%s: a name must be supplied (dir=%q)\n' $0 $dir >&2
+		print >&2 -r -- "$0: a name must be supplied (dir=${(q)dir})"
 		return 1
-	elif [[ -z $dir ]]; then
-		SampShell_log '[WARN] %s: named dir "%s" points to an empty dir, which defaults to $HOME' \
-			$0 $name
+	fi
+
+	if [[ -z $dir ]]; then
+		print >&2 -r -- "$0: [WARN] named dir ${(q)dir} points to an empty dir, which defaults to $HOME"
 	elif [[ ! -d $dir ]]; then
-		SampShell_log '[WARN] %s: named dir "%s" points to a non-directory: %q' $0 $name $dir
+		print >&2 -r -- "$0: [WARN] named dir ${(q)dir} points to a non-directory: ${(q)dir}'"
 	fi
 
 	builtin hash -d -- $name=$dir

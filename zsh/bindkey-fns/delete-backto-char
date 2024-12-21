@@ -1,31 +1,29 @@
 #!zsh
-read -sk chr # Read a character and put it into `$REPLY`
 
-## If it doesn't exist in the string, beep and return.
-if (( ! ${BUFFER[(I)$chr]} )) then
+# Read a single character and put it into `$chr`
+read -sk chr
+
+# If `chr` doesn't exist in the string, "beep" and return.
+if (( ! BUFFER[(I)$chr] )) then
 	zle beep
 	return
 fi
 
-## The amount of times to delete, defaults to 1.
+# The amount of repetitions. If it's negative, we delete forwards.
+# (NOTE: You can specify repetitions by doing `ESC` then a digit before hand, eg
+# "ESC, `2`, ESC, `=`, `e`" will delete to the second closest `e`.)
 amount=${NUMERIC:-1}
 
-## Stuff after the cursor
-remainder=${BUFFER:$CURSOR}
+# Remember stuff after the current cursor
+post=${BUFFER:$CURSOR}
+pre=${BUFFER::$CURSOR}
 
-## If it's positive, delete to the left, if it's negative, delete right.
+# Delete forwards or backwards depending on the sign of `amount`
 if (( amount < 0 )) then
-	for (( i = 0; i < -amount; i++ )); do
-		remainder=${remainder#*$chr}
-	done
+	while (( amount++ )) do post=${post#*$chr} done
 else
-	for (( i = 0; i < amount; i++ )); do
-		BUFFER=${BUFFER%$chr*}
-	done
+	while (( amount-- )) do pre=${pre%$chr*} done
 fi
 
-## Put the cursor back to the end of the buffer
-CURSOR=$#BUFFER
-
-## Append `remainder` to the end of thebuffer
-BUFFER+=$post
+CURSOR=$#pre     # Put the cursor back to the end of the buffer
+BUFFER=$pre$post # Append `remainder` to the end of the buffer
