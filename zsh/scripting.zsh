@@ -1,4 +1,4 @@
-#### Setup for ZSH script files
+	#### Setup for ZSH script files
 # All SampShell ZSH scripts should start with the line `SampShell-script`, which loads in this
 # file; it's defined within `env.zsh`.
 #

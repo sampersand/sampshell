@@ -59,6 +59,17 @@ class Object
   def sl(method) = method(method).source_location
 end
 
+class Integer
+  def hex = to_s(16)
+  def bin = to_s(2)
+  def oct = to_s(8)
+end
+
+class String
+  def bin = to_i(2)
+end
+
+PRCHARS = (' '..'~')
 
 # IRB.conf[:PROMPT_MODE] = :TOPLEVEL
 # IRB.conf[:PROMPT][:TOPLEVEL] = {

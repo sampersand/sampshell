@@ -1,0 +1,16 @@
+#!ruby -s
+
+$h || $_help and (puts <<EOS; exit)
+usage: #{File.basename $0} [-h] [-d | -b=num] [args...]
+options:
+  -d same as `-b=10`
+  -b interpret args in base num, instead of the default 16
+Prints the base-n ascii representation of its arguments, one line per arg.
+If no args are given, defaults to stdin.
+EOS
+
+BASE = ($b&.to_i) || ($d && 10) || 16
+
+($*.empty? ? $stdin.map(&:chomp) : $*).each do |word|
+  puts word.bytes.map{|byte| byte.to_s BASE}.join(' ')
+end
