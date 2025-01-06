@@ -3,7 +3,7 @@ require 'optparse'
 require 'pathname'
 
 # $* << '-x' << '--bytes' << '--' <<
-$* << 'heツl👍🏿lo'
+if $*.empty? then $* << 'heツl👍🏿lo' end
 # $*[0] = '-h'
 
 $base = nil
@@ -11,6 +11,8 @@ $mode = :bytes
 $files = []
 OptParse.new do |op|
   op.banner = "usage: #{op.program_name} [bases] [forms] [--] [...]"
+
+
 
 # Supply these options
   op.on '-h', '--help', 'print this message, then exit' do
@@ -62,28 +64,47 @@ def format_base(val)
   end
 end
 
+def iterator(word)
+  case $mode
+  when :unicode then word.each_codepoint
+  when :bytes then word.each_byte
+  when :grapheme then word.each_grapheme_cluster
+  else raise "[bug] unknown mode: #$mode"
+  end
+end
+
 INPUT = $*.empty? ? $stdin.to_a(chomp: true) : $*
 def handle(word)
   if $base == nil && $inspect
     p case $mode
-      when :unicode then word.chars
-      when :ascii then word.bytes.map(&:chr)
+      when :unicode  then word.chars
+      when :ascii    then word.bytes.map(&:chr)
       when :grapheme then word.grapheme_clusters
       else raise "unknown mode: #{$mode.inspect}"
       end
     return
   end
 
+  if $base == nil
+    puts case $mode
+      when :unicode then word.chars
+      when :ascii then word.bytes.map(&:chr)
+      when :grapheme then word.grapheme_clusters
+      else raise "unknown mode: #{$mode.inspect}"
+      end.join ' '
+    return
+  end
+
   if $base
     case $mode
     when :unicode
-      word.each_codepoint.map { format_base _1 }.join ' '
+      puts word.each_codepoint.map { format_base _1 }.join ' '
 
-    when :bytes
-      word.each_byte.map { format_base _1 }.join ' '
+    when :bytes, :ascii
+      puts word.each_byte.map { format_base _1 }.join ' '
 
     when :grapheme
-      word.each_grapheme_cluster.map { |cluster| cluster.each_codepoint.map {
+      puts word.each_grapheme_cluster.map { |cluster| cluster.each_codepoint.map {
         format_base _1
       }.join '_' }.join ' '
     else raise "unknown mode: #{$mode.inspect}"
@@ -91,7 +112,9 @@ def handle(word)
   end
 end
 
-INPUT.each do handle _1 end
+INPUT.each do
+  handle _1
+end
 # $base = 16
 # $mode = :bytes ; INPUT.each do puts handle _1 end
 # $mode = :unicode; INPUT.each do puts handle _1 end
