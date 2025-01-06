@@ -119,5 +119,10 @@ if [ -n "$create" ]; then
 	done
 fi
 
+if [ -z "${SampShell_no_experimental-}" ] && [ "$editor" = "sublime4" ]; then
+	/Applications/sublime4.app/Contents/SharedSupport/bin/subl "$@"
+	exit
+fi
+
 ## Now that all the files are created, go ahead and open them.
 exec open -a "$editor" -- "$@"

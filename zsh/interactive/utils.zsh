@@ -3,6 +3,8 @@ alias gcm='noglob gcm' # dont glob with gcm, eg dont have `!`s
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ }
 
+alias hg='h | grep'
+
 [[ $VENDOR == apple ]] && eval "${$(alias -L ls)}hGb" # add the `l` alias more options to `ls` which I know macOS supports
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias d=dirs
@@ -58,6 +60,8 @@ function toggle-wifi { disable-wifi; sleep 2; enable-wifi }
 
 # Copies a previous command
 cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | pbcopy }
+
+alias banner='noglob ~ss/bin/banner' # Annoying cause banner is a builtin on macos
 b80 () { banner "$@" | pbcopy }
 b100 () { banner -w100 "$@" | pbcopy }
 cc () { print -r $history[$(($#history - 0))] | pbcopy; }
@@ -65,4 +69,3 @@ cc () { print -r $history[$(($#history - 0))] | pbcopy; }
 pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
 
-alias banner='noglob ~ss/bin/banner' # Annoying cause banner is a builtin on macos

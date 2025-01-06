@@ -237,6 +237,7 @@ alias purge='command rm -ridP' ## Purge deletes something entirely
 ppurge () { echo "todo: parallelize purging"; }
 
 alias pargs=prargs
+alias p=pargs
 prargs () {
    SampShell_scratch=0
 

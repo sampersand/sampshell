@@ -2,18 +2,52 @@ if RUBY_VERSION < '3.3'
   # TODO: is this necessary? it was originally for cause `;` wasnt recognized at end of line
   IRB.conf[:ECHO_ON_ASSIGNMENT] = false
 end
+
+####################################################################################################
+#                                                                                                  #
+#                                             Includes                                             #
+#                                                                                                  #
+####################################################################################################
+
+## Modules I want to always beloaded.
 IRB.load_modules.concat %w[csv json set]
 
-def subl(*files) = system('subl', '--no-create', '--', *files)
-def ssubl(*files) = system('subl', '--create', '--', *files)
-
+## Always load in `bitint` if possible, and then `use` its refinements.
+# This isn't a part of `IRB.loaded_modules` because I want to have the `using BitInt::Refinements`,
+# and this `using` is a per-file basis, so we need to run it based on the `IRB::TOPLEVEL_BINDING`.
+# But, since we only want to run that if `bitint` was loaded, we do it here.
 begin
   require 'bitint'
 rescue LoadError
-  warn "Can't load bitint"
+  warn "Can't load bitint for Ruby #{RUBY_VERSION}"
 else
-  IRB::TOPLEVEL_BINDING.eval 'BEGIN{ using BitInt::Refinements }'
+  # Since `using` is file-specific, we need to `eval` it to get it to work in the top-level.
+  IRB::TOPLEVEL_BINDING.eval 'using BitInt::Refinements'
 end
+
+####################################################################################################
+#                                                                                                  #
+#                                           Sublime Text                                           #
+#                                                                                                  #
+####################################################################################################
+
+## Always have `subl` and `ssubl` visible
+public def subl(*files)  system('subl', '--no-create', '--', *files) end
+public def ssubl(*files) system('subl',    '--create', '--', *files) end
+
+## Open up the method in sublime text. (Note the `sublm` won't )
+class Method; def subl; TOPLEVEL_BINDING.subl(source_location.join(':')) end end
+class Object
+  def sublm(m)
+    method(m).subl # DOESN'T WORK W/ REFINEMENTS
+  end
+end
+
+####################################################################################################
+#                                                                                                  #
+#                                               Misc                                               #
+#                                                                                                  #
+####################################################################################################
 
 class Object
   def ms = methods(false)
@@ -26,7 +60,8 @@ class Object
 end
 
 
-IRB.conf[:PROMPT_MODE] = :TOPLEVEL
-IRB.conf[:PROMPT][:TOPLEVEL] = {
+# IRB.conf[:PROMPT_MODE] = :TOPLEVEL
+# IRB.conf[:PROMPT][:TOPLEVEL] = {
 
-}
+# }
+alias echo puts

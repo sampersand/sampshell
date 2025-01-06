@@ -1,0 +1,4 @@
+#!zsh
+WORDCHARS=${WORDCHARS/\/}
+zle backward-kill-word
+zle -f kill

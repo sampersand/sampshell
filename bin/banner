@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 ## Safety first
 set -o nounset
@@ -8,6 +8,7 @@ set -o errexit
 ## Script name, used in error messages and usage
 readonly scriptname="${0##*/}"
 
+## Print error message and exit
 die () {
 	fmt="%s: $1\\n"
 	shift
@@ -33,12 +34,8 @@ expect_numeric () case $1 in
 esac
 
 ## Config options
-width=80
-style=\#
-multiline=
-blank=
-pre=0
-post=0
+width=80 style=\# pre=0
+multiline= blank=
 
 while [ "$#" -ne 0 ]; do
 	option=$1
@@ -108,7 +105,7 @@ done
 [ -n "$blank" ]     && set -- '' "$@" ''
 
 # Calculate the width
-width=$((width - pre - post))
+width=$((width - pre))
 
 print_lines () {
 	prefix=$1
