@@ -26,7 +26,7 @@ SampShell_git_branch_prefix=swesterman
 # This is the path to the root of SampShell, and must be present so SampShell
 # knows where other files are. Some shells (eg ZSH and Bash) are able to
 # automatically determine it, and so this can be omitted in those shells. If it
-# is omitted, it's assumed to be `$HOME/.sampshell`, and a warning is emitted.
+# is omitted, it warns and defaults to `$HOME/.sampshell`d.
 SampShell_ROOTDIR=$HOME/me/sampshell
 
 ## Load SampShell itself

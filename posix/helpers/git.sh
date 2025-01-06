@@ -129,6 +129,7 @@ alias gammend='git commit --amend'
 alias gs='git status'
 alias grb='git rebase'
 alias grbm='git rebase "$(master-branch)"'
+alias grba='git rebase --abort'
 alias ga='git add'
 
 alias grs='git reset'
@@ -156,6 +157,7 @@ gm () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git merge "$@"
 }
+alias gma='git merge --abort'
 
 alias gdm='gd "$(SampShell_master_branch)"'
 alias gd='git diff'

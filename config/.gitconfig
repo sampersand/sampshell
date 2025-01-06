@@ -1,0 +1,18 @@
+[user]
+	name = SamW
+	email = mail@sampersand.me
+
+# TODO: aliases?
+[core]
+	excludesfile = config/.gitignore_global
+	editor = subl
+
+[branch]
+	# sort = ??
+
+[grep]
+	lineNumber = true
+	patternType = perl
+
+[init]
+	defaultBranch = master

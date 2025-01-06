@@ -250,3 +250,32 @@ alias -s so='ldd'
 ###
 
 location=$(readlink -f ${(%):-%N}) what lol
+
+
+---
+I'm trying to do `~/.config/bindkeys/clear-screen` , with `fpath[1,0]=(~/.config/bindkeys)` , and I'm hoping that `^L` uses my custom clear screen, but it doesn't seem like it wants to work. I even tried `autoload -Uz clear-screen`
+
+I notice the description for `HIST_FCNTL_LOCK` mentions ". On recent operating systems this may provide better performance, in particular avoiding history corruption when files are stored on NFS." ; is there any reason _not_ to set this on any modern computer?
+
+Unrelated, I was talking with a friend of mine who has some ZSH setup scripts too. They put at the top of theirs `location=$(readlink -f ${(%):-%N})` , as opposed to my `location=${0:P:h}`. Is there any reason to use theirs over mine?
+
+
+https://zsh.sourceforge.io/Guide/zshguide04.html#zle
+ Suppose you've already gone through a few continuation lines in the normal way with $PS2's? You can't scroll back then, even though the block hasn't yet been edited. There's a magic way of turning all those continuation lines into a single block: the editor command push-line-or-edit. If you're not on a continuation line, it acts like the normal push-line command, which we'll meet below, but for present purpose you use it when you are on a continuation line. You are presented with a seamless block of text from the (redrawn) prompt to the end which you can edit as one. It's quite reasonable to bind push-line-or-edit instead of push-line, to either ^q or \eq (in Emacs mode, which I will assume, as usual). Be careful with ^q, though --- if the option flowcontrol is set it will probably be swallowed up by the terminal driver and not get through to the shell, the same problem I mentioned above for ^s.
+
+ -U string
+
+    This pushes the characters in the string onto the input stack of ZLE. After the widget currently executed finishes ZLE will behave as if the characters in the string were typed by the user.
+
+    As ZLE uses a stack, if this option is used repeatedly the last string pushed onto the stack will be processed first. However, the characters in each string will be processed in the order in which they appear in the string.
+
+-F [ -L | -w ] [ fd [ handler ] ] whatnow?
+
+set-local-history
+
+    By default, history movement commands visit the imported lines as well as the local lines. This widget lets you toggle this on and off, or set it with the numeric argument. Zero for both local and imported lines and nonzero for only local lines.
+
+^^ what's an imported line
+
+Hi all! I'm learning how to use `bindkey` in ZSH, and i'm coming across a problem: How on earth do you bind the option key, or the shift key? from what I can tell, `^` stands for "control" (eg `^x` is ctlr+x) and `^[` means escape (`^[x` is escape + x). I'm pretty sure you cant bind the command key at all, but if you could, being able to bind cmd+z would be amazing lol
+im posting hereon the off chance thatsomeone knows
