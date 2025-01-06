@@ -38,6 +38,7 @@
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
+# ZSH
 if [ -n "${ZSH_VERSION-}" ]; then
 	. "$SampShell_ROOTDIR/zsh/interactive.zsh"
 	return
@@ -45,13 +46,10 @@ fi
 
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
-case "$0" in
-	dash | */dash)
-		. "$SampShell_ROOTDIR/dash/interactive.dash"
-		return
+case "$0" in dash | */dash)
+	. "$SampShell_ROOTDIR/dash/interactive.dash"
+	return
 esac
 
-# ## Disable `xtrace` and `verbose` in case they were set at startup
-# set +o xtrace +o verbose
-# ^^ We don't do this in case we want to see the xtrace and stuff _after_
-# this script is loaded
+# NOTE: We don't disable xtrace/verbose here, in case the `.zshrc` or whatnot
+# wants to xtrace their own things too.

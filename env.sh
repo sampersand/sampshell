@@ -48,25 +48,29 @@
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
 ################################################################################
 
+### NOTE: IF THIS SECTION IS CHANGED, ALSO UPDATE `both.sh`!
+
 # Make sure `SampShell_ROOTDIR` is set.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
-	# If we're using ZSH, just use the builtin `${0:P:h}` to find it.
+	# ZSH: just use the builtin `${0:P:h}` to find it
 	if [ -n "${ZSH_VERSION-}" ]; then
 		# We need to use `eval` in case shells don't understand `${0:P:h}`.
 		eval 'SampShell_ROOTDIR="${0:P:h}"'
-	elif [ -n "${BASH_VERSION-}" ] && [ -n "${BASH_SOURCE-}" ]; then
+
+	# BASH: Use `BASH_SOURCE`
+	elif [ -n "${BASH_SOURCE-}" ]; then
 		SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
 		SampShell_ROOTDIR=${SampShell_ROOTDIR#?x}
 
-	# If we're not interactive, then just return 1
-	elif case "$-" in *i*) false; esac; then
+	# Non-interactive: Error, just return 1.
+	elif case $- in *i*) false; esac; then
 		return 1
 
 	# We are interactive, default it and warn
 	else
 		# Whelp, we can't rely on `$0`, let's just guess and hope?
 		SampShell_ROOTDIR="$HOME/.sampshell"
-		printf '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
+		printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
 			"$SampShell_ROOTDIR" >&2
 	fi
 fi
@@ -75,8 +79,8 @@ fi
 if ! [ -d "$SampShell_ROOTDIR" ]; then
 	# If we're interactive, then print out the warning
 	if ! case $- in *i*) false; esac; then
-		printf '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-			"$SampShell_ROOTDIR" >&2
+		printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
+			"$SampShell_ROOTDIR"
 	fi
 
 	return 2
@@ -97,7 +101,7 @@ export SampShell_ROOTDIR
 #                              Add SampShell bin                               #
 ################################################################################
 
-# Add generic "SampShell" bin files in
+# Add generic "SampShell" bin files to the start
 export PATH="$SampShell_ROOTDIR/bin${PATH:+:}$PATH"
 
 ################################################################################
