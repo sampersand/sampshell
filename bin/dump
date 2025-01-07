@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# TODO: look into `od`
-
 ## Converts an input into c-style escapes
 # This program interprets all command-line arguments as filenames (or if none
 # are provided, will use stdin), and will print each line, with c-style escapes
@@ -65,18 +63,18 @@ exec ruby -x -- "$0" "$@"
 BEGIN {
   # If either `-h` or `--help` are passed on the command line, print the usage
   # and exit.
-  $h || $_help and (puts <<USAGE; exit)
-usage: #{File.basename($0)} [-l |-n] [--] [file ...]
+  $h || $_help and (puts <<~USAGE; exit)
+    usage: #{File.basename($0)} [-l |-n] [--] [file ...]
 
-options:
-  -h,--help     print this message, then exit
-  -n            suppress printing the final newline
-  -l            don't escape newlines. disables '-n'
+    options:
+      -h,--help     print this message, then exit
+      -n            suppress printing the final newline
+      -l            don't escape newlines. disables '-n'
 
-This prints each line from 'file' (use '-' for stdin; no files
-defaults to '-'), replacing non-printing characters (as well
-as '\\') with their c-style escape sequence. 
-USAGE
+    This prints each line from 'file' (use '-' for stdin; no files
+    defaults to '-'), replacing non-printing characters (as well
+    as '\\') with their c-style escape sequence.
+  USAGE
 
   # If `-l` was passed, then set the output record separator to the input record
   # separator. `$\` is written after every `print` command, including the one

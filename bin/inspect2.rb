@@ -12,8 +12,6 @@ $files = []
 OptParse.new do |op|
   op.banner = "usage: #{op.program_name} [bases] [forms] [--] [...]"
 
-
-
 # Supply these options
   op.on '-h', '--help', 'print this message, then exit' do
     puts op.help
@@ -41,7 +39,7 @@ OptParse.new do |op|
   op.on '-u', '--unicode', 'Print out unicode characters' do $mode = :unicode end
   op.on '-g', '--grapheme', 'Print out grapheme clusters' do $mode = :grapheme end
   op.on '-c', '--chars', 'Print out bytes' do $mode = :chars end
-  op.on '-b', '--bytes', 'Print out bytes' do $mode = :ascii end
+  op.on '-b', '--bytes', 'Print out bytes' do $mode = :bytes end
   op.on '-a', '--ascii', 'Print out ascii bytes' do $mode = :ascii end
 
   op.on '-i', '--inspect', 'prints out in ruby inspect style' do $inspect = true end
@@ -74,28 +72,15 @@ def iterator(word)
 end
 
 class Printer
-  def initialize(sep = 5)
+  def initialize
     @byteno = 1
     @column = 1
-    @sep = sep
   end
 
-  def write_byte(byte, amount=1)
-    if @column == 1
-      puts if @byteno != 1
-      @column += $stdout.write "%05d\t" % @byteno
-    end
-
-
-    @column += $stdout.write("%0#{@sep}s" % byte)
-    @byteno += amount
-    if @column > (@column %= 80) #=
-      puts
-      @column += $stdout.write "%05d\t" % @byteno
-    end
+  def write()
   end
 end
-$writer = Printer.new
+$printer = Printer.new
 
 def handle(word)
   if $base == nil && $inspect
@@ -109,20 +94,12 @@ def handle(word)
   end
 
   if $base == nil
-    puts (case $mode
+    puts case $mode
       when :unicode then word.chars
-      when :ascii
-        word.each_byte do |byte|
-          if (chr=byte.chr) =~ /[[:print:]]/
-            $writer.write_byte chr
-          else
-            $writer.write_byte byte.to_s(16)
-          end
-        end
-        return
+      when :ascii then word.bytes.map(&:chr)
       when :grapheme then word.grapheme_clusters
       else raise "unknown mode: #{$mode.inspect}"
-      end).join ' '
+      end.join ' '
     return
   end
 
@@ -132,7 +109,7 @@ def handle(word)
       puts word.each_codepoint.map { format_base _1 }.join ' '
 
     when :bytes, :ascii
-      puts word.each_codepoint.map { format_base _1 }.join ' '
+      $printer.write word.each_byte
 
     when :grapheme
       puts word.each_grapheme_cluster.map { |cluster| cluster.each_codepoint.map {
@@ -148,7 +125,7 @@ INPUT.each do
   handle _1
 end
 
-if $mode == :ascii and false
+if $mode == :ascii
   print "bytes:     ", INPUT[0].each_byte.map{ _1.to_s $base || 16 }.join(' '), "\n"
   print "codepoint: ", INPUT[0].each_codepoint.map{ p(_1).to_s $base || 16 }.join(' '), "\n"
   p 1
