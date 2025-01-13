@@ -5,6 +5,7 @@ r () {
 	source ~ss/zsh/prompt/ps1.zsh
 }
 
+zstyle ':ss:prompt:time' format '%I'
 zstyle ':ss:prompt:username' expected 'sampersand'
 zstyle ':ss:prompt:hostname' expected 'Sampbook-Pro'
 
@@ -62,34 +63,44 @@ unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
 #     [[ (-z $username || -z $hostname) && -z $show_login_info ]] && show_login_info=1
 
 # PS1= #'%k' <-- used to reset
-PS1=
-PS1+='%B%F{blue}[%b'               # `[`
-PS1+='%F{cyan}%D{%_I:%M:%S %p}'    #    time
-PS1+=' %U%f%!%u'                   #    history
-PS1+=' %B%F{blue}|%b'              #    |
-PS1+=' %(?.%F{green}.%F{red})%?'   #    prev-stat-code
 
-# JOB COUNT
+################################################################################
+#                                                                              #
+#                                Bracket Prefix                                #
+#                                                                              #
+################################################################################
+PS1=
+PS1+='%B%F{blue}[%b' # `[`
+
+() {
+	local timefmt
+	zstyle -s ':ss:prompt:time' format timefmt
+	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S %p}}"
+}
+PS1+=' %U%f%!%u'                   # history
+PS1+=' %B%F{blue}|%b'              # |
+PS1+=' %(?.%F{green}.%F{red})%?'   # previous status code
+
+## JOB COUNT
 if zstyle -t ':ss:prompt:jobcount' display; then
 	PS1+=' %F{166}(%j job%2(1j.%(2j.s.).s))'
 elif (( $? == 2 )) then
 	PS1+='%(1j. %F{166}(%j job%(2j.s.)).)'   # [jobs, if more than one]
-
-# else, never display job count if it's set to false.
 fi
 
-
+## SHLVL
 if zstyle -t ':ss:prompt:shlvl' display; then
 	PS1+=' %F{red}SHLVL=%L'
 elif (( $? == 2 )) then
 	PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
 fi
 
-
-PS1+='%B%F{blue}]%b'               # ]
+PS1+='%B%F{blue}]%b' # ]
 
 ################################################################################
-#                                   Hostname                                   #
+#                                                                              #
+#                            Username and Hostname                             #
+#                                                                              #
 ################################################################################
 () {
 	readonly hostname_snippet=' %n@%m'
@@ -115,20 +126,36 @@ PS1+='%B%F{blue}]%b'               # ]
 	fi
 }
 
+################################################################################
+#                                                                              #
+#                                     Path                                     #
+#                                                                              #
+################################################################################
+
 # Add ~path, possibly limiting it if $pathlen is nonzero
 [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
 PS1+=' %F{11}';
 if [[ $all = 1 ]]; then PS1+='%d'; else PS1+='%~'; fi # ~path
 [[ $pathlen != 0 ]] && PS1+='%<<'
 
-# # Add git branch in
-# PS1+="%F{043}\$(_SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
+################################################################################
+#                                                                              #
+#                               Git information                                #
+#                                                                              #
+################################################################################
 
-# # git status
-# PS1+='$(_SampShell_rps1_git_status)'
+# Add git branch in
+PS1+="%F{043}\$(_SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
 
-# # Trailing %
-# PS1+='%b %F{8}'
+# git status
+PS1+='$(_SampShell_rps1_git_status)'
+PS1+='%b'
 
-# PS1+='%#%f '                                   # ending %
-# }
+################################################################################
+#                                                                              #
+#                                    Finale                                    #
+#                                                                              #
+################################################################################
+
+PS1+=' %F{8}%#%f ' # ending %
+
