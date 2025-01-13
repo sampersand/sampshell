@@ -5,9 +5,12 @@ r () {
 	source ~ss/zsh/prompt/ps1.zsh
 }
 
-zstyle ':ss:prompt:time' format '%I'
 zstyle ':ss:prompt:username' expected 'sampersand'
 zstyle ':ss:prompt:hostname' expected 'Sampbook-Pro'
+zstyle ':ss:prompt:*' display auto
+zstyle ':ss:prompt:time' format '%_I:%M:%S %p'
+zstyle ':ss:prompt:git:branch' pattern '[[:alnum:]]##/??-??-??/'
+zstyle ':ss:prompt:git:branch' pattern '[[:alnum:]]##/??-??-??/'
 
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
@@ -84,14 +87,14 @@ PS1+=' %(?.%F{green}.%F{red})%?'   # previous status code
 ## JOB COUNT
 if zstyle -t ':ss:prompt:jobcount' display; then
 	PS1+=' %F{166}(%j job%2(1j.%(2j.s.).s))'
-elif (( $? == 2 )) then
+elif zstyle -T ':ss:prompt:jobcount' display auto; then
 	PS1+='%(1j. %F{166}(%j job%(2j.s.)).)'   # [jobs, if more than one]
 fi
 
 ## SHLVL
 if zstyle -t ':ss:prompt:shlvl' display; then
 	PS1+=' %F{red}SHLVL=%L'
-elif (( $? == 2 )) then
+elif zstyle -T ':ss:prompt:shlvl' display auto; then
 	PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
 fi
 
@@ -112,7 +115,7 @@ PS1+='%B%F{blue}]%b' # ]
 		# Explicitly requested to always print the hostname
 		PS1+=$hostname_grey$hostname_snippet
 
-	elif (( $? != 2 )) then
+	elif ! zstyle -T ':ss:prompt:hostname' display auto; then
 		# It's found and false, so that means let's never display the hostname
 
 	elif ! zstyle -s ':ss:prompt:hostname' expected hostname ||
@@ -144,11 +147,38 @@ if [[ $all = 1 ]]; then PS1+='%d'; else PS1+='%~'; fi # ~path
 #                                                                              #
 ################################################################################
 
-# Add git branch in
-PS1+="%F{043}\$(_SampShell_ps1_git_branch $all ${(q)opts[--branch-pattern]})%f"        # git branch
+function _SampShell-ps1-git-branch {
+	local always branch pattern
 
-# git status
+	if zstyle -t ':ss:prompt:git:branch' display; then
+		always=1
+	elif ! zstyle -T ':ss:prompt:git:branch' display auto; then
+		# don't display the branch ever, so return.
+		return
+	fi
+
+	branch=$(git branch --show-current 2>&-) || {
+		(( always )) && print -n '%F{red}(no branch)'
+		return
+	}
+
+	if (( !always )) && zstyle -s ':ss:prompt:git:branch' pattern pattern; then
+    	local tmp=${branch#$~pattern}
+    	[[ $tmp = $branch ]] || tmp=#$tmp
+    	branch=$tmp
+    fi
+
+    print -nr -- "%F{043}${branch:gs/%/%%}"
+}
+
+if zstyle -t ':ss:prompt:git:branch' display ||
+   zstyle -T ':ss:prompt:git:branch' display auto
+then
+	PS1+=' $(_SampShell-ps1-git-branch)'
+fi
+
 PS1+='$(_SampShell_rps1_git_status)'
+# git status
 PS1+='%b'
 
 ################################################################################
@@ -158,4 +188,3 @@ PS1+='%b'
 ################################################################################
 
 PS1+=' %F{8}%#%f ' # ending %
-
