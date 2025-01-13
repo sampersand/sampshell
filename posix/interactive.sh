@@ -183,7 +183,8 @@ cls () {
    printf '\ec\e[3J'
 }
 
-PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
+# vvv Not needed, as no shells actually support `!` natively really.
+# PS1='[!!! | ?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
 
 ################################################################################
 #                               Helper Functions                               #
