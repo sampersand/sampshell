@@ -132,8 +132,3 @@ function make-prompt make-ps1 { #} <-- `#}` is needed by sublime to not freak ou
 
     PS1+='%#%f '                                   # ending %
 }
-
-typeset -aU preexec_functions
-preexec_functions+=(_SampShell-preexec-clear-formatting)
-function _SampShell-preexec-clear-formatting { print -nP '%b%u%s%f' } # Reset formatting, though i cant figure out how to unset background colours
-
