@@ -18,7 +18,7 @@
 ####################################################################################################
 
 ## Add named directories
-source ${0:P:h}/helpers/named-directories.zsh
+source ${0:P:h}/named-directories.zsh
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
 [[ -n $SampShell_TMPDIR   ]] && add-named-dir tmp   $SampShell_TMPDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
