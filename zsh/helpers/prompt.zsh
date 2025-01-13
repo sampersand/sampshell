@@ -1,26 +1,5 @@
 ### Prompting in ZSH
 
-
-# ZSH by default helpfully prints out an inverted `%` when an incomplete line is printed. However,
-# it ends up adding _lots_ of spaces to stdout, which makes it annoying to copy on Terminal in
-# MacOS. (This is usually correct, as race conditions can make manually querying not work well, but
-# I find it's more useful to have no spaces instead.)
-unsetopt PROMPT_SP
-typeset -aU precmd_functions
-precmd_functions+=(_SampShell_noprint_spaces)
-function _SampShell_noprint_spaces {
-    emulate -L zsh -o ERR_RETURN
-
-    local line
-    print -n '\e[6n'  # Special escape sequence to ask for the current position
-    read -s -d R line # Read the current position in
-
-    # If we're not at the start of the line, print the "EOL MARK," or its default.
-    if (( ${line#*\;} != 1 )) then
-        print -P ${PROMPT_EOL_MARK:-'%B%S%#%s%b'}
-    fi
-}
-
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST                # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do this with %!.
