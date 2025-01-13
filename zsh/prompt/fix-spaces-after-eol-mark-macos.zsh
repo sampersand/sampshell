@@ -8,8 +8,7 @@
 unsetopt PROMPT_SP # Disable the default functionality
 
 # Add the function to the list of precommand functions
-typeset -aU precmd_functions
-precmd_functions+=(_SampShell-noprint-spaces)
+add-zsh-hook precmd _SampShell-noprint-spaces
 
 # The function in question that handles not printing spaces
 function _SampShell-noprint-spaces {
