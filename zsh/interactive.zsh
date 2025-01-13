@@ -58,11 +58,7 @@ unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remai
 ####################################################################################################
 
 ## Load in the prompt creator. This also sets up prompt options for us, as they're required for it.
-source ${0:P:h}/helpers/prompt.zsh
 source ${0:P:h}/prompt/main.zsh
-
-## Create the prompt with default options
-make-ps1
 
 ####################################################################################################
 #                                        Entering Commands                                         #

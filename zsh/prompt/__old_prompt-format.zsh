@@ -1,10 +1,10 @@
-### Prompting in ZSH
+# TODO: CLEAN THIS UP
 
 ## Options for the prompt, only set the singular required one (prompt_subst)
-setopt PROMPT_SUBST                # Lets you use variables and $(...) in prompts.
-unsetopt PROMPT_BANG               # Don't make `!` mean history number; we do this with %!.
-unsetopt NO_PROMPT_PERCENT         # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_CR              # Ensure the inverted `%` is printed
+setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
+unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
+unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
 
 function _SampShell_ps1_hostname_username {
     case $1 in
@@ -14,12 +14,13 @@ function _SampShell_ps1_hostname_username {
             echo -n ' %B%F{red}' ;;
         (^1)
             warn "unknown hostname kind $1; falling thru" ;&
-        (1) 
+        (1)
             echo -n ' %F{242}';;
     esac
 
     echo -n '%n@%m%b%f'
 }
+PS1='%k%B%F{blue}[%b%F{cyan}%D{%_I:%M:%S %p}%f %U%!%u%B%F{blue} |%b%f %(?.%F{green}.%F{red})%?%f%(1j. %F{166}(%j job%(2j.s.))%f.)%(2L. %F{red}SHLVL=%L.)%B%F{blue}]%b%f%65>..> %F{11}%~%<<%F{043}$(_SampShell_ps1_git_branch 0 \[\[:alnum:\]\]\#\#/\?\?-\?\?-\?\?/)%f$(_SampShell_rps1_git_status)%b %F{8}'$'\n''%#%f '
 
 
 function _SampShell_ps1_git_branch {
