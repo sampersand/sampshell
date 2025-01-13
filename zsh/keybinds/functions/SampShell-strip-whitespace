@@ -1,15 +1,31 @@
 #!zsh
 
+## Strips whitespace from a line, depending on the arguments that're given:
+# If the first argument is:
+# * 0 - No stripping done at the start
+# * 1 - Delete all leading whitespace
+# * 2 - Same as `1`, except a single leading space is kept if `HIST_IGNORE_SPACE` is enabled.
+# If the second argument is:
+# * 0 - no stripping is done
+# * 1 - if the start of the buffer isn't the quick-replacement character, then the buffer has spaces
+# deleted, but backslashes are respected.
+
+
 # Stripping leading space off.
 case ${1:-1} in
-	0) ;; # do nothing
-	1) BUFFER=${BUFFER##[[:space:]]#} ;; # strip all leading space
+	0)
+	 	# do nothing
+		;;
+	1)
+		# strip all leading space
+		BUFFER=${BUFFER##[[:space:]]#} ;;
 	2)
 		# Keep a space at the front if `hist_ignore_space` is enabled
-		[[ -o HIST_IGNORE_SPACE && $BUFFER[1] = ' ' ]]
-		add_space=$?
-		BUFFER=${BUFFER##[[:space:]]#}
-		(( add_space == 0 )) && BUFFER=" $BUFFER" ;;
+		if [[ -o HIST_IGNORE_SPACE && $BUFFER[1] = ' ' ]] then
+			pre=' '
+		fi
+		BUFFER=$pre${BUFFER##[[:space:]]#} ;;
+	*)
 esac
 
 # Strip trailing space off, but also let `\` escapes work

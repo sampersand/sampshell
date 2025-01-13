@@ -34,6 +34,21 @@ end
 ## Always have `subl` and `ssubl` visible
 public def subl(*files)  system('subl', '--no-create', '--', *files) end
 public def ssubl(*files) system('subl',    '--create', '--', *files) end
+public def pbc(input = noinput = true)
+  if noinput
+    if equal?(IRB::TOPLEVEL_BINDING)
+      input = IRB.CurrentContext.last_value
+    else
+      input = to_s
+    end
+  end
+
+  IO.pipe do |r, w|
+    w.puts input.to_s
+    w.close
+    system('pbcopy', in: r)
+  end
+end
 
 ## Open up the method in sublime text. (Note the `sublm` won't )
 class Method; def subl; TOPLEVEL_BINDING.subl(source_location.join(':')) end end

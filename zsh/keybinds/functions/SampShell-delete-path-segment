@@ -1,4 +1,5 @@
 #!zsh
-WORDCHARS=${WORDCHARS/\/}
-zle backward-kill-word
-zle -f kill
+
+## Deletes a path segment. Similar, but not identical to, using delete-backto-char with `/`,
+# as this one deletes words
+WORDCHARS=${WORDCHARS/\/} && zle backward-kill-word && zle -f kill

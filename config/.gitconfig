@@ -4,7 +4,7 @@
 
 # TODO: aliases?
 [core]
-	excludesfile = config/.gitignore_global
+	excludesfile = ~/.gitignore_global
 	editor = subl
 
 [branch]

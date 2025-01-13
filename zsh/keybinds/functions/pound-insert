@@ -1,5 +1,6 @@
 #!zsh
 
-# Make `pound-insert` use the histchar character, and add a space too
+## Comment out a line by adding the comment character (default: `#`) and a space
+# before the current line, then accepting it.
 BUFFER="$histchars[3] $BUFFER"
 zle accept-line

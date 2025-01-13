@@ -1,4 +1,4 @@
 #!zsh
 
-cls
-zle reset-prompt
+## Overwrite the builtin `clear-screen` command by having it call `cls` instead.
+cls && zle reset-prompt
