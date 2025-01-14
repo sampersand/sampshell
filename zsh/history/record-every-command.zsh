@@ -129,3 +129,13 @@ _SampShell-record-every-command () {
 	## Everything's successful! Let's return.
 	return 0
 }
+
+## Very basic "history" mechanism for sampshell
+function ss-history () {
+	emulate -L zsh -o EXTENDED_GLOB
+	local filename
+
+	for filename in $SampShell_HISTDIR/*.sampshell-history(^on); do
+		cat $filename
+	done | jq "${1+".date + \": \" +"} .line" --raw-output | dump -l
+}
