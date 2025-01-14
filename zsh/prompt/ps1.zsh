@@ -92,47 +92,66 @@ PS1+='%B%F{blue}]%b ' # ]
 	PS1+='%F{11}'
 	# IE display the full path
 	if zstyle -t ':ss:prompt:path' display; then
-		PS1+='%d'
+		PS1+='%d '
+		return
 	elif zstyle -t ':ss:prompt:path' display-partial; then
-		PS1+='%~'
-	else
-
-		function _SampShell-ps1-path {
-			local pathlen
-			zstyle -s ':ss:prompt:path' length pathlen
-			(( ! pathlen )) && pathlen=20
-
-			psvar[4]=$(print -P '%~')
-			(( $#psvar[4] <= $pathlen )) && return
-			# TODO: what if the component itself is too large?
-			local tilde_path=$psvar[4]
-			local root_dir=${tilde_path[(ws:/:)1]}
-			tilde_path=${tilde_path#$root_dir/}
-			local remainder=$((pathlen - $#root_dir - 2)) # sub 2 for `..`
-			local pre=${tilde_path:0:$((remainder / 5 + 1))}
-			local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
-
-			tilde_path=${tilde_path#*/}
-			# psvar[4]+=/$tilde_path[(ws:/:)1]
-
-			psvar[4]=$root_dir/$pre..$post
-		}
-		add-zsh-hook precmd _SampShell-ps1-path
-
-
-		# PS1+='%(2~:%10<...<%~%<<:%0~)'
-		PS1+='%4v'
-
-		# PS1+="%-1~/%$len<..<"
-		# PS1+="%~%>>"
+		PS1+='%~ '
+		return
 	fi
-	PS1+=' '
 
-	# # Add ~path, possibly limiting it if $pathlen is nonzero
-	# [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
-	# if [[ $all = 1 ]]; then PS1+='%d'; else PS1+='%~'; fi # ~path
-	# [[ $pathlen != 0 ]] && PS1+='%<<'
-	# PS1+=' '
+	function _SampShell-ps1-path {
+		local pathlen
+		zstyle -s ':ss:prompt:path' length pathlen
+		(( ! pathlen )) && pathlen=20
+
+		psvar[4]=$(print -P '%~')
+		(( $#psvar[4] <= $pathlen )) && return
+		# TODO: what if the component itself is too large?
+		local tilde_path=$psvar[4]
+		local root_dir=${tilde_path[(ws:/:)1]}
+		tilde_path=${tilde_path#$root_dir/}
+		local remainder=$((pathlen - $#root_dir - 2)) # sub 2 for `..`
+		local pre=${tilde_path:0:$((remainder / 5 + 1))}
+		local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
+
+		tilde_path=${tilde_path#*/}
+		# psvar[4]+=/$tilde_path[(ws:/:)1]
+
+		psvar[4]=$root_dir/$pre..$post
+	}
+	add-zsh-hook precmd _SampShell-ps1-path
+
+	# function _SampShell-ps1-path2 {
+	# 	local pathlen
+	# 	zstyle -s ':ss:prompt:path' length pathlen
+	# 	(( ! pathlen )) && pathlen=20
+
+	# 	psvar[4]=$(print -P '%~')
+	# 	(( $#psvar[4] <= $pathlen )) && return
+
+	# 	local parts=(${(s:/:)psvar[4]})
+	# 	local tpath=($parts[1])
+
+	# 	while $(( ${#(j:/:)parts} ))
+	# 	shift parts
+	# 	echo "${parts}: $tpath"
+	# 	return
+
+	# 	local tilde_path=$psvar[4]
+	# 	local root_dir=${tilde_path[(ws:/:)1]}
+	# 	tilde_path=${tilde_path#$root_dir/}
+	# 	local remainder=$((pathlen - $#root_dir - 2)) # sub 2 for `..`
+	# 	local pre=${tilde_path:0:$((remainder / 5 + 1))}
+	# 	local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
+
+	# 	tilde_path=${tilde_path#*/}
+	# 	# psvar[4]+=/$tilde_path[(ws:/:)1]
+
+	# 	psvar[4]=$root_dir/$pre..$post
+	# }
+	# add-zsh-hook precmd _SampShell-ps1-path2
+
+	PS1+='%4v '
 }
 
 ################################################################################
