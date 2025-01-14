@@ -9,8 +9,8 @@ zstyle ':ss:prompt:username' expected 'sampersand'
 zstyle ':ss:prompt:hostname' expected 'Sampbook-Pro'
 zstyle ':ss:prompt:*' display auto
 zstyle ':ss:prompt:time' format '%_I:%M:%S %p'
-zstyle ':ss:prompt:git:branch' pattern '[[:alnum:]]##/??-??-??/'
-zstyle ':ss:prompt:git:branch' pattern '[[:alnum:]]##/??-??-??/'
+zstyle ':ss:prompt:git' pattern '[[:alnum:]]##/??-??-??/'
+
 
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
@@ -20,85 +20,38 @@ unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
 
 # zstyle ':ss:prompt:*' display 1
 
-# function make-prompt make-ps1 { #} <-- `#}` is needed by sublime to not freak out... lol
-#     local -A opts=(
-#         --pwd-max-len 65
-#         --branch-pattern '[[:alnum:]]##/??-??-??/'
-#     )
-
-#     zparseopts -F -K -A opts  \
-#         {h,-help}             \
-#         {a,-all}              \
-#         -pwd-max-len:         \
-#         {l,-show-login-info}: \
-#         {U,-user,-username}:  \
-#         {H,-host,-hostname}:  \
-#         -branch-pattern:      \
-
-#     if [[ $+opts[-h] = 1 || $+opts[--help] = 1 ]]; then
-#         echo "usage: $0 [options]"
-#         echo
-#         echo '  -h,--help                   show this'
-#         echo '  -a,--all                    enable all PS1 conditionals'
-#         echo "     --pwd-max-len=LEN        max len for the pwd; defaults to $opts[--pwd-max-len]"
-#         echo '  -l,--show-login-info={0,1}  when 1, always show login info; when 0, never'
-#         echo '  -U,--user,--username=NAME   username to match against' # can use `whoami`
-#         echo '  -H,--host,--hostname=NAME   hostname to match against' # can use `hostname -s`
-#         echo "     --branch-pattern=PAT     branch prefix pattern; default: ${opts[--branch-pattern]}"
-#         echo
-#         echo "If --login-info is empty, then the login username and hostname of the machine"
-#         echo "will be checked; if they're both as expected, the user@host field isn't printed"
-#         return -1
-#     fi
-
-#     local all=$(( $+opts[-a] || $+opts[--all] ))
-#     local show_login_info=${opts[-l]-$opts[--show-login-info]}
-#     local username=${opts[-U]-${opts[--user]-$opts[--username]}}
-#     local hostname=${opts[-H]-${opts[--host]-$opts[--hostname]}}
-#     local pathlen=${opts[--pwd-max-len]-0}
-
-#     # If all is given, always show login info and pathlengths
-#     if [[ $all = 1 ]]; then
-#         show_login_info=1
-#         pathlen=0
-#     fi
-#     # if either username or hostname aren't given, and show_login_info is unset, set it to always.
-#     [[ (-z $username || -z $hostname) && -z $show_login_info ]] && show_login_info=1
-
-# PS1= #'%k' <-- used to reset
-
 ################################################################################
 #                                                                              #
 #                                Bracket Prefix                                #
 #                                                                              #
 ################################################################################
 PS1=
-PS1+='%B%F{blue}[%b' # `[`
+PS1+='%B%F{blue}[%b' # `[`; notably no space as the time fmt should have a space
 
 () {
 	local timefmt
 	zstyle -s ':ss:prompt:time' format timefmt
-	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S %p}}"
+	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S %p}} "
 }
-PS1+=' %U%f%!%u'                   # history
-PS1+=' %B%F{blue}|%b'              # |
-PS1+=' %(?.%F{green}.%F{red})%?'   # previous status code
+PS1+='%U%f%!%u '                   # history
+PS1+='%B%F{blue}|%b '              # |
+PS1+='%(?.%F{green}.%F{red})%? '   # previous status code
 
 ## JOB COUNT
 if zstyle -t ':ss:prompt:jobcount' display; then
-	PS1+=' %F{166}(%j job%2(1j.%(2j.s.).s))'
+	PS1+='%F{166}(%j job%2(1j.%(2j.s.).s)) '
 elif zstyle -T ':ss:prompt:jobcount' display auto; then
-	PS1+='%(1j. %F{166}(%j job%(2j.s.)).)'   # [jobs, if more than one]
+	PS1+='%(1j.%F{166}(%j job%(2j.s.)) .)'   # [jobs, if more than one]
 fi
 
 ## SHLVL
 if zstyle -t ':ss:prompt:shlvl' display; then
-	PS1+=' %F{red}SHLVL=%L'
+	PS1+='%F{red}SHLVL=%L '
 elif zstyle -T ':ss:prompt:shlvl' display auto; then
-	PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
+	PS1+='%(2L.%F{red}SHLVL=%L .)' # [shellevel, if more than 1]
 fi
 
-PS1+='%B%F{blue}]%b' # ]
+PS1+='%B%F{blue}]%b ' # ]
 
 ################################################################################
 #                                                                              #
@@ -106,7 +59,7 @@ PS1+='%B%F{blue}]%b' # ]
 #                                                                              #
 ################################################################################
 () {
-	readonly hostname_snippet=' %n@%m'
+	readonly hostname_snippet='%n@%m '
 	readonly hostname_grey='%F{242}'
 
 	local hostname username
@@ -137,7 +90,7 @@ PS1+='%B%F{blue}]%b' # ]
 
 # Add ~path, possibly limiting it if $pathlen is nonzero
 [[ $pathlen != 0 ]] && PS1+="%$pathlen>..>"
-PS1+=' %F{11}';
+PS1+='%F{11} ';
 if [[ $all = 1 ]]; then PS1+='%d'; else PS1+='%~'; fi # ~path
 [[ $pathlen != 0 ]] && PS1+='%<<'
 
@@ -147,39 +100,42 @@ if [[ $all = 1 ]]; then PS1+='%d'; else PS1+='%~'; fi # ~path
 #                                                                              #
 ################################################################################
 
-function _SampShell-ps1-git-branch {
-	local always branch pattern
-
-	if zstyle -t ':ss:prompt:git:branch' display; then
-		always=1
-	elif ! zstyle -T ':ss:prompt:git:branch' display auto; then
-		# don't display the branch ever, so return.
-		return
-	fi
-
-	branch=$(git branch --show-current 2>&-) || {
-		(( always )) && print -n '%F{red}(no branch)'
-		return
-	}
-
-	if (( !always )) && zstyle -s ':ss:prompt:git:branch' pattern pattern; then
-    	local tmp=${branch#$~pattern}
-    	[[ $tmp = $branch ]] || tmp=#$tmp
-    	branch=$tmp
-    fi
-
-    print -nr -- "%F{043}${branch:gs/%/%%}"
-}
-
-if zstyle -t ':ss:prompt:git:branch' display ||
-   zstyle -T ':ss:prompt:git:branch' display auto
+if zstyle -t ':ss:prompt:git' display ||
+   zstyle -T ':ss:prompt:git' display auto
 then
-	PS1+=' $(_SampShell-ps1-git-branch)'
-fi
+	GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
+	GIT_PS1_SHOWSTASHSTATE=1      # Show `$` when there's something stashed
+	GIT_PS1_SHOWUNTRACKEDFILES=1  # Also show untracted files via `%`
+	GIT_PS1_SHOWCONFLICTSTATE=1   # Show when there's a merge conflict
+	GIT_PS1_HIDE_IF_PWD_IGNORED=1 # Don't show git when the PWD is ignored.
 
-PS1+='$(_SampShell_rps1_git_status)'
-# git status
-PS1+='%b'
+	[[ -n $SampShell_no_experimental ]] && GIT_PS1_SHOWUPSTREAM=auto    # IDK IF I need this
+
+	function _SampShell-ps1-git {
+		local always git_info
+
+		if ! zstyle -b ':ss:prompt:git' display always &&
+		   ! zstyle -T ':ss:prompt:git' display auto
+		then
+			# don't display git info ever, so return.
+			return
+		fi
+
+		git_info=$(__git_ps1 %s)
+		if [[ -z $git_info ]] then
+			[[ $always = yes ]] && print -n '%F{red} (no repo)'
+			return
+		fi
+
+		if [[ $always != yes ]] && zstyle -s ':ss:prompt:git' pattern pattern; then
+			git_info=${git_info/${~pattern}/..}
+		fi
+		print -nr -- "%F{043}$git_info "
+	}
+	source ${0:P:h}/git_prompt.sh
+
+	PS1+="\$(_SampShell-ps1-git $always)"
+fi
 
 ################################################################################
 #                                                                              #
@@ -187,4 +143,4 @@ PS1+='%b'
 #                                                                              #
 ################################################################################
 
-PS1+=' %F{8}%#%f ' # ending %
+PS1+='%F{8}%#%f ' # ending %
