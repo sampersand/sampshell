@@ -110,7 +110,7 @@ PS1+='%B%F{blue}]%b ' # ]
 		local tilde_path=$psvar[4]
 		local root_dir=${tilde_path[(ws:/:)1]}
 		tilde_path=${tilde_path#$root_dir/}
-		local remainder=$((pathlen - $#root_dir - 2)) # sub 2 for `..`
+		local remainder=$(( pathlen - $#root_dir - 2 ))
 		local pre=${tilde_path:0:$((remainder / 5 + 1))}
 		local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
 
@@ -119,6 +119,28 @@ PS1+='%B%F{blue}]%b ' # ]
 
 		psvar[4]=$root_dir/$pre..$post
 	}
+
+	# function _SampShell-ps1-path {
+	# 	local pathlen
+	# 	zstyle -s ':ss:prompt:path' length pathlen
+	# 	(( ! pathlen )) && pathlen=20
+
+	# 	psvar[4]=$(print -P '%~')
+	# 	(( $#psvar[4] <= $pathlen )) && return
+
+	# 	# TODO: what if the component itself is too large?
+	# 	local tilde_path=$psvar[4]
+	# 	local root_dir=${tilde_path[(ws:/:)1]}
+	# 	tilde_path=${tilde_path#$root_dir/}
+	# 	# local remainder=(pathlen - $#root_dir - 2)) # sub 2 for `..`
+	# 	local pre=${tilde_path:0:$((remainder / 5 + 1))}
+	# 	local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
+
+	# 	tilde_path=${tilde_path#*/}
+	# 	# psvar[4]+=/$tilde_path[(ws:/:)1]
+
+	# 	psvar[4]=$root_dir/$pre..$post
+	# }
 	add-zsh-hook precmd _SampShell-ps1-path
 
 	# function _SampShell-ps1-path2 {
@@ -169,7 +191,7 @@ PS1+='%B%F{blue}]%b ' # ]
 	fi
 
 	GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
-	GIT_PS1_SHOWSTASHSTATE=1      # Show `$` when there's something stashed
+	# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
 	GIT_PS1_SHOWUNTRACKEDFILES=1  # Also show untracted files via `%`
 	GIT_PS1_SHOWCONFLICTSTATE=1   # Show when there's a merge conflict
 	GIT_PS1_HIDE_IF_PWD_IGNORED=1 # Don't show git when the PWD is ignored.
