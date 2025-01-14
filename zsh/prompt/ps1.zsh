@@ -1,10 +1,37 @@
 #!zsh
 
+# Define the `SampShell-reload-prompt` function
+eval "function SampShell-reload-prompt { source ${(q)0:P:h} }"
+
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
 unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
+
+# The following are the zstyles that're used, and their defaults
+if false; then
+	# if `1`/`on`/`yes`/`true`, always display, if auto, do default as if it were unset. if
+	# anything else, disable
+	zstyle ':ss:prompt:*' display
+
+	zstyle ':ss:prompt:time' format '%_I:%M:%S %p' # The time format
+
+	zstyle ':ss:prompt:jobcount' display auto # true: always display. auto: only if > 0
+	zstyle ':ss:prompt:shlvl'    display auto # true: always display. auto: only if > 1
+
+	zstyle ':ss:prompt:userhost' display auto # true: always display. auto: dont display if expected equal
+	zstyle ':ss:prompt:hostname' expected # not set by default; if it and username are set, and
+	zstyle ':ss:prompt:username' expected # ..equal to the machine, nothing. if not, red & bold.
+
+	zstyle ':ss:prompt:path' display # true: always display full path
+	zstyle ':ss:prompt:path' display-partial # true: always display tilde path
+	zstyle ':ss:prompt:path' length $((COLUMNS * 2 / 5)) # length of paths before truncation
+
+	zstyle ':ss:prompt:git' display auto # true: always display. auto: only if in a repo
+	zstyle ':ss:prompt:git' pattern  # not set by default; if set, used when truncating repo paths.
+
+fi
 
 # zstyle ':ss:prompt:*' display 1
 
@@ -54,11 +81,11 @@ PS1+='%B%F{blue}]%b ' # ]
 
 	local hostname username
 
-	if zstyle -t ':ss:prompt:hostname' display; then
+	if zstyle -t ':ss:prompt:userhost' display; then
 		# Explicitly requested to always print the hostname
 		PS1+=$hostname_grey$hostname_snippet
 
-	elif ! zstyle -T ':ss:prompt:hostname' display auto; then
+	elif ! zstyle -T ':ss:prompt:userhost' display auto; then
 		# It's found and false, so that means let's never display the hostname
 
 	elif ! zstyle -s ':ss:prompt:hostname' expected hostname ||
@@ -93,7 +120,7 @@ PS1+='%B%F{blue}]%b ' # ]
 	function _SampShell-ps1-path {
 		local pathlen
 		zstyle -s ':ss:prompt:path' length pathlen
-		(( ! pathlen )) && pathlen=20
+		(( ! pathlen )) && pathlen=$((COLUMNS * 2 / 5))
 
 		psvar[4]=$(print -P '%~')
 		(( $#psvar[4] <= $pathlen )) && return
@@ -130,26 +157,27 @@ PS1+='%B%F{blue}]%b ' # ]
 		return 0
 	fi
 
-	GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
-	# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
-	GIT_PS1_SHOWUNTRACKEDFILES=1  # Also show untracted files via `%`
-	GIT_PS1_SHOWCONFLICTSTATE=1   # Show when there's a merge conflict
-	GIT_PS1_HIDE_IF_PWD_IGNORED=1 # Don't show git when the PWD is ignored.
-	GIT_PS1_STATESEPARATOR=       # Don't put anything after the branch name
-
-	[[ -n $SampShell_no_experimental ]] && GIT_PS1_SHOWUPSTREAM=auto    # IDK IF I need this
-
 	function _SampShell-ps1-git {
-		local always git_info
+		local always git_info display_type
 
 		psvar[1]= psvar[2]= psvar[3]=
 
 		if ! zstyle -b ':ss:prompt:git' display always &&
-		   ! zstyle -T ':ss:prompt:git' display auto
+		   ! zstyle -T ':ss:prompt:git' display auto branch-only
 		then
 			# don't display git info ever, so return.
 			return
 		fi
+		zstyle -s ':ss:prompt:git' display display_type
+
+		GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
+		# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
+		GIT_PS1_SHOWUNTRACKEDFILES=1  # Also show untracted files via `%`
+		GIT_PS1_SHOWCONFLICTSTATE=1   # Show when there's a merge conflict
+		GIT_PS1_HIDE_IF_PWD_IGNORED=1 # Don't show git when the PWD is ignored.
+		GIT_PS1_STATESEPARATOR=       # Don't put anything after the branch name
+
+		[[ -n $SampShell_no_experimental ]] && GIT_PS1_SHOWUPSTREAM=auto    # IDK IF I need this
 
 		git_info=$(__git_ps1 %s)
 		if [[ -z $git_info ]] then
