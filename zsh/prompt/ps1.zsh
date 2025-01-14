@@ -1,16 +1,5 @@
 #!zsh
 
-
-r () {
-	source ~ss/zsh/prompt/ps1.zsh
-}
-
-zstyle ':ss:prompt:username' expected 'sampersand'
-zstyle ':ss:prompt:hostname' expected 'Sampbook-Pro'
-zstyle ':ss:prompt:*' display auto
-zstyle ':ss:prompt:time' format '%_I:%M:%S %p'
-zstyle ':ss:prompt:git' pattern '[[:alnum:]]##/??-??-??/'
-
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
