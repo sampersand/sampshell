@@ -3,8 +3,9 @@
 # Sometimes the prompt gets `CTRL+C`'d in the middle of doing stuff, and it doesn't reset
 # its colours. This forces them to be reset always.
 
-typeset -aU preexec_functions
-preexec_functions+=(_SampShell-preexec-clear-formatting)
+add-zsh-hook preexec _SampShell-preexec-clear-formatting
+
+POSTEDIT=$(print -nP %b%u%s%f) # TODO, does this do what we need for us? sick!
 
 # Reset formatting.
 function _SampShell-preexec-clear-formatting {
