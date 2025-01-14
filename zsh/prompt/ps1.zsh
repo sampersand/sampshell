@@ -41,7 +41,34 @@ fi
 #                                                                              #
 ################################################################################
 PS1= # Clear PS1
+ps1_header () {
+	local sep='%F{blue}%B|%f%b'
+	echo
+	echo -n $sep "$(ruby --version | awk '{print $2}')" $sep '%F{11}%d' $sep ''
+	echo -n %y $sep %n@%M $sep ''
+	local bat=$(pmset -g batt | sed 1d)
+	local batperc=$(echo $bat | awk '{print $3}')
+	local bathow=$(echo $bat | awk '{print $4}')
 
+	if [[ ${bathow%;} = charging ]] then
+		echo -n '🔌'
+		if (( batperc <= 20 )) then
+			echo -n '%F{red}'
+		else
+			echo -n '%F{green}'
+		fi
+	elif (( batperc <= 20 )) then
+		echo -n '🪫%F{red}'
+	else
+		echo -n '🔋%F{green}'
+	fi
+	echo -n ${batperc}%%
+# InternalBattery-0 (id=22937699)	90 charging; 0:32 remaining present: true
+
+	echo
+}
+
+PS1+='$(typeset -f ps1_header >/dev/null && { ps1_header; print })'$'\n'
 PS1+='%B%F{blue}[%b' # `[`
 
 # Current time
