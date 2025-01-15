@@ -46,32 +46,11 @@ ps1_header () {
 
 	echo
 	echo -n $sep "$(ruby --version | awk '{print $2}')" $sep '%F{11}%d' $sep ''
-	echo -n %y $sep %n@%M $sep ''
-
-	local bat=$(pmset -g batt)
-	local batperc=$(echo $bat | grep -Eo '\d+%')
-	batperc=${batperc%'%'}
-	local bathow=$(echo $bat | sed 1d | awk '{print $4}')
-
-	if [[ ${bathow%;} = charging ]] then
-		echo -n '🔌'
-		if (( batperc <= 20 )) then
-			echo -n '%F{red}'
-		else
-			echo -n '%F{green}'
-		fi
-	elif (( batperc <= 20 )) then
-		echo -n '🪫%F{red}'
-	else
-		echo -n '🔋%F{green}'
-	fi
-	# InternalBattery-0 (id=22937699)	90 charging; 0:32 remaining present: true
-	echo -n ${batperc}%%
-
-	echo
+	echo -n %y $sep %n@%M $sep "$(_SampShell-prompt-current-battery)" $sep
 }
+source ${0:P:h}/prompt-widgets.zsh
 
-PS1+='$(typeset -f ps1_header >/dev/null && { ps1_header; print })'$'\n'
+# PS1+='$(typeset -f ps1_header >/dev/null && { ps1_header; print })'$'\n'
 PS1+='%B%F{blue}[%b' # `[`
 
 # Current time
@@ -235,3 +214,9 @@ PS1+='%B%F{blue}]%b ' # ]
 ################################################################################
 
 PS1+='%F{8}%#%f ' # ending %
+
+################################################################################
+#                                                                              #
+#                                     RPS1                                     #
+#                                                                              #
+################################################################################
