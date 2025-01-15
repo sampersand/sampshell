@@ -1,5 +1,9 @@
 #!zsh
 
+## Customizing the prompt
+# The prompt can be customized using `zstyle`, eg `zstyle :sampshell:prompt:shlvl: display tue`
+#
+
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
@@ -12,21 +16,20 @@ if false; then
 	# anything else, disable
 	zstyle ':sampshell:prompt:*' display
 
-	zstyle ':sampshell:prompt:time:' format '%_I:%M:%S %p' # The time format
+	zstyle ':sampshell:prompt:time' format '%_I:%M:%S %p' # The time format
 
-	zstyle ':sampshell:prompt:jobcount:' display auto # true: always display. auto: only if > 0
-	zstyle ':sampshell:prompt:shlvl:'    display auto # true: always display. auto: only if > 1
+	zstyle ':sampshell:prompt:jobcount' display auto # true: always display. auto: only if > 0
+	zstyle ':sampshell:prompt:shlvl'    display auto # true: always display. auto: only if > 1
 
-	zstyle ':sampshell:prompt:userhost:' display auto # true: always display. auto: dont display if expected equal
-	zstyle ':sampshell:prompt:hostname:' expected # not set by default; if it and username are set, and
-	zstyle ':sampshell:prompt:username:' expected # ..equal to the machine, nothing. if not, red & bold.
+	zstyle ':sampshell:prompt:userhost' display auto # true: always display. auto: dont display if expected equal
+	zstyle ':sampshell:prompt:hostname' expected # not set by default; if it and username are set, and
+	zstyle ':sampshell:prompt:username' expected # ..equal to the machine, nothing. if not, red & bold.
 
-	zstyle ':sampshell:prompt:path:' display # true: always display full path
-	zstyle ':sampshell:prompt:path:' display-partial # true: always display tilde path
-	zstyle ':sampshell:prompt:path:' length $((COLUMNS * 2 / 5)) # length of paths before truncation
+	zstyle ':sampshell:prompt:path' display # if set to `always`, display the full path. Unable to be disabled.
+	zstyle ':sampshell:prompt:path' length $((COLUMNS * 2 / 5)) # length of paths before truncation
 
-	zstyle ':sampshell:prompt:git:' display auto # true: always display. auto: only if in a repo
-	zstyle ':sampshell:prompt:git:' pattern  # not set by default; if set, used when truncating repo paths.
+	zstyle ':sampshell:prompt:git' display auto # true: always display. auto: only if in a repo
+	zstyle ':sampshell:prompt:git' pattern  # not set by default; if set, used when truncating repo paths.
 
 fi
 
@@ -52,7 +55,7 @@ function SampShell-create-prompt {
 	PS1+='%B%F{blue}[%b' # `[`
 
 	# Current time
-	zstyle -s ':sampshell:prompt:time:' format tmp
+	zstyle -s ':sampshell:prompt:time' format tmp
 	PS1+="%F{cyan}%D{${tmp:-%_I:%M:%S %p}} "
 
 	PS1+='%U%f%!%u '                   # history
@@ -60,16 +63,16 @@ function SampShell-create-prompt {
 	PS1+='%(?.%F{green}.%F{red})%?'   # previous status code
 
 	## JOB COUNT
-	if zstyle -t ':sampshell:prompt:jobcount:' display; then
+	if zstyle -t ':sampshell:prompt:jobcount' display; then
 		PS1+='%F{166} (%j job%2(1j.%(2j.s.).s))'
-	elif zstyle -T ':sampshell:prompt:jobcount:' display auto; then
+	elif zstyle -T ':sampshell:prompt:jobcount' display auto; then
 		PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'   # [jobs, if more than one]
 	fi
 
 	## SHLVL
-	if zstyle -t ':sampshell:prompt:shlvl:' display; then
+	if zstyle -t ':sampshell:prompt:shlvl' display; then
 		PS1+=' %F{red}SHLVL=%L'
-	elif zstyle -T ':sampshell:prompt:shlvl:' display auto; then
+	elif zstyle -T ':sampshell:prompt:shlvl' display auto; then
 		PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
 	fi
 
@@ -83,17 +86,17 @@ function SampShell-create-prompt {
 	readonly hostname_snippet='%n@%m '
 	readonly hostname_grey='%F{242}'
 
-	zstyle ':sampshell:prompt:userhost:' display false
+	zstyle ':sampshell:prompt:userhost' display false
 
-	zstyle -s ':sampshell:prompt:userhost:' display tmp
+	zstyle -s ':sampshell:prompt:userhost' display tmp
 	case $tmp in
 	always|1|yes|on|true)
 		PS1+=$hostname_grey$hostname_snippet ;;
 
 	auto|default|)
 		local hostname username
-		if ! zstyle -s ':sampshell:prompt:userhost:hostname:' expected hostname ||
-		   ! zstyle -s ':sampshell:prompt:userhost:username:' expected username
+		if ! zstyle -s ':sampshell:prompt:userhost:hostname' expected hostname ||
+		   ! zstyle -s ':sampshell:prompt:userhost:username' expected username
 		then
 			# One of the two `hostname`/`username` are missing, print out in grey.
 			PS1+=$hostname_grey$hostname_snippet
@@ -114,22 +117,22 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-	PS1+='%F{11}' # We always print the path
-	# IE display the full path
-	if zstyle -t ':sampshell:prompt:path:' display absolute; then
+	PS1+='%F{11}' # Add the colour in. (There's no way to disable the path, so add it in here)
+
+	if zstyle -t ':sampshell:prompt:path' display absolute; then
 		PS1+='%d'
 	else
-		# Get the path length; default to `$COLUMNS / 5`
-		zstyle -s ':sampshell:prompt:path:' length tmp || tmp='$((COLUMNS / 5))'
+		# Get the path length; default to `$COLUMNS / 5`. Shortening can be disabled by
+		# setting the length to 0.
+		zstyle -s ':sampshell:prompt:path' length tmp || tmp='$((COLUMNS / 5))'
 
-		# No need to check for `0`, as truncation doesn't happen with 0 length.
-
+		# (No need to check for `0`, as `%0</…<` disables truncation.)
 		PS1+='%-1~'                            # always have the root component
-		PS1+="%$tmp</..<"                      # When replacing, make sure to have `/...`
+		PS1+="%$tmp</…<"                       # start path truncation.
 		PS1+='${(*)$(print -P ''%~'')##[^/]#}' # Everything but the root component
-		PS1+='%<<'                            # stop replacing
+		PS1+='%<<'                             # stop truncation
 	fi
-	PS1+=' '
+	PS1+=' ' # Adda space after the path
 
 	################################################################################
 	#                                                                              #
@@ -137,26 +140,22 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-	() {
-		local always
-		if ! zstyle -b ':sampshell:prompt:git:' display always &&
-		   ! zstyle -T ':sampshell:prompt:git:' display auto
-		then
-			return 0
-		fi
-
+	local always
+	if zstyle -b ':sampshell:prompt:git' display always ||
+	   zstyle -T ':sampshell:prompt:git' display auto
+	then
 		function _SampShell-ps1-git {
 			local always git_info display_type
 
 			psvar[1]= psvar[2]= psvar[3]=
 
-			if ! zstyle -b ':sampshell:prompt:git:' display always &&
-			   ! zstyle -T ':sampshell:prompt:git:' display auto branch-only
+			if ! zstyle -b ':sampshell:prompt:git' display always &&
+			   ! zstyle -T ':sampshell:prompt:git' display auto branch-only
 			then
 				# don't display git info ever, so return.
 				return
 			fi
-			zstyle -s ':sampshell:prompt:git:' display display_type
+			zstyle -s ':sampshell:prompt:git' display display_type
 
 			GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
 			# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
@@ -174,7 +173,7 @@ function SampShell-create-prompt {
 			fi
 
 			psvar[1]="$git_info "
-			if [[ $always != yes ]] && zstyle -s ':sampshell:prompt:git:' pattern pattern; then
+			if [[ $always != yes ]] && zstyle -s ':sampshell:prompt:git' pattern pattern; then
 				git_info=${git_info/${~pattern}/..}
 			fi
 			psvar[2]="$git_info "
@@ -183,7 +182,7 @@ function SampShell-create-prompt {
 		add-zsh-hook precmd _SampShell-ps1-git
 		[[ $always = yes ]] && PS1+="%F{red}%3v"
 		PS1+="%F{043}%\$((COLUMNS *3/ 4))(l.%1v.%2v)"
-	} ${0:P:h}
+	fi
 
 	################################################################################
 	#                                                                              #
