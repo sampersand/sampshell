@@ -114,33 +114,22 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-	# PS1+='%F{11}' # We always print the path
-	# zstyle -s ':sampshell:prompt:path:' display tmp
-	# case $tmp in
-	# 	abs|absolute|full) PS1+='%d' ;; # Full path
-	# 	partial)
-	# esac
-	# PS1+=' ' # always add a space after the path
-	# () {
-		PS1+='%F{11}'
-		# IE display the full path
-		if zstyle -t ':sampshell:prompt:path:' display; then
-			PS1+='%d '
-			return
-		elif zstyle -t ':sampshell:prompt:path:' display-partial; then
-			PS1+='%~ '
-			return
-		fi
+	PS1+='%F{11}' # We always print the path
+	# IE display the full path
+	if zstyle -t ':sampshell:prompt:path:' display absolute; then
+		PS1+='%d'
+	else
+		# Get the path length; default to `$COLUMNS / 5`
+		zstyle -s ':sampshell:prompt:path:' length tmp || tmp='$((COLUMNS / 5))'
 
-		# PS1+='${$(print -P ''%~'')%%/*'
-		# PS1+='%<<'
+		# No need to check for `0`, as truncation doesn't happen with 0 length.
 
-		PS1+='%1~'
-		PS1+='%$((COLUMNS / 5))</..<'
-		PS1+='${(*)$(print -P ''%~'')##[^/]#}'
-		PS1+='%<< '
-		# PS1+='%-1~%>..>%<< '
-	# }
+		PS1+='%-1~'                            # always have the root component
+		PS1+="%$tmp</..<"                      # When replacing, make sure to have `/...`
+		PS1+='${(*)$(print -P ''%~'')##[^/]#}' # Everything but the root component
+		PS1+='%<<'                            # stop replacing
+	fi
+	PS1+=' '
 
 	################################################################################
 	#                                                                              #
