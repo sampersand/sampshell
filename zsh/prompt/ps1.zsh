@@ -10,33 +10,34 @@ unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
 if false; then
 	# if `1`/`on`/`yes`/`true`, always display, if auto, do default as if it were unset. if
 	# anything else, disable
-	zstyle ':ss:prompt:*' display
+	zstyle ':sampshell:prompt:*' display
 
-	zstyle ':ss:prompt:time:' format '%_I:%M:%S %p' # The time format
+	zstyle ':sampshell:prompt:time:' format '%_I:%M:%S %p' # The time format
 
-	zstyle ':ss:prompt:jobcount:' display auto # true: always display. auto: only if > 0
-	zstyle ':ss:prompt:shlvl:'    display auto # true: always display. auto: only if > 1
+	zstyle ':sampshell:prompt:jobcount:' display auto # true: always display. auto: only if > 0
+	zstyle ':sampshell:prompt:shlvl:'    display auto # true: always display. auto: only if > 1
 
-	zstyle ':ss:prompt:userhost:' display auto # true: always display. auto: dont display if expected equal
-	zstyle ':ss:prompt:hostname:' expected # not set by default; if it and username are set, and
-	zstyle ':ss:prompt:username:' expected # ..equal to the machine, nothing. if not, red & bold.
+	zstyle ':sampshell:prompt:userhost:' display auto # true: always display. auto: dont display if expected equal
+	zstyle ':sampshell:prompt:hostname:' expected # not set by default; if it and username are set, and
+	zstyle ':sampshell:prompt:username:' expected # ..equal to the machine, nothing. if not, red & bold.
 
-	zstyle ':ss:prompt:path:' display # true: always display full path
-	zstyle ':ss:prompt:path:' display-partial # true: always display tilde path
-	zstyle ':ss:prompt:path:' length $((COLUMNS * 2 / 5)) # length of paths before truncation
+	zstyle ':sampshell:prompt:path:' display # true: always display full path
+	zstyle ':sampshell:prompt:path:' display-partial # true: always display tilde path
+	zstyle ':sampshell:prompt:path:' length $((COLUMNS * 2 / 5)) # length of paths before truncation
 
-	zstyle ':ss:prompt:git:' display auto # true: always display. auto: only if in a repo
-	zstyle ':ss:prompt:git:' pattern  # not set by default; if set, used when truncating repo paths.
+	zstyle ':sampshell:prompt:git:' display auto # true: always display. auto: only if in a repo
+	zstyle ':sampshell:prompt:git:' pattern  # not set by default; if set, used when truncating repo paths.
 
 fi
 
-# zstyle ':ss:prompt:*' display 1
+# zstyle ':sampshell:prompt:*' display 1
 
 
 # Mark `PS1` and `RPS1` as global, but not exported, so other shells don't inherit them.
 typeset -g +x PS1 RPS1
 
 source ${0:P:h}/prompt-widgets.zsh
+source ${0:P:h}/git_prompt.sh
 
 ## The function to create the prompt. Takes no arguments, as everything's done via zstyle.
 function SampShell-create-prompt {
@@ -51,7 +52,7 @@ function SampShell-create-prompt {
 	PS1+='%B%F{blue}[%b' # `[`
 
 	# Current time
-	zstyle -s ':ss:prompt:time:' format tmp
+	zstyle -s ':sampshell:prompt:time:' format tmp
 	PS1+="%F{cyan}%D{${tmp:-%_I:%M:%S %p}} "
 
 	PS1+='%U%f%!%u '                   # history
@@ -59,16 +60,16 @@ function SampShell-create-prompt {
 	PS1+='%(?.%F{green}.%F{red})%? '   # previous status code
 
 	## JOB COUNT
-	if zstyle -t ':ss:prompt:jobcount:' display; then
+	if zstyle -t ':sampshell:prompt:jobcount:' display; then
 		PS1+='%F{166}(%j job%2(1j.%(2j.s.).s)) '
-	elif zstyle -T ':ss:prompt:jobcount:' display auto; then
+	elif zstyle -T ':sampshell:prompt:jobcount:' display auto; then
 		PS1+='%(1j.%F{166}(%j job%(2j.s.)) .)'   # [jobs, if more than one]
 	fi
 
 	## SHLVL
-	if zstyle -t ':ss:prompt:shlvl:' display; then
+	if zstyle -t ':sampshell:prompt:shlvl:' display; then
 		PS1+='%F{red}SHLVL=%L '
-	elif zstyle -T ':ss:prompt:shlvl:' display auto; then
+	elif zstyle -T ':sampshell:prompt:shlvl:' display auto; then
 		PS1+='%(2L.%F{red}SHLVL=%L .)' # [shellevel, if more than 1]
 	fi
 
@@ -79,29 +80,31 @@ function SampShell-create-prompt {
 	#                            Username and Hostname                             #
 	#                                                                              #
 	################################################################################
-	() {
-		readonly hostname_snippet='%n@%m '
-		readonly hostname_grey='%F{242}'
+	readonly hostname_snippet='%n@%m '
+	readonly hostname_grey='%F{242}'
 
+	zstyle -s ':sampshell:prompt:userhost:' display tmp
+	case $tmp in
+	always|1|yes|on|true)
+		PS1+=$hostname_grey$hostname_snippet ;;
+
+	auto|default|)
 		local hostname username
-
-		if zstyle -t ':ss:prompt:userhost:' display; then
-			# Explicitly requested to always print the hostname
-			PS1+=$hostname_grey$hostname_snippet
-
-		elif ! zstyle -T ':ss:prompt:userhost:' display auto; then
-			# It's found and false, so that means let's never display the hostname
-
-		elif ! zstyle -s ':ss:prompt:hostname:' expected hostname ||
-			 ! zstyle -s ':ss:prompt:username:' expected username; then
+		if ! zstyle -s ':sampshell:prompt:userhost:hostname:' expected hostname ||
+		   ! zstyle -s ':sampshell:prompt:userhost:username:' expected username
+		then
 			# One of the two `hostname`/`username` are missing, print out in grey.
 			PS1+=$hostname_grey$hostname_snippet
-
 		elif [[ $username != "$(print -P %n)" || $hostname != $(print -P %m) ]] then
 			# One of the two doesn't match, uh oh!
 			PS1+="%F{red}%B$hostname_snippet%b"
-		fi
-	}
+		fi ;;
+
+	0|no|off|false)
+		;; # Don't modify
+	*)
+		SampShell_log 'unknown display value: %s' $tmp
+	esac
 
 	################################################################################
 	#                                                                              #
@@ -109,21 +112,27 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-
+	PS1+='%F{11}' # We always print the path
+	zstyle -s ':sampshell:prompt:path:' display tmp
+	case $tmp in
+		abs|absolute|full) PS1+='%d' ;; # Full path
+		partial)
+	esac
+	PS1+=' ' # always add a space after the path
 	() {
 		PS1+='%F{11}'
 		# IE display the full path
-		if zstyle -t ':ss:prompt:path:' display; then
+		if zstyle -t ':sampshell:prompt:path:' display; then
 			PS1+='%d '
 			return
-		elif zstyle -t ':ss:prompt:path:' display-partial; then
+		elif zstyle -t ':sampshell:prompt:path:' display-partial; then
 			PS1+='%~ '
 			return
 		fi
 
 		function _SampShell-ps1-path {
 			local pathlen
-			zstyle -s ':ss:prompt:path:' length pathlen
+			zstyle -s ':sampshell:prompt:path:' length pathlen
 			(( ! pathlen )) && pathlen=$((COLUMNS * 2 / 5))
 
 			psvar[4]=$(print -P '%~')
@@ -155,8 +164,8 @@ function SampShell-create-prompt {
 
 	() {
 		local always
-		if ! zstyle -b ':ss:prompt:git:' display always &&
-		   ! zstyle -T ':ss:prompt:git:' display auto
+		if ! zstyle -b ':sampshell:prompt:git:' display always &&
+		   ! zstyle -T ':sampshell:prompt:git:' display auto
 		then
 			return 0
 		fi
@@ -166,13 +175,13 @@ function SampShell-create-prompt {
 
 			psvar[1]= psvar[2]= psvar[3]=
 
-			if ! zstyle -b ':ss:prompt:git:' display always &&
-			   ! zstyle -T ':ss:prompt:git:' display auto branch-only
+			if ! zstyle -b ':sampshell:prompt:git:' display always &&
+			   ! zstyle -T ':sampshell:prompt:git:' display auto branch-only
 			then
 				# don't display git info ever, so return.
 				return
 			fi
-			zstyle -s ':ss:prompt:git:' display display_type
+			zstyle -s ':sampshell:prompt:git:' display display_type
 
 			GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
 			# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
@@ -190,12 +199,11 @@ function SampShell-create-prompt {
 			fi
 
 			psvar[1]="$git_info "
-			if [[ $always != yes ]] && zstyle -s ':ss:prompt:git:' pattern pattern; then
+			if [[ $always != yes ]] && zstyle -s ':sampshell:prompt:git:' pattern pattern; then
 				git_info=${git_info/${~pattern}/..}
 			fi
 			psvar[2]="$git_info "
 		}
-		source $1/git_prompt.sh
 
 		add-zsh-hook precmd _SampShell-ps1-git
 		[[ $always = yes ]] && PS1+="%F{red}%3v"
