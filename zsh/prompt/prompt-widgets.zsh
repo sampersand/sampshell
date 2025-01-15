@@ -31,7 +31,7 @@ function _SampShell-prompt-is-airport-power-on () {
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
 		"$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
 	then
-		print -n '%K{red}🚫🛜%k %F{blue}%B|%f%B'
+		print -n '%K{red}🚫🛜%G%k %F{blue}%B|%f%B'
 	fi
 	# networksetup -setairportpower en0 off
 }
