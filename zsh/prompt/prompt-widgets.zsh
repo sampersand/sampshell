@@ -36,6 +36,12 @@ function _SampShell-prompt-is-airport-power-on () {
 	# networksetup -setairportpower en0 off
 }
 
+
 RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
 
-
+	## SHLVL
+	if zstyle -t ':sampshell:prompt:shlvl:' display; then
+		RPS1+=' %F{red}SHLVL=%L'
+	elif zstyle -T ':sampshell:prompt:shlvl:' display auto; then
+		RPS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
+	fi

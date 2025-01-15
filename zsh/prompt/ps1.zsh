@@ -48,7 +48,7 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 	PS1= # Clear PS1
-
+	# PS1='%$((COLUMNS * 3 / 5))>..>'
 	PS1+='%B%F{blue}[%b' # `[`
 
 	# Current time
@@ -57,20 +57,20 @@ function SampShell-create-prompt {
 
 	PS1+='%U%f%!%u '                   # history
 	PS1+='%B%F{blue}|%b '              # |
-	PS1+='%(?.%F{green}.%F{red})%? '   # previous status code
+	PS1+='%(?.%F{green}.%F{red})%?'   # previous status code
 
 	## JOB COUNT
 	if zstyle -t ':sampshell:prompt:jobcount:' display; then
-		PS1+='%F{166}(%j job%2(1j.%(2j.s.).s)) '
+		PS1+='%F{166} (%j job%2(1j.%(2j.s.).s))'
 	elif zstyle -T ':sampshell:prompt:jobcount:' display auto; then
-		PS1+='%(1j.%F{166}(%j job%(2j.s.)) .)'   # [jobs, if more than one]
+		PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'   # [jobs, if more than one]
 	fi
 
 	## SHLVL
 	if zstyle -t ':sampshell:prompt:shlvl:' display; then
-		PS1+='%F{red}SHLVL=%L '
+		PS1+=' %F{red}SHLVL=%L'
 	elif zstyle -T ':sampshell:prompt:shlvl:' display auto; then
-		PS1+='%(2L.%F{red}SHLVL=%L .)' # [shellevel, if more than 1]
+		PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
 	fi
 
 	PS1+='%B%F{blue}]%b ' # ]
@@ -82,6 +82,8 @@ function SampShell-create-prompt {
 	################################################################################
 	readonly hostname_snippet='%n@%m '
 	readonly hostname_grey='%F{242}'
+
+	zstyle ':sampshell:prompt:userhost:' display false
 
 	zstyle -s ':sampshell:prompt:userhost:' display tmp
 	case $tmp in
@@ -112,14 +114,14 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-	PS1+='%F{11}' # We always print the path
-	zstyle -s ':sampshell:prompt:path:' display tmp
-	case $tmp in
-		abs|absolute|full) PS1+='%d' ;; # Full path
-		partial)
-	esac
-	PS1+=' ' # always add a space after the path
-	() {
+	# PS1+='%F{11}' # We always print the path
+	# zstyle -s ':sampshell:prompt:path:' display tmp
+	# case $tmp in
+	# 	abs|absolute|full) PS1+='%d' ;; # Full path
+	# 	partial)
+	# esac
+	# PS1+=' ' # always add a space after the path
+	# () {
 		PS1+='%F{11}'
 		# IE display the full path
 		if zstyle -t ':sampshell:prompt:path:' display; then
@@ -130,31 +132,15 @@ function SampShell-create-prompt {
 			return
 		fi
 
-		function _SampShell-ps1-path {
-			local pathlen
-			zstyle -s ':sampshell:prompt:path:' length pathlen
-			(( ! pathlen )) && pathlen=$((COLUMNS * 2 / 5))
+		# PS1+='${$(print -P ''%~'')%%/*'
+		# PS1+='%<<'
 
-			psvar[4]=$(print -P '%~')
-			(( $#psvar[4] <= $pathlen )) && return
-			# TODO: what if the component itself is too large?
-			local tilde_path=$psvar[4]
-			local root_dir=${tilde_path[(ws:/:)1]}
-			tilde_path=${tilde_path#$root_dir/}
-			local remainder=$(( pathlen - $#root_dir - 2 ))
-			local pre=${tilde_path:0:$((remainder / 5 + 1))}
-			local post=${tilde_path: -$((remainder - (remainder / 5 + 1))) }
-
-			tilde_path=${tilde_path#*/}
-			# psvar[4]+=/$tilde_path[(ws:/:)1]
-
-			psvar[4]=$root_dir/$pre..$post
-		}
-
-		add-zsh-hook precmd _SampShell-ps1-path
-
-		PS1+='%4v '
-	}
+		PS1+='%1~'
+		PS1+='%$((COLUMNS / 5))</..<'
+		PS1+='${(*)$(print -P ''%~'')##[^/]#}'
+		PS1+='%<< '
+		# PS1+='%-1~%>..>%<< '
+	# }
 
 	################################################################################
 	#                                                                              #
