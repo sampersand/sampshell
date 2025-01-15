@@ -51,7 +51,6 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 	PS1= # Clear PS1
-	# PS1='%$((COLUMNS * 3 / 5))>..>'
 	PS1+='%B%F{blue}[%b' # `[`
 
 	# Current time
@@ -85,8 +84,6 @@ function SampShell-create-prompt {
 	################################################################################
 	readonly hostname_snippet='%n@%m '
 	readonly hostname_grey='%F{242}'
-
-	zstyle ':sampshell:prompt:userhost' display false
 
 	zstyle -s ':sampshell:prompt:userhost' display tmp
 	case $tmp in
@@ -141,7 +138,7 @@ function SampShell-create-prompt {
 	################################################################################
 
 	local always
-	if zstyle -b ':sampshell:prompt:git' display always ||
+	if zstyle -t ':sampshell:prompt:git' display always ||
 	   zstyle -T ':sampshell:prompt:git' display auto
 	then
 		function _SampShell-ps1-git {
