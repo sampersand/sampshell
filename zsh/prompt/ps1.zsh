@@ -137,48 +137,66 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 
-	local always
-	if zstyle -t ':sampshell:prompt:git' display always ||
-	   zstyle -T ':sampshell:prompt:git' display auto
-	then
+	# If we even are even displaying git in the first place? (default to yes with `-T`)
+	if zstyle -T ':sampshell:prompt:git' display; then
 		function _SampShell-ps1-git {
-			local always git_info display_type
+			psvar[1]= psvar[2]=
 
-			psvar[1]= psvar[2]= psvar[3]=
-
-			if ! zstyle -b ':sampshell:prompt:git' display always &&
-			   ! zstyle -T ':sampshell:prompt:git' display auto branch-only
-			then
-				# don't display git info ever, so return.
-				return
+			# If we're just not displaying git at all, then return.
+			if ! zstyle -T ":sampshell:prompt:git:$PWD" display; then
+				echo oh
+				return 0
 			fi
-			zstyle -s ':sampshell:prompt:git' display display_type
 
-			GIT_PS1_SHOWDIRTYSTATE=1      # Show `*` and `+` for untracted states
+			if zstyle -T ":sampshell:prompt:git:dirty:$PWD" display; then
+				# Show `*` and `+` for untracted states
+				local GIT_PS1_SHOWDIRTYSTATE=1
+			fi
+
 			# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
-			GIT_PS1_SHOWUNTRACKEDFILES=1  # Also show untracted files via `%`
-			GIT_PS1_SHOWCONFLICTSTATE=1   # Show when there's a merge conflict
-			GIT_PS1_HIDE_IF_PWD_IGNORED=1 # Don't show git when the PWD is ignored.
-			GIT_PS1_STATESEPARATOR=       # Don't put anything after the branch name
 
-			[[ -n $SampShell_no_experimental ]] && GIT_PS1_SHOWUPSTREAM=auto    # IDK IF I need this
-
-			git_info=$(__git_ps1 %s)
-			if [[ -z $git_info ]] then
-				[[ $always = yes ]] && psvar[3]='(no repo) '
-				return
+			if zstyle -T ":sampshell:prompt:git:untracked:$PWD" display; then
+				# Also show untracted files via `%`
+				local GIT_PS1_SHOWUNTRACKEDFILES=1
 			fi
 
-			psvar[1]="$git_info "
-			if [[ $always != yes ]] && zstyle -s ':sampshell:prompt:git' pattern pattern; then
-				git_info=${git_info/${~pattern}/..}
+			if zstyle -T ":sampshell:prompt:git:conflict:$PWD" display; then
+				# Show when there's a merge conflict
+				local GIT_PS1_SHOWCONFLICTSTATE=1
 			fi
-			psvar[2]="$git_info "
+
+			if zstyle -T ":sampshell:prompt:git:hidepwd:$PWD" display; then
+				# Don't show git when the PWD is ignored.
+				local GIT_PS1_HIDE_IF_PWD_IGNORED=1
+			fi
+
+			if zstyle -t ":sampshell:prompt:git:upstream:$PWD" display; then
+				# Show the difference fro upstream
+				local GIT_PS1_SHOWUPSTREAM=1
+			fi
+
+			# Don't put anything after the branch name
+			local GIT_PS1_STATESEPARATOR=${GIT_PS1_STATESEPARATOR:-}
+
+			psvar[1]="$(__git_ps1 %s) "
+			psvar[2]=$psvar[1]
+
+			local pattern
+			if zstyle -s ":sampshell:prompt:git:$PWD" pattern pattern; then
+				psvar[2]=${psvar[2]/${~pattern}/…}
+			fi
 		}
 
+		# Always run this function before a command. We have to put it in `precmd` because
+		# i can't figure out a way to figure out line lengths from within functions.
 		add-zsh-hook precmd _SampShell-ps1-git
-		[[ $always = yes ]] && PS1+="%F{red}%3v"
-		PS1+="%F{043}%\$((COLUMNS *3/ 4))(l.%1v.%2v)"
+
+		# # Get the git prompt length, which defaults to `$COLUMNS / 5`. Shortening can be
+		# # disabled by setting the length to 0.
+		# zstyle -s ':sampshell:prompt:git' length tmp || tmp='$((COLUMNS / 5))'
+
+		PS1+="%F{043}⇄%-\$((COLUMNS * 3 / 5))(l.%1v.%2v)"
+
 	fi
 
 	################################################################################
