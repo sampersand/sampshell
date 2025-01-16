@@ -187,15 +187,13 @@ function SampShell-create-prompt {
 			fi
 		}
 
-		# Always run this function before a command. We have to put it in `precmd` because
-		# i can't figure out a way to figure out line lengths from within functions.
+		# Always run this function before a prompt, instead of adding it as part of the
+		# prompt. (This is b/c they're run before the prompt is executed, so there's no
+		# way to get the length)
 		add-zsh-hook precmd _SampShell-ps1-git
 
-		# # Get the git prompt length, which defaults to `$COLUMNS / 5`. Shortening can be
-		# # disabled by setting the length to 0.
-		# zstyle -s ':sampshell:prompt:git' length tmp || tmp='$((COLUMNS / 5))'
-
-		PS1+="%F{043}⇄%-\$((COLUMNS * 3 / 5))(l.%1v.%2v)"
+		# Only expand the full thing if there's a significant amount of whitespace left.
+		PS1+="%F{043}⇄%-\$((COLUMNS * 5 / 8))(l.%1v.%2v)"
 
 	fi
 
