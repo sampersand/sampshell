@@ -178,8 +178,11 @@ function SampShell-create-prompt {
 			# Don't put anything after the branch name
 			local GIT_PS1_STATESEPARATOR=${GIT_PS1_STATESEPARATOR:-}
 
-			psvar[1]="$(__git_ps1 %s) "
+			psvar[1]=$(__git_ps1 %s)
+			[[ -z $psvar[1] ]] && return
+			psvar[1]="⇄${psvar[1]/\%\%/!} "
 			psvar[2]=$psvar[1]
+
 
 			local pattern
 			if zstyle -s ":sampshell:prompt:git:$PWD" pattern pattern; then
@@ -193,7 +196,7 @@ function SampShell-create-prompt {
 		add-zsh-hook precmd _SampShell-ps1-git
 
 		# Only expand the full thing if there's a significant amount of whitespace left.
-		PS1+="%F{043}⇄%-\$((COLUMNS * 5 / 8))(l.%1v.%2v)"
+		PS1+="%F{043}%\$((COLUMNS /3))(l.%2v.%1v)"
 
 	fi
 

@@ -71,3 +71,7 @@ cc () { print -r $history[$(($#history - 0))] | pbcopy; }
 pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
 
+
+alias -- +x='chmod +x'
+alias -- +rwx='chmod +rwx'
+alias ps='ps -ax'
