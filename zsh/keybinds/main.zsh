@@ -32,10 +32,16 @@ bindkey '^[/' SampShell-delete-path-segment
 bindkey '^[=' SampShell-delete-backto-char
 bindkey '^S'  SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 bindkey '^[%' SampShell-make-prompt-simple
+bindkey '^[$' SampShell-make-prompt-simple
 
 bindkey '^[^[[A' SampShell-up-directory
+bindkey '^[c' SampShell-add-pbcopy
 bindkey '^X^R' redo
 bindkey '^XR' redo
 bindkey '^Xr' redo
 alias which-command=which
 
+# bindkey '^[[1;2C' <-- Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
+# bindkey '^[[1;5C' <-- Terminal.app's default sequence for "CTRL + RIGHT ARROW"
+# bindkey '^[[1;2D' <-- Terminal.app's default sequence for "SHIFT + LEFT ARROW"
+# bindkey '^[[1;5D' <-- Terminal.app's default sequence for "CTRL + LEFT ARROW"

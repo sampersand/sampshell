@@ -1,0 +1,4 @@
+#!zsh
+
+BUFFER+=' | pbcopy'
+zle redisplay

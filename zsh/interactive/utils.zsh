@@ -1,7 +1,7 @@
 alias gcm='noglob gcm' # dont glob with gcm, eg dont have `!`s
 
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
-function prp { print -P $@ }
+function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
 alias hg='h | grep'
 
@@ -11,7 +11,7 @@ alias d=dirs
 alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
-xx () repeat $2 print -rn -- $1
+xx () { repeat $2 print -rn -- $1; print }
 
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
@@ -29,6 +29,11 @@ function reload {
 		alias -g "@-$i=@{-$i}"
 	done
 }
+
+
+function hex { bc -O16 -e$^@ }
+function oct { bc  -O8 -e$^@ }
+function bin { bc  -O2 -e$^@ }
 
 ## Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal" vars such as $TERM/$HOME etc
 function clsh   { clean-shell --shell =sh --none -- $@ }
@@ -68,7 +73,6 @@ cc () { print -r $history[$(($#history - 0))] | pbcopy; }
 
 pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
-
 
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
