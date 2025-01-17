@@ -1,3 +1,5 @@
+#!zsh
+
 #### Basic SampShell definitions for _all_ ZSH shell instances.
 # While this file is usually `.`d from the top-level `env.sh` file, it can be `.`d on its own.
 #
@@ -5,6 +7,9 @@
 # only will this make it faster to load (which speeds up execution of scripts), but also keeps our
 # config minimal. Again, this file is `source`d` for EVERY SINGLE ZSH INSTANCE, including scripts
 # that we didn't write, so we don't want to do anything that's potentially disruptive!
+#
+# Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
+# a user's `.zshenv`. (Instead, `source` the top-level `env.sh` file if needed.)
 ####
 
 ####################################################################################################

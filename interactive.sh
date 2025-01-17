@@ -40,14 +40,14 @@
 
 # ZSH
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/interactive.zsh"
+	. "$SampShell_ROOTDIR/zsh/zshrc"
 	return
 fi
 
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
 case "$0" in dash | */dash)
-	. "$SampShell_ROOTDIR/dash/interactive.dash"
+	. "$SampShell_ROOTDIR/dash/profile.dash"
 	return
 esac
 

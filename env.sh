@@ -109,7 +109,7 @@ export PATH="$SampShell_ROOTDIR/bin${PATH:+:}$PATH"
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/env.zsh"
+	. "$SampShell_ROOTDIR/zsh/zshenv"
 	return
 fi
 

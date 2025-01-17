@@ -1,3 +1,5 @@
+#!zsh
+
 #### Basic SampShell definitions for interactive ZSH shell instances.
 # This file shouldn't be sourced directly; instead, the top-level `interactive.sh` file sources it.
 #
@@ -11,6 +13,9 @@
 # Note that `setopt` is used for setting new options, whereas `unsetopt` is used to set options back
 # to their default, in case something else changed them. They're functionally the same, but it's
 # easier for me to look at and figure out why i'm doing something one way
+#
+# Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
+# a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
 autoload -Uz add-zsh-hook
