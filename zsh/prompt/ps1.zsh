@@ -67,41 +67,36 @@ function SampShell-create-prompt {
 	#                            Username and Hostname                             #
 	#                                                                              #
 	################################################################################
-	#
+
 	# By default, the username and hostname are always displayed. This can be disabled byK
 	# either opting out (`zstyle ':sampshell:prompt:(username|hostname)' display false`),
 	# or by explicitly setting an expected username/hostname (or multiple); if they match,
 	# the value won't be printed, but if they don't it'll be printed in red and bold.
 
-	zstyle -d ':sampshell:prompt:username' display
-	zstyle -d ':sampshell:prompt:username' expected
-	zstyle -d ':sampshell:prompt:hostname' expected
-	zstyle -d ':sampshell:prompt:hostname' display 1
-	zstyle ':sampshell:prompt:username' expected foo sampe bar sampersand
-
-	if ! zstyle -T ':sampshell:prompt:username' display; then
-		# Don't display when there's an explicit opt-out
-	elif zstyle -a ':sampshell:prompt:username' expected tmp; then
-		# Display an error if `expected` is defined and the user isn't one of the values.
-		(( ${tmp[(I)$USER]} )) || PS1+='%F{red}%B%n%b'
+	# (NOTE: Don't change the condition's orderings; the `elif` relies on `expected` being 2nd.)
+	if ! zstyle -T ':sampshell:prompt:username' display ||
+	     zstyle -t ':sampshell:prompt:username' expected $USER
+	then
+		# Do nothing; Either an explicit opt-out, or we matched.
+	elif (( $? == 1 )) then
+		PS1+='%F{red}%B%n%b' # `expected` exists but didn't contain `$USER`. Use an error.
 	else
-		PS1+='%F{242}%n'
+		PS1+='%F{242}%n'     # `expected` was undefined, so print nothing
 	fi
 
-	if ! zstyle -T ':sampshell:prompt:hostname' display; then
-		# Don't display when there's an explicit opt-out
-	elif zstyle -a ':sampshell:prompt:hostname' expected tmp; then
-		# Display an error if `expected` is defined and the user isn't one of the values.
-		(( ${tmp[(I)$HOST]} )) || PS1+='%F{red}%B@%M%b'
+	# (Same layout as `username`)
+	if ! zstyle -T ':sampshell:prompt:hostname' display ||
+	     zstyle -t ':sampshell:prompt:hostname' expected $HOST
+	then
+		# Do nothing
+	elif (( $? == 1 )) then
+		PS1+='%F{red}%B@%M%b'
 	else
-		# If we displayed a username, and it was grey, then don't re-add the grey back in.
-		[[ ${PS1: -2} != %n ]] && PS1+='%F{242}'
-		PS1+='@%M'
+		PS1+='%F{242}@%M'
 	fi
 
 	# Add a space on if any of username or hostname were added in
 	[[ ${PS1: -1} != ' ' ]] && PS1+=' '
-
 
 	################################################################################
 	#                                                                              #
