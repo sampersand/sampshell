@@ -4,12 +4,12 @@ function _SampShell-prompt-current-battery {
 	zstyle -T ':ss:prompt:battery' display || return 0
 
 	local bat perc how remain
-	local bat=$(pmset -g batt | sed 1d)
 
+	bat=$(pmset -g batt | sed 1d)
 	IFS=' ;' read -r perc how remain <<<${bat#*$'\t'}
 	perc=${perc%'%'}
 
-	if   (( perc <= 10 )) then print -n '%S%K{red}'
+	if   (( perc <= 10 )) then print -n '%F{red}%S'
 	elif (( perc <= 20 )) then print -n '%F{red}'
 	elif (( perc <= 40 )) then print -n '%F{yellow}'
 	else                       print -n '%F{green}'
