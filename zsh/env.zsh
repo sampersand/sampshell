@@ -14,17 +14,6 @@
 typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't already).
 
 ####################################################################################################
-#                                         SampShell-script                                         #
-####################################################################################################
-
-## Define the `SampShell-script` alias, which is intended to be put at the very top of all scripts I
-# write. It ensures some sane default options, turns on a lot of "guardrail" options, and provides 
-# some util functions. See `zsh/scripting.zsh` for details.
-#
-# This is only enabled in non-interactive shells, as interactive shells aren't scripts.
-[[ ! -o INTERACTIVE ]] && alias SampShell-script="source ${(q)0:P:h}/scripting.zsh"
-
-####################################################################################################
 #                                       SampShell_{un,}debug                                       #
 ####################################################################################################
 

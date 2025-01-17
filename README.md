@@ -1,4 +1,4 @@
-# sampshell
+# Dotfiles
 My shell startup files.
 
 This repo contains all the standard definitions and configuration I use for my shells; It's 100% usable from any POSIX-compliant shell!
