@@ -58,35 +58,13 @@ h () {
    history "$@"
 }
 
-
-
 ################################################################################
-#                               Load Other Files                               #
+#                                 Experimental                                 #
 ################################################################################
 
-## Load files that aren't "core" to SampShell, but are nice to have.
-# These files are loaded only if some precondition is met, such as only loading
-# the "git" config if the `git` command is found.
-
-# Load the git config, if git is found
-if SampShell_command_exists git; then
-   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/git.sh"
-fi
-
-# Load experimental changes, if experimental is defined
+# Load experimental changes, unless they're disabled.
 if [ -z "$SampShell_no_experimental" ]; then
-   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/helpers/experimental.sh"
-fi
-
-# Setup the editor if it exists
-if [ -n "$SampShell_EDITOR" ]; then
-   alias s=subl
-   alias ss=ssubl
-   alias ssubl='subl --create'
-
-   ## Spellchecks
-   alias sbul=subl
-   alias ssbul=ssubl
+   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/experimental.sh"
 fi
 
 ################################################################################
@@ -132,6 +110,18 @@ alias .....='cd ../../../..'
 
 ## Shorthands
 j () { jobs "$@"; }
+
+# Setup the editor if it exists
+if [ -n "$SampShell_EDITOR" ]; then
+   alias s=subl
+   alias ss=ssubl
+   alias ssubl='subl --create'
+
+   ## Spellchecks
+   alias sbul=subl
+   alias ssbul=ssubl
+fi
+
 
 ################################################################################
 #                             Changing Directories                             #
