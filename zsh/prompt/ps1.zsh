@@ -6,6 +6,7 @@
 
 ## Options for the prompt, only set the singular required one (prompt_subst)
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+setopt TRANSIENT_RPROMPT   # Remove the right-prompt whenever a line is accepted. MAkes it easier to copy
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
 unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
@@ -46,21 +47,22 @@ source ${0:P:h}/git_prompt.sh
 eval "c () { source ${(q)0:P} && SampShell-create-prompt }"
 function SampShell-create-prompt {
 	local tmp
+	PS1= # Clear PS1
+
 	################################################################################
 	#                                                                              #
 	#                                Bracket Prefix                                #
 	#                                                                              #
 	################################################################################
-	PS1= # Clear PS1
 
-
-	PS1+='%B%F{blue}[%b'                       # [
+	PS1+='%B%F{blue}[%b'                           # [
 	zstyle -s ':sampshell:prompt:time' format tmp
-	PS1+="%F{cyan}%D{${tmp:-'%_I:%M:%S %p'}} " # Current time
-	PS1+='%F{15}%U%!%u '                       # History Number
-	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'    # Previous exit code
-	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     # [jobs, if more than one]
-	PS1+='%B%F{blue}]%b '                      # ]
+	PS1+="%F{cyan}%D{${tmp:-'%_I:%M:%S %p'}} "     #   Current time
+	PS1+='%F{15}%U%!%u '                           #   History Number
+	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'          #   Previous exit code
+	PS1+='%(2L. %F{red}SHLVL=%L.)'                 #   [shellevel, if more than 1]
+	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'         #   [jobs, if more than one]
+	PS1+='%B%F{blue}]%b '                          # ]
 
 	################################################################################
 	#                                                                              #
@@ -114,10 +116,10 @@ function SampShell-create-prompt {
 		zstyle -s ':sampshell:prompt:path' length tmp || tmp='$((COLUMNS / 5))'
 
 		# (No need to check for `0`, as `%0</…<` disables truncation.)
-		PS1+='%-1~'                            # always have the root component
-		PS1+="%$tmp</…<"                       # start path truncation.
-		PS1+='${(*)$(print -P ''%~'')##[^/]#}' # Everything but the root component
-		PS1+='%<<'                             # stop truncation
+		PS1+='%-1~'                        # always have the root component
+		PS1+="%$tmp</…<"                   # start path truncation.
+		PS1+='${(*)$(print -P %~)##[^/]#}' # Everything but the root component
+		PS1+='%<<'                         # stop truncation
 	fi
 	PS1+=' ' # Adda space after the path
 
@@ -134,7 +136,6 @@ function SampShell-create-prompt {
 
 			# If we're just not displaying git at all, then return.
 			if ! zstyle -T ":sampshell:prompt:git:$PWD" display; then
-				echo oh
 				return 0
 			fi
 
@@ -170,7 +171,7 @@ function SampShell-create-prompt {
 
 			psvar[1]=$(__git_ps1 %s)
 			[[ -z $psvar[1] ]] && return
-			psvar[1]="⇄${psvar[1]/\%\%/!} "
+			psvar[1]="⇄${psvar[1]/\%\%/!} " # Changes the "uncommitted files"
 			psvar[2]=$psvar[1]
 
 
@@ -186,7 +187,7 @@ function SampShell-create-prompt {
 		add-zsh-hook precmd _SampShell-ps1-git
 
 		# Only expand the full thing if there's a significant amount of whitespace left.
-		PS1+="%F{043}%\$((COLUMNS /3))(l.%2v.%1v)"
+		PS1+="%F{043}%\$((COLUMNS / 3))(l.%2v.%1v)"
 
 	fi
 

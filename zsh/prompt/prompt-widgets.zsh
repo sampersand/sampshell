@@ -1,11 +1,7 @@
 function _SampShell-prompt-current-battery {
 	emulate -L zsh -o EXTENDED_GLOB
 
-	if ! zstyle -t ':ss:prompt:battery' display &&
-	   ! zstyle -T ':ss:prompt:battery' display auto
-	then
-		return 0
-	fi
+	zstyle -T ':ss:prompt:battery' display || return 0
 
 	local bat perc how remain
 	local bat=$(pmset -g batt | sed 1d)
@@ -28,21 +24,14 @@ function _SampShell-prompt-current-battery {
 }
 
 function _SampShell-prompt-is-airport-power-on () {
+	zstyle -T ':ss:prompt:airport' display || return 0
+
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
-		"$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
+	      "$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
 	then
-		print -n '%K{red}🚫🛜%G%k %F{blue}%B|%f%B'
+		print -n '%K{red}🚫🛜%G%k '
 	fi
-	# networksetup -setairportpower en0 off
 }
 
 
 RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
-setopt transientrprompt
-
-	## SHLVL
-	if zstyle -t ':sampshell:prompt:shlvl:' display; then
-		RPS1+=' %F{red}SHLVL=%L'
-	elif zstyle -T ':sampshell:prompt:shlvl:' display auto; then
-		RPS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
-	fi
