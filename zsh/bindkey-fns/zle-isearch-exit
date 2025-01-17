@@ -1,3 +1,0 @@
-#!zsh
-
-zle -M "" # Clear the result from `zsh-isearch-update`

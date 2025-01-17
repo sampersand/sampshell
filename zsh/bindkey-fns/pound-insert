@@ -1,5 +1,0 @@
-#!zsh
-
-# Make `pound-insert` use the histchar character, and add a space too
-BUFFER="$histchars[3] $BUFFER"
-zle accept-line

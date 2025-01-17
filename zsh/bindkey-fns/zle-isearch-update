@@ -1,3 +1,0 @@
-#!zsh
-
-zle -M "Line $HISTNO" # Print out the history number

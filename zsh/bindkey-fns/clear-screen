@@ -1,4 +1,0 @@
-#!zsh
-
-cls
-zle reset-prompt

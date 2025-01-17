@@ -1,6 +1,4 @@
 function _SampShell-prompt-current-battery {
-	emulate -L zsh -o EXTENDED_GLOB
-
 	zstyle -T ':sampshell:prompt:battery' display || return 0
 
 	local bat perc how remain

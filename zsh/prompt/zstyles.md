@@ -1,3 +1,4 @@
+```zsh
 # The following are the zstyles that're used
 if false; then
 	# The time string that's printed out; inserted into the `%D{...}` prompt string.
@@ -38,3 +39,4 @@ if false; then
 	# If set, displays the airport status on the right-hand-side of the srceen
 	zstyle ':sampshell:prompt:airport' display 1
 fi
+```
