@@ -9,7 +9,7 @@ function _SampShell-prompt-current-battery {
 	IFS=' ;' read -r perc how remain <<<${bat#*$'\t'}
 	perc=${perc%'%'}
 
-	if   (( perc <= 10 )) then print -n '%K{red}'
+	if   (( perc <= 10 )) then print -n '%S%K{red}'
 	elif (( perc <= 20 )) then print -n '%F{red}'
 	elif (( perc <= 40 )) then print -n '%F{yellow}'
 	else                       print -n '%F{green}'
@@ -20,7 +20,7 @@ function _SampShell-prompt-current-battery {
 	else                          print -n 🔋
 	fi
 
-	print -n "$perc%%%k" #$remain
+	print -n "$perc%%%k%s" #$remain
 }
 
 function _SampShell-prompt-is-airport-power-on () {
