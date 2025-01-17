@@ -1,54 +1,60 @@
-## Options for the prompting
+
+## Mark `PS1` and `RPS1` as global (so functions can interact with them), but not exported (as then
+# other shells would inherit them, and they certainly wouldn't understand the formatting.)
+typeset -g +x PS1 RPS1
+
+## Options for prompt expansion
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+setopt TRANSIENT_RPROMPT   # Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
-setopt TRANSIENT_RPROMPT   # Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
 
-## Special ZSH variable that is printed after we enter a command; We use it to make sure we reset
-# the colouring in case the prompt gets screwed up somehow
+## Special ZSH variable that is printed after we enter a command. It's set to this specific string
+# so that the colour and styles are reset right before a command is executed.
 POSTEDIT=${(%):-%b%u%s%f}
 
 # source ${0:P:h}/fix-spaces-after-eol-mark-macos.zsh
-
-# Mark `PS1` and `RPS1` as global, but not exported, so other shells don't inherit them.
-typeset -g +x PS1 RPS1
-
 source ${0:P:h}/ps1.zsh
 source ${0:P:h}/rps1.zsh
 
-eval "c () { source ${(q)0:P} && SampShell-create-prompt }"
-
-# The following are the zstyles that're used, and their defaults
+# The following are the zstyles that're used
 if false; then
-	# if `1`/`on`/`yes`/`true`, always display, if auto, do default as if it were unset. if
-	# anything else, disable
-	zstyle ':sampshell:prompt:*' display
+	# The time string that's printed out; inserted into the `%D{...}` prompt string.
+	zstyle ':sampshell:prompt:time' format '%_I:%M:%S %p'
 
-	zstyle ':sampshell:prompt:time' format '%_I:%M:%S %p' # The time format
+	# By default, `user@home` is printed. If `display` is set to false, they can be individually
+	# disabled. If not disabled, `expected` is checked for a list of expected users/hosts. If
+	# expected is set, and one of its values match, then the user/host isn't printed. If it's
+	# set, but _doesnt_ match, it's printed in red and bold.
+	zstyle ':sampshell:prompt:user' display 1
+	zstyle ':sampshell:prompt:home' display 1
+	zstyle ':sampshell:prompt:user' expected (unset)
+	zstyle ':sampshell:prompt:home' expected (unset)
 
-	zstyle ':sampshell:prompt:jobcount' display auto # true: always display. auto: only if > 0
-	zstyle ':sampshell:prompt:shlvl'    display auto # true: always display. auto: only if > 1
+	# Normally the path prints out relative paths (eg `~foo/bar`); set the style to `absolute`
+	# to instead use absolute paths.
+	zstyle ':sampshell:prompt:path' absolute-paths 0
+	# The maximum length that the path can be. if it's larger than this, the rootmost dir is
+	# preserved, and everything afte rit is trucnated. Set to `0` or an empty string to disable
+	# truncation.
+	zstyle ':sampshell:prompt:path' length '$(( COLUMS * 2 / 5))'
 
-	zstyle ':sampshell:prompt:userhost' display auto # true: always display. auto: dont display if expected equal
-	zstyle ':sampshell:prompt:hostname' expected # not set by default; if it and username are set, and
-	zstyle ':sampshell:prompt:username' expected # ..equal to the machine, nothing. if not, red & bold.
 
-	zstyle ':sampshell:prompt:path' display # if set to `always`, display the full path. Unable to be disabled.
-	zstyle ':sampshell:prompt:path' length $((COLUMNS * 2 / 5)) # length of paths before truncation
+	# If set to 0, completely disables git
+	zstyle ':sampshell:prompt:git' display 1
+	# Unlike other styles, the git one uses the pwd as part of it, so that different values can
+	# be set for different repos. Enable with true/false. Defaults are shown in parens
+	zstyle ':sampshell:prompt:git:dirty:*'     display 1 # Show `*` and `+` for untracted states
+	zstyle ':sampshell:prompt:git:stash:*'     display 0 # Show `$` when there's a stash
+	zstyle ':sampshell:prompt:git:untracked:*' display 1 # Also show untracted files via `!`
+	zstyle ':sampshell:prompt:git:conflict:*'  display 1 # Show when there's a merge conflict
+	zstyle ':sampshell:prompt:git:hidepwd:*'   display 1 # Don't show git when the PWD's ignored
+	zstyle ':sampshell:prompt:git:upstream:*'  display 0 # Show the difference for upstream
 
-	zstyle ':sampshell:prompt:git' display auto # true: always display. auto: only if in a repo
-	zstyle ':sampshell:prompt:git' pattern  # not set by default; if set, used when truncating repo paths.
-	# zstyle ':sampshell:prompt:*' display 1
+	# If set, displays the battery on the right-hand-side of the srceen
+	zstyle ':sampshell:prompt:battery' display 1
 
+	# If set, displays the airport status on the right-hand-side of the srceen
+	zstyle ':sampshell:prompt:airport' display 1
 fi
-
-ps1_header () {
-	local sep='%F{blue}%B|%f%b'
-
-	echo
-	echo -n $sep "$(ruby --version | awk '{print $2}')" $sep '%F{11}%d' $sep ''
-	echo -n %y $sep %n@%M $sep "$(_SampShell-prompt-current-battery)" $sep
-}
-
-# PS1+='$(typeset -f ps1_header >/dev/null && { ps1_header; print })'$'\n'

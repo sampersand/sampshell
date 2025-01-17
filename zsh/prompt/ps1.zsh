@@ -68,8 +68,8 @@ PS1= # Clear PS1
 	local len d='~'
 
 	# Normally, we use relative paths (eg `~tmp/foo`), but by setting
-	# `display absolute`, we use absolute paths (eg `/Users/me/tmp/foo`)
-	zstyle -t ':sampshell:prompt:path' display absolute && d=/
+	# `style absolute`, we use absolute paths (eg `/Users/me/tmp/foo`)
+	zstyle -t ':sampshell:prompt:path' absolute-paths && d=/
 
 	# Get the path length, which is dynamically evaluated each time the
 	# prompt is rendered. default to `$((COLUMNS / 5))`. Shortening can be
@@ -94,7 +94,7 @@ PS1= # Clear PS1
 # :sampshell:prompt:git:untracked:$PWD display -T  # Also show untracted files via `!`
 # :sampshell:prompt:git:conflict:$PWD display -T   # Show when there's a merge conflict
 # :sampshell:prompt:git:hidepwd:$PWD display -T    # Don't show git when the PWD is ignored.
-# :sampshell:prompt:git:upstream:$PWD display -t   # Show the difference fro upstream
+# :sampshell:prompt:git:upstream:$PWD display -t   # Show the difference for upstream
 
 # If we even are even displaying git in the first place? (default to yes with `-T`)
 if zstyle -T ':sampshell:prompt:git' display; then
@@ -106,7 +106,7 @@ if zstyle -T ':sampshell:prompt:git' display; then
 		# If we're just not displaying git at all, then return.
 		zstyle -T ":sampshell:prompt:git:${(q)PWD}" display || return 0
 
-		local GIT_PS1_{SHOW{UNTRACKEDFILES,{DIRTY,CONFLICT}STATE,UPSTREAM}}
+		local GIT_PS1_SHOW{UNTRACKEDFILES,{DIRTY,CONFLICT}STATE,UPSTREAM}
 		local GIT_PS1_HIDE_IF_PWD_IGNORED
 		local p=${(q)PWD}
 

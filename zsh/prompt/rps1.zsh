@@ -1,7 +1,7 @@
 function _SampShell-prompt-current-battery {
 	emulate -L zsh -o EXTENDED_GLOB
 
-	zstyle -T ':ss:prompt:battery' display || return 0
+	zstyle -T ':sampshell:prompt:battery' display || return 0
 
 	local bat perc how remain
 
@@ -24,7 +24,7 @@ function _SampShell-prompt-current-battery {
 }
 
 function _SampShell-prompt-is-airport-power-on () {
-	zstyle -T ':ss:prompt:airport' display || return 0
+	zstyle -T ':sampshell:prompt:airport' display || return 0
 
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
 	      "$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
@@ -32,6 +32,5 @@ function _SampShell-prompt-is-airport-power-on () {
 		print -n '%K{red}🚫🛜%G%k '
 	fi
 }
-
 
 RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
