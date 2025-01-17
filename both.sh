@@ -14,7 +14,7 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# BASH: Use `BASH_SOURCE`
 	elif [ -n "${BASH_SOURCE-}" ]; then
 		SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
-		SampShell_ROOTDIR=${SampShell_ROOTDIR#?x}
+		SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
 
 	# Non-interactive: Error, just return 1.
 	elif case $- in *i*) false; esac; then
