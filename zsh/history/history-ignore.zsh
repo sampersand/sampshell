@@ -1,7 +1,7 @@
 ## List of patterns to ignore
 typeset -g -a -U -H _SampShell_histignore_patterns
 
-## Prepend to the start of `zshaddhistory_functions` so we go after "record-every-command"
+## Prepend to the start of `zshaddhistory_functions` so we go before "record-every-command"
 zshaddhistory_functions[1,0]=(_SampShell-histignore)
 
 ## Ignore commands that match any of `_SampShell_histignore_patterns`.

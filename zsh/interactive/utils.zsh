@@ -44,8 +44,8 @@ function cldash { clean-shell --shell =dash --none -- -l $@ }
 }
 
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
-rd () { builtin rm -f -- ${1:?need a dir}/.DS_Store && builtin rmdir -- $1 }
-md () { builtin mkdir -p -- "${1:?missing a directory}" && builtin cd -- "$1" }
+rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
+md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
 
 # utility functions and what have you that I've accumulated over the years
 chr () ruby -- /dev/fd/3 $@ 3<<'RUBY'

@@ -166,7 +166,46 @@ unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask f
 #                                           Key Bindings                                           #
 #                                                                                                  #
 ####################################################################################################
-source ${0:P:h}/keybinds/main.zsh
+
+## Useful keybind aliases
+alias bk='noglob bindkey'
+alias bkg='bindkey | noglob fgrep -ie'
+
+## Register functions; We use an anonymous function so `fn` doesn't escape
+() {
+	fpath+=($1)
+
+	local fn
+	for fn in $1/*(:t); do
+		autoload -Uz $fn
+		zle -N $fn
+	done
+} ${0:P:h}/keybind-functions
+
+## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
+bindkey -N sampshell emacs
+bindkey -A sampshell main
+
+## Bind key strokes to do functions
+bindkey '^[#'    pound-insert
+bindkey '^[/'    SampShell-delete-path-segment
+bindkey '^[='    SampShell-delete-backto-char
+bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
+bindkey '^[%'    SampShell-make-prompt-simple
+bindkey '^[$'    SampShell-make-prompt-simple
+bindkey '^[^[[A' SampShell-up-directory
+bindkey '^[c'    SampShell-add-pbcopy
+bindkey '^X^R'   redo
+bindkey '^XR'    redo
+bindkey '^Xr'    redo
+alias which-command=which # for `^[?`
+
+bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
+bindkey '^[[1;2D' undefined-key # Terminal.app's default sequence for "SHIFT + LEFT ARROW"
+bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARROW")
+bindkey '^[[1;5B' down-history  # (Added as a custom sequence for "CTRL + DOWN ARROW")
+bindkey '^[[1;5C' undefined-key # Terminal.app's default sequence for "CTRL + RIGHT ARROW"
+bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LEFT ARROW"
 
 ####################################################################################################
 #                                                                                                  #
