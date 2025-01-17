@@ -16,6 +16,7 @@ xx () repeat $2 print -rn -- $1
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
 function reload {
+	unalias gcm >/dev/null 2>/dev/null # TODO: shoudl this be `unalias -a`?
 	setopt -L LOCAL_TRAPS
 	trap 'for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do source ${file:P}; done' EXIT
 }
@@ -29,16 +30,13 @@ function reload {
 	done
 }
 
-## Adds in "clean shell" functions, and the clsh alias
-function clean-sh   { clean-shell --shell =sh $@ } # use which in case EQUALS is unset,
-function clean-zsh  { clean-shell --shell =zsh $@ } # even though it's set by default.
-function clean-bash { clean-shell --shell =bash $@ }
+## Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal" vars such as $TERM/$HOME etc
+function clsh   { clean-shell --shell =sh --none -- $@ }
+function clbash { clean-shell --shell =bash --none -- --noprofile --norc $@ }
+function clzsh  { clean-shell --shell =zsh --none -- -fd $@ }
 SampShell_command_exists dash && {
-	function clean-dash { clean-shell --shell =dash $@ }
-	function cldash { clean-dash --none -- -l $@ }
+function cldash { clean-shell --shell =dash --none -- -l $@ }
 }
-alias clsh=clean-shell
-function clzsh { clean-zsh --none -- -fd $@ } # Don't set SampShell variables, only $TERM/$HOME,etc
 
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
 rd () { builtin rm -f -- ${1:?need a dir}/.DS_Store && builtin rmdir -- $1 }
