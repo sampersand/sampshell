@@ -1,6 +1,7 @@
 #!zsh
 
-PS1= # Clear PS1
+PS1= # Reset ps1
+
 ################################################################################
 #                                                                              #
 #                                Bracket Prefix                                #
@@ -76,11 +77,11 @@ PS1= # Clear PS1
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                      # The path colour
-	PS1+="%-1$d"                       # always have the root component
-	PS1+="%$len</…<"                   # start path truncation.
-	PS1+="\${(*)\${(%):-%$d}##?[^/]#}" # everything but root component
-	PS1+='%<< '                        # stop truncation
+	PS1+='%F{11}'                                # The path colour
+	PS1+="%-1$d"                                 # always have the first component
+	PS1+="%$len</…<"                             # start path truncation.
+	PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
+	PS1+='%<< '                                  # stop truncation
 }
 
 ################################################################################

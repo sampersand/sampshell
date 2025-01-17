@@ -16,7 +16,9 @@
 autoload -Uz add-zsh-hook
 
 ####################################################################################################
+#                                                                                                  #
 #                                       Changing Directories                                       #
+#                                                                                                  #
 ####################################################################################################
 
 ## Add named directories
@@ -38,14 +40,18 @@ setopt PUSHD_IGNORE_DUPS # Delete old duplicate entries on the directory stack w
 setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing directories.
 
 ####################################################################################################
+#                                                                                                  #
 #                                             History                                              #
+#                                                                                                  #
 ####################################################################################################
 
 ## Enables the "record-every-command" feature, which stores nearly every command for later analysis.
 source ${0:P:h}/history/main.zsh
 
 ####################################################################################################
+#                                                                                                  #
 #                                               Jobs                                               #
+#                                                                                                  #
 ####################################################################################################
 	
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
@@ -56,14 +62,38 @@ unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ####################################################################################################
+#                                                                                                  #
 #                                            The Prompt                                            #
+#                                                                                                  #
 ####################################################################################################
 
-## Load in the prompt creator. This also sets up prompt options for us, as they're required for it.
-source ${0:P:h}/prompt/main.zsh
+# source ${0:P:h}/prompt/fix-spaces-after-eol-mark-macos.zsh <-- failed experiment
+
+## Options for prompt expansion
+setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+setopt TRANSIENT_RPROMPT   # Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
+unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
+unsetopt NO_PROMPT_BANG    # Don't make `!` mean history number; we do this with %!.
+unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
+
+## Mark `PS1` and `RPS1` as global (so functions can interact with them), but not exported (as then
+# other shells would inherit them, and they certainly wouldn't understand the formatting.)
+typeset -g +x PS1 RPS1
+
+## Load in the definitions for the `PS1` and `RPS1` variables
+source ${0:P:h}/prompt/ps1.zsh
+source ${0:P:h}/prompt/rps1.zsh
+
+## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
+# variable that's printed after a command's been accepted, but before its execution starts. Here, it
+# is set to an escape sequence which resets visual effects.
+POSTEDIT=$'\e[m'
+# PROMPT_EOL_MARK=$'\e[m'"%B%S%#%s%b" # <--- TODO: is this needed for a reset too?
 
 ####################################################################################################
+#                                                                                                  #
 #                                        Entering Commands                                         #
+#                                                                                                  #
 ####################################################################################################
 
 ## Interactive history options
@@ -87,12 +117,16 @@ unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask f
 # note that `CHECK_JOBS` and `CHECK_RUNNING_JOBS` are set in the "Jobs" section.
 
 ####################################################################################################
+#                                                                                                  #
 #                                           Key Bindings                                           #
+#                                                                                                  #
 ####################################################################################################
 source ${0:P:h}/keybinds/main.zsh
 
 ####################################################################################################
+#                                                                                                  #
 #                                           Autocomplete                                           #
+#                                                                                                  #
 ####################################################################################################
 ## TODO:
 autoload -U compinit; compinit
@@ -114,14 +148,18 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 # zstyle ':completion:*:files' file-sort '!ignored-patterns '*.DS_Store'
 
 ####################################################################################################
+#                                                                                                  #
 #                                       Experimental Config                                        #
+#                                                                                                  #
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
 [[ -z $SampShell_no_experimental ]] && source ${0:P:h}/interactive/experimental.zsh
 
 ####################################################################################################
+#                                                                                                  #
 #                                      Functions and Aliases                                       #
+#                                                                                                  #
 ####################################################################################################
 
 ## All helper functions and aliases should be defined here.

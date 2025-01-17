@@ -33,4 +33,5 @@ function _SampShell-prompt-is-airport-power-on () {
 	fi
 }
 
+typeset -g +x RPS1= 
 RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
