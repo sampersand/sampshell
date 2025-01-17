@@ -1,16 +1,5 @@
 #!zsh
 
-## Customizing the prompt
-# The prompt can be customized using `zstyle`, eg `zstyle :sampshell:prompt:shlvl: display tue`
-#
-
-## Options for the prompt, only set the singular required one (prompt_subst)
-setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
-setopt TRANSIENT_RPROMPT   # Remove the right-prompt whenever a line is accepted. MAkes it easier to copy
-unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
-unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_CR      # Ensure a `\r` is printed before a line starts
-
 # The following are the zstyles that're used, and their defaults
 if false; then
 	# if `1`/`on`/`yes`/`true`, always display, if auto, do default as if it were unset. if
@@ -31,16 +20,11 @@ if false; then
 
 	zstyle ':sampshell:prompt:git' display auto # true: always display. auto: only if in a repo
 	zstyle ':sampshell:prompt:git' pattern  # not set by default; if set, used when truncating repo paths.
+	# zstyle ':sampshell:prompt:*' display 1
 
 fi
 
-# zstyle ':sampshell:prompt:*' display 1
 
-
-# Mark `PS1` and `RPS1` as global, but not exported, so other shells don't inherit them.
-typeset -g +x PS1 RPS1
-
-source ${0:P:h}/prompt-widgets.zsh
 source ${0:P:h}/git_prompt.sh
 
 ## The function to create the prompt. Takes no arguments, as everything's done via zstyle.
@@ -121,7 +105,7 @@ function SampShell-create-prompt {
 		PS1+='${(*)$(print -P %~)##[^/]#}' # Everything but the root component
 		PS1+='%<<'                         # stop truncation
 	fi
-	PS1+=' ' # Adda space after the path
+	PS1+=' ' # Add a space after the path
 
 	################################################################################
 	#                                                                              #
