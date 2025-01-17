@@ -43,6 +43,7 @@ source ${0:P:h}/prompt-widgets.zsh
 source ${0:P:h}/git_prompt.sh
 
 ## The function to create the prompt. Takes no arguments, as everything's done via zstyle.
+eval "c () { source ${(q)0:P} && SampShell-create-prompt }"
 function SampShell-create-prompt {
 	local tmp
 	################################################################################
@@ -51,62 +52,48 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 	PS1= # Clear PS1
-	PS1+='%B%F{blue}[%b' # `[`
 
-	# Current time
+
+	PS1+='%B%F{blue}[%b'                       # [
 	zstyle -s ':sampshell:prompt:time' format tmp
-	PS1+="%F{cyan}%D{${tmp:-%_I:%M:%S %p}} "
-
-	PS1+='%U%f%!%u '                   # history
-	PS1+='%B%F{blue}|%b '              # |
-	PS1+='%(?.%F{green}.%F{red})%?'   # previous status code
-
-	## JOB COUNT
-	if zstyle -t ':sampshell:prompt:jobcount' display; then
-		PS1+='%F{166} (%j job%2(1j.%(2j.s.).s))'
-	elif zstyle -T ':sampshell:prompt:jobcount' display auto; then
-		PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'   # [jobs, if more than one]
-	fi
-
-	## SHLVL
-	if zstyle -t ':sampshell:prompt:shlvl' display; then
-		PS1+=' %F{red}SHLVL=%L'
-	elif zstyle -T ':sampshell:prompt:shlvl' display auto; then
-		PS1+='%(2L. %F{red}SHLVL=%L.)' # [shellevel, if more than 1]
-	fi
-
-	PS1+='%B%F{blue}]%b ' # ]
+	PS1+="%F{cyan}%D{${tmp:-'%_I:%M:%S %p'}} " # Current time
+	PS1+='%F{15}%U%!%u '                       # History Number
+	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'    # Previous exit code
+	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     # [jobs, if more than one]
+	PS1+='%B%F{blue}]%b '                      # ]
 
 	################################################################################
 	#                                                                              #
 	#                            Username and Hostname                             #
 	#                                                                              #
 	################################################################################
-	readonly hostname_snippet='%n@%m '
-	readonly hostname_grey='%F{242}'
+	#
+	# By default, the username and hostname
 
-	zstyle -s ':sampshell:prompt:userhost' display tmp
-	case $tmp in
-	always|1|yes|on|true)
-		PS1+=$hostname_grey$hostname_snippet ;;
+	# zstyle -d ':sampshell:prompt:username' display
+	# zstyle -d ':sampshell:prompt:username' expected
 
-	auto|default|)
-		local hostname username
-		if ! zstyle -s ':sampshell:prompt:userhost:hostname' expected hostname ||
-		   ! zstyle -s ':sampshell:prompt:userhost:username' expected username
-		then
-			# One of the two `hostname`/`username` are missing, print out in grey.
-			PS1+=$hostname_grey$hostname_snippet
-		elif [[ $username != "$(print -P %n)" || $hostname != $(print -P %m) ]] then
-			# One of the two doesn't match, uh oh!
-			PS1+="%F{red}%B$hostname_snippet%b"
-		fi ;;
+	if ! zstyle -T ':sampshell:prompt:username' display; then
+		# Don't display when there's an explicit opt-out
+	elif zstyle -s ':sampshell:prompt:username' expected tmp; then
+		# Only display if `expected` is defined and not equal to `%n`
+		[[ $tmp != "$(print -P %n)" ]] && PS1+='%F{red}%B%n%b'
+	else #zstyle -t ':sampshell:prompt:username' display; then
+		PS1+='%F{242}%n'
+	fi
 
-	0|no|off|false)
-		;; # Don't modify
-	*)
-		SampShell_log 'unknown display value: %s' $tmp
-	esac
+	if ! zstyle -T ':sampshell:prompt:hostname' display; then
+		# Don't display when there's an explicit opt-out
+	elif zstyle -s ':sampshell:prompt:hostname' expected tmp; then
+		# Only display if `expected` is defined and not equal to `%n`
+		[[ $tmp != "$(print -P %M)" ]] && PS1+='%F{red}%B@%M%b'
+	else
+		PS1+='%F{242}@%M'
+	fi
+
+	# Add a space on if any of username or hostname were added in
+	[[ ${PS1: -1} != ' ' ]] && PS1+=' '
+
 
 	################################################################################
 	#                                                                              #

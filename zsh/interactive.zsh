@@ -13,10 +13,11 @@
 # easier for me to look at and figure out why i'm doing something one way
 #####
 
+autoload -Uz add-zsh-hook
+
 ####################################################################################################
 #                                       Changing Directories                                       #
 ####################################################################################################
-autoload -Uz add-zsh-hook
 
 ## Add named directories
 source ${0:P:h}/named-directories.zsh

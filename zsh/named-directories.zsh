@@ -1,5 +1,4 @@
-### This file is for setting up "named directories" in zsh, a-la `cd ~ss`
-# Note that this file doesn't actually add any named dirs itself, but just adds the functions.
+### This file is for setting up "named directories" in zsh, a-la `cd ~foo`
 
 ## Add a directory to the list of named directories.
 function add-named-dir {
