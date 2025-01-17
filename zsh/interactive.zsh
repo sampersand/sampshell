@@ -238,7 +238,7 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
-[[ -z $SampShell_no_experimental ]] && source ${0:P:h}/interactive/experimental.zsh
+[[ -z $SampShell_no_experimental ]] && source ${0:P:h}/experimental.zsh
 
 ####################################################################################################
 #                                                                                                  #
@@ -247,4 +247,4 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 ####################################################################################################
 
 ## All helper functions and aliases should be defined here.
-source ${0:P:h}/interactive/utils.zsh
+source ${0:P:h}/utils.zsh
