@@ -1,7 +1,6 @@
 #!zsh
 
 PS1= # Clear PS1
-
 ################################################################################
 #                                                                              #
 #                                Bracket Prefix                                #
@@ -13,7 +12,7 @@ PS1= # Clear PS1
 	zstyle -s ':sampshell:prompt:time' format timefmt
 
 	PS1+='%B%F{blue}[%b'                           # [
-	PS1+="%F{cyan}%D{${timefmt:-'%_I:%M:%S %p'}} " #   Current time
+	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S %p}} "   #   Current time
 	PS1+='%F{15}%U%!%u '                           #   History Number
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'          #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'                 #   (SHLVL, if >1)
@@ -66,7 +65,7 @@ PS1= # Clear PS1
 ################################################################################
 
 () {
-	local len d=~
+	local len d='~'
 
 	# Normally, we use relative paths (eg `~tmp/foo`), but by setting
 	# `display absolute`, we use absolute paths (eg `/Users/me/tmp/foo`)
@@ -77,11 +76,11 @@ PS1= # Clear PS1
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                         # The path colour
-	PS1+="%-1$d"                          # always have the root component
-	PS1+="%$len</…<"                      # start path truncation.
-	PS1+="\${(*)\$(print -P %$d)##[^/]#}" # everything but root component
-	PS1+='%<< '                           # stop truncation
+	PS1+='%F{11}'                          # The path colour
+	PS1+="%-1$d"                           # always have the root component
+	PS1+="%$len</…<"                       # start path truncation.
+	PS1+="\${(*)\$(print -P %$d)##?[^/]#}" # everything but root component
+	PS1+='%<< '                            # stop truncation
 }
 
 ################################################################################

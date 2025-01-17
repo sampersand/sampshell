@@ -1,5 +1,8 @@
 #!zsh
 
+
+# (This is a failed experiment, because it will swallow characters that're typed before the prompt is written)
+
 # ZSH by default helpfully prints out an inverted `%` when an incomplete line is printed. However,
 # it ends up adding _lots_ of spaces to stdout, which makes it annoying to copy on Terminal in
 # MacOS. (This is usually correct, as race conditions can make manually querying not work well, but
