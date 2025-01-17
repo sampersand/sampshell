@@ -1,6 +1,17 @@
 #!/usr/bin/env dash
 
 # Dash doesn't support `!`, sadly.
-PS1='[?$?] ${PWD##"${HOME:+"$HOME"/}"} ${0##*/}$ '
+__SampShell_dash_PS1_histno () {
+	{ fc -l -1 2>/dev/null || echo 0; } | awk '{print $1}'
+}
+
+__SampShell_dash_PS1_pwd () case $PWD in
+	"$HOME"*) printf '~%s' "${PWD#"$HOME"}" ;;
+	*)        printf  '%s' "$PWD"
+esac
+
+PS1='[?$? !$(__SampShell_dash_PS1_histno) | $(date +"%I:%M:%S %p")]' # prefix
+PS1=$PS1' $(__SampShell_dash_PS1_pwd) ${0##*/}$ ' # Suffix
 
 alias r='fc -s'
+
