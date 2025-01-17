@@ -1,7 +1,10 @@
-## Spellcheck
-alias gti=git
+## TODO: This file was originally 100%` sh-compliant, so now we should clean that up and make it more
+# zsh-like.
 
 alias g=git
+
+## Spellcheck
+alias gti=git
 
 ignore () {
 	if [ "$#" -eq 0 ]; then
