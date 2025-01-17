@@ -38,6 +38,7 @@ function _SampShell-prompt-is-airport-power-on () {
 
 
 RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
+setopt transientrprompt
 
 	## SHLVL
 	if zstyle -t ':sampshell:prompt:shlvl:' display; then

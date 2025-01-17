@@ -31,3 +31,11 @@ bindkey '^[#' pound-insert
 bindkey '^[/' SampShell-delete-path-segment
 bindkey '^[=' SampShell-delete-backto-char
 bindkey '^S'  SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
+bindkey '^[%' SampShell-make-prompt-simple
+
+bindkey '^[^[[A' SampShell-up-directory
+bindkey '^X^R' redo
+bindkey '^XR' redo
+bindkey '^Xr' redo
+alias which-command=which
+

@@ -1,0 +1,14 @@
+#!zsh
+
+# Ensure that the `cd` doesn't`
+emulate -L zsh -o NO_AUTO_PUSHD -o PUSHD_SILENT
+
+local old=$PWD
+pushd $PWD
+
+repeat ${NUMERIC:-1} do
+	builtin cd .. || return
+done
+
+zle reset-prompt
+zle -M "Changed from $old"
