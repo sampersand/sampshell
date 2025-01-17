@@ -68,27 +68,35 @@ function SampShell-create-prompt {
 	#                                                                              #
 	################################################################################
 	#
-	# By default, the username and hostname
+	# By default, the username and hostname are always displayed. This can be disabled byK
+	# either opting out (`zstyle ':sampshell:prompt:(username|hostname)' display false`),
+	# or by explicitly setting an expected username/hostname (or multiple); if they match,
+	# the value won't be printed, but if they don't it'll be printed in red and bold.
 
-	# zstyle -d ':sampshell:prompt:username' display
-	# zstyle -d ':sampshell:prompt:username' expected
+	zstyle -d ':sampshell:prompt:username' display
+	zstyle -d ':sampshell:prompt:username' expected
+	zstyle -d ':sampshell:prompt:hostname' expected
+	zstyle -d ':sampshell:prompt:hostname' display 1
+	zstyle ':sampshell:prompt:username' expected foo sampe bar sampersand
 
 	if ! zstyle -T ':sampshell:prompt:username' display; then
 		# Don't display when there's an explicit opt-out
-	elif zstyle -s ':sampshell:prompt:username' expected tmp; then
-		# Only display if `expected` is defined and not equal to `%n`
-		[[ $tmp != "$(print -P %n)" ]] && PS1+='%F{red}%B%n%b'
-	else #zstyle -t ':sampshell:prompt:username' display; then
+	elif zstyle -a ':sampshell:prompt:username' expected tmp; then
+		# Display an error if `expected` is defined and the user isn't one of the values.
+		(( ${tmp[(I)$USER]} )) || PS1+='%F{red}%B%n%b'
+	else
 		PS1+='%F{242}%n'
 	fi
 
 	if ! zstyle -T ':sampshell:prompt:hostname' display; then
 		# Don't display when there's an explicit opt-out
-	elif zstyle -s ':sampshell:prompt:hostname' expected tmp; then
-		# Only display if `expected` is defined and not equal to `%n`
-		[[ $tmp != "$(print -P %M)" ]] && PS1+='%F{red}%B@%M%b'
+	elif zstyle -a ':sampshell:prompt:hostname' expected tmp; then
+		# Display an error if `expected` is defined and the user isn't one of the values.
+		(( ${tmp[(I)$HOST]} )) || PS1+='%F{red}%B@%M%b'
 	else
-		PS1+='%F{242}@%M'
+		# If we displayed a username, and it was grey, then don't re-add the grey back in.
+		[[ ${PS1: -2} != %n ]] && PS1+='%F{242}'
+		PS1+='@%M'
 	fi
 
 	# Add a space on if any of username or hostname were added in
