@@ -1,4 +1,4 @@
-function _SampShell-prompt-current-battery {
+function _SampShell-rps1-current-battery {
 	zstyle -T ':sampshell:prompt:battery' display || return 0
 
 	local bat perc how remain
@@ -21,7 +21,7 @@ function _SampShell-prompt-current-battery {
 	print -n "$perc%%%k%s" #$remain
 }
 
-function _SampShell-prompt-is-airport-power-on () {
+function _SampShell-rps1-is-airport-power-on () {
 	zstyle -T ':sampshell:prompt:airport' display || return 0
 
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
@@ -31,5 +31,10 @@ function _SampShell-prompt-is-airport-power-on () {
 	fi
 }
 
-typeset -g +x RPS1= 
-RPS1='$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
+function _SampShell-rps1-ruby-version () {
+	zstyle -T ':sampshell:prompt:ruby-version' display || return 0
+
+	print -n "💎%F{red}$(ruby -v | awk '{print $2}')%f "
+}
+
+RPS1='$(_SampShell-rps1-ruby-version)$(_SampShell-rps1-is-airport-power-on)$(_SampShell-rps1-current-battery)'
