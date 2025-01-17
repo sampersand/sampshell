@@ -76,11 +76,11 @@ PS1= # Clear PS1
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                          # The path colour
-	PS1+="%-1$d"                           # always have the root component
-	PS1+="%$len</…<"                       # start path truncation.
-	PS1+="\${(*)\$(print -P %$d)##?[^/]#}" # everything but root component
-	PS1+='%<< '                            # stop truncation
+	PS1+='%F{11}'                      # The path colour
+	PS1+="%-1$d"                       # always have the root component
+	PS1+="%$len</…<"                   # start path truncation.
+	PS1+="\${(*)\${(%):-%$d}##?[^/]#}" # everything but root component
+	PS1+='%<< '                        # stop truncation
 }
 
 ################################################################################
@@ -89,67 +89,51 @@ PS1= # Clear PS1
 #                                                                              #
 ################################################################################
 
+# :sampshell:prompt:git:dirty:$PWD display -T      # Show `*` and `+` for untracted states
+# :sampshell:prompt:git:stash:$PWD display -t      # Show `$` when there's something stashed
+# :sampshell:prompt:git:untracked:$PWD display -T  # Also show untracted files via `!`
+# :sampshell:prompt:git:conflict:$PWD display -T   # Show when there's a merge conflict
+# :sampshell:prompt:git:hidepwd:$PWD display -T    # Don't show git when the PWD is ignored.
+# :sampshell:prompt:git:upstream:$PWD display -t   # Show the difference fro upstream
+
 # If we even are even displaying git in the first place? (default to yes with `-T`)
 if zstyle -T ':sampshell:prompt:git' display; then
-	source ${0:P:h}/git_prompt.sh
+	source ${0:P:h}/git_prompt.sh # Load the git PS1 script.
 
 	function _SampShell-ps1-git {
 		psvar[1]= psvar[2]=
 
 		# If we're just not displaying git at all, then return.
-		if ! zstyle -T ":sampshell:prompt:git:$PWD" display; then
-			return 0
-		fi
+		zstyle -T ":sampshell:prompt:git:${(q)PWD}" display || return 0
 
-		if zstyle -T ":sampshell:prompt:git:dirty:$PWD" display; then
-			# Show `*` and `+` for untracted states
-			local GIT_PS1_SHOWDIRTYSTATE=1
-		fi
+		local GIT_PS1_{SHOW{UNTRACKEDFILES,{DIRTY,CONFLICT}STATE,UPSTREAM}}
+		local GIT_PS1_HIDE_IF_PWD_IGNORED
+		local p=${(q)PWD}
 
-		# GIT_PS1_SHOWSTASHSTATE=1    # Don't show `$` when there's something stashed, as i do it a lot
+		zstyle -T :sampshell:prompt:git:dirty:$p     display && GIT_PS1_SHOWDIRTYSTATE=1
+		zstyle -t :sampshell:prompt:git:stash:$p     display && GIT_PS1_SHOWSTASHSTATE=1
+		zstyle -T :sampshell:prompt:git:untracked:$p display && GIT_PS1_SHOWUNTRACKEDFILES=1
+		zstyle -T :sampshell:prompt:git:conflict:$p  display && GIT_PS1_SHOWCONFLICTSTATE=1
+		zstyle -T :sampshell:prompt:git:hidepwd:$p  display && GIT_PS1_HIDE_IF_PWD_IGNORED=1
+		zstyle -t :sampshell:prompt:git:upstream:$p  display && GIT_PS1_SHOWUPSTREAM=1
 
-		if zstyle -T ":sampshell:prompt:git:untracked:$PWD" display; then
-			# Also show untracted files via `%`
-			local GIT_PS1_SHOWUNTRACKEDFILES=1
-		fi
-
-		if zstyle -T ":sampshell:prompt:git:conflict:$PWD" display; then
-			# Show when there's a merge conflict
-			local GIT_PS1_SHOWCONFLICTSTATE=1
-		fi
-
-		if zstyle -T ":sampshell:prompt:git:hidepwd:$PWD" display; then
-			# Don't show git when the PWD is ignored.
-			local GIT_PS1_HIDE_IF_PWD_IGNORED=1
-		fi
-
-		if zstyle -t ":sampshell:prompt:git:upstream:$PWD" display; then
-			# Show the difference fro upstream
-			local GIT_PS1_SHOWUPSTREAM=1
-		fi
-
-		# Don't put anything after the branch name
-		local GIT_PS1_STATESEPARATOR=${GIT_PS1_STATESEPARATOR:-}
-
-		psvar[1]=$(__git_ps1 %s)
-		[[ -z $psvar[1] ]] && return
-		psvar[1]="⇄${psvar[1]/\%\%/!} " # Changes the "uncommitted files"
+		local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
+		psvar[1]=${"$(__git_ps1 '⇄%s ')"/\%\%/!} # the `/%%/!` replaces stash `%` with my `!`
 		psvar[2]=$psvar[1]
 
-
 		local pattern
-		if zstyle -s ":sampshell:prompt:git:$PWD" pattern pattern; then
+		if zstyle -s :sampshell:prompt:git:$p pattern pattern; then
 			psvar[2]=${psvar[2]/${~pattern}/…}
 		fi
 	}
 
-	# Always run this function before a prompt, instead of adding it as part of the
-	# prompt. (This is b/c they're run before the prompt is executed, so there's no
-	# way to get the length)
+	# Always run this function before a prompt, instead of adding it as part
+	# of the prompt. (`$()` and `${}` are done before prompt expansions, and
+	# so there's no way to get a length.)
 	add-zsh-hook precmd _SampShell-ps1-git
 
-	# Only expand the full thing if there's a significant amount of whitespace left.
-	PS1+="%F{043}%\$((COLUMNS / 3))(l.%2v.%1v)"
+	# Only expand the full thing if there's a significant amount of space left.
+	PS1+='%F{43}%$((COLUMNS / 3))(l.%2v.%1v)'
 fi
 
 ################################################################################
