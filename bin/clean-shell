@@ -60,6 +60,9 @@ longusage () { cat; } <<EOS
 options: (any time '=' is present after an argname, you can omit and put a space)
    -h, --help show this message
 
+   -v, --verbose print out the invocation before running it
+       --dry     don't actually execute the command; implies -v
+
    -E, --env[=VAL]  same as --var ENV=VAL; VAL defaults to \$ENV (err if env doesnt exist); -E always uses \$ENV
    -sSHELL, --shell=PROG  sets the shell; if unset, assumed to be the first non-positional arg
    -s                     same -s/bin/sh
@@ -69,7 +72,6 @@ options: (any time '=' is present after an argname, you can omit and put a space
    -P, --[no-]path[=PATH] includes path in the output
    -R, --[no-]required-vars set (or dont) all the "required" variables (eg TERM/HOME/SHLVL)
    -S, --[no-]sampshell-vars add all sampshell (or dont) vars to the variables to export
-   -v, --verbose print out the invocation before running it
 
    -vVAR=VAL, --var VAR=VAL   sets VAR=VAL in the shell to execute
    -vVAR, --var VAR           same as --var VAR=\$VAR; VAR must be defined
@@ -82,6 +84,7 @@ required_vars=1
 include_path=$PATH
 dont_include_path=
 verbose_mode=
+dry_mode=
 
 typeset -a env_vars
 
@@ -105,6 +108,7 @@ while [[ $# > 0 ]]; do
 		--path=*) dont_include_path= include_path=${option#--path=} ;;
 
 		-V | --verbose) verbose_mode=1;;
+		--dry) verbose_mode=1 dry_mode=1 ;;
 
 		--no-required-vars) required_vars= ;;
 		-R | --required-vars) required_vars=1 ;;
@@ -163,5 +167,9 @@ if [ -n "$sampshell_vars" ]; then
 	done
 fi
 
-[[ -n $verbose_mode ]] && set -o xtrace
-exec env -i $env_vars $shellname $@
+command=(env -i $env_vars $shellname $@)
+[[ -n $verbose_mode || -n $dry_mode ]] && {
+	print ${(q)command}
+	[[ -n $dry_mode ]] && return
+}
+$command

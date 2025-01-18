@@ -214,13 +214,14 @@ nargs () { echo "$#"; }
 
 alias cpu='top -o cpu'
 
-SampShell_command_exists pbcopy && pbc () if [ "$#" = 0 ]; then
-   pbcopy
+alias SampShell_copy=pbcopy # TODO: pbcopy on other systems
+pbc () if [ "$#" = 0 ]; then
+   SampShell_copy
 else
-   echo "$*" | pbcopy
+   echo "$*" | SampShell_copy
 fi
 
-SampShell_command_exists pbpaste && alias pbb=pbpaste
+SampShell_command_exists pbpaste && alias pbp=pbpaste
 
 ## Deleting files
 # `rm -d` is in safety.

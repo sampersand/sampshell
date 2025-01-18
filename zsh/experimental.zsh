@@ -19,26 +19,6 @@ unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
 ## 
 # TMPPREFIX=$SampShell_TMPDIR/.zsh/ # todo; shoudl this be set to SampShell_TMPDIR?
 
-# Disable `xtrace` for each line, as apple does some setups with cwd and wahtnot
-# which catches us offguard.
-if [[ $VENDOR == apple && $TERM_PROGRAM == Apple_Terminal ]]; then
-	typeset +x -gH _SampShell_was_xtrace_on
-
-	function _SampShell_disable_xtrace {
-		_SampShell_was_xtrace_on=$options[xtrace]
-		trap 'unsetopt xtrace' EXIT
-	}
-	function _SampShell_enable_xtrace {
-		trap '[[ $_SampShell_was_xtrace_on = on ]] && setopt xtrace' EXIT
-	}
-
-	typeset -aU precmd_functions preexec_functions
-
-	precmd_functions[1,0]=_SampShell_disable_xtrace
-	preexec_functions+=(_SampShell_enable_xtrace)
-fi
-
-
 # failed experiments:
 return
 setopt CSH_JUNKIE_LOOPS # Allow loops to end in `end`; only loops tho not ifs. also doesnt let short-formofthings

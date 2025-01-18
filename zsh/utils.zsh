@@ -1,11 +1,20 @@
-alias gcm='noglob gcm' # dont glob with gcm, eg dont have `!`s
+. ${0:P:h}/functions.zsh
+
+function copy-to-clipboard {
+	if (( $# == 0 )) then
+		pbcopy
+	else
+		print -nr -- $* | copy-to-clipboard
+	fi
+}
+
+[[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
 
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
 alias hg='h | grep'
 
-[[ $VENDOR == apple ]] && eval "${$(alias -L ls)}hGb" # add the `l` alias more options to `ls` which I know macOS supports
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias d=dirs
 alias mk=mkdir
@@ -30,19 +39,6 @@ function reload {
 	done
 }
 
-
-function hex { bc -O16 -e$^@ }
-function oct { bc  -O8 -e$^@ }
-function bin { bc  -O2 -e$^@ }
-
-## Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal" vars such as $TERM/$HOME etc
-function clsh   { clean-shell --shell =sh --none -- $@ }
-function clbash { clean-shell --shell =bash --none -- --noprofile --norc $@ }
-function clzsh  { clean-shell --shell =zsh --none -- -fd $@ }
-SampShell_command_exists dash && {
-function cldash { clean-shell --shell =dash --none -- -l $@ }
-}
-
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
 rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
 md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
@@ -59,20 +55,16 @@ puts ($*.empty? ? $stdin.map{_1.chomp.split} : [$*])
 	.map{_1.map(&:hex).pack('C*')}
 RUBY
 
-function enable-wifi { networksetup -setairportpower en0 on }
-function disable-wifi { networksetup -setairportpower en0 off }
-function toggle-wifi { disable-wifi; sleep 2; enable-wifi }
-
 # Copies a previous command
-cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | pbcopy }
+cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | SampShell-copy }
 
 alias banner='noglob ~ss/bin/banner' # Annoying cause banner is a builtin on macos
-b80 () { banner "$@" | pbcopy }
-b100 () { banner -w100 "$@" | pbcopy }
-cc () { print -r $history[$(($#history - 0))] | pbcopy; }
+b80 () { banner "$@" | SampShell-copy }
+b100 () { banner -w100 "$@" | SampShell-copy }
+cc () { print -r $history[$(($#history - 0))] | SampShell-copy; }
 
 pr () print -zr -- $ZLE_LINE_ABORTED
-cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbcopy }
+cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
 
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
