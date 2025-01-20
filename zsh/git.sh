@@ -1,6 +1,13 @@
 ## TODO: This file was originally 100%` sh-compliant, so now we should clean that up and make it more
 # zsh-like.
 
+## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
+# the var will leak
+() while (( $# )) do
+	alias -g "@-$1=@{-$1}"
+	shift
+done $(seq 0 10)
+
 alias g=git
 
 ## Spellcheck

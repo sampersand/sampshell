@@ -1,4 +1,6 @@
 #!zsh
 
-BUFFER+=' | pbcopy'
+# Add a space unless there's already a space
+[[ ${BUFFER: -1} = [[:blank:]] ]] || BUFFER+=' '
+BUFFER+='| pbcopy'
 zle redisplay

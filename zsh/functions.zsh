@@ -23,8 +23,13 @@ function cldash { clean-shell --shell =dash --none -- -l $@ }
 ################################################################################
 
 ## Helpful shorthand utilities
-function xx { repeat $2 print -rn -- $1; print } # Repeats a string
 
-# alias banner='noglob ~ss/bin/banner' # Annoying cause banner is a builtin on macos
-# b80 () { banner "$@" | pbcopy }
-# b100 () { banner -w100 "$@" | pbcopy }
+## Repeats a string
+function xx {
+	repeat ${2:?need a count} print -rn -- ${1:?need a string}
+	print
+} # Repeats a string
+
+alias banner='noglob ~ss/bin/banner' # noglob's so that we can just give most strings
+function b80  { banner -w80 $@  | pbcopy }
+function b100 { banner -w100 $@ | pbcopy }

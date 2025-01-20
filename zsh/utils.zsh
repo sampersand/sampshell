@@ -30,15 +30,6 @@ function reload {
 	trap 'for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do source ${file:P}; done' EXIT
 }
 
-## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
-# `i` will leak.
-() {
-	local i
-	for (( i = 0; i < 10; i++ )); do
-		alias -g "@-$i=@{-$i}"
-	done
-}
-
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
 rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
 md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
@@ -57,10 +48,6 @@ RUBY
 
 # Copies a previous command
 cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | SampShell-copy }
-
-alias banner='noglob ~ss/bin/banner' # Annoying cause banner is a builtin on macos
-b80 () { banner "$@" | SampShell-copy }
-b100 () { banner -w100 "$@" | SampShell-copy }
 cc () { print -r $history[$(($#history - 0))] | SampShell-copy; }
 
 pr () print -zr -- $ZLE_LINE_ABORTED
@@ -69,3 +56,33 @@ cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
+
+################################################################################
+
+bindkey -r '^[ '
+function put-back-zle {
+	BUFFER+=$ZLE_LINE_ABORTED
+	(( CURSOR += $#ZLE_LINE_ABORTED ))
+	zle redisplay
+}
+zle -N put-back-zle
+
+function copy-current-command {
+	: ${NUMERIC:=0}
+	if (( NUMERIC )) then
+		echo todo
+	else
+		print -rn -- $BUFFER | pbcopy
+	fi
+	zle -M "copied: $BUFFER"
+}
+zle -N copy-current-command
+
+# pr () print -zr -- $ZLE_LINE_ABORTED
+bindkey '^[ z' put-back-zle
+bindkey '^[ c' copy-current-command
+bindkey '^[ p' SampShell-add-pbcopy
+
+# bindkey -N SampShell-git
+bindkey -s '^[gaa' '^Qgit add --all^M'
+bindkey -s '^[gs'  '^Qgit status^M'
