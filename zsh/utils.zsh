@@ -82,6 +82,7 @@ zle -N copy-current-command
 bindkey '^[ z' put-back-zle
 bindkey '^[ c' copy-current-command
 bindkey '^[ p' SampShell-add-pbcopy
+bindkey -s '^[ l' '^Qls^M'
 
 # bindkey -N SampShell-git
 bindkey -s '^[gaa' '^Qgit add --all^M'
