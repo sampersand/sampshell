@@ -34,4 +34,4 @@ function toggle-history {
 }
 
 ## Ensure we don't save the commands variants
-history-ignore-command {enable,disable,toggle}-history
+SampShell-history-ignore-command {enable,disable,toggle}-history

@@ -93,7 +93,7 @@ function h {
 		printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
 	done
 }
-history-ignore-command h
+SampShell-history-ignore-command h
 
 ####################################################################################################
 #                                                                                                  #
