@@ -4,16 +4,12 @@
 # this file's job is to hook into ZSH's "add history" mechanism, and to output every line that'd be
 # stored to ZSH's history _also_ to a separate file.
 
-## Make `zshaddhistory_functions` a unique array, in case it's not already
-# This prevents `_SampShell-record-every-command` from being recorded twice (eg if we `reload`)
-typeset -agU zshaddhistory_functions
-
 ## Add the record history function to the end.
 # We want it to be the last function, so it'll only record things down if all the previous history
 # functions have passed. However, it's not critical for it to be the last one (as this is just used
 # for statistical purposes, and nothing mission-critical), so that if functions are added after it,
 # it's ok.
-zshaddhistory_functions+=_SampShell-record-every-command
+add-zsh-hook zshaddhistory _SampShell-record-every-command
 
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
 typeset +x -gH _SampShell_dont_record_every_command
@@ -57,7 +53,6 @@ _SampShell-record-every-command () {
 
 	## Return early if we're not saving history, or there isn't even a place to store history.
 	[[ -n $_SampShell_dont_record_every_command || -z $SampShell_HISTDIR ]] && return 0
-
 
 	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines
 	local line=${1%$'\n'}
@@ -111,7 +106,7 @@ _SampShell-record-every-command () {
 	local date="$(date '+%F %T %z')"
 
 	## Print the history line to the history file; note the redirect at the end of `fi`
-	if SampShell_command_exists jq; then
+	if SampShell_does_command_exist jq; then
 		# If `jq` is found, then let's print out the original line (no stripping,
 		# other than a single trailing `\n`, as we can strip it later) along with
 		# some other details in json format.

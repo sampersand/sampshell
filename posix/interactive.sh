@@ -14,23 +14,6 @@
 ## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
 set +o nounset
 
-## Unalias all of its arguments, always succeeding.
-# unalias SampShell_unalias >/dev/null 2>&1 # unalias this one in case it existed.
-SampShell_unalias () {
-   if [ "$#" = 0 ]; then
-      echo 'usage: SampShell_unalias name [name ...]' >&2
-      return 1
-   fi
-
-   while [ "$#" != 0 ]; do
-      unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we always succeed.
-      shift
-   done
-
-   : # `unalias` always suceeds
-}
-
-
 ################################################################################
 #                                   History                                    #
 ################################################################################
@@ -51,7 +34,7 @@ elif [[ -z ${HISTFILE} ]]; then
 fi
 
 ## Ensure we have the `history` command if it doesnt exist already.
-SampShell_command_exists history || eval 'history () { fc -l "$@"; }'
+SampShell_does_command_exist history || eval 'history () { fc -l "$@"; }'
 
 ## Add in the `h` command, which is like `history`, except it does `history 0`
 # when not connected to a tty (eg when we're piping it into grep).
@@ -178,7 +161,7 @@ SampShell_add_to_cd_path () {
 # Clear the screen; also uses the `clear` command if it exists
 SampShell_unalias cls
 cls () {
-   SampShell_command_exists clear && { clear || return; }
+   SampShell_does_command_exist clear && { clear || return; }
    printf '\ec\e[3J'
 }
 
@@ -233,7 +216,7 @@ else
    echo "$*" | SampShell_copy
 fi
 
-SampShell_command_exists pbpaste && alias pbp=pbpaste
+SampShell_does_command_exist pbpaste && alias pbp=pbpaste
 
 ## Deleting files
 # `rm -d` is in safety.
