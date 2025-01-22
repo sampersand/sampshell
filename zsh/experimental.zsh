@@ -17,7 +17,8 @@ unsetopt IGNORE_EOF      # In case it was set, as I use `ctrl+d` to exit a lot.
 unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
 
 ## 
-# TMPPREFIX=$SampShell_TMPDIR/.zsh/ # todo; shoudl this be set to SampShell_TMPDIR?
+TMPPREFIX=$TMPDIR/.zsh # todo; shoudl this be set to SampShell_TMPDIR?
+mkdir -p $TMPPREFIX
 
 # failed experiments:
 return
