@@ -1,4 +1,6 @@
 function _SampShell-rps1-current-battery {
+	emulate -L zsh # Reset the shell to the default ZSH options
+
 	zstyle -T ':sampshell:prompt:battery' display || return 0
 
 	local bat perc how remain
@@ -22,7 +24,11 @@ function _SampShell-rps1-current-battery {
 }
 
 function _SampShell-rps1-is-airport-power-on () {
+	emulate -L zsh # Reset the shell to the default ZSH options
+
 	zstyle -T ':sampshell:prompt:airport' display || return 0
+
+	SampShell_does_command_exist networksetup || return 0 # networksetup must be defined
 
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
 	      "$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
@@ -32,7 +38,10 @@ function _SampShell-rps1-is-airport-power-on () {
 }
 
 function _SampShell-rps1-ruby-version () {
+	emulate -L zsh # Reset the shell to the default ZSH options
+
 	zstyle -T ':sampshell:prompt:ruby-version' display || return 0
+	SampShell_does_command_exist ruby || return 0 # ruby must be defined
 
 	print -n "💎%F{red}$(ruby -v | awk '{print $2}')%f "
 }

@@ -101,7 +101,7 @@ function {SampShell-,}history-ignore-command {
 	fi
 
 	# Add the arguments to `_SampShell_history_ignore_commands`.
-	_SampShell_history_ignore_commands+=$@
+	_SampShell_history_ignore_commands+=($@)
 }
 
 

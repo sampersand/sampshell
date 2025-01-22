@@ -102,6 +102,8 @@ if zstyle -T ':sampshell:prompt:git' display; then
 	source ${0:P:h}/git_prompt.sh # Load the git PS1 script.
 
 	function _SampShell-ps1-git {
+		emulate -L zsh # Reset the shell to the default ZSH options
+
 		psvar[1]= psvar[2]=
 
 		# If we're just not displaying git at all, then return.

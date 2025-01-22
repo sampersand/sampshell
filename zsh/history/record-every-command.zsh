@@ -12,7 +12,9 @@
 add-zsh-hook zshaddhistory _SampShell-record-every-command
 
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
-typeset +x -gH _SampShell_dont_record_every_command
+#
+# This variable is also `typeset` within `disable-history.zsh`.
+typeset +x -gH _SampShell_history_disabled
 
 ## Global, non-exported variable that's the current history file; let's you do
 # `tail SampShell_current_record_all_history_file`. I might shorten its name later.
@@ -21,7 +23,7 @@ typeset +x -g SampShell_current_record_all_history_file
 ## Record all commands entered interactively
 # This function is called every time the user enters a command on the command line. It saves each
 # command that isn't skipped to a file. Note that you can entirely disable this function by setting
-# `$_SampShell_dont_record_every_command` to a nonempty value, or by making `$SampShell_HISTDIR` empty.
+# `$_SampShell_history_disabled` to a nonempty value, or by making `$SampShell_HISTDIR` empty.
 #
 # History functions are always given a single argument, the entire input line, unadulterated (except
 # for alias expansion). Their return status indicates what should happen with the line; non-zero
@@ -52,7 +54,7 @@ _SampShell-record-every-command () {
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
 	## Return early if we're not saving history, or there isn't even a place to store history.
-	[[ -n $_SampShell_dont_record_every_command || -z $SampShell_HISTDIR ]] && return 0
+	[[ -n $_SampShell_history_disabled || -z $SampShell_HISTDIR ]] && return 0
 
 	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines
 	local line=${1%$'\n'}
