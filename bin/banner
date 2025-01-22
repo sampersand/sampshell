@@ -18,6 +18,7 @@ die () {
 
 usage () { cat; } <<USAGE
 usage: $scriptname [options] [--] message here
+                   -l [options]
                    -m [options] [--] lines here
 options:
 	-wN, --width=N         total width of the line
@@ -25,6 +26,7 @@ options:
 	-sC, --style=CHAR      print out in STYLE style
 	-m, --multiline        interpret each argument as a separate line, instead of just one line.
 	-b, --blank            Add a blank line before and after input
+	-l, --single-line      Only print the header and then return; ignores args
 USAGE
 
 expect_numeric () case $1 in
@@ -35,7 +37,7 @@ esac
 
 ## Config options
 width=80 style=\# pre=0
-multiline= blank=
+multiline= blank= single_line=
 
 while [ "$#" -ne 0 ]; do
 	option=$1
@@ -47,8 +49,9 @@ while [ "$#" -ne 0 ]; do
 	-h | --help) usage; exit 0 ;;
 
 	# Flag options
-	-m | --multiline) multiline=1 ;;
-	-b | --blank)     blank=1 ;;
+	-m | --multiline)   multiline=1 ;;
+	-b | --blank)       blank=1 ;;
+	-l | --single-line) single_line=1 ;;
 
 	# Numeric options
 	-w | --line-width) width=${1:-}; expect_numeric "$width"; shift ;;
@@ -96,7 +99,10 @@ done
 # for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
 
 # Expect at least one banner argument
-[ $# -eq 0 ] && { usage >&2; exit 1; }
+if { [ -n "$single_line" ] && [ $# -ne 0 ]; } || { [ -z "$single_line" ] && [ $# -eq 0 ]; } ; then
+	usage >&2
+	exit 1
+fi
 
 # If multiline isn't set, all args are just separated by spaces
 [ -n "$multiline" ] || set -- "$*"
@@ -126,18 +132,21 @@ case $style in
 	\#)
 		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
+		[ -n "$single_line" ] && exit
 		print_lines '#' '#' $width "$@"
 		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	/)
 		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
+		[ -n "$single_line" ] && exit
 		print_lines '//' '//' $width "$@"
 		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	\*)
 		printf "%${pre}s"
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
+		[ -n "$single_line" ] && exit
 		print_lines ' *' '*' $((width - 1)) "$@"
 		printf " %${pre}s"
 		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
