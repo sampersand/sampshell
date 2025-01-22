@@ -83,7 +83,7 @@ function h {
 
 	# If we're not connected to a TTY, the just act like `history`, except all values are
 	# printed out by default. This lets us do `h | grep ...`
-	if [[ ! -t 1 ]]; then
+	if [[ ! -t 1 ]] then
 		history ${@:-0}
 		return
 	fi
