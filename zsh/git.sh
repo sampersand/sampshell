@@ -108,9 +108,8 @@ gsquash () {
 }
 
 # Fixup code
-goops () {
-	[ "$#" = 0 ] && set -- '--all'
-	git add "$@" && git commit --amend --no-edit && git push --force
+function goops {
+	git add --all && git commit --amend --no-edit && git push --force
 }
 
 gclear () {
@@ -120,18 +119,20 @@ gclear () {
 }
 
 # Adds everything and prints out the status
-gaa () {
+function gaa {
 	git add --all && git status
 }
 
 # Commits untracked files; all arguments are joined with a space.
-gcm () {
-	if [ "$#" = 0 ]; then
+function _SampShell-gcm {
+	if [[ "$#" = 0 ]]; then
 		git commit
 	else
 		git commit --message "$*"
 	fi
 }
+alias gcm='noglob _SampShell-gcm'
+
 alias gam='git commit --amend'
 alias gcma='git commit --amend'
 alias gammend='git commit --amend'

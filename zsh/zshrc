@@ -18,6 +18,7 @@
 # a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
+# Add `add-zsh-hook` to the autoload list.
 autoload -Uz add-zsh-hook
 
 ####################################################################################################
@@ -78,6 +79,8 @@ unsetopt SHARE_HISTORY        # Don't constantly share history across interactiv
 
 ## Same as `history` except it also numbers its output lines
 function h {
+	emulate -L zsh # Reset ZSH options to their default for _just_ this function.
+
 	# If we're not connected to a TTY, the just act like `history`, except all values are
 	# printed out by default. This lets us do `h | grep ...`
 	if [[ ! -t 1 ]]; then

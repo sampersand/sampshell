@@ -2,6 +2,8 @@
 
 ## Add a directory to the list of named directories.
 function add-named-dir {
+	emulate -L zsh # Reset ZSH to its default options, just for this function.
+
 	local dir name
 
 	# Extract the name and directory from the arguments
@@ -30,6 +32,8 @@ function add-named-dir {
 
 ## Remove a directory from the list of directories.
 function del-named-dir {
+	emulate -L zsh # Reset ZSH to its default options, just for this function.
+
 	if (( $# != 1 )) then
 		print >&2 -r "usage: $0 name"
 		print >&2
