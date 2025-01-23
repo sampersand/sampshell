@@ -1,0 +1,57 @@
+#!/bin/zsh
+
+
+usage () { cat <<USAGE; }
+usage: ${0:t} [-n] (-w WIDTH | -c COUNT) string
+       $(printf "%${#0}s" "") [-n] string [WIDTH=80]
+
+With -c, prints 'string' COUNT times. With -w, prints 'string' until WIDTH
+characters have been printed. With -n, the trailing newline is suppressed.
+The second form acts like '-w', and the width defaults to 80.
+USAGE
+
+wopts=(-w 80) # default
+zparseopts -D -K n=no_newline {w,c}+:=wopts h=help
+
+(( $+help )) && { usage; exit }
+
+# If exactly two arguments are given, and no width options were,
+# then assume the second form
+if (( $# == 2 && $#wopts == 2 )) then
+	wopts=(-w $2)
+	shift -p
+fi
+
+if (( $# != 1 )) then
+	usage >&2
+	exit 1
+fi
+
+style=$wopts[-2]
+width=$wopts[-1]
+
+if [[ $width != <-> ]] then
+	print "$0:t: width has to be an integer" >&1
+	exit 1
+fi
+
+msg=$1
+
+if [[ $style == -c ]] then
+	repeat $width do
+		print -nr -- $*
+	done
+else
+	while (( width > 0 )) do
+		if (( $#msg > width )) then
+			printf "%.${width}s" $*
+			break
+		else
+			print -rn -- $*
+			(( width -= $#msg ))
+		fi
+	done
+fi
+
+[[ $no_newline ]] || print
+exit 0

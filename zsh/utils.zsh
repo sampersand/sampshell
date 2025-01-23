@@ -56,6 +56,7 @@ cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
+alias hd='hexdump -C'
 
 ################################################################################
 
@@ -87,3 +88,4 @@ bindkey -s '^[ l' '^Qls^M'
 # bindkey -N SampShell-git
 bindkey -s '^[gaa' '^Qgit add --all^M'
 bindkey -s '^[gs'  '^Qgit status^M'
+
