@@ -40,9 +40,18 @@ function SampShell-math-min  { (( ${${(-)@#+}[1]} )); true }
 function SampShell-math-max  { (( ${${(-)@#+}[-1]} )); true }
 function SampShell-math-cmp  { (( sign($1 - $2) )); true }
 function SampShell-math-sign { (( $1 < 0 ? -1 : $1 > 0 )); true }
+function SampShell-math-rand { (( $(SampShell-random $@) )); true }
 
 # functions -M <math name> <min argc> <max argc> <shell fn name>
 functions -M  min 1 -1 SampShell-math-min
 functions -M  max 1 -1 SampShell-math-max
 functions -M  cmp 2  2 SampShell-math-cmp
 functions -M sign 1  1 SampShell-math-sign
+functions -M rand 0  2 SampShell-math-rand
+
+function SampShell-random {
+	local min=${2:-0} max=${1:-9223372036854775807}
+	shuf --random-source=/dev/urandom -n1 -i $min-$max
+	# `shuf` isn't posix compliant, but the following is:
+	# od -vAn -N8 -tu8 < /dev/urandom | tr -d ' ' 
+}
