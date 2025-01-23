@@ -1,5 +1,12 @@
 #!/bin/zsh
 
+## `xx`: A helper script to repeat a string a certain amount of times
+# mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
+##
+
+
+
+## Usage function
 usage () cat <<USAGE
 usage: ${ZSH_SCRIPT:t} [-n] (-w WIDTH | -c COUNT) [--] string
 	-n         Don't print the trailing newline
@@ -7,37 +14,39 @@ usage: ${ZSH_SCRIPT:t} [-n] (-w WIDTH | -c COUNT) [--] string
 	-w WIDTH   Repeat 'string' until WIDTH chars are printed
 USAGE
 
+
+
+## Parse Command line options
 wopts=(-w 80) # Default output options
 zparseopts -D -E -K n=no_newline {w,c}+:=wopts h=help # Parse command line options
 [[ $1 == -- ]] && shift # `zparseopts` doesn't strip `--`, so we do that ourselves
 
-# If help was requested, print the usage and exit.
-(( $+help )) && { usage; exit }
+## Fetch command line option values
+msg=$1
+style=$wopts[-2] # Style and width are the last two values passed in to `-w` or `-c`; if nothing ...
+width=$wopts[-1] # ... was passed in, then the default `-w 80` is used.
 
-# If not exactly one argument was left over, that's an error.
-(( $# != 1 )) && { usage >&2; exit 1 }
+## Handle `-h` and validate options.
+(( $+help ))  && { usage; exit } # If help was requested, print the usage and exit.
+(( $# != 1 )) && { usage >&2; exit 1 } # If not exactly one argument was left over, that's an error.
+[[ $width != <-> ]] && { print -- "${ZSH_SCRIPT:t}: width is not an integer: $width" >&1; exit 1 }
 
-msg=$1 # The message is the first argument
 
-# Get the style and width from the last two values within `$wopts` (ie the last two values given, or
-# the default if none were.)
-style=$wopts[-2]
-width=$wopts[-1]
 
-# Make sure width is an integer
-[[ $width != <-> ]] && { print "${ZSH_SCRIPT:t}: width has to be an integer" >&1; exit 1 }
-
-# If `-c` was requested, then use ZSH's builtin repeat function.
+## Do the repetition
 if [[ $style == -c ]] then
-	repeat $width do
-		print -nr -- $msg
-	done
+	repeat $width print -nr -- $msg
 else
 	for (( ; 0 < width; width -= $#msg )) do
+		# Note that `%.*s` with a width larger than the string length is a no-op.
 		printf '%.*s' $width $msg
 	done
 fi
 
-[[ $no_newline ]] || print # Print a newline unless `-n` was provided
+## Print the trailing newline unless it was suppressed
+[[ $no_newline ]] || print
 
-exit 0 # Success!
+
+
+## Exit successfully
+exit 0
