@@ -33,13 +33,13 @@ rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
 md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
 
 # utility functions and what have you that I've accumulated over the years
-chr () ruby -- /dev/fd/3 $@ 3<<'RUBY'
+false && chr () ruby -- /dev/fd/3 $@ 3<<'RUBY'
 puts ([]==$*?$stdin.map(&:chomp):$*).map{|w|w.bytes.map{_1.to_s 16}.join(?\s)}
 RUBY
 # $*.empty? and $*.replace $stdin.map(&:chomp)
 # puts $*.map{|w|w.bytes.map{|b|b.to_s 16}.join(?\s)}
 
-ord () ruby -- /dev/fd/3 $@ 3<<'RUBY'
+false && ord () ruby -- /dev/fd/3 $@ 3<<'RUBY'
 puts ($*.empty? ? $stdin.map{_1.chomp.split} : [$*])
 	.map{_1.map(&:hex).pack('C*')}
 RUBY
@@ -59,12 +59,6 @@ alias hd='hexdump -C'
 ################################################################################
 
 bindkey -r '^[ '
-function put-back-zle {
-	BUFFER+=$ZLE_LINE_ABORTED
-	(( CURSOR += $#ZLE_LINE_ABORTED ))
-	zle redisplay
-}
-zle -N put-back-zle
 
 function copy-current-command {
 	: ${NUMERIC:=0}
@@ -73,12 +67,12 @@ function copy-current-command {
 	else
 		print -rn -- $BUFFER | pbcopy
 	fi
-	zle -M "copied: $BUFFER"
+	zle -M "Command copied"
 }
 zle -N copy-current-command
 
 # pr () print -zr -- $ZLE_LINE_ABORTED
-bindkey '^[ z' put-back-zle
+# bindkey '^[ z' put-back-zle
 bindkey '^[ c' copy-current-command
 bindkey '^[ p' SampShell-add-pbcopy
 bindkey -s '^[ l' '^Qls^M'

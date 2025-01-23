@@ -208,6 +208,12 @@ bindkey '^XR'    redo
 bindkey '^Xr'    redo
 alias which-command=which # for `^[?`
 
+# "command-space" commands
+bindkey '^[ z' SampShell-put-back-zle
+bindkey '^[ p' SampShell-add-pbcopy
+bindkey -s '^[ l' '^Qls^M'
+
+# Arrow keys that can be used in the future
 bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
 bindkey '^[[1;2D' undefined-key # Terminal.app's default sequence for "SHIFT + LEFT ARROW"
 bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARROW")
