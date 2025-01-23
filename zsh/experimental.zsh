@@ -4,7 +4,7 @@
 : "${a=4}" # Print the duration of commands that take more than 4s of CPU time
 # DIRSTACKSIZE=30   # I just started using dirstack more, if it ever grows unwieldy I can set this.
 
-setopt EXTENDED_HISTORY       # (For fun) When writing cmds, write their start time & duration too.
+setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
 setopt COMPLETE_IN_WORD
 setopt CORRECT              # Correct commands when executing.
 setopt RM_STAR_WAIT         # Wait 10 seconds before accepting the `y` in `rm *`

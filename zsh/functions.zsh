@@ -23,7 +23,26 @@ function cldash { clean-shell --shell =dash --none -- -l $@ }
 ################################################################################
 
 ## Helpful shorthand utilities
-
-alias banner='noglob ~ss/bin/banner' # noglob's so that we can just give most strings
+alias banner='noglob ~ss/bin/banner' # noglob's so that we can give most strings
 function b80  { banner -w80 $@  | pbcopy }
 function b100 { banner -w100 $@ | pbcopy }
+
+################################################################################
+#                                Math Functions                                #
+################################################################################
+
+# Functions for shell math; these can be used in any arithmetic contexts (incl.
+# eg indexing into arrays). The return value is the return value of the last
+# math operation done in the function. (Which also means the return value must
+# be `true` not `return 0`, as `return`'s argument is a math op.)
+
+function SampShell-math-min  { (( ${${(-)@#+}[1]} )); true }
+function SampShell-math-max  { (( ${${(-)@#+}[-1]} )); true }
+function SampShell-math-cmp  { (( sign($1 - $2) )); true }
+function SampShell-math-sign { (( $1 < 0 ? -1 : $1 > 0 )); true }
+
+# functions -M <math name> <min argc> <max argc> <shell fn name>
+functions -M  min 1 -1 SampShell-math-min
+functions -M  max 1 -1 SampShell-math-max
+functions -M  cmp 2  2 SampShell-math-cmp
+functions -M sign 1  1 SampShell-math-sign
