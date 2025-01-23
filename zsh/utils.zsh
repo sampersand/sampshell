@@ -20,8 +20,6 @@ alias d=dirs
 alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
-xx () { repeat $2 print -rn -- $1; print }
-
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
 function reload {
