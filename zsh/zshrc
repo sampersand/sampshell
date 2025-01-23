@@ -126,14 +126,9 @@ function j {
 
 ## Options for prompt expansion
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
-setopt TRANSIENT_RPROMPT   # Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
 unsetopt NO_PROMPT_BANG    # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
-
-## Mark `PS1` and `RPS1` as global (so functions can interact with them), but not exported (as then
-# other shells would inherit them, and they certainly wouldn't understand the formatting.)
-typeset -g +x PS1 RPS1
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
 source ${0:P:h}/prompt/ps1.zsh

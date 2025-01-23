@@ -1,3 +1,6 @@
+# Styles used
+(TODO: Make it pretty)
+
 ```zsh
 # The following are the zstyles that're used
 if false; then

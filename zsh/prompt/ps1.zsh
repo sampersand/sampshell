@@ -1,12 +1,16 @@
-#!zsh
+### Config for the `PS1` prompt, i.e. the thing that's shown on the left-hand-side of the screen.
+# This file makes heavy use of `zstyle`, which is ZSH's alternative to environment variables. See
+# the `zstyles.md` file in this folder for more details.
+###
 
-PS1= # Reset ps1
+## Mark `PS1` as global (so functions can interact with it), but not exported (as then other shells
+# would inherit it, and they certainly don't understand the formatting), and initialize it to an
+# empty string (so we can construct it down below)
+typeset -g +x PS1=''
 
-################################################################################
-#                                                                              #
-#                                Bracket Prefix                                #
-#                                                                              #
-################################################################################
+####################################################################################################
+#                                          Bracket Prefix                                          #
+####################################################################################################
 
 () {
 	local timefmt
@@ -21,11 +25,9 @@ PS1= # Reset ps1
 	PS1+='%B%F{blue}]%b '                          # ]
 }
 
-################################################################################
-#                                                                              #
-#                            Username and Hostname                             #
-#                                                                              #
-################################################################################
+####################################################################################################
+#                                      Username and Hostname                                       #
+####################################################################################################
 
 # By default, the user and host are always displayed. This can be disabled by
 # setting their `display` to false, or by setting an `expected` value. If the
@@ -59,11 +61,9 @@ PS1= # Reset ps1
 	[[ ${PS1: -1} != ' ' ]] && PS1+=' '
 }
 
-################################################################################
-#                                                                              #
-#                                     Path                                     #
-#                                                                              #
-################################################################################
+####################################################################################################
+#                                               Path                                               #
+####################################################################################################
 
 () {
 	local len d='~'
@@ -84,65 +84,67 @@ PS1= # Reset ps1
 	PS1+='%<< '                                  # stop truncation
 }
 
-################################################################################
-#                                                                              #
-#                               Git information                                #
-#                                                                              #
-################################################################################
+####################################################################################################
+#                                         Git Information                                          #
+####################################################################################################
 
-# :sampshell:prompt:git:dirty:$PWD display -T      # Show `*` and `+` for untracted states
-# :sampshell:prompt:git:stash:$PWD display -t      # Show `$` when there's something stashed
-# :sampshell:prompt:git:untracked:$PWD display -T  # Also show untracted files via `!`
-# :sampshell:prompt:git:conflict:$PWD display -T   # Show when there's a merge conflict
-# :sampshell:prompt:git:hidepwd:$PWD display -T    # Don't show git when the PWD is ignored.
-# :sampshell:prompt:git:upstream:$PWD display -t   # Show the difference for upstream
+# :sampshell:prompt:git:dirty:$PWD display      # Show `*` and `+` for untracted states
+# :sampshell:prompt:git:stash:$PWD display      # Show `$` when there's something stashed
+# :sampshell:prompt:git:untracked:$PWD display  # Also show untracted files via `!`
+# :sampshell:prompt:git:conflict:$PWD display   # Show when there's a merge conflict
+# :sampshell:prompt:git:hidepwd:$PWD display    # Don't show git when the PWD is ignored.
+# :sampshell:prompt:git:upstream:$PWD display   # Show the difference for upstream
 
-# If we even are even displaying git in the first place? (default to yes with `-T`)
+## Mark `__git_ps1` as an autoloaded function; we don't want to load it just yet in case we aren't
+# going to be displaying the git prompt. (NOTE: The file must be named exactly `__git_ps1`, as the
+# name of the function and the name of the file must match.) We use `emulate` to ensure that no
+# weird options affect the way that we're autoloading.
+emulate zsh -c "autoload -RUk ${(q)0:P:h}/__git_ps1"
+
+## The function that's used to fetch the git status.
+function _SampShell-prompt-git-hook {
+	emulate -L zsh # Reset the shell to the default ZSH options
+
+	psvar[1]= psvar[2]= # Empty the variables
+
+	## Ensure we're even displaying git
+	zstyle -T ":sampshell:prompt:git:${(q)PWD}" display || return 0
+
+	## Configure variables for the `__git_ps1` function
+	local GIT_PS1_{HIDE_IF_PWD_IGNORED,SHOW{UNTRACKEDFILES,UPSTREAM,{DIRTY,CONFLICT}STATE}}
+	zstyle -T ":sampshell:prompt:git:dirty:$PWD"     display && GIT_PS1_SHOWDIRTYSTATE=1
+	zstyle -t ":sampshell:prompt:git:stash:$PWD"     display && GIT_PS1_SHOWSTASHSTATE=1
+	zstyle -T ":sampshell:prompt:git:untracked:$PWD" display && GIT_PS1_SHOWUNTRACKEDFILES=1
+	zstyle -T ":sampshell:prompt:git:conflict:$PWD"  display && GIT_PS1_SHOWCONFLICTSTATE=1
+	zstyle -T ":sampshell:prompt:git:hidepwd:$PWD"   display && GIT_PS1_HIDE_IF_PWD_IGNORED=1
+	zstyle -t ":sampshell:prompt:git:upstream:$PWD"  display && GIT_PS1_SHOWUPSTREAM=1
+
+	## Perform the substitution
+	local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
+	psvar[1]=${"$(__git_ps1 '⇄%s ')"/\%\%/!} # the `/%%/!` replaces `%` with my `!`
+	psvar[2]=$psvar[1]
+
+	## If there's a prefix pattern, then set `psvar[2]` to that replacement.
+	local pattern
+	if zstyle -s ":sampshell:prompt:git:$PWD" pattern pattern; then
+		psvar[2]=${psvar[2]/${~pattern}/…}
+	fi
+}
+
+## Only add the hooks and the git prompt if we're even displaying git in the first place (which is
+# true by default.)
 if zstyle -T ':sampshell:prompt:git' display; then
-	source ${0:P:h}/git_prompt.sh # Load the git PS1 script.
-
-	function _SampShell-ps1-git {
-		emulate -L zsh # Reset the shell to the default ZSH options
-
-		psvar[1]= psvar[2]=
-
-		# If we're just not displaying git at all, then return.
-		zstyle -T ":sampshell:prompt:git:${(q)PWD}" display || return 0
-
-		local GIT_PS1_SHOW{UNTRACKEDFILES,{DIRTY,CONFLICT}STATE,UPSTREAM}
-		local GIT_PS1_HIDE_IF_PWD_IGNORED
-		local p=${(q)PWD}
-
-		zstyle -T :sampshell:prompt:git:dirty:$p     display && GIT_PS1_SHOWDIRTYSTATE=1
-		zstyle -t :sampshell:prompt:git:stash:$p     display && GIT_PS1_SHOWSTASHSTATE=1
-		zstyle -T :sampshell:prompt:git:untracked:$p display && GIT_PS1_SHOWUNTRACKEDFILES=1
-		zstyle -T :sampshell:prompt:git:conflict:$p  display && GIT_PS1_SHOWCONFLICTSTATE=1
-		zstyle -T :sampshell:prompt:git:hidepwd:$p  display && GIT_PS1_HIDE_IF_PWD_IGNORED=1
-		zstyle -t :sampshell:prompt:git:upstream:$p  display && GIT_PS1_SHOWUPSTREAM=1
-
-		local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
-		psvar[1]=${"$(__git_ps1 '⇄%s ')"/\%\%/!} # the `/%%/!` replaces stash `%` with my `!`
-		psvar[2]=$psvar[1]
-
-		local pattern
-		if zstyle -s :sampshell:prompt:git:$p pattern pattern; then
-			psvar[2]=${psvar[2]/${~pattern}/…}
-		fi
-	}
-
 	# Always run this function before a prompt, instead of adding it as part
 	# of the prompt. (`$()` and `${}` are done before prompt expansions, and
 	# so there's no way to get a length.)
-	add-zsh-hook precmd _SampShell-ps1-git
+	add-zsh-hook precmd _SampShell-prompt-git-hook
 
 	# Only expand the full thing if there's a significant amount of space left.
 	PS1+='%F{43}%$((COLUMNS / 3))(l.%2v.%1v)'
 fi
 
 ################################################################################
-#                                                                              #
 #                                   Ending %                                   #
-#                                                                              #
 ################################################################################
 
 PS1+='%F{8}%#%f ' # ending %

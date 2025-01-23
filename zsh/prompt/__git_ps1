@@ -1,4 +1,6 @@
 # SOURCED FROM https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh
+# (NOTE: This file shoudl be kept as `__git_ps1` so the `autoload` functionality works.)
+
 #
 # bash/zsh git prompt support
 #
