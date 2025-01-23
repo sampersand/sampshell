@@ -8,6 +8,10 @@
 # is not a hard-and-fast rule, and it's really just "newer ideas go into RPS1 as PS1 is filled up".
 ###
 
+####################################################################################################
+#                                              Setup                                               #
+####################################################################################################
+
 ## Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
 setopt TRANSIENT_RPROMPT
 
@@ -15,6 +19,14 @@ setopt TRANSIENT_RPROMPT
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
 # empty string (so we can construct it down below)
 typeset -g +x RPS1=''
+
+## Don't indent the right prompt. (Normally set to `1` b/c some terminals don't handle it properly,
+# but Terminal.app on macOS does, so I've set it to 0.)
+ZLE_RPROMPT_INDENT=0
+
+####################################################################################################
+#                                         Current Battery                                          #
+####################################################################################################
 
 ## Helper for the current battery status
 function _SampShell-prompt-current-battery {
@@ -42,6 +54,10 @@ function _SampShell-prompt-current-battery {
 	print -n "$perc%%%k%s" #$remain
 }
 
+####################################################################################################
+#                                         Is Wifi Enabled                                          #
+####################################################################################################
+
 ## Helper for whether wifi is even on.
 function _SampShell-prompt-is-airport-power-on () {
 	emulate -L zsh # Reset the shell to the default ZSH options
@@ -57,6 +73,10 @@ function _SampShell-prompt-is-airport-power-on () {
 	fi
 }
 
+####################################################################################################
+#                                       Current Ruby Version                                       #
+####################################################################################################
+
 ## Helper for the current ruby version
 function _SampShell-prompt-ruby-version () {
 	emulate -L zsh # Reset the shell to the default ZSH options
@@ -67,5 +87,46 @@ function _SampShell-prompt-ruby-version () {
 	print -n "💎%F{red}$(ruby -v | awk '{print $2}')%f "
 }
 
+####################################################################################################
+#                                    Previous Command Duration                                     #
+####################################################################################################
+
+typeset -FH SECONDS # Set the builtlin `SECONDS` variable to be a float. TODO: This is dangerous?
+typeset -FH _SampShell_last_exec_time=0
+
+# Add this to the end of preexec so we don't get all the other functions
+preexec_functions+=(_SampShell-prompt-set-start-time-hook)
+function _SampShell-prompt-set-start-time-hook {
+	_SampShell_last_exec_time=$SECONDS
+}
+
+# Add this as the very first precmd function, so that we get more accurate timing.
+precmd_functions[1,0]=_SampShell-prompt-display-time-hook
+function _SampShell-prompt-display-time-hook {
+	# Get the current duration as soon as possible
+	float now=$SECONDS
+
+	(( _SampShell_last_exec_time )) || return
+	float diff='now - _SampShell_last_exec_time'
+
+	# Make it red if the difference is more than 3s
+	psvar[4]=
+	(( diff > 1 )) && psvar[4]=1
+
+	float -F5 seconds='diff % 60'
+	integer minutes='(diff /= 60) % 60'
+	integer hours='(diff /= 60) % 24'
+	integer days='(diff /= 24)'
+
+	local tmp
+	(( days )) && tmp+=${days}d
+	(( hours )) && tmp+=${tmp:+ }${hours}h
+	(( minutes )) && tmp+=${tmp:+ }${minutes}m
+	psvar[3]=${tmp:+ }${seconds}s
+
+	_SampShell_last_exec_time=
+}
+
 ## Just construct the entire RPS1 whole-cloth.
 RPS1='$(_SampShell-prompt-ruby-version)$(_SampShell-prompt-is-airport-power-on)$(_SampShell-prompt-current-battery)'
+RPS1+=" %f[%F{%(4V.red.green)}%3v%f]"
