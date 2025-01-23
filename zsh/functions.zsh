@@ -36,6 +36,8 @@ function b100 { banner -w100 $@ | pbcopy }
 # math operation done in the function. (Which also means the return value must
 # be `true` not `return 0`, as `return`'s argument is a math op.)
 
+# NOTE: `autoload zmathfunc; zmathfunc` will define `min` and `max`, however
+# it's much less efficient than these are (i think?)
 function SampShell-math-min  { (( ${${(-)@#+}[1]} )); true }
 function SampShell-math-max  { (( ${${(-)@#+}[-1]} )); true }
 function SampShell-math-cmp  { (( sign($1 - $2) )); true }

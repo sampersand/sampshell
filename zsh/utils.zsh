@@ -16,7 +16,6 @@ function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 alias hg='h | grep'
 
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
-alias d=dirs
 alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
@@ -51,6 +50,8 @@ cc () { print -r $history[$(($#history - 0))] | SampShell-copy; }
 pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
 
+
+alias grep='grep --color=auto'
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'

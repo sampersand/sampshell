@@ -1,3 +1,15 @@
+zsh autoloads
+------
+promptnl
+  # generate pattern to match all known math functions
+  mathfuncs=(abs acos acosh asin asinh atan atanh cbrt ceil cos cosh erf erfc
+    exp expm1 fabs float floor gamma int j0 j1 lgamma log log10 log1p logb
+    sin sinh sqrt tan tanh y0 y1 signgam copysign fmod hypot nextafter jn yn
+    ldexp scalb rand48)
+
+
+---others
+
 - `SHELL_SESSIONS_DISABLE` in macos
 
 disable -p, to disable patterns!

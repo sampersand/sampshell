@@ -1,0 +1,24 @@
+#!/bin/zsh
+
+outputfile="$(mktemp)"
+rm $outputfile
+if [[ $1 = - ]]; then
+	main=1
+	shift
+fi
+src=${1?"need source file"}
+# -Wall -Wextra -Wpedantic -Wnoerror
+gcc -xc -o $outputfile - ${@[2,-1]} <<EOS
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+$(if [[ -n $main ]]; then
+	printf 'int main(int argc, char **argv){\n%s\n;\n}' ${src%;}
+else
+	echo $src
+fi)
+EOS
+$outputfile
+rm $outputfile
