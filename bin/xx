@@ -1,24 +1,25 @@
 #!/bin/zsh
 
-## `xx`: A helper script to repeat a string a certain amount of times
+# `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
-##
 
-
+####################################################################################################
+#                                          Parse Options                                           #
+####################################################################################################
 
 ## Usage function
 usage () cat <<USAGE
 usage: ${ZSH_SCRIPT:t} [-n] (-w WIDTH | -c COUNT) [--] string
 	-n         Don't print the trailing newline
 	-c COUNT   Print 'string' COUNT times
-	-w WIDTH   Repeat 'string' until WIDTH chars are printed
+	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
+
+(There's a bug with a 'string' of just '-'; use -- before it to fix it, eg ${ZSH_SCRIPT:t} -w8 -- -.)
 USAGE
-
-
 
 ## Parse Command line options
 wopts=(-w 80) # Default output options
-zparseopts -D -E -K n=no_newline {w,c}+:=wopts h=help # Parse command line options
+zparseopts -D -E -K n=no_newline {w,c}+:=wopts h=help \-=q # Parse command line options
 [[ $1 == -- ]] && shift # `zparseopts` doesn't strip `--`, so we do that ourselves
 
 ## Fetch command line option values
@@ -31,7 +32,9 @@ width=$wopts[-1] # ... was passed in, then the default `-w 80` is used.
 (( $# != 1 )) && { usage >&2; exit 1 } # If not exactly one argument was left over, that's an error.
 [[ $width != <-> ]] && { print -- "${ZSH_SCRIPT:t}: width is not an integer: $width" >&1; exit 1 }
 
-
+####################################################################################################
+#                                        Do the Repetition                                         #
+####################################################################################################
 
 ## Do the repetition
 if [[ $style == -c ]] then
@@ -46,7 +49,9 @@ fi
 ## Print the trailing newline unless it was suppressed
 [[ $no_newline ]] || print
 
-
+####################################################################################################
+#                                             Success                                              #
+####################################################################################################
 
 ## Exit successfully
 exit 0

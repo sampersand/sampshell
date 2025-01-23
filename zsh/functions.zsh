@@ -24,13 +24,6 @@ function cldash { clean-shell --shell =dash --none -- -l $@ }
 
 ## Helpful shorthand utilities
 
-## Repeats a string
-function xx {
-	
-	repeat ${2:?need a count} print -rn -- ${1:?need a string}
-	print
-}
-
 alias banner='noglob ~ss/bin/banner' # noglob's so that we can just give most strings
 function b80  { banner -w80 $@  | pbcopy }
 function b100 { banner -w100 $@ | pbcopy }
