@@ -1,57 +1,43 @@
 #!/bin/zsh
 
-
-usage () { cat <<USAGE; }
-usage: ${0:t} [-n] (-w WIDTH | -c COUNT) string
-       $(printf "%${#0}s" "") [-n] string [WIDTH=80]
-
-With -c, prints 'string' COUNT times. With -w, prints 'string' until WIDTH
-characters have been printed. With -n, the trailing newline is suppressed.
-The second form acts like '-w', and the width defaults to 80.
+usage () cat <<USAGE
+usage: ${ZSH_SCRIPT:t} [-n] (-w WIDTH | -c COUNT) [--] string
+	-n         Don't print the trailing newline
+	-c COUNT   Print 'string' COUNT times
+	-w WIDTH   Repeat 'string' until WIDTH chars are printed
 USAGE
 
-wopts=(-w 80) # default
-zparseopts -D -K n=no_newline {w,c}+:=wopts h=help
+wopts=(-w 80) # Default output options
+zparseopts -D -E -K n=no_newline {w,c}+:=wopts h=help # Parse command line options
+[[ $1 == -- ]] && shift # `zparseopts` doesn't strip `--`, so we do that ourselves
 
+# If help was requested, print the usage and exit.
 (( $+help )) && { usage; exit }
 
-# If exactly two arguments are given, and no width options were,
-# then assume the second form
-if (( $# == 2 && $#wopts == 2 )) then
-	wopts=(-w $2)
-	shift -p
-fi
+# If not exactly one argument was left over, that's an error.
+(( $# != 1 )) && { usage >&2; exit 1 }
 
-if (( $# != 1 )) then
-	usage >&2
-	exit 1
-fi
+msg=$1 # The message is the first argument
 
+# Get the style and width from the last two values within `$wopts` (ie the last two values given, or
+# the default if none were.)
 style=$wopts[-2]
 width=$wopts[-1]
 
-if [[ $width != <-> ]] then
-	print "$0:t: width has to be an integer" >&1
-	exit 1
-fi
+# Make sure width is an integer
+[[ $width != <-> ]] && { print "${ZSH_SCRIPT:t}: width has to be an integer" >&1; exit 1 }
 
-msg=$1
-
+# If `-c` was requested, then use ZSH's builtin repeat function.
 if [[ $style == -c ]] then
 	repeat $width do
-		print -nr -- $*
+		print -nr -- $msg
 	done
 else
-	while (( width > 0 )) do
-		if (( $#msg > width )) then
-			printf "%.${width}s" $*
-			break
-		else
-			print -rn -- $*
-			(( width -= $#msg ))
-		fi
+	for (( ; 0 < width; width -= $#msg )) do
+		printf '%.*s' $width $msg
 	done
 fi
 
-[[ $no_newline ]] || print
-exit 0
+[[ $no_newline ]] || print # Print a newline unless `-n` was provided
+
+exit 0 # Success!
