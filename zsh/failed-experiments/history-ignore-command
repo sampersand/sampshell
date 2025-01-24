@@ -31,6 +31,12 @@
 # this file exists.
 ##
 
+## The list of commands to ignore. This variable isn't meant to be directly interacted with.
+# - `-g +x`: Globally visible within this shell, but not exported to other programs.
+# - `-aU`  : Declares it as an array that ensures its arguments are always unique.
+# - `-H`   : Hide its values when `typeset`ing, as it's "private"
+typeset -g +x -aU -H _SampShell_history_ignore_commands
+
 ## The hook function.
 # If the function returns `1`, that indicates to ZSH that the command shouldn't be stored, and none
 # of the remaining hook functions are run. If it returns `0`, ZSH will continue executing other
@@ -43,10 +49,42 @@ function _SampShell-history-ignore-commands-hook {
 	emulate -L zsh
 
 	# Local variables used in the function
+	local command ignore_prefix split_prefix want given
 
 	# Split the command into its arguments, using ZSH-style syntax parsing (eg remove comments,
 	# squash consecutive whitespace, etc.). This is done so we can match command prefixes.
-	! zstyle -t ":sampshell:history:record:${(j: :)${(Z+Cn+)1}}" ignore-command
+	command=( ${(Z+Cn+)1} )
+
+##	if zstyle -t ":sampshell:history:record:${(j: :)command}" ignore; then
+##		echo "ignoring!"
+##	fi
+
+	# Iterate over the list of ignored command prefixes, so we can see if they match.
+	for ignore_prefix in $_SampShell_history_ignore_commands; do
+		# Split apart the ignored prefix using ZSH-style parsing (but do keep comments, in
+		# case the command includes a `#`),
+		split_prefix=( ${(z)ignore_prefix} )
+
+		# If the split prefix has more arguments than the command itself, it cannot possibly
+		# match. So, we `continue` so we don't fall through
+		((  $#split_prefix > $#command )) && continue
+
+		# zip $split_prefix and $command together, stopping when $split_prefix is exhausted.
+		for want given in ${split_prefix:^command}; do
+			# If what we want isn't equal to what we were given, the prefix doesn't
+			# match. Continue the outer for loop.
+			[[ $want != $given ]] && continue 2
+		done
+
+##		echo "ignoring as well!"
+
+		# The prefix matched, so we shouldn't record it. Return `1` to indicate this.
+		return 1
+
+	done
+
+	# None of the prefixes matched, so return `0` to indicate we don't care if it's stored.
+	return 0
 }
 
 ## Make sure our hook is the very first hook that's run.
@@ -61,7 +99,7 @@ function history-ignore-command {
 
 	# If no arguments are given, print an error message and return.
 	if (( $# == 0 )) then
-		print >&2 "usage: $0 [-g] [--] command [...commands]"
+		print >&2 "usage: $0 command [...commands]"
 		print >&2
 		print >&2 "Don't save invocations of 'command' in history. The commands can include"
 		print >&2 "spaces in them, and will match subcommands (eg if command='git status',"
@@ -70,10 +108,11 @@ function history-ignore-command {
 		return 1
 	fi
 
-	# Add the arguments to the `zstyle` list
-	local cmd
-	for cmd do
-		cmd=${(j: :)${(bz)cmd}} # split apart `cmd`, and quote it so it'll work with zstyle
-		zstyle ":sampshell:history:record:$cmd(|[[:space:]]*)" ignore-command true
-	done
+	# Add the arguments to `_SampShell_history_ignore_commands`.
+	_SampShell_history_ignore_commands+=($@)
+##	local tmp
+##	for tmp; do
+##		tmp=( ${(Z+Cn+)tmp} )
+##		zstyle ":sampshell:history:record:${(b)${(j: :)tmp}}(|[[:space:]]*)" ignore true
+##	done
 }

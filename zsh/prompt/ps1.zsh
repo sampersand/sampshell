@@ -99,7 +99,7 @@ typeset -g +x PS1=''
 # going to be displaying the git prompt. (NOTE: The file must be named exactly `__git_ps1`, as the
 # name of the function and the name of the file must match.) We use `emulate` to ensure that no
 # weird options affect the way that we're autoloading.
-emulate zsh -c "autoload -RUk ${(q)0:P:h}/__git_ps1"
+emulate sh -c "autoload -RUk ${(q)0:P:h}/__git_ps1"
 
 ## The function that's used to fetch the git status.
 function _SampShell-prompt-git-hook {
