@@ -42,11 +42,12 @@ function _SampShell-history-ignore-commands-hook {
 	# user-specific config.
 	emulate -L zsh
 
-	# Local variables used in the function
-
 	# Split the command into its arguments, using ZSH-style syntax parsing (eg remove comments,
 	# squash consecutive whitespace, etc.). This is done so we can match command prefixes.
-	! zstyle -t ":sampshell:history:record:${(j: :)${(Z+Cn+)1}}" ignore-command
+	#
+	# Note: We intentionally add a space to the end of the command, so that the command pattern
+	# has an easier time matching.
+	! zstyle -t ":sampshell:history:record:${(j: :)${(Z+Cn+)1}} " ignore-command
 }
 
 ## Make sure our hook is the very first hook that's run.
@@ -74,6 +75,7 @@ function history-ignore-command {
 	local cmd
 	for cmd do
 		cmd=${(j: :)${(bz)cmd}} # split apart `cmd`, and quote it so it'll work with zstyle
-		zstyle ":sampshell:history:record:$cmd(|[[:space:]]*)" ignore-command true
+		# (Parens are needed so it interprets it as a glob pattern)
+		zstyle ":sampshell:history:record:$cmd([[:space:]]*)" ignore-command true
 	done
 }

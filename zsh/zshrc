@@ -142,7 +142,7 @@ unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remai
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
 function j {
 	emulate -L zsh
-	jobs -d $@ | sed -n 'N;s/\n/ /;p'
+	jobs -d $@ | sed 'N;s/\n/ /'
 }
 
 ####################################################################################################
