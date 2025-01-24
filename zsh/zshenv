@@ -13,6 +13,19 @@
 ####
 
 ####################################################################################################
+#                                  Enable Profiling if Requested                                   #
+####################################################################################################
+
+## If the `$SampShell_PROFILE` variable is defined and nonempty, then we enable profiling.
+# (We eval it so we doesn't parse it if it's not profiling)
+if [[ -n ${SampShell_PROFILE:-} ]]; then
+	eval '
+zshexit_functions+=(_SampShell_profile_exit)
+function _SampShell_profile_exit { zprof }
+zmodload zsh/zprof'
+fi
+
+####################################################################################################
 #                                           Setup $PATH                                            #
 ####################################################################################################
 
