@@ -22,7 +22,7 @@ typeset -g +x RPS1=''
 
 ## Don't indent the right prompt. (Normally set to `1` b/c some terminals don't handle it properly,
 # but Terminal.app on macOS does, so I've set it to 0.)
-ZLE_RPROMPT_INDENT=0
+# ZLE_RPROMPT_INDENT=0 <-- actually, it does screw up sometimes afaict... lol
 
 ####################################################################################################
 #                                         Current Battery                                          #

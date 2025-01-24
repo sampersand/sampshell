@@ -18,20 +18,27 @@
 # a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
-# Add `add-zsh-hook` to the autoload list.
-autoload -Uz add-zsh-hook
+####################################################################################################
+#                                                                                                  #
+#                                   Add in autoloaded functions                                    #
+#                                                                                                  #
+####################################################################################################
 
 typeset -Ua fpath # make fpath unique if it wasnt already
-fpath+=(${0:P:h}/functions)
+
+## Add the `functions` directory to the start of the list of autoloadable functions, so they're
+# checked first.
+fpath=(${0:P:h}/functions $fpath)
+
+## Mark all the functions within that directory as autoloaded. The `-U` specifies that aliases won't
+# be expanded in them, and `-z` specifies that they'll be autoloaded in ZSH-style (not KSH).
+autoload -Uz ${0:P:h}/functions/*(.:t)
 
 ####################################################################################################
 #                                                                                                  #
 #                                       Changing Directories                                       #
 #                                                                                                  #
 ####################################################################################################
-
-## Setup
-autoload -Uz add-named-dir del-named-dir
 
 ## Add named directories
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
@@ -62,8 +69,6 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 ## Load in history utilities
 source ${0:P:h}/history/record-every-command.zsh
 
-autoload -Uk history-ignore-command
-
 	## Functions for enabling and disabling history recording.
 	# History in ZSH is written periodically, when manually requested (via `fc -W`), or when the shell
 	# exits, to the `$HISTFILE` parameter (with `$SAVEHIST` entries being written). To "disable" ZSH's
@@ -80,13 +85,6 @@ autoload -Uk history-ignore-command
 	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
 	# commands are stored in the history.
 	##
-
-	## Global, non-exported variable, whose value is hidden from end-users; its primary purpose is
-	# actually within `record-every-command.zsh`, as it uses it to determine whether commands should be
-	# recorded or not. It's also used within `history-{enable,disable,toggle}`.
-	#
-	# This variable is also `typeset` within `record-every-command.zsh`.
-	autoload -Uz history-{disable,enable,toggle}
 	history-ignore-command history-{enable,disable,toggle}
 
 ## Setup history parameters

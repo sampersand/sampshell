@@ -9,7 +9,7 @@
 # functions have passed. However, it's not critical for it to be the last one (as this is just used
 # for statistical purposes, and nothing mission-critical), so that if functions are added after it,
 # it's ok.
-add-zsh-hook zshaddhistory _SampShell-record-every-command
+zshaddhistory_functions+=(_SampShell-record-every-command)
 
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
 #

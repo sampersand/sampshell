@@ -53,7 +53,7 @@ PROMPT_EOL_MARK=$'\e[m'"%B%S%#%s%b" # <--- TODO: is this needed for a reset too?
 	unsetopt PROMPT_SP # Disable the default functionality
 
 	# Add the function to the list of precommand functions
-	add-zsh-hook precmd _SampShell-noprint-spaces
+	precmd_functions+=(_SampShell-noprint-spaces)
 
 	# The function in question that handles not printing spaces
 	function _SampShell-noprint-spaces {
