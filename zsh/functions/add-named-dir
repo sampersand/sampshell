@@ -6,7 +6,7 @@
 ##
 
 emulate -L zsh # Reset ZSH to its default options, just for this function.
-
+foo=5
 local dir name
 
 # Extract the name and directory from the arguments

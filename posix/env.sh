@@ -122,22 +122,20 @@ export HOMEBREW_NO_ANALYTICS=1
 unalias SampShell_unalias >/dev/null 2>&1 # Unalias this one in case it existed.
 SampShell_unalias () {
    if [ "$#" = 0 ]; then
-      echo 'usage: SampShell_unalias name [name ...]' >&2
+      echo >&2 'usage: SampShell_unalias name [name ...]'
       return 1
    fi
 
-   while [ "$#" != 0 ]; do
-      unalias "$1" >/dev/null 2>&1 || : # `:` to ensure we always succeed.
-      shift
-   done
-
-   : # `unalias` always suceeds
+   unalias "$@" >/dev/null 2>&1 || : # To ensure we always succeed
 }
+
+## Unalias all the functions in case they already existed
+SampShell_unalias SampShell_log SampShell_dot_if_exists SampShell_add_to_path
+SampShell_unalias SampShell_does_command_exist SampShell_debug SampShell_undebug
 
 ## Logs a message only if `$SampShell_VERBOSE` is enabled.
 # If `$SampShell_VERBOSE` is nonempty, all arguments are forwarded to `printf`,
 # and a newline is appended at the end.
-SampShell_unalias SampShell_log
 SampShell_log () {
    [ -z "${SampShell_VERBOSE-}" ] && return 0
    printf -- "$@" && echo # Make sure we print the trailing newline
@@ -148,7 +146,6 @@ SampShell_log () {
 #
 # This returns an error if the `.` itself failed, or if the file doesn't exist
 # and `SampShell_log` failed for some reason.
-SampShell_unalias SampShell_dot_if_exists
 SampShell_dot_if_exists () {
    if [ -e "${1:?need file to source}" ]; then
       . "$@"
@@ -157,20 +154,11 @@ SampShell_dot_if_exists () {
    fi
 }
 
-## Returns whether or not the given command exists.
-# This not only checks for functions, but also aliases, scripts via `$PATH`,
-# keywords, and anything else that's valid as a command.
-SampShell_unalias SampShell_does_command_exist
-SampShell_does_command_exist () {
-   command -v "${1:?need command to check}" >/dev/null 2>&1
-}
-
 ## Prepends its argument to '$PATH', unless that argument is already in $PATH.
 # This ensures that each PATH entry is only added once, as there's no real
 # reason to have duplicates. This also handles the case where `$PATH` is empty.
 #
 # This notably does _not_ export `$PATH`; that's the caller's job.
-SampShell_unalias SampShell_add_to_path
 SampShell_add_to_path () {
    case :${PATH-}: in
    *:"${1:?need a path}":*) :                      ;; # It's already there!
@@ -178,10 +166,16 @@ SampShell_add_to_path () {
    esac
 }
 
+## Returns whether or not the given command exists.
+# This not only checks for functions, but also aliases, scripts via `$PATH`,
+# keywords, and anything else that's valid as a command.
+SampShell_does_command_exist () {
+   command -v "${1:?need command to check}" >/dev/null 2>&1
+}
+
 ## Enables debugging mode
 # This enables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
-SampShell_unalias SampShell_debug
 SampShell_debug () {
    export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace -o verbose
 }
@@ -189,7 +183,6 @@ SampShell_debug () {
 ## Disables debugging mode
 # This disables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
-SampShell_unalias SampShell_undebug
 SampShell_undebug () {
    unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace +o verbose
 }

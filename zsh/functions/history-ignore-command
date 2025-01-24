@@ -55,6 +55,10 @@ function _SampShell-history-ignore-commands-hook {
 	# squash consecutive whitespace, etc.). This is done so we can match command prefixes.
 	command=( ${(Z+Cn+)1} )
 
+##	if zstyle -t ":sampshell:history:record:${(j: :)command}" ignore; then
+##		echo "ignoring!"
+##	fi
+
 	# Iterate over the list of ignored command prefixes, so we can see if they match.
 	for ignore_prefix in $_SampShell_history_ignore_commands; do
 		# Split apart the ignored prefix using ZSH-style parsing (but do keep comments, in
@@ -72,6 +76,8 @@ function _SampShell-history-ignore-commands-hook {
 			[[ $want != $given ]] && continue 2
 		done
 
+##		echo "ignoring as well!"
+
 		# The prefix matched, so we shouldn't record it. Return `1` to indicate this.
 		return 1
 
@@ -85,7 +91,7 @@ function _SampShell-history-ignore-commands-hook {
 # While it's not a strict requirement that it's run before all the other hooks (if any hook returns
 # a non-zero return status, the rest of them aren't run), it's first so that other hooks don't see
 # a line which is ultimately not going to be recorded.
-zshaddhistory_functions=( _SampShell-history-ignore-commands-hook $zshaddhistory_functions )
+zshaddhistory_functions[1,0]=(_SampShell-history-ignore-commands-hook)
 
 ## Add commands to the list of commands to ignore.
 function history-ignore-command {
@@ -104,4 +110,9 @@ function history-ignore-command {
 
 	# Add the arguments to `_SampShell_history_ignore_commands`.
 	_SampShell_history_ignore_commands+=($@)
+##	local tmp
+##	for tmp; do
+##		tmp=( ${(Z+Cn+)tmp} )
+##		zstyle ":sampshell:history:record:${(b)${(j: :)tmp}}(|[[:space:]]*)" ignore true
+##	done
 }

@@ -10,7 +10,6 @@
 # * 1 - if the start of the buffer isn't the quick-replacement character, then the buffer has spaces
 # deleted, but backslashes are respected.
 
-
 # Stripping leading space off.
 case ${1:-1} in
 	0)

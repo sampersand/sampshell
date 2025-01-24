@@ -4,8 +4,10 @@
 # Strip out trailing whitespace. Note that we don't need to set `EXTENDED_GLOB` (or use the `(*)`
 # parameter) as ZLE ensures it's always set.
 if zstyle -T 'zle:accept-line' strip-whitespace; then
-	(( ! ${+NUMERIC} )) && zle SampShell-strip-whitespace -- 2 1
+	# This isn't working currently
+	# (( ! ${+NUMERIC} )) && zle SampShell-strip-whitespace -- 2 1
 fi
+
 
 # Call the builtin `accept-line` instead of this anything that may overwrite it (ie this fn).
 zle .accept-line

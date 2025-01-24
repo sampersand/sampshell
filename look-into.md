@@ -7,6 +7,34 @@ promptnl
     sin sinh sqrt tan tanh y0 y1 signgam copysign fmod hypot nextafter jn yn
     ldexp scalb rand48)
 
+STTY=-isig sleep 1 <-- lol no ctrl+c
+
+STTY variable is cool!
+ZSH_ARGZERO vs  ZSH_EXECUTION_STRING vs  ZSH_SCRIPT
+how does ARGV0 really work?
+
+ohw does `typeset -h _` and then `_=3; echo $_` not work?
+
+
+LC_EXPANSION
+
+STTY
+
+    If this parameter is set in a command’s environment, the shell runs the stty command with the value of this parameter as arguments in order to set up the terminal before executing the command. The modes apply only to the command, and are reset when it finishes or is suspended. If the command is suspended and continued later with the fg or wait builtins it will see the modes specified by STTY, as if it were not suspended. This (intentionally) does not apply if the command is continued via ‘kill -CONT’. STTY is ignored if the command is run in the background, or if it is in the environment of the shell but not explicitly assigned to in the input line. This avoids running stty at every external command by accidentally exporting it. Also note that STTY should not be used for window size specifications; these will not be local to the command.
+
+    If the parameter is set and empty, all of the above applies except that stty is not run. This can be useful as a way to freeze the tty around a single command, blocking its changes to tty settings, similar to the ttyctl builtin.
+
+TMOUT
+
+    If this parameter is nonzero, the shell will receive an ALRM signal if a command is not entered within the specified number of seconds after issuing a prompt. If there is a trap on SIGALRM, it will be executed and a new alarm is scheduled using the value of the TMOUT parameter after executing the trap. If no trap is set, and the idle time of the terminal is not less than the value of the TMOUT parameter, zsh terminates. Otherwise a new alarm is scheduled to TMOUT seconds after the last keypress.
+
+ZBEEP
+
+    If set, this gives a string of characters, which can use all the same codes as the bindkey command as described in The zsh/zle Module, that will be output to the terminal instead of beeping. This may have a visible instead of an audible effect; for example, the string ‘\e[?5h\e[?5l’ on a vt100 or xterm will have the effect of flashing reverse video on and off (if you usually use reverse video, you should use the string ‘\e[?5l\e[?5h’ instead). This takes precedence over the NOBEEP option.
+
+zle_highlight
+    https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
+
 
 ---others
 

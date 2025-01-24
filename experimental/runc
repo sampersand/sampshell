@@ -1,12 +1,15 @@
 #!/bin/zsh
 
 outputfile="$(mktemp)"
-rm $outputfile
+trap 'rm $outputfile' EXIT
+
 if [[ $1 = - ]]; then
 	main=1
 	shift
 fi
+
 src=${1?"need source file"}
+
 # -Wall -Wextra -Wpedantic -Wnoerror
 gcc -xc -o $outputfile - ${@[2,-1]} <<EOS
 #include <stdio.h>
@@ -20,5 +23,5 @@ else
 	echo $src
 fi)
 EOS
+
 $outputfile
-rm $outputfile

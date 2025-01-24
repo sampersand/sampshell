@@ -24,19 +24,16 @@
 #                                                                                                  #
 ####################################################################################################
 
-typeset -Ua fpath # make fpath unique if it wasnt already
-
-## Add the `functions` directory to the start of the list of autoloadable functions, so they're
-# checked first.
-fpath=(${0:P:h}/functions $fpath)
-
-## Mark all the functions within that directory as autoloaded. The `-U` specifies that aliases won't
-# be expanded in them, and `-z` specifies that they'll be autoloaded in ZSH-style (not KSH).
-autoload -Uz ${0:P:h}/functions/*(.:t)
+## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
+# loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
+# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH, and the `-R` flag dictates
+# that their paths should be immediately recorded, instead of relying on `$fpath` like normal auto-
+# loaded functions).
+autoload -URz ${0:P:h}/functions/*
 
 ####################################################################################################
 #                                                                                                  #
-#                                       Changing Directories                                       #
+#                                           Directories                                            #
 #                                                                                                  #
 ####################################################################################################
 
@@ -66,8 +63,10 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 #                                                                                                  #
 ####################################################################################################
 
-## Load in history utilities
-source ${0:P:h}/history/record-every-command.zsh
+## Load in the "record every command" functionality, unless it's been explicitly opted out of
+if zstyle -T ':sampshell:history:record-every-command' enabled; then
+	source ${0:P:h}/record-every-command.zsh
+fi
 
 	## Functions for enabling and disabling history recording.
 	# History in ZSH is written periodically, when manually requested (via `fc -W`), or when the shell
@@ -204,13 +203,9 @@ alias bkg='bindkey | noglob fgrep -ie'
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
 () {
-	fpath+=($1)
-
+	autoload -URz $1/*
 	local fn
-	for fn in $1/*(:t); do
-		autoload -Uz $fn
-		zle -N $fn
-	done
+	for fn in $1/*(:t); do zle -N $fn; done
 } ${0:P:h}/keybind-functions
 
 ## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
@@ -235,6 +230,10 @@ alias which-command=which # for `^[?`
 bindkey '^[ z' SampShell-put-back-zle
 bindkey '^[ p' SampShell-add-pbcopy
 bindkey -s '^[ l' '^Qls^M'
+
+## up and down history, but without going line-by-line
+bindkey '^P' up-history
+bindkey '^N' down-history
 
 # Arrow keys that can be used in the future
 bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
