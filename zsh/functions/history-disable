@@ -1,0 +1,23 @@
+#!zsh
+
+## Disables history
+
+emulate -L zsh # Reset the shell to the default ZSH options
+
+# If any options are given, that's an error.
+if (( $# != 0 )) then
+	print >&2 "usage: $0"
+	print >&2
+	print >&2 'Disables the saving of history to files'
+	return 1
+fi
+
+# If history is already disabled, that's an error.
+if (( _SampShell_history_disabled )) then
+	print >&2 'History saving already disabled.'
+	return 2
+fi
+
+# Push `$HISTFILE` and `$SAVEHIST` onto a stack, unset them. Then set
+# `_SampShell_history_disabled` to 1, and print a message.
+fc -p && _SampShell_history_disabled=1 && print 'History saving disabled.'

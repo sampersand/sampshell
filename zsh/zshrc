@@ -31,8 +31,7 @@ fpath+=(${0:P:h}/functions)
 ####################################################################################################
 
 ## Setup
-autoload -Uz add-named-dir
-autoload -Uz del-named-dir
+autoload -Uz add-named-dir del-named-dir
 
 ## Add named directories
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
@@ -63,7 +62,31 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 ## Load in history utilities
 source ${0:P:h}/history/record-every-command.zsh
 source ${0:P:h}/history/history-ignore.zsh
-source ${0:P:h}/history/disable-history.zsh
+
+	## Functions for enabling and disabling history recording.
+	# History in ZSH is written periodically, when manually requested (via `fc -W`), or when the shell
+	# exits, to the `$HISTFILE` parameter (with `$SAVEHIST` entries being written). To "disable" ZSH's
+	# history mechanism, one simply has to unset these variables, and ZSH won't have anywhere to store
+	# the history.
+	#
+	# ZSH provides a nice little builtin pair to "push" (`fc -p`) and "pop" (`fc -P`) these two
+	# variables onto a stack. So, `history-disable` "pushes" the current $HISTFILE and $SAVEHIST vars
+	# onto the stack (via `fc -p`), but doesn't set new ones. This means ZSH has nowhere to save the
+	# history. When `history-enable` is later executed, assuming they haven't been manually set after
+	# the `history-disable`, the `fc -P` will attempt to write the current history to an empty file, and
+	# thus just discards it.
+	#
+	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
+	# commands are stored in the history.
+	##
+
+	## Global, non-exported variable, whose value is hidden from end-users; its primary purpose is
+	# actually within `record-every-command.zsh`, as it uses it to determine whether commands should be
+	# recorded or not. It's also used within `history-{enable,disable,toggle}`.
+	#
+	# This variable is also `typeset` within `record-every-command.zsh`.
+	autoload -Uz history-{disable,enable,toggle}
+	history-ignore-command history-{enable,disable,toggle}
 
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands

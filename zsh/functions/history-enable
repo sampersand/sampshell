@@ -1,0 +1,24 @@
+#!zsh
+
+## Enables recording history again. Any commands that were entered since the `disable-history` was
+# run are discarded (assuming HISTFILE/SAVEHIST weren't updated).
+emulate -L zsh # Reset the shell to the default ZSH options
+
+# If any options are given, that's an error.
+if (( $# != 0 )) then
+	print >&2 "usage: $0"
+	print >&2
+	print >&2 'Enables the saving of history to files.'
+	return 1
+fi
+
+# If history is already enabled, that's an error.
+if (( ! _SampShell_history_disabled )) then
+	print >&2 'History saving already enabled.'
+	return 2
+fi
+
+# Save the history to `$HISTFILE` and `$SAVEHIST` (if they were set; they won't be after a
+# `disable-history` unless something manually touched them), then pop those variables from
+# their stack. Then set unset `_SampShell_history_disabled`, and print a message.
+fc -P && _SampShell_history_disabled= && print 'History saving enabled.'

@@ -1,0 +1,19 @@
+#!zsh
+
+## Either disables or enables history, depending on the `_SampShell_history_disabled` variable.
+emulate -L zsh # Reset the shell to the default ZSH options
+
+# If any options are given, that's an error.
+if (( $# != 0 )) then
+	print >&2 "usage: $0"
+	print >&2
+	print >&2 'Toggles whether history is currently active.'
+	return 1
+fi
+
+# Enable or disable based on the variable
+if (( _SampShell_history_disabled )) then
+	enable-history
+else
+	disable-history
+fi
