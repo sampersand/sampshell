@@ -1,6 +1,7 @@
 #!zsh
 
 ## Either disables or enables history, depending on the `_SampShell_history_disabled` variable.
+#
 emulate -L zsh # Reset the shell to the default ZSH options
 
 # If any options are given, that's an error.

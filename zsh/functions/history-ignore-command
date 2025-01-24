@@ -1,3 +1,5 @@
+#!zsh
+
 ## Disable history for specific commands.
 # (NOTE: Since this command affects the shell itself, it must be `.` or `source`d to work properly.)
 #
@@ -86,7 +88,7 @@ function _SampShell-history-ignore-commands-hook {
 zshaddhistory_functions=( _SampShell-history-ignore-commands-hook $zshaddhistory_functions )
 
 ## Add commands to the list of commands to ignore.
-function {SampShell-,}history-ignore-command {
+function history-ignore-command {
 	emulate -L zsh # Reset ZSH to default options for this function
 
 	# If no arguments are given, print an error message and return.
@@ -103,5 +105,3 @@ function {SampShell-,}history-ignore-command {
 	# Add the arguments to `_SampShell_history_ignore_commands`.
 	_SampShell_history_ignore_commands+=($@)
 }
-
-

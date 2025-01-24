@@ -61,7 +61,8 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 
 ## Load in history utilities
 source ${0:P:h}/history/record-every-command.zsh
-source ${0:P:h}/history/history-ignore.zsh
+
+autoload -Uk history-ignore-command
 
 	## Functions for enabling and disabling history recording.
 	# History in ZSH is written periodically, when manually requested (via `fc -W`), or when the shell
