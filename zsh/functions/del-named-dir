@@ -1,0 +1,19 @@
+#!zsh
+
+##
+# Removes a directory from the list of directories.
+# (This file is really just a wrapper around `hash -d`)
+##
+
+emulate -L zsh # Reset ZSH to its default options, just for this function.
+
+if (( $# != 1 )) then
+	print >&2 -r "usage: $0 name"
+	print >&2
+	print >&2 -r "removes 'name' as a named dir"
+	return 1
+fi
+
+# NOTE: the `:t` is so you can pass paths in, as `/` is an invalid char
+# in named directories. Also, provides parity with `add-named-dir`
+builtin unhash -d -- ${1:t}

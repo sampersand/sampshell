@@ -1,0 +1,33 @@
+#!zsh
+
+##
+# Add a directory to the list of named directories.
+# (This file is really just a wrapper around `hash -d`)
+##
+
+emulate -L zsh # Reset ZSH to its default options, just for this function.
+
+local dir name
+
+# Extract the name and directory from the arguments
+case $# in
+1) dir=$1; name=${dir:t} ;;
+2) dir=$2; name=$1 ;;
+*)
+	print >&2 "usage: $0 [name] dir"
+	print >&2
+	print >&2 'Lets you use ~name as a shorthand for `dir`, eg `cd ~name/bar/baz`'
+	print >&2 'If `name` is not given, it defaults to the last part of `dir`'
+	return 1
+esac
+
+# Ensure a directory and name are actually given
+if [[ -z $dir ]] then
+	print >&2 -r -- "$0: an empty directory was given"
+	return 1
+elif [[ -z $name ]] then
+	print >&2 -r -- "$0: an empty name was given"
+	return 1
+fi
+
+builtin hash -d -- $name=$dir

@@ -21,14 +21,20 @@
 # Add `add-zsh-hook` to the autoload list.
 autoload -Uz add-zsh-hook
 
+typeset -Ua fpath # make fpath unique if it wasnt already
+fpath+=(${0:P:h}/functions)
+
 ####################################################################################################
 #                                                                                                  #
 #                                       Changing Directories                                       #
 #                                                                                                  #
 ####################################################################################################
 
+## Setup
+autoload -Uz add-named-dir
+autoload -Uz del-named-dir
+
 ## Add named directories
-source ${0:P:h}/named-directories.zsh
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
 [[ -n $SampShell_TMPDIR   ]] && add-named-dir tmp   $SampShell_TMPDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
