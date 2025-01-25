@@ -89,6 +89,7 @@ fi
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
 SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
+# HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
 
 ## Setup history options
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
@@ -153,8 +154,8 @@ function j {
 
 ## Options for prompt expansion
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_BANG    # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
@@ -205,7 +206,9 @@ alias bkg='bindkey | noglob fgrep -ie'
 () {
 	autoload -URz $1/*
 	local fn
-	for fn in $1/*(:t); do zle -N $fn; done
+	for fn in $1/*(:t); do
+		zle -N $fn
+	done
 } ${0:P:h}/keybind-functions
 
 ## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
@@ -214,8 +217,8 @@ bindkey -A sampshell main
 
 ## Bind key strokes to do functions
 bindkey '^[#'    pound-insert
+bindkey '^[='    SampShell-delete-to-char
 bindkey '^[/'    SampShell-delete-path-segment
-bindkey '^[='    SampShell-delete-backto-char
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 bindkey '^[%'    SampShell-make-prompt-simple
 bindkey '^[$'    SampShell-make-prompt-simple

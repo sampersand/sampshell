@@ -13,7 +13,8 @@ function copy-to-clipboard {
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
-alias hg='h | grep'
+function _SampShell-hg { h | grep $* }
+alias hg='noglob _SampShell-hg'
 
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 alias mk=mkdir
@@ -56,6 +57,7 @@ alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
 alias hd='hexdump -C'
+-x () { { set -x; $@ } always { set +x } } # enable xtrace for a single invocation
 
 ################################################################################
 

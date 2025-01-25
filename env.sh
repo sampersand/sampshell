@@ -55,6 +55,7 @@ if [ -z "${SampShell_ROOTDIR-}" ]; then
 	# ZSH: just use the builtin `${0:P:h}` to find it
 	if [ -n "${ZSH_VERSION-}" ]; then
 		# We need to use `eval` in case shells don't understand `${0:P:h}`.
+		# (TODO: can you make this work with `emulate sh` in effect)
 		eval 'SampShell_ROOTDIR="${0:P:h}"'
 
 	# BASH: Use `BASH_SOURCE`

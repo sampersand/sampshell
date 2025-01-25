@@ -1,6 +1,11 @@
 #!zsh
 
+## This has been supplanted by using `zle/deltochar`
+
 ## Deletes from the cursor to a given character, either forwards or backwards.
+# NOTE: there's a builtin module `zmodload zle/deltochar` which exposes the
+# widget `delete-to-char` which does something very similar, except it by goes
+# the other direction by default.
 
 # Read a single character and put it into `$chr`
 read -sk chr
