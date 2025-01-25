@@ -91,20 +91,20 @@ function _SampShell-prompt-ruby-version () {
 #                                    Previous Command Duration                                     #
 ####################################################################################################
 
-typeset -FH SECONDS # Set the builtlin `SECONDS` variable to be a float. TODO: This is dangerous?
+zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile for `strftime`
 typeset -FH _SampShell_last_exec_time=0
 
 # Add this to the end of preexec so we don't get all the other functions
 preexec_functions+=(_SampShell-prompt-set-start-time-hook)
 function _SampShell-prompt-set-start-time-hook {
-	_SampShell_last_exec_time=$SECONDS
+	_SampShell_last_exec_time=$EPOCHREALTIME
 }
 
 # Add this as the very first precmd function, so that we get more accurate timing.
 precmd_functions[1,0]=_SampShell-prompt-display-time-hook
 function _SampShell-prompt-display-time-hook {
 	# Get the current duration as soon as possible
-	float now=$SECONDS
+	float now=$EPOCHREALTIME
 
 	(( _SampShell_last_exec_time )) || return
 	float diff='now - _SampShell_last_exec_time'

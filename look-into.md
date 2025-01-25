@@ -1,3 +1,8 @@
+what is "zsh/mapfile", zsh/sched
+The zsh/attr Module
+    what is an extended attribute
+zsh/clone: Copy the current shell. maybe as a replacement for command+t?
+
 zsh autoloads
 ------
 promptnl
@@ -7,7 +12,7 @@ promptnl
     sin sinh sqrt tan tanh y0 y1 signgam copysign fmod hypot nextafter jn yn
     ldexp scalb rand48)
 
-STTY=-isig sleep 1 <-- lol no ctrl+c
+- STTY=-isig sleep 1 <-- lol no ctrl+c
 
 STTY variable is cool!
 ZSH_ARGZERO vs  ZSH_EXECUTION_STRING vs  ZSH_SCRIPT
