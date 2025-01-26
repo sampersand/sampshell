@@ -57,6 +57,7 @@ alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
 alias hd='hexdump -C'
+alias psg='noglob ps -ax | grep '
 
 ################################################################################
 
