@@ -64,13 +64,13 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 # warrant delving into that. Possible future TODO?
 function SampShell_debug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	export SampShell_VERBOSE=1 SampShell_TRACE=1
+	export SampShell_TRACE=1
 	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 
 function SampShell_undebug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	unset SampShell_VERBOSE SampShell_TRACE
+	unset SampShell_TRACE
 	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 

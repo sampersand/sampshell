@@ -7,12 +7,12 @@
 setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
 setopt COMPLETE_IN_WORD
 setopt CORRECT              # Correct commands when executing.
-setopt RM_STAR_WAIT         # Wait 10 seconds before accepting the `y` in `rm *`
+# setopt RM_STAR_WAIT       # Disabled, since I don't need this level of protection. Wait 10 seconds before accepting the `y` in `rm *`
 setopt CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
 # setopt NO_FLOW_CONTROL    # Modern terminals dont need control flow lol (?? whats this even do?)
 
 # WORDCHARS=$WORDCHARS # ooo, you can modify which chars are for a word in ZLE
-CORRECT_IGNORE='_*' # Don't correct to functions starting with `_`
+CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting with `_`
 # CORRECT_IGNORE_FILE ; setopt correct_all
 
 ## Defaults that probably shoudl eb set
