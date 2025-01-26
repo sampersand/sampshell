@@ -103,6 +103,13 @@ export SampShell_ROOTDIR
 ################################################################################
 
 # Add generic "SampShell" bin files to the start
+SampShell_add_to_path () {
+   case :${PATH-}: in
+   *:"${1:?need a path}":*) :                      ;; # It's already there!
+   *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
+   esac
+}
+
 SampShell_add_to_path "$SampShell_ROOTDIR/bin"
 if [ -z "${SampShell_no_experimental-}" ]; then
 	SampShell_add_to_path "$SampShell_ROOTDIR/experimental"

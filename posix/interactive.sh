@@ -12,6 +12,10 @@
 ###
 
 export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+SampShell_does_command_exist () {
+   command -v "${1:?need command to check}" >/dev/null 2>&1
+}
+
 
 ## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
 set +o nounset

@@ -64,7 +64,7 @@ function _SampShell-prompt-is-airport-power-on () {
 
 	zstyle -T ':sampshell:prompt:airport' display || return 0
 
-	SampShell_does_command_exist networksetup || return 0 # networksetup must be defined
+	whence networksetup >/dev/null || return 0 # networksetup must be defined
 
 	if [[ "$(networksetup -getairportpower en0)" = *Off ||
 	      "$(networksetup -getairportnetwork en0)" = "You are not associated with an AirPort network." ]]
@@ -82,7 +82,7 @@ function _SampShell-prompt-ruby-version () {
 	emulate -L zsh # Reset the shell to the default ZSH options
 
 	zstyle -T ':sampshell:prompt:ruby-version' display || return 0
-	SampShell_does_command_exist ruby || return 0 # ruby must be defined
+	whence ruby >/dev/null || return 0 # ruby must be defined
 
 	print -n "💎%F{red}$(ruby -v | awk '{print $2}')%f "
 }

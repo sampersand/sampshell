@@ -106,8 +106,8 @@ _SampShell-record-every-command () {
 	SampShell_current_record_all_history_file="$SampShell_HISTDIR/$(date +%F).sampshell-history"
 	local date="$(date '+%F %T %z')"
 
-	## Print the history line to the history file; note the redirect at the end of `fi`
-	if SampShell_does_command_exist jq; then
+	## Print the history line to the history file; note the redirect
+	>>$SampShell_current_record_all_history_file if whence jq >/dev/null; then
 		# If `jq` is found, then let's print out the original line (no stripping,
 		# other than a single trailing `\n`, as we can strip it later) along with
 		# some other details in json format.
@@ -120,7 +120,7 @@ _SampShell-record-every-command () {
 		# `jq` isn't found, alas, fall back on the basic method.
 		line=${line//$'\n'/$'\n\t'} # Replace all newlines with a newline-tab
 		printf '%s| %s\n' $date $line
-	fi >>$SampShell_current_record_all_history_file
+	fi
 
 	## Everything's successful! Let's return.
 	return 0
