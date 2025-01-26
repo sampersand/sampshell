@@ -203,14 +203,14 @@ SampShell_undebug () {
 #
 # Note that we allow `$SampShell_ROOTDIR` to be empty, in case the files are
 # stored under `/posix/bin` for some reason.
-if [ -n "${SampShell_ROOTDIR+1}" ]; then
-   if ! [ -d "$SampShell_ROOTDIR/posix/bin" ]; then
-      SampShell_log '[WARN] POSIX bin location (%s/posix/bin) does not exist; still adding it to $PATH though' "$SampShell_ROOTDIR"
-   fi
+# if [ -n "${SampShell_ROOTDIR+1}" ]; then
+#    if ! [ -d "$SampShell_ROOTDIR/posix/bin" ]; then
+#       SampShell_log '[WARN] POSIX bin location (%s/posix/bin) does not exist; still adding it to $PATH though' "$SampShell_ROOTDIR"
+#    fi
 
-   SampShell_add_to_path "$SampShell_ROOTDIR/posix/bin"
-   export PATH
-fi
+#    SampShell_add_to_path "$SampShell_ROOTDIR/posix/bin"
+#    export PATH
+# fi
 
 ################################################################################
 #                           Respect SampShell_TRACE                            #
