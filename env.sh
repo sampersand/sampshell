@@ -57,7 +57,9 @@ if [ -n "${SampShell_TRACE-}" ]; then
 fi
 
 ################################################################################
+#                                                                              #
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
+#                                                                              #
 ################################################################################
 
 ### NOTE: IF THIS SECTION IS CHANGED, ALSO UPDATE `both.sh`!
@@ -124,8 +126,9 @@ case :${PATH-}: in
 
 	# Issue a warning if the bin doesn't exist, and we're in an interactive
 	# shell.
-	# if [ ! -d "$SampShell_ROOTDIR/bin" ]; then
-	# 	! case $- in *i*) false; esac; then
+	if [ ! -d "$SampShell_ROOTDIR/bin" ] && ! case $- in *i*) false; esac; then
+		printf '[WARN] SampShell bin dir cannot be found at: %s\n' "$SampShell_ROOTDIR/bin"
+	fi
 
 	;;
 esac
@@ -134,7 +137,9 @@ esac
 [ -z "${SampShell_no_experimental-}" ] && PATH="$SampShell_ROOTDIR/experimental:$PATH"
 
 ################################################################################
+#                                                                              #
 #                         Source Shell-Specific Config                         #
+#                                                                              #
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
