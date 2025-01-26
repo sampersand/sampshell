@@ -52,8 +52,8 @@
 ################################################################################
 
 if [ -n "${SampShell_TRACE-}" ]; then
-   export SampShell_TRACE # Export it in case it's not already exported.
-   set -o xtrace
+	export SampShell_TRACE # Export it in case it's not already exported.
+	set -x
 fi
 
 ################################################################################
@@ -63,40 +63,41 @@ fi
 ### NOTE: IF THIS SECTION IS CHANGED, ALSO UPDATE `both.sh`!
 
 # Make sure `SampShell_ROOTDIR` is set.
-if [ -z "${SampShell_ROOTDIR-}" ]; then
-   # ZSH: just use the builtin `${0:P:h}` to find it
-   if [ -n "${ZSH_VERSION-}" ]; then
-      # We need to use `eval` in case shells don't understand `${0:P:h}`.
-      # (TODO: can you make this work with `emulate sh` in effect)
-      eval 'SampShell_ROOTDIR="${0:P:h}"'
+if [ -n "${SampShell_ROOTDIR-}" ]; then
+	# Cool, it's already set. Nothing to do
 
-   # BASH: Use `BASH_SOURCE`
-   elif [ -n "${BASH_SOURCE-}" ]; then
-      SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
-      SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
+elif [ -n "${ZSH_VERSION-}" ]; then
+	# ZSH: just use the builtin `${0:P:h}` to find it
+	# We need to use `eval` in case shells don't understand `${0:P:h}`.
+	# (TODO: can you make this work with `emulate sh` in effect)
+	eval 'SampShell_ROOTDIR="${0:P:h}"'
 
-   # Non-interactive: Error, just return 1.
-   elif case $- in *i*) false; esac; then
-      return 1
+# BASH: Use `BASH_SOURCE`
+elif [ -n "${BASH_SOURCE-}" ]; then
+	SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
+	SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
 
-   # We are interactive, default it and warn
-   else
-      # Whelp, we can't rely on `$0`, let's just guess and hope?
-      SampShell_ROOTDIR="$HOME/.sampshell"
-      printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
-         "$SampShell_ROOTDIR" >&2
-   fi
+# Non-interactive: Error, just return 1.
+elif case $- in *i*) false; esac; then
+	return 1
+
+# We are interactive, default it and warn
+else
+	# Whelp, we can't rely on `$0`, let's just guess and hope?
+	SampShell_ROOTDIR="$HOME/.sampshell"
+	printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
+		"$SampShell_ROOTDIR" >&2
 fi
 
 # Make sure that it's actually a directory
 if ! [ -d "$SampShell_ROOTDIR" ]; then
-   # If we're interactive, then print out the warning
-   if ! case $- in *i*) false; esac; then
-      printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-         "$SampShell_ROOTDIR"
-   fi
+	# If we're interactive, then print out the warning
+	if ! case $- in *i*) false; esac; then
+		printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
+			"$SampShell_ROOTDIR"
+	fi
 
-   return 2
+	return 2
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
@@ -120,16 +121,15 @@ export HOMEBREW_NO_ANALYTICS=1
 
 # Add generic "SampShell" bin files to the start
 case :${PATH-}: in
-   *:"$SampShell_ROOTDIR/bin":*)
-      # It's already there!
-      :
-      ;;
-   *)
-      # Not present; prepend it.
-      PATH=$1${PATH:+:}$PATH
-      ;;
+	*:"$SampShell_ROOTDIR/bin":*)
+		# It's already there!
+		:
+		;;
+	*)
+		# Not present; prepend it.
+		PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH
+		;;
 esac
-}
 
 # Unconditionally add "experimental" binaries in, 'cause why not.
 [ -z "${SampShell_no_experimental-}" ] && PATH="$SampShell_ROOTDIR/experimental:$PATH"
@@ -139,8 +139,8 @@ esac
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-   . "$SampShell_ROOTDIR/zsh/zshenv"
-   return
+	. "$SampShell_ROOTDIR/zsh/zshenv"
+	return
 fi
 
 # TODO: add more shell configs when i eventually need them, like bash

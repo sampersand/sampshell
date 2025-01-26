@@ -14,6 +14,15 @@
 SampShell_does_command_exist () {
    command -v "${1:?need command to check}" >/dev/null 2>&1
 }
+SampShell_unalias () {
+   if [ "$#" = 0 ]; then
+      echo >&2 'usage: SampShell_unalias name [name ...]'
+      return 1
+   fi
+
+   unalias "$@" >/dev/null 2>&1 || : # To ensure we always succeed
+}
+
 
 
 ## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
