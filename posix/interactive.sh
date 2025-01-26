@@ -11,7 +11,6 @@
 # the definitions within `env.sh` are expected to be visible here.
 ###
 
-export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 SampShell_does_command_exist () {
    command -v "${1:?need command to check}" >/dev/null 2>&1
 }

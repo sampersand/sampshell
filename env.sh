@@ -44,6 +44,18 @@
 # If `$SampShell_ROOTDIR` is valid, then the rest of the script happens.
 ####
 
+
+################################################################################
+#                                                                              #
+#                 Enable xtrace if $SampShell_TRACE is enabled                 #
+#                                                                              #
+################################################################################
+
+if [ -n "${SampShell_TRACE-}" ]; then
+   export SampShell_TRACE # Export it in case it's not already exported.
+   set -o xtrace
+fi
+
 ################################################################################
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
 ################################################################################
@@ -52,76 +64,83 @@
 
 # Make sure `SampShell_ROOTDIR` is set.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
-	# ZSH: just use the builtin `${0:P:h}` to find it
-	if [ -n "${ZSH_VERSION-}" ]; then
-		# We need to use `eval` in case shells don't understand `${0:P:h}`.
-		# (TODO: can you make this work with `emulate sh` in effect)
-		eval 'SampShell_ROOTDIR="${0:P:h}"'
+   # ZSH: just use the builtin `${0:P:h}` to find it
+   if [ -n "${ZSH_VERSION-}" ]; then
+      # We need to use `eval` in case shells don't understand `${0:P:h}`.
+      # (TODO: can you make this work with `emulate sh` in effect)
+      eval 'SampShell_ROOTDIR="${0:P:h}"'
 
-	# BASH: Use `BASH_SOURCE`
-	elif [ -n "${BASH_SOURCE-}" ]; then
-		SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
-		SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
+   # BASH: Use `BASH_SOURCE`
+   elif [ -n "${BASH_SOURCE-}" ]; then
+      SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
+      SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
 
-	# Non-interactive: Error, just return 1.
-	elif case $- in *i*) false; esac; then
-		return 1
+   # Non-interactive: Error, just return 1.
+   elif case $- in *i*) false; esac; then
+      return 1
 
-	# We are interactive, default it and warn
-	else
-		# Whelp, we can't rely on `$0`, let's just guess and hope?
-		SampShell_ROOTDIR="$HOME/.sampshell"
-		printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
-			"$SampShell_ROOTDIR" >&2
-	fi
+   # We are interactive, default it and warn
+   else
+      # Whelp, we can't rely on `$0`, let's just guess and hope?
+      SampShell_ROOTDIR="$HOME/.sampshell"
+      printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
+         "$SampShell_ROOTDIR" >&2
+   fi
 fi
 
 # Make sure that it's actually a directory
 if ! [ -d "$SampShell_ROOTDIR" ]; then
-	# If we're interactive, then print out the warning
-	if ! case $- in *i*) false; esac; then
-		printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-			"$SampShell_ROOTDIR"
-	fi
+   # If we're interactive, then print out the warning
+   if ! case $- in *i*) false; esac; then
+      printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
+         "$SampShell_ROOTDIR"
+   fi
 
-	return 2
+   return 2
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
 export SampShell_ROOTDIR
 
 ################################################################################
-#                        Source POSIX-Compliant Config                         #
+#                                                                              #
+#                          Other SampShell Variables                           #
+#                                                                              #
 ################################################################################
 
-# Note we don't check for whether the file exists; if it doesn't we're already
-# done for...
-. "$SampShell_ROOTDIR/posix/env.sh" || return
+: "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
+export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
+export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
+export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+export HOMEBREW_NO_ANALYTICS=1
 
 ################################################################################
 #                              Add SampShell bin                               #
 ################################################################################
 
 # Add generic "SampShell" bin files to the start
-SampShell_add_to_path () {
-   case :${PATH-}: in
-   *:"${1:?need a path}":*) :                      ;; # It's already there!
-   *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
-   esac
+case :${PATH-}: in
+   *:"$SampShell_ROOTDIR/bin":*)
+      # It's already there!
+      :
+      ;;
+   *)
+      # Not present; prepend it.
+      PATH=$1${PATH:+:}$PATH
+      ;;
+esac
 }
 
-SampShell_add_to_path "$SampShell_ROOTDIR/bin"
-if [ -z "${SampShell_no_experimental-}" ]; then
-	SampShell_add_to_path "$SampShell_ROOTDIR/experimental"
-fi
+# Unconditionally add "experimental" binaries in, 'cause why not.
+[ -z "${SampShell_no_experimental-}" ] && PATH="$SampShell_ROOTDIR/experimental:$PATH"
 
 ################################################################################
 #                         Source Shell-Specific Config                         #
 ################################################################################
 
 if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/zshenv"
-	return
+   . "$SampShell_ROOTDIR/zsh/zshenv"
+   return
 fi
 
 # TODO: add more shell configs when i eventually need them, like bash
