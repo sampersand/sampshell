@@ -1,31 +1,36 @@
-################################################################################
-#                                 Conversions                                  #
-################################################################################
-
 # Convert base-10 integers to other bases
 function hex { bc <(print -l obase=16 $@ quit) }
 function oct { bc <(print -l obase=8 $@ quit) }
 function bin { bc <(print -l obase=2 $@ quit) }
 
-################################################################################
-#                                 Other Shells                                 #
-################################################################################
-
-# Adds in "clean shell" functions, which startup a clean version of shells, and
-# only set "normal" vars such as $TERM/$HOME etc
+# Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal"
+# vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
 function clsh   { clean-shell --shell =sh   --none -- $@ }
 function clbash { clean-shell --shell =bash --none -- --noprofile --norc $@ }
 function clzsh  { clean-shell --shell =zsh  --none -- -fd $@ }
 function cldash { clean-shell --shell =dash --none -- -l $@ }
 
-################################################################################
-#                                    others                                    #
-################################################################################
+## Banner utility
+function _SampShell-banner { ~ss/bin/banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
+alias banner='noglob _SampShell-banner'
+alias b80='banner -w80'
+alias b100='banner -w100'
 
-## Helpful shorthand utilities
-alias banner='noglob ~ss/bin/banner' # noglob's so that we can give most strings
-function b80  { banner -w80 $@  | pbcopy }
-function b100 { banner -w100 $@ | pbcopy }
+## Debugging utilities
+function -x { { set -x; "$@" } always { set +x } } # enable xtrace for a single invocation
+function pa {
+	local a b i=0
+	if [[ ${(tP)1} = array-* ]]; then
+		p ${(P)1}
+	else
+		for a b in ${(kvP)1}; do
+			printf "%3d: %-20s%s\n" $((i++)) $a $b
+		done
+	fi
+}
+## Adding default arguments to builtin commands
+alias grep='grep --color=auto'
+alias ps='ps -ax'
 
 ################################################################################
 #                                Math Functions                                #

@@ -1,3 +1,4 @@
+## I've decided to keep keybind functions separate
 return # This file is currently unused
 ## Register functions; We use an anonymous function so `fn` doesn't escape
 () {

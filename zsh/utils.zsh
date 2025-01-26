@@ -10,12 +10,6 @@ function copy-to-clipboard {
 
 [[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
 
-function pa {
-	local a b i=0
-	for a b in ${(kvP)1}; do
-		printf "%3d: %-20s%s\n" $((i++)) $a $b
-	done
-}
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
@@ -63,7 +57,6 @@ alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
 alias hd='hexdump -C'
--x () { { set -x; $@ } always { set +x } } # enable xtrace for a single invocation
 
 ################################################################################
 

@@ -18,12 +18,17 @@
 
 ## If the `$SampShell_PROFILE` variable is defined and nonempty, then we enable profiling.
 # (We eval it so we doesn't parse it if it's not profiling)
-if [[ -n ${SampShell_PROFILE:-} ]]; then
-	eval '
+[[ -n ${SampShell_PROFILE:-} ]] && eval '
 zshexit_functions+=(_SampShell_profile_exit)
 function _SampShell_profile_exit { zprof }
 zmodload zsh/zprof'
-fi
+
+####################################################################################################
+#                                         Set Debug Prompt                                         #
+####################################################################################################
+
+# Set the debug prompt to something a bit more informative. I'm still not sure how much I like this.
+[[ -n $SampShell_no_experimental ]] && PS4='+%x:%N:%I> '
 
 ####################################################################################################
 #                                           Setup $PATH                                            #
@@ -61,14 +66,6 @@ function SampShell_undebug {
 	unset SampShell_VERBOSE SampShell_TRACE
 	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
-
-####################################################################################################
-#                                         Set Debug Prompt                                         #
-####################################################################################################
-
-# Set the debug prompt to something a bit more informative. I'm still not sure how much I like this.
-[[ -n $SampShell_no_experimental ]] && PS4='+%x:%N:%I> '
-
 
 ####################################################################################################
 #                                     Respect SampShell_TRACE                                      #

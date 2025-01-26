@@ -1,0 +1,43 @@
+#!zsh
+emulate -L zsh
+
+SampShell_scratch=0
+
+while [ "$#" != 0 ]; do
+	SampShell_scratch=$((SampShell_scratch + 1))
+	printf '%3d: %s\n' "$SampShell_scratch" "$1"
+	shift
+done
+
+unset -v SampShell_scratch
+
+exit
+set -- -p options #foo bar $'\nbaz\n' {1..10}
+local pmode=
+if [[ $1 == -p ]] {
+	pmode=1
+	shift
+}
+
+local arg
+for arg
+	argv=(${(P)argv})
+}
+
+iter=({1..$#})
+printf "%${#${#}}d: %s\n" ${(q)iter:^argv}
+exit
+
+echo $indirect
+
+exit
+
+# function pa {
+local a b i=0
+if [[ ${(tP)1} = array-* ]]; then
+	p ${(P)1}
+else
+	for a b in ${(kvP)1}; do
+		printf "%3d: %-20s%s\n" $((i++)) $a $b
+	done
+fi

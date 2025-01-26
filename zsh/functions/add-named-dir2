@@ -1,0 +1,78 @@
+#!zsh
+
+emulate -L zsh # Reset ZSH to its default options, just for this function.
+
+# set -- -n -- $PWD foo/bar/baz foo=bar
+local -a opts
+zparseopts -D -a opts n
+infer=$+opts[(I)-n]
+(( ! $# )) && { cat <<USAGE >&2; return 1 }
+usage: $0 [-n] [--] path/to/dir [...other/paths/to/dirs]
+Adds 'dirs' to the list of named directories, so you can use '~dir' as a
+shorthand for it. The name is by default 'dir', but this can be changed by
+putting an 'foo=path/to/dir' in front of it.
+        -n        Disable the automatic 'foo=...'expansion
+        -d        Instead delete the directory names
+        -e        Don't check for existance first; without this, non-extant dirs aren't added
+#
+USAGE
+
+local arg
+for arg do
+	# Do automatic `=` expansion
+	(( $+opts[(I)-n] && ! $arg[(I)=] )) && arg=${arg:t}=$arg
+
+	local dir
+	if (( $+opts[(I)-e] )) && [[ ! -e ${dir::=${arg#*=}} ]]; then
+
+	fi
+done
+
+
+# # case $# in
+# # 1) dir=$1; name=\${dir:t} ;;
+# # 2) dir=$2; name=\$1 ;;
+# # *)
+# # 	print >&2 "usage: \$0 [name] dir"
+# # 	print >&2
+# # 	print >&2 'Lets you use ~name as a shorthand for `dir`, eg `cd ~name/bar/baz`'
+# # 	print >&2 'If `name` is not given, it defaults to the last part of `dir`'
+# # 	return 1
+# # esac
+# return
+
+# if (( infer )) then
+# 	for (( i=1; i <= $#; ++i )) do
+# 		if [[ $argv[i] != *=* ]] then
+# 			argv[$i]="${argv[$i]:t}=$argv[$i]"
+# 		fi
+# 	done
+# fi
+# echo $opts : $@ : $infer
+# exit
+
+
+# local dir name
+
+# # Extract the name and directory from the arguments
+# case $# in
+# 1) dir=$1; name=${dir:t} ;;
+# 2) dir=$2; name=$1 ;;
+# *)
+# 	print >&2 "usage: $0 [name] dir"
+# 	print >&2
+# 	print >&2 'Lets you use ~name as a shorthand for `dir`, eg `cd ~name/bar/baz`'
+# 	print >&2 'If `name` is not given, it defaults to the last part of `dir`'
+# 	return 1
+# esac
+
+# # Ensure a directory and name are actually given
+# if [[ -z $dir ]] then
+# 	print >&2 -r -- "$0: an empty directory was given"
+# 	return 1
+# elif [[ -z $name ]] then
+# 	print >&2 -r -- "$0: an empty name was given"
+# 	return 1
+# fi
+
+# builtin hash -d -- $name=$dir

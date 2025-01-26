@@ -26,10 +26,9 @@
 
 ## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
-# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH, and the `-R` flag dictates
-# that their paths should be immediately recorded, instead of relying on `$fpath` like normal auto-
-# loaded functions).
-autoload -URz ${0:P:h}/functions/*
+# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
+# paths, they won't use the normal `$fpath` expansion.)
+autoload -Uz ${0:P:h}/functions/*
 
 ####################################################################################################
 #                                                                                                  #
@@ -204,12 +203,12 @@ alias bkg='bindkey | noglob fgrep -ie'
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
 () {
-	autoload -URz $1/*
+	autoload -Uz $1/*
 	local fn
 	for fn in $1/*(:t); do
 		zle -N $fn
 	done
-} ${0:P:h}/keybind-functions
+} ${0:P:h}/widgets
 
 ## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
 bindkey -N sampshell emacs
