@@ -24,13 +24,13 @@ HISTSIZE=500 # How many history entries for the editor to keep.
 # indicates we don't want to store history.
 if [ -z "${HISTFILE+1}" ]; then
    if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
-      SampShell_log '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
+      echo '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
    else
       HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
       # TODO: do we want to export histfie for subshells
    fi
 elif [[ -z ${HISTFILE} ]]; then
-   SampShell_log '[INFO] Not defaulting HISTFILE; it is set to the empty string'
+   echo '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 
 ## Ensure we have the `history` command if it doesnt exist already.

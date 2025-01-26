@@ -14,11 +14,6 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 export SampShell_TRACE="${SampShell_TRACE-}"
 export HOMEBREW_NO_ANALYTICS=1
 
-SampShell_log () {
-   [ -z "${SampShell_VERBOSE-}" ] && return 0
-   printf -- "$@" && echo # Make sure we print the trailing newline
-}
-
 SampShell_add_to_path () {
    case :${PATH-}: in
    *:"${1:?need a path}":*) :                      ;; # It's already there!
