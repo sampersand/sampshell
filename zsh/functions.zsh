@@ -5,10 +5,10 @@ function bin { bc <(print -l obase=2 $@ quit) }
 
 # Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
-function clsh   { clean-shell --shell =sh   --none -- $@ }
-function clbash { clean-shell --shell =bash --none -- --noprofile --norc $@ }
-function clzsh  { clean-shell --shell =zsh  --none -- -fd $@ }
-function cldash { clean-shell --shell =dash --none -- -l $@ }
+function clsh   { clean-shell --shell =sh   --none $@ }
+function clbash { clean-shell --shell =bash --none --noprofile --norc $@ }
+function clzsh  { clean-shell --shell =zsh  --none -fd $@ }
+function cldash { clean-shell --shell =dash --none -l $@ }
 
 ## Banner utility
 function _SampShell-banner { ~ss/bin/banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
