@@ -51,8 +51,8 @@ h () {
 ################################################################################
 
 # Load experimental changes, unless they're disabled.
-if [ -z "$SampShell_no_experimental" ]; then
-   SampShell_dot_if_exists "$SampShell_ROOTDIR/posix/experimental.sh"
+if [ -z "$SampShell_no_experimental" ] && [ -e "$SampShell_ROOTDIR/posix/experimental" ]; then
+   . "$SampShell_ROOTDIR/posix/experimental.sh"
 fi
 
 ################################################################################

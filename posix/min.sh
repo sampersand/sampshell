@@ -18,13 +18,7 @@ SampShell_log () {
    [ -z "${SampShell_VERBOSE-}" ] && return 0
    printf -- "$@" && echo # Make sure we print the trailing newline
 }
-SampShell_dot_if_exists () {
-   if [ -e "${1:?need file to source}" ]; then
-      . "$@"
-   else
-      SampShell_log 'SampShell_dot_if_exists: Ignoring non-extant file: %s' "$1"
-   fi
-}
+
 SampShell_add_to_path () {
    case :${PATH-}: in
    *:"${1:?need a path}":*) :                      ;; # It's already there!
