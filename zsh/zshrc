@@ -267,6 +267,7 @@ zstyle ':completion:*' list-colors '' # Add colours to completions
 zstyle ':completion:*:*:cd:*' file-sort modification
 zstyle ':completion:*:*:rm:*' completer _ignored
 zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
+. ${0:P:h}/completion.zsh
 # zstyle ':completion:*:files' file-sort '!ignored-patterns '*.DS_Store'
 
 ####################################################################################################
