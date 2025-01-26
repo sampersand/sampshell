@@ -98,8 +98,7 @@ _SampShell-record-every-command () {
 	## Create the history directory if it doesn't exist.
 	if ! mkdir -p $SampShell_HISTDIR; then
 		# Uh oh, problem making it! log a warning, and then return.
-		SampShell_log "%s: Unable to record command; we couldn't make \$SampShell_HISTDIR: %s" \
-			$0 $SampShell_HISTDIR
+		print -r -- "$0: Unable to record command; we couldn't make \$SampShell_HISTDIR: $SampShell_HISTDIR" \
 		return 0 # Return 0 even in failure, so as to not preclude the line being saved in history.
 	fi
 
