@@ -61,32 +61,23 @@ fi
 ################################################################################
 
 ### NOTE: IF THIS SECTION IS CHANGED, ALSO UPDATE `both.sh`!
-
-# Make sure `SampShell_ROOTDIR` is set.
 if [ -n "${SampShell_ROOTDIR-}" ]; then
-	# Cool, it's already set. Nothing to do
-
+	# Already setup, nothing to do.
+	:
 elif [ -n "${ZSH_VERSION-}" ]; then
 	# ZSH: just use the builtin `${0:P:h}` to find it
-	# We need to use `eval` in case shells don't understand `${0:P:h}`.
-	# (TODO: can you make this work with `emulate sh` in effect)
-	eval 'SampShell_ROOTDIR="${0:P:h}"'
-
-# BASH: Use `BASH_SOURCE`
+	SampShell_ROOTDIR=${0:P:h}
 elif [ -n "${BASH_SOURCE-}" ]; then
+	# BASH: Use `BASH_SOURCE`
 	SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
 	SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
-
-# Non-interactive: Error, just return 1.
 elif case $- in *i*) false; esac; then
+	# Non-interactive: Error, just return 1.
 	return 1
-
-# We are interactive, default it and warn
 else
-	# Whelp, we can't rely on `$0`, let's just guess and hope?
+	# We are interactive, guess a default (hope it works) and warn.
 	SampShell_ROOTDIR="$HOME/.sampshell"
-	printf >&2 '[INFO] Defaulting $SampShell_ROOTDIR to %s\n' \
-		"$SampShell_ROOTDIR" >&2
+	printf >&2 '[WARN] Default $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
 # Make sure that it's actually a directory
@@ -116,19 +107,27 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 export HOMEBREW_NO_ANALYTICS=1
 
 ################################################################################
-#                              Add SampShell bin                               #
+#                                                                              #
+#                          Add SampShell bin to $PATH                          #
+#                                                                              #
 ################################################################################
 
-# Add generic "SampShell" bin files to the start
+# Add it to the $PATH, but make sure it's not already there to begin with (to
+# make our `$PATH` cleaner in case this file's run multiple times.)
 case :${PATH-}: in
-	*:"$SampShell_ROOTDIR/bin":*)
-		# It's already there!
-		:
-		;;
-	*)
-		# Not present; prepend it.
-		PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH
-		;;
+*:"$SampShell_ROOTDIR/bin":*)
+	# Our bin already exists, nothing to do!
+	: ;;
+*)
+	# It doesn't exist. Prepend it.
+	PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH
+
+	# Issue a warning if the bin doesn't exist, and we're in an interactive
+	# shell.
+	# if [ ! -d "$SampShell_ROOTDIR/bin" ]; then
+	# 	! case $- in *i*) false; esac; then
+
+	;;
 esac
 
 # Unconditionally add "experimental" binaries in, 'cause why not.
