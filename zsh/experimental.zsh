@@ -19,5 +19,4 @@ CORRECT_IGNORE='_*' # Don't correct to functions starting with `_`
 unsetopt IGNORE_EOF         # In case it was set, as I use `ctrl+d` to exit a lot.
 unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
 
-## 
-mkdir -p $TMPPREFIX
+: command_not_found_handler # <-- thing executed when a command'snot found
