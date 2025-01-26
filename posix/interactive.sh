@@ -87,8 +87,8 @@ alias ll='ls -l'   # Shorthand for `ls -al`
 ## Renaming sampshell methods
 alias parallelize_it=SampShell_parallelize_it
 alias cdd=SampShell_cdd
-alias debug=SampShell_debug
-alias undebug=SampShell_undebug
+# alias debug=SampShell_debug
+# alias undebug=SampShell_undebug
 
 ## Aliases for going up directories
 alias ..='cd ..'

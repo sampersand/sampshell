@@ -20,15 +20,11 @@ SampShell_add_to_path () {
    *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
    esac
 }
+
 SampShell_does_command_exist () {
    command -v "${1:?need command to check}" >/dev/null 2>&1
 }
-SampShell_debug () {
-   export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace -o verbose
-}
-SampShell_undebug () {
-   unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace +o verbose
-}
+
 if [ -n "${SampShell_TRACE-}" ]; then
    export SampShell_TRACE # Export it in case it's not already exported.
    set -o xtrace
