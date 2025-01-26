@@ -38,8 +38,8 @@ autoload -Uz ${0:P:h}/functions/*
 
 ## Add named directories
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
-[[ -n $SampShell_TMPDIR   ]] && add-named-dir tmp   $SampShell_TMPDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
+[[ -n ~/tmp               ]] && add-named-dir tmp   ~/tmp
 [[ -d ~/Desktop           ]] && add-named-dir d     ~/Desktop
 [[ -d ~/Downloads         ]] && add-named-dir dl    ~/Downloads
 

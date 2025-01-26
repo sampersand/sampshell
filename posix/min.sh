@@ -1,16 +1,6 @@
-if [ -z "${SampShell_VERBOSE+1}" ]; then
-   case "$-" in
-   *i*) SampShell_VERBOSE=1 ;;
-   *)   SampShell_VERBOSE=  ;;
-   esac
-fi
-export SampShell_VERBOSE
-
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 : "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
 export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
-export SampShell_TMPDIR="${SampShell_TMPDIR:-$SampShell_gendir/.tmp}"
-export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 export SampShell_TRACE="${SampShell_TRACE-}"
 export HOMEBREW_NO_ANALYTICS=1
 
@@ -29,4 +19,5 @@ if [ -n "${SampShell_TRACE-}" ]; then
    export SampShell_TRACE # Export it in case it's not already exported.
    set -o xtrace
 fi
+
 true

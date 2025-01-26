@@ -11,6 +11,8 @@
 # the definitions within `env.sh` are expected to be visible here.
 ###
 
+export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+
 ## Ensure `nounset` is its default, so `$doesnt_exist` is an empty string.
 set +o nounset
 
@@ -118,6 +120,7 @@ fi
 ## Changes to the SampShell tmp directory, creating it unless it exists already.
 SampShell_unalias cdtmp
 cdtmp () {
+   : "${SampShell_TMPDIR:=$HOME/tmp}"
    if ! [ -e "${SampShell_TMPDIR:?}" ]; then
       mkdir -p -- "$SampShell_TMPDIR" || return
    fi
