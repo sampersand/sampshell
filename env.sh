@@ -70,8 +70,10 @@ elif [ -n "${ZSH_VERSION-}" ]; then
 	# ZSH: just use the builtin `${0:P:h}` to find it
 	SampShell_ROOTDIR=${0:P:h}
 elif [ -n "${BASH_SOURCE-}" ]; then
-	# BASH: Use `BASH_SOURCE`
+	# BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
+	# use the `&& printf x` trick
 	SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
+	SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
 	SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
 elif case $- in *i*) false; esac; then
 	# Non-interactive: Error, just return 1.
@@ -79,12 +81,12 @@ elif case $- in *i*) false; esac; then
 else
 	# We are interactive, guess a default (hope it works) and warn.
 	SampShell_ROOTDIR="$HOME/.sampshell"
-	printf >&2 '[WARN] Default $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
+	printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
-# Make sure that it's actually a directory
+# Make sure that `$SampShell_ROOTDIR` is actually a directory
 if ! [ -d "$SampShell_ROOTDIR" ]; then
-	# If we're interactive, then print out the warning
+	# If we're interactive, then print out a warning
 	if ! case $- in *i*) false; esac; then
 		printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
 			"$SampShell_ROOTDIR"
@@ -133,7 +135,7 @@ case :${PATH-}: in
 	;;
 esac
 
-# Unconditionally add "experimental" binaries in, 'cause why not.
+# Unconditionally add "experimental" scripts in, 'cause why not.
 [ -z "${SampShell_no_experimental-}" ] && PATH="$SampShell_ROOTDIR/experimental:$PATH"
 
 ################################################################################
