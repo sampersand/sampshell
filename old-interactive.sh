@@ -107,6 +107,5 @@ elif [[ -z ${HISTFILE} ]]; then
 fi
 SampShell_does_command_exist history || eval 'history () { fc -l "$@"; }'
 
-
 alias cpu='top -o cpu'
 alias purge='command rm -ridP' ## Purge deletes something entirely
