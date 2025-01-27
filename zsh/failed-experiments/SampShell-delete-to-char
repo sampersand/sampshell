@@ -1,6 +1,7 @@
 #!zsh
 
-## This has been supplanted by using `zle/deltochar`
+## This has been supplanted by using `zle/deltochar`. (Also: note: This was before I learned about
+# `LBUFFER` and `RBUFFER` which are essentially `pre`/`post`.)
 
 ## Deletes from the cursor to a given character, either forwards or backwards.
 # NOTE: there's a builtin module `zmodload zle/deltochar` which exposes the
