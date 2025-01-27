@@ -1,0 +1,5 @@
+#!/bin/sh
+
+## Clears the entire screen, and resets the scroll buffer.
+
+printf '\ec\e[3J'
