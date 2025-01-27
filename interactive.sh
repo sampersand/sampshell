@@ -27,89 +27,125 @@
 [ -d "$SampShell_ROOTDIR" ] || return 2
 
 ################################################################################
-#                        Source POSIX-Compliant Config                         #
+#                                                                              #
+#                             SampShell Functions                              #
+#                                                                              #
 ################################################################################
 
-# Note we don't check for whether the file exists; if it doesn't we're already
-# done for, so we might as well just error out. 
-. "$SampShell_ROOTDIR/posix/min.sh" || return
+## Short helper for looking at history.
+# If any arguments are given, they're forwarded to `fc -l` (ie list that many
+# arguments). Without arguments, if not connected to a tty, all commands are
+# printed out (for usage with `grep`).
+h () {
+	if [ "$#" -eq 0 ] && [ ! -t 1 ]; then
+		fc -ln 0
+	else
+		fc -l "$@"
+	fi
+}
 
-h () if [ "$#" -eq 0 ] && [ ! -t 1 ]
-     then fc -ln 0
-     else fc -l "$@"
-     fi
-
-
+## Changes to the directory containing its argument.
+# (Useful for dragging files in from Finder to Terminal on MacOS.)
 cdd () {
-   if [ "$#" -ne 1 ]; then
-      echo >&2 'usage: cdd file'
-      echo >&2
-      echo >&2 "CD's to the directory containing 'file'"
-      return 2
-   fi
+	if [ "$#" -ne 1 ]; then
+		echo >&2 'usage: cdd path'
+		echo >&2
+		echo >&2 "cd's to the directory containing 'path'"
+		return 2
+	fi
 
-   SampShell_scratch=$(dirname -- "$1" && printf x) || {
-      unset -v SampShell_scratch
-      return 1
-   }
-   set -- "${SampShell_scratch%?x}"
-   unset -v SampShell_scratch
-   [ "$1" = - ] && set -- ./-
-   CDPATH= cd -- "$1"
+	# We have to do this whole rigmarole in case the directory ends in a
+	# newline. (Odd, but a possibility, and I don't want to be blindsided by
+	# it later.)
+	SampShell_scratch=$(dirname -- "$1" && printf x) || {
+		unset -v SampShell_scratch
+		return 1
+	}
+	set -- "${SampShell_scratch%?x}"
+	unset -v SampShell_scratch # Delete the variable so it doesn't leak
+
+	# In case the directory's name is `-`, we don't want to `cd -` (which
+	# would be the previous directory.)
+	[ "$1" = - ] && set -- ./-
+
+	# IF `ZSH` is set
+	if [ -n "$ZSH_VERSION" ]; then
+		setopt LOCAL_OPTIONS POSIX_BUILTINS
+	fi
+
+	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
+	# use `\` to disable alias expansion for `cd`. (We could use `command`,
+	# but `zsh`)
+	CDPATH= \cd -- "$1"
 }
 
-## Interactive utils
-nargs () { echo "$#"; }
+## Simply prints out how many args were given to the function
+nargs () {
+	echo "$#"
+}
+
+## Prints out its arguments in a debug format.
 p () {
-   SampShell_scratch=0
+	SampShell_scratch=0
 
-   while [ "$#" != 0 ]; do
-      SampShell_scratch=$((SampShell_scratch + 1))
-      printf '%3d: %s\n' "$SampShell_scratch" "$1"
-      shift
-   done
+	while [ "$#" != 0 ]; do
+		printf '%3d: %q\n' "$((SampShell_scratch += 1))" "$1"
+		shift
+	done
 
-   unset -v SampShell_scratch
+	unset -v SampShell_scratch
 }
 
-alias ls='ls -AFq'
-alias l='ls -l'
-
+## Creates a directory, and then changes to it.
 md () {
-	# ZSH doesn't like `command cd` to get around aliasing; You could just
-	# test for `ZSH_VERSION` and set `setopt LOCAL_OPTIONS POSIX_BUILTINS`,
-	# but that's overkill and a simple backslash to attempt alias
-	# suppression works fine.
-	\mkdir -p -- "${1:?missing a directory}" && CDPATH= \cd -- "$1"
+	# (ZSH by default doesn't like `command cd` to get around aliasing, so
+	# we have to convince it to do it by setting `POSIX_BUILTINS`.)
+	if [ -n "$ZSH_VERSION" ]; then
+		setopt LOCAL_OPTIONS POSIX_BUILTINS
+	fi
+
+	command mkdir -p -- "${1:?missing dir}" && CDPATH= command cd -- "$1"
 }
+
+## Add in custom flags to `ls`; We make it a function so that the macOS config
+# can add in an alias later on to add additional default flags.
+unalias ls >/dev/null 2>&1 # Remove the alias in case it already existed
+ls () {
+	command ls -AFq "$@"
+}
+alias l='ls -l'
+alias j=jobs
+
 
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
 if [ -n "$SampShell_EDITOR" ]; then
-   alias s=subl ss=ssubl ssubl='subl --create'
+	alias s=subl ss=ssubl ssubl='subl --create'
 fi
 
-alias j=jobs
 
 ################################################################################
 #                                    Safety                                    #
 ################################################################################
 set -o noclobber
-alias rm='rm -i'  mv='mv -i'  cp='cp -i'
+alias  rm='rm -i'  mv='mv -i'  cp='cp -i'
 alias rmm='rm -f' mvv='mv -f' cpp='cp -f'
+
+# Alias for `bin` things.
+alias m=mv-safe r=trash
 
 ################################################################################
 #                                    macOS                                     #
 ################################################################################
 if [ "$(uname)" = Darwin ]; then
-	eval "$(alias -L ls)hGb"
 	pbc () if [ "$#" -eq 0 ]; then
 		pbcopy
 	else
-		(unset IFS; echo "$*" | pbcopy)
+		(unset -v IFS; printf %s "$*" | pbcopy)
 	fi
 	alias pbp=pbpaste
+	alias ls='ls -hGb' # MACOS-specific ls
 fi
 
 
