@@ -2,7 +2,7 @@
 
 # Dash doesn't support `!`, sadly.
 __SampShell_dash_PS1_histno () {
-	{ fc -l -1 2>/dev/null || echo 0; } | awk '{print $1}'
+	{ fc -l -1 2>/dev/null || echo 0; } | awk 'NR==1{print $1}'
 }
 
 __SampShell_dash_PS1_pwd () case $PWD in
@@ -15,3 +15,23 @@ PS1=$PS1' $(__SampShell_dash_PS1_pwd) ${0##*/}$ ' # Suffix
 
 alias r='fc -s'
 
+alias history='fc -l'
+
+add_to_CDPATH () {
+	if [ "$#" -eq 0 ]; then
+		echo 'usage: add_to_CDPATH path [more ...]' >&2
+		return 64
+	fi
+
+	SampShell_scratch=
+	while [ "$#" -ne 0 ]; do
+		SampShell_scratch=$(realpath -- "$1" && printf x) || return
+
+		# TODO: make sure it's not already in CDPATH
+		CDPATH=":${SampShell_scratch%?x}${CDPATH}"
+		shift
+	done
+
+	unset -v SampShell_scratch
+	return 0
+}

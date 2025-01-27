@@ -10,6 +10,8 @@ function copy-to-clipboard {
 
 [[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
 
+alias dash='dash -l' # i want normal dash to have login
+
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
@@ -30,7 +32,7 @@ function reload {
 
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
 rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
-md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
+# md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
 
 # utility functions and what have you that I've accumulated over the years
 false && chr () ruby -- /dev/fd/3 $@ 3<<'RUBY'
