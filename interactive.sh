@@ -86,6 +86,12 @@ md () {
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 [ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
+if [ -n "$SampShell_EDITOR" ]; then
+   alias s=subl ss=ssubl ssubl='subl --create'
+fi
+
+alias j=jobs
+
 ################################################################################
 #                                    Safety                                    #
 ################################################################################

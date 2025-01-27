@@ -82,10 +82,10 @@ if [ -z "$SampShell_no_experimental" ]; then
    alias .....='cd ../../../..'
 fi
 
-
 SampShell_does_command_exist () {
    command -v "${1:?need command to check}" >/dev/null 2>&1
 }
+
 SampShell_unalias () {
    if [ "$#" = 0 ]; then
       echo >&2 'usage: SampShell_unalias name [name ...]'
