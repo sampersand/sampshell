@@ -45,9 +45,10 @@
 ####
 
 
+
 ################################################################################
 #                                                                              #
-#                 Enable xtrace if $SampShell_XTRACE is enabled                 #
+#                 Enable xtrace if $SampShell_XTRACE is enabled                #
 #                                                                              #
 ################################################################################
 
@@ -71,7 +72,7 @@ elif [ -n "${ZSH_VERSION-}" ]; then
 	SampShell_ROOTDIR=${0:P:h}
 elif [ -n "${BASH_SOURCE-}" ]; then
 	# BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
-	# use the `&& printf x` trick
+	# use the `&& printf x` trick, because there's no nicer way to do it.
 	SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
 	SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
 	SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}
@@ -80,19 +81,13 @@ elif case $- in *i*) false; esac; then
 	return 1
 else
 	# We are interactive, guess a default (hope it works) and warn.
-	SampShell_ROOTDIR="$HOME/.sampshell"
+	SampShell_ROOTDIR=$HOME/.sampshell
 	printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
-# Make sure that `$SampShell_ROOTDIR` is actually a directory
-if ! [ -d "$SampShell_ROOTDIR" ]; then
-	# If we're interactive, then print out a warning
-	if ! case $- in *i*) false; esac; then
-		printf >&3 '[FATAL] Unable to initialize SampShell: $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' \
-			"$SampShell_ROOTDIR"
-	fi
-
-	return 2
+## Warn if `SampShell_ROOTDIR` isn't a directory, and we're in interactive mode.
+if ! [ -d "$SampShell_ROOTDIR" ] && ! case $- in *i*) false; esac; then
+	printf >&2 '[WARN] $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' "$SampShell_ROOTDIR"
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
@@ -132,10 +127,13 @@ case :${PATH-}: in
 esac
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
-[ -z "${SampShell_no_experimental-}" ] && case :${PATH-}: in
+[ -z "${SampShell_no_experimental-}" ] && case $PATH in
 *:"$SampShell_ROOTDIR/experimental":*) : ;;
-*) PATH=$SampShell_ROOTDIR/experimental${PATH:+:}$PATH ;;
+*) PATH=$SampShell_ROOTDIR/experimental:$PATH ;;
 esac
+
+## Ensure `PATH` is exported so other programs we execute get our changes.
+export PATH
 
 ################################################################################
 #                                                                              #
