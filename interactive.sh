@@ -128,11 +128,9 @@ if [ "$(uname)" = Darwin ]; then
 	## Paste from macOS's clipboard
 	alias pbp=pbpaste
 
-	## Add options to `ls` which macOS supports. (The `POSIXLY_CORRECT` var
-	# is so bash outputs `ls` in the POSIX format of `ls='...'`; The redir-
-	# ection is a safeguard in case `ls` isn't aliased, however it should be
-	# because aliased it above.)
-	alias "$(POSIXLY_CORRECT=1; alias ls 2>/dev/null || echo 'ls=ls -')hGb"
+	## Add options to `ls` which macOS supports. (We only add the alias if
+	# `ls` was already an alias, otherwise the `eval` doesn't work.)
+	alias ls >/dev/null 2>&1 && eval "$(command -v ls)hGb"
 fi
 
 ################################################################################

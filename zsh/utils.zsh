@@ -62,3 +62,12 @@ alias hd='hexdump -C'
 alias psg='noglob ps -ax | grep '
 
 ################################################################################
+
+tracezsh2 () {
+	clean-shell --none \
+		--var PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
+		--var SampShell_just_for_testing_should_disable_rvm=1 \
+		-xil \
+		-o promptsubst \
+		-c exit
+}
