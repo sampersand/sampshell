@@ -25,10 +25,10 @@
 # autocompletion.
 ####
 
-## Respect the 'SampShell_TRACE' environment variable
-if [ "${SampShell_TRACE-}" = 1  ]; then
+## Respect the 'SampShell_XTRACE' environment variable
+if [ "${SampShell_XTRACE-}" = 1  ]; then
    set -o xtrace
-   export SampShell_TRACE
+   export SampShell_XTRACE
 fi
 
 ## Safety first!

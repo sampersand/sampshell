@@ -64,7 +64,7 @@ All config variables that're used within SampShell are prefixed with `SampShell_
 | `SampShell_HISTDIR`  | `$SampShell_gendir/.sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. (Also used in ZSH.) |
 | `SampShell_EDITOR`   | `sublime4`                             | The default editor for `subl`.                                                     |
 | `SampShell_VERBOSE`  | `1` if interactive, (empty) otherwise  | Whether to log verbose messages (used in `SampShell_log`).                         |
-| `SampShell_TRACE`    | (empty)                                | If set to `1`, all SampShell scripts will `set -o xtrace` at the very start.       |
+| `SampShell_XTRACE`    | (empty)                                | If set to `1`, all SampShell scripts will `set -o xtrace` at the very start.       |
 | `SampShell_scratch`  | N/A                                    | Used within POSIX-compliant shell functions; always unset upon exit.               |
 
 ## POSIX Variables, `interactive`

@@ -16,7 +16,7 @@
 #   1. Create `Sampshell_XXX` variables (if they dont exist), and export them.
 #   2. Setup `SampShell_xxx functions.
 #   3. If `$SampShell_ROOTDIR` is set, add POSIX-compliant utilites to `$PATH`.
-#   4. If `$SampShell_TRACE` is set, enable `xtrace` and `verbose`.
+#   4. If `$SampShell_XTRACE` is set, enable `xtrace` and `verbose`.
 #
 #
 # Required Variables
@@ -97,14 +97,14 @@ export SampShell_TMPDIR="${SampShell_TMPDIR:-$SampShell_gendir/.tmp}"
 export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 
 ## Whether to enable xtrace (`set -x`) in scripts.
-# (Tracing is enabled if `$SampShell_TRACE` is a non-empty value)
+# (Tracing is enabled if `$SampShell_XTRACE` is a non-empty value)
 #
 # When set, assuming all scripts are `.`ing this file, this should propagate
 # through _all_ files that are called, which lets you debug more easily. It's
 # important that this is exported, so scripts can see it.
 #
 # The `set -x` is actually done as the the end of this file.
-export SampShell_TRACE="${SampShell_TRACE-}"
+export SampShell_XTRACE="${SampShell_XTRACE-}"
 
 ## Disable homebrew analytics.
 # If set, homebrew (the mac package manager) won't send any analytics. We set it
@@ -177,14 +177,14 @@ SampShell_does_command_exist () {
 # This enables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
 SampShell_debug () {
-   export SampShell_VERBOSE=1 SampShell_TRACE=1 && set -o xtrace -o verbose
+   export SampShell_VERBOSE=1 SampShell_XTRACE=1 && set -o xtrace -o verbose
 }
 
 ## Disables debugging mode
 # This disables all of SampShell_debug's debugging capabilities, as well as the
 # current shell; it's expected that this is overwritten in per-shell config.
 SampShell_undebug () {
-   unset -v SampShell_VERBOSE SampShell_TRACE && set +o xtrace +o verbose
+   unset -v SampShell_VERBOSE SampShell_XTRACE && set +o xtrace +o verbose
 }
 
 ################################################################################
@@ -213,14 +213,14 @@ SampShell_undebug () {
 # fi
 
 ################################################################################
-#                           Respect SampShell_TRACE                            #
+#                           Respect SampShell_XTRACE                            #
 ################################################################################
 
-## Enables xtrace mode if `SampShell_TRACE` is set.
+## Enables xtrace mode if `SampShell_XTRACE` is set.
 # This enables it in both scripts and interactive shells, as this allows us to
 # trace third-party scripts as well, if need be.
-if [ -n "${SampShell_TRACE-}" ]; then
-   export SampShell_TRACE # Export it in case it's not already exported.
+if [ -n "${SampShell_XTRACE-}" ]; then
+   export SampShell_XTRACE # Export it in case it's not already exported.
    set -o xtrace
 fi
 

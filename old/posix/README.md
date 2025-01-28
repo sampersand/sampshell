@@ -5,7 +5,7 @@ The config in this directory is designed to be POSIX-compliant, which allows it 
 # TODO:
 - cleanup top of env.sh
 - finish interactive.sh
-- `SampShell_TRACE=1 clean-shell --none --var ZDOTDIR=/dne --shell =zsh -- -x f` fails
+- `SampShell_XTRACE=1 clean-shell --none --var ZDOTDIR=/dne --shell =zsh -- -x f` fails
 
 ## Design goals
 - Be POSIX compliant (lets me use different shells but still have my bare-minimum basic config)

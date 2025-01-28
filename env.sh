@@ -47,12 +47,12 @@
 
 ################################################################################
 #                                                                              #
-#                 Enable xtrace if $SampShell_TRACE is enabled                 #
+#                 Enable xtrace if $SampShell_XTRACE is enabled                 #
 #                                                                              #
 ################################################################################
 
-if [ -n "${SampShell_TRACE-}" ]; then
-	export SampShell_TRACE # Export it in case it's not already exported.
+if [ -n "${SampShell_XTRACE-}" ]; then
+	export SampShell_XTRACE # Export it in case it's not already exported.
 	set -x
 fi
 
@@ -100,14 +100,21 @@ export SampShell_ROOTDIR
 
 ################################################################################
 #                                                                              #
-#                          Other SampShell Variables                           #
+#                           Other Exported Variables                           #
 #                                                                              #
 ################################################################################
 
+## SampShell Variables.
 : "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
 export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+
+## Disable homebrew analytics.
+# If set, homebrew (the mac package manager) won't send any analytics. We set it
+# in `env.zsh` and not `interactive.sh` in case any config scripts decide to use
+# homebrew themselves. (We _could_ check to see if homebrew is installed, but
+# that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
 
 ################################################################################
@@ -116,27 +123,19 @@ export HOMEBREW_NO_ANALYTICS=1
 #                                                                              #
 ################################################################################
 
-# Add it to the $PATH, but make sure it's not already there to begin with (to
-# make our `$PATH` cleaner in case this file's run multiple times.)
+## Add SampShell scripts to the `$PATH`, but make sure it's not already there to
+# begin with. (Not strictly necessary, but it helps prevent massive `$PATH`s in
+# case SampShell's loaded multiple times.)
 case :${PATH-}: in
-*:"$SampShell_ROOTDIR/bin":*)
-	# Our bin already exists, nothing to do!
-	: ;;
-*)
-	# It doesn't exist. Prepend it.
-	PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH
-
-	# Issue a warning if the bin doesn't exist, and we're in an interactive
-	# shell.
-	if [ ! -d "$SampShell_ROOTDIR/bin" ] && ! case $- in *i*) false; esac; then
-		printf '[WARN] SampShell bin dir cannot be found at: %s\n' "$SampShell_ROOTDIR/bin"
-	fi
-
-	;;
+*:"$SampShell_ROOTDIR/bin":*) :               ;; # Already there; do nothing
+*) PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH ;; # It doesn't exist. Prepend it.
 esac
 
-# Unconditionally add "experimental" scripts in, 'cause why not.
-[ -z "${SampShell_no_experimental-}" ] && PATH="$SampShell_ROOTDIR/experimental:$PATH"
+## Add in "experimental" scripts I'm working on and haven't quite completed.
+[ -z "${SampShell_no_experimental-}" ] && case :${PATH-}: in
+*:"$SampShell_ROOTDIR/experimental":*) : ;;
+*) PATH=$SampShell_ROOTDIR/experimental${PATH:+:}$PATH ;;
+esac
 
 ################################################################################
 #                                                                              #
@@ -149,4 +148,4 @@ if [ -n "${ZSH_VERSION-}" ]; then
 	return
 fi
 
-# TODO: add more shell configs when i eventually need them, like bash
+# TODO: add more shell configs when I eventually need them, like bash

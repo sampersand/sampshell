@@ -64,24 +64,24 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 # warrant delving into that. Possible future TODO?
 function SampShell_debug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	export SampShell_TRACE=1
+	export SampShell_XTRACE=1
 	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 
 function SampShell_undebug {
 	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	unset SampShell_TRACE
+	unset SampShell_XTRACE
 	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
 }
 
 ####################################################################################################
-#                                     Respect SampShell_TRACE                                      #
+#                                     Respect SampShell_XTRACE                                      #
 ####################################################################################################
 
-## Respect `SampShell_TRACE` in all scripts, regardless of whether they're a SampShell script.
+## Respect `SampShell_XTRACE` in all scripts, regardless of whether they're a SampShell script.
 # We want this as the last thing in this file, so we don't print traces for the other setup config.
-if [[ -n $SampShell_TRACE ]]; then
-	export SampShell_TRACE # in case it's not already exported for some reason
+if [[ -n $SampShell_XTRACE ]]; then
+	export SampShell_XTRACE # in case it's not already exported for some reason
 	setopt SOURCE_TRACE XTRACE
 fi
 
