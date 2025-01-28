@@ -1,34 +1,20 @@
-#### Basic config universal to _all_ interactive POSIX-compliant shells
-# Interactive shells should `.` this file after `.`ing the `env.sh` file, as
-# that contains key definitions (such as `$SampShell_ROOTDIR`, updating `$PATH`,
-# etc.)
+#### Interactive config for all POSIX-compliant shells.
+# This file sets up the minimum interactive environment I want on all shells (a
+# couple of essential functions, some aliases, and a few macOS-specific things),
+# then loads shell-specific config.
 #
+# (As this file is loaded by all shells, it's entirely POSIX-compliant.)
 #
-# Overview
-# ========
-# This file does the following things:
-# 1. Check for `$SampShell_ROOTDIR` (see below
-# 2. Load the universal config for all POSIX-compliant shells
-# 3. Load shell-specific config
-#
-#
-# POSIX-compliant
-# ===============
-# Since this is the entry point for _all_ interactive shells, it must be kept
-# pristine and strictly POSIX-compliant. However, unlike `env.sh`, it's not
-# expected that this file will be sourced at any point, so options like the
-# `set -o nounset` don't need to be respected.
-###
-
-# At this point, we can assume the `env.sh` file has been run, and as such that
-# `$SampShell_ROOTDIR` exists, is exported, and is an actual directory. But,
-# let's just check for sanity's sake.
-[ -n "$SampShell_ROOTDIR" ] || return 1
-[ -d "$SampShell_ROOTDIR" ] || return 2
+# This file's intended to be loaded after `env.sh`, as it also does some setup,
+# namely setting `$SampShell_ROOTDIR`. This file expects that to be set, as it
+# uses that to determine where the shell-specific config is located; If it's not
+# set, the "universal config" in this file will still be run, but shell-specific
+# configs won't be (as they can't be located).
+####
 
 ################################################################################
 #                                                                              #
-#                             SampShell Functions                              #
+#                          Common Functions & Aliases                          #
 #                                                                              #
 ################################################################################
 
@@ -36,13 +22,10 @@
 # If any arguments are given, they're forwarded to `fc -l` (ie list that many
 # arguments). Without arguments, if not connected to a tty, all commands are
 # printed out (for usage with `grep`).
-h () {
-	if [ "$#" -eq 0 ] && [ ! -t 1 ]; then
-		fc -ln 0
-	else
-		fc -l "$@"
+h ()	if [ "$#" -eq 0 ] && [ ! -t 1 ]
+	then fc -ln 0
+	else fc -l "$@"
 	fi
-}
 
 ## Changes to the directory containing its argument.
 # (Useful for dragging files in from Finder to Terminal on MacOS.)
@@ -67,11 +50,6 @@ cdd () {
 	# In case the directory's name is `-`, we don't want to `cd -` (which
 	# would be the previous directory.)
 	[ "$1" = - ] && set -- ./-
-
-	# IF `ZSH` is set
-	if [ -n "$ZSH_VERSION" ]; then
-		setopt LOCAL_OPTIONS POSIX_BUILTINS
-	fi
 
 	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
 	# use `\` to disable alias expansion for `cd`. (We could use `command`,
@@ -98,60 +76,81 @@ p () {
 
 ## Creates a directory, and then changes to it.
 md () {
-	# (ZSH by default doesn't like `command cd` to get around aliasing, so
-	# we have to convince it to do it by setting `POSIX_BUILTINS`.)
-	if [ -n "$ZSH_VERSION" ]; then
-		setopt LOCAL_OPTIONS POSIX_BUILTINS
-	fi
-
-	command mkdir -p -- "${1:?missing dir}" && CDPATH= command cd -- "$1"
+	# (use `\cd` so that we don't get alias expansion that might exist)
+	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
-## Add in custom flags to `ls`; We make it a function so that the macOS config
-# can add in an alias later on to add additional default flags.
-unalias ls >/dev/null 2>&1 # Remove the alias in case it already existed
-ls () {
-	command ls -AFq "$@"
-}
+alias ls='ls -AFq'
 alias l='ls -l'
 alias j=jobs
-
-
-export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
-[ -z "$words" ] && export words="$SampShell_WORDS" # Only set `words` if it doesnt exist
 
 if [ -n "$SampShell_EDITOR" ]; then
 	alias s=subl ss=ssubl ssubl='subl --create'
 fi
 
+## Words is something I use quite frequently; only assign `$words` though if it
+# doesn't exist, and `$SampShell_WORDS` is a file.
+export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
+[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
 
 ################################################################################
+#                                                                              #
 #                                    Safety                                    #
+#                                                                              #
 ################################################################################
+
+## Don't clobber files on output
 set -o noclobber
-alias  rm='rm -i'  mv='mv -i'  cp='cp -i'
-alias rmm='rm -f' mvv='mv -f' cpp='cp -f'
 
-# Alias for `bin` things.
-alias m=mv-safe r=trash
+## Make `rm`, `mv`, and `cp` safe by default; repeat the second arg for unsafe
+alias rm='rm -i' rmm='command rm'
+alias mv='mv -i' mvv='command mv'
+alias cp='cp -i' cpp='command cp'
+
+## Shorthand aliases for "safe alternatives" foundin `bin`
+alias m=mv-safe
+alias r=trash
 
 ################################################################################
-#                                    macOS                                     #
+#                                                                              #
+#                                 MacOS Config                                 #
+#                                                                              #
 ################################################################################
+
 if [ "$(uname)" = Darwin ]; then
-	pbc () if [ "$#" -eq 0 ]; then
-		pbcopy
-	else
-		(unset -v IFS; printf %s "$*" | pbcopy)
-	fi
+	## Copy its commands to the macOS clipboard. If not given any args,
+	# instead read them from stdin.
+	pbc ()	if [ "$#" -eq 0 ]
+		then pbcopy
+		else (unset -v IFS; printf %s "$*" | pbcopy)
+		fi
+
+	## Paste from macOS's clipboard
 	alias pbp=pbpaste
-	alias ls='ls -hGb' # MACOS-specific ls
+
+	## Add options to `ls` which macOS supports. (The `POSIXLY_CORRECT` var
+	# is so bash outputs `ls` in the POSIX format of `ls='...'`; The redir-
+	# ection is a safeguard in case `ls` isn't aliased, however it should be
+	# because aliased it above.)
+	alias "$(POSIXLY_CORRECT=1; alias ls 2>/dev/null || echo 'ls=ls -')hGb"
 fi
 
-
 ################################################################################
+#                                                                              #
 #                         Source Shell-Specific Config                         #
+#                                                                              #
 ################################################################################
+
+## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
+# message than what `.` would output
+if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
+	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not set\n' >&2
+	return 0
+elif [ ! -d "$SampShell_ROOTDIR" ]; then
+	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not a dir: %s\n' \
+		"$SampShell_ROOTDIR" >&2
+	return 0
+fi
 
 # ZSH
 if [ -n "${ZSH_VERSION-}" ]; then
@@ -165,6 +164,3 @@ case "$0" in dash | */dash)
 	. "$SampShell_ROOTDIR/dash/profile.dash"
 	return
 esac
-
-# NOTE: We don't disable xtrace/verbose here, in case the `.zshrc` or whatnot
-# wants to xtrace their own things too.
