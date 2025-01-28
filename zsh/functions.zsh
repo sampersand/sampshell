@@ -29,7 +29,7 @@ function pa {
 	fi
 }
 ## Adding default arguments to builtin commands
-alias grep='grep --color=auto'
+function grep () grep --color=auto $@
 alias ps='ps -ax'
 
 ################################################################################

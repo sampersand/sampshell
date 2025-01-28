@@ -54,7 +54,7 @@ pr () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
 
 
-alias grep='grep --color=auto'
+grep () command grep --color=auto $@
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'

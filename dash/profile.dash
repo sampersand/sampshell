@@ -1,20 +1,25 @@
 #!/usr/bin/env dash
 
+export SHLVL="$(( SHLVL + 1 ))"
+
 # Dash doesn't support `!`, sadly.
-__SampShell_dash_PS1_histno () {
+__PS1_histno () {
 	{ fc -l -1 2>/dev/null || echo 0; } | awk 'NR==1{print $1}'
 }
 
-__SampShell_dash_PS1_pwd () case $PWD in
+__PS1_pwd () case $PWD in
 	"$HOME"*) printf '~%s' "${PWD#"$HOME"}" ;;
 	*)        printf  '%s' "$PWD"
 esac
 
-PS1='[?$? !$(__SampShell_dash_PS1_histno) | $(date +"%I:%M:%S %p")]' # prefix
-PS1=$PS1' $(__SampShell_dash_PS1_pwd) ${0##*/}$ ' # Suffix
+PS1='[?$? !$(__PS1_histno) | $(date +"%I:%M:%S %p")'
+[ "$SHLVL" -ne 1 ] && PS1="$PS1 SHLVL=$SHLVL"
+PS1="$PS1"'] $(__PS1_pwd) ${0##*/}$ '
+
+# Use `vim` for editing commands.
+FCEDIT=vim
 
 alias r='fc -s'
-
 alias history='fc -l'
 
 add_to_CDPATH () {

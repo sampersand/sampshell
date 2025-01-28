@@ -1,0 +1,24 @@
+#!zsh
+emulate -L zsh
+
+# If we're not connected to a TTY, the just act like `history`, except all values are
+# printed out by default. This lets us do `h | grep ...`
+if [[ ! -t 1 ]] then
+	history ${@:-0}
+	return
+fi
+
+# If any arguments were given that aren't integers, instead interpret them as args to `grep`, and
+# pass everything to grep.
+if [[ $# -ne 0 && $1 != (-|)<-> ]]; then
+	history 0 | egrep -i "$@"
+	return
+fi
+
+local sep amount REPLY
+
+# Number the output lines
+history $@ | while read -r; do
+	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} ))
+	printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
+done

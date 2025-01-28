@@ -24,6 +24,9 @@
 #                                                                                                  #
 ####################################################################################################
 
+## Unset the `h` command as the ZSH version supplies a much better one under `functions/*`
+unfunction h
+
 ## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
 # the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
@@ -105,25 +108,7 @@ unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for sav
 unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
 unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
 
-## Same as `history` except it also numbers its output lines
-function h {
-	emulate -L zsh
-
-	# If we're not connected to a TTY, the just act like `history`, except all values are
-	# printed out by default. This lets us do `h | grep ...`
-	if [[ ! -t 1 ]] then
-		history ${@:-0}
-		return
-	fi
-
-	local sep amount
-
-	# Number the output lines
-	history $@ | while read -r; do
-		amount=-$(( HISTCMD - ${REPLY[(wr)<->]} ))
-		printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
-	done
-}
+## Don't record `h` (which is `autoload`ed from `functions`)
 history-ignore-command h
 
 ####################################################################################################
