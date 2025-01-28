@@ -5,7 +5,7 @@
 # The following are the zstyles that're used
 if false; then
 	# The time string that's printed out; inserted into the `%D{...}` prompt string.
-	zstyle ':sampshell:prompt:time' format '%_I:%M:%S %p'
+	zstyle ':sampshell:prompt:time' format '%_I:%M:%S.%I %p'
 
 	# By default, `user@home` is printed. If `display` is set to false, they can be individually
 	# disabled. If not disabled, `expected` is checked for a list of expected users/hosts. If
