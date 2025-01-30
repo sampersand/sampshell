@@ -130,7 +130,7 @@ if [ "$(uname)" = Darwin ]; then
 
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
-	alias ls >/dev/null 2>&1 && eval "$(command -v ls)hGb"
+	alias ls >/dev/null 2>&1 && eval "alias $([ -n "$BASH_VERSION" ] && set -o posix; alias ls)hGb"
 fi
 
 ################################################################################

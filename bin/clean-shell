@@ -73,6 +73,8 @@ options: (any time '=' is present after an argname, you can omit and put a space
    -R, --[no-]required-vars set (or dont) all the "required" variables (eg TERM/HOME/SHLVL)
    -S, --[no-]sampshell-vars add all sampshell (or dont) vars to the variables to export
 
+   -aVAL, --arg VAL  adds 'VAL' as an argument to the shell without ending shell option parsing.
+
    -vVAR=VAL, --var VAR=VAL   sets VAR=VAL in the shell to execute
    -vVAR, --var VAR           same as --var VAR=\$VAR; VAR must be defined
 EOS
@@ -85,6 +87,7 @@ include_path=$PATH
 dont_include_path=
 verbose_mode=
 dry_mode=
+args=()
 
 typeset -a env_vars
 
@@ -152,8 +155,11 @@ fi
 ## Setup required variables, if that's defined.
 if [[ -n $required_vars ]]; then
 	env_vars[1,0]=SHELL=$shellname
-	[[ -v TERM ]] && env_vars[1,0]=TERM=$TERM
-	[[ -v HOME ]] && env_vars[1,0]=HOME=$HOME
+	for v in TERM HOME LANG LC_{COLLAGE,CTYPE,MESSAGES,MONETARY,NUMERIC,TIME,ALL}; do
+		if [[ -v $v ]] then
+			env_vars[1,0]=( $v=${(P)v} )
+		fi
+	done
 	[[ -v SHLVL ]] && env_vars[1,0]=SHLVL=$((SHLVL-1))
 fi
 

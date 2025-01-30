@@ -24,9 +24,6 @@
 #                                                                                                  #
 ####################################################################################################
 
-## Unset the `h` command as the ZSH version supplies a much better one under `functions/*`
-unfunction h
-
 ## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
 # the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
@@ -108,7 +105,10 @@ unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for sav
 unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
 unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
 
-## Don't record `h` (which is `autoload`ed from `functions`)
+# Don't record the `h` or `SampShell-history` functions
+## Unset the `h` command as the ZSH version supplies a much better one under `functions/*`
+unfunction h
+alias h='noglob SampShell-history'
 history-ignore-command h
 
 ####################################################################################################

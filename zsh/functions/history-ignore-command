@@ -1,8 +1,12 @@
 #!zsh
 
 ## Disable history for specific commands.
-# (NOTE: Since this command affects the shell itself, it must be `.` or `source`d to work properly.)
+# (NOTE: This file's been designed to be used with `autoload`, however it can be `source`d instead,
+# and will work just fine.)
 #
+# (NOTE: This program doesn't play nicely with environment variables; setting them, or any of the
+# "precommand modifiers" (like `noglob`) will circumvent this entirely.)
+
 # This file adds in a new hook to ZSH's history mechanism to ensure that any commands passed to the
 # exposed `history-ignore-command` function aren't actually recorded in the history. For example:
 #
@@ -16,9 +20,9 @@
 #	# entering `git<TAB><SPACE>status` would still match this.
 #	history-ignore-command 'git status'
 #
-# Note that ZSH will always keep the previous command around in case you need to edit it, regardless
-# of any settings. You can just do an `ls` or something after entering one of these ignored commands
-# to ensure that even after pressing "up arrow" it won't exist.
+# ZSH will always keep the previous command around in case you need to edit it, regardless of any
+# settings. You can just do an `ls` or some other command after entering one of these ignored
+# commands to ensure that even after pressing "up arrow" it won't exist.
 #
 # ## SEE ALSO:
 # There's a few builtins options ZSH has which you can tweak instead of using this:
@@ -54,7 +58,7 @@ function _SampShell-history-ignore-commands-hook {
 	#
 	# The return value is negated because a value of `1` indicates we _shouldn't_ record the
 	# command in history, which is what we want.
-	! zstyle -t ":sampshell:history:record:${(j: :)${(Z+Cn+)1}} " ignore-command
+	! zstyle -t ":sampshell:history:record:${(j: :)cmd} " ignore-command
 }
 
 ## Make sure our hook is the very first hook that's run.
