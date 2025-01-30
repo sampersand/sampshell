@@ -89,7 +89,7 @@ alias ls='ls -AFq'
 alias l='ls -l'
 alias j=jobs
 
-if [ -n "$SampShell_EDITOR" ]; then
+if [ -n "${SampShell_EDITOR-}" ]; then
 	alias s=subl ss=ssubl ssubl='subl --create'
 fi
 
@@ -136,7 +136,7 @@ if [ "$(uname)" = Darwin ]; then
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	if alias ls >/dev/null 2>&1; then
-		eval "alias $([ -n "$BASH_VERSION" ] && set -o posix; alias ls)hGb"
+		eval "alias $([ -n "${BASH_VERSION-}" ] && set -o posix; alias ls)hGb"
 	fi
 
 	## Change the `rd` function to remove `.DS_Store`
