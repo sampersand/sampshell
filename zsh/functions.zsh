@@ -3,12 +3,12 @@ function hex { bc <(print -l obase=16 $@ quit) }
 function oct { bc <(print -l obase=8 $@ quit) }
 function bin { bc <(print -l obase=2 $@ quit) }
 
-# Adds in "clean shell" functions, which startup a clean version of shells, and only set "normal"
+# Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
-function clsh   { clean-shell --shell =sh   --none $@ }
-function clbash { clean-shell --shell =bash --none --noprofile --norc $@ }
-function clzsh  { clean-shell --shell =zsh  --none -fd $@ }
-function cldash { clean-shell --shell =dash --none $@ }
+alias   clsh='clean-shell --shell =sh   --none $@'
+alias clbash='clean-shell --shell =bash --none --arg --noprofile --arg --norc $@'
+alias  clzsh='clean-shell --shell =zsh  --none --arg -fd $@'
+alias cldash='clean-shell --shell =dash --none $@'
 
 ## Banner utility
 function _SampShell-banner { ~ss/bin/banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.

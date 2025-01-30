@@ -74,6 +74,11 @@ p () {
 	unset -v SampShell_scratch
 }
 
+## Removes a directory
+rd () {
+	rmdir -- "$@"
+}
+
 ## Creates a directory, and then changes to it.
 md () {
 	# (use `\cd` so that we don't get alias expansion that might exist)
@@ -130,7 +135,14 @@ if [ "$(uname)" = Darwin ]; then
 
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
-	alias ls >/dev/null 2>&1 && eval "alias $([ -n "$BASH_VERSION" ] && set -o posix; alias ls)hGb"
+	if alias ls >/dev/null 2>&1; then
+		eval "alias $([ -n "$BASH_VERSION" ] && set -o posix; alias ls)hGb"
+	fi
+
+	## Change the `rd` function to remove `.DS_Store`
+	rd () {
+		command rm -f -- "${1:?need a dir}"/.DS_Store && command rmdir -- "$1"
+	}
 fi
 
 ################################################################################

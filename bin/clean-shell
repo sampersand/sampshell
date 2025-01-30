@@ -60,7 +60,7 @@ longusage () { cat; } <<EOS
 options: (any time '=' is present after an argname, you can omit and put a space)
    -h, --help show this message
 
-   -v, --verbose print out the invocation before running it
+   -V, --verbose print out the invocation before running it
        --dry     don't actually execute the command; implies -v
 
    -E, --env[=VAL]  same as --var ENV=VAL; VAL defaults to \$ENV (err if env doesnt exist); -E always uses \$ENV
@@ -87,7 +87,7 @@ include_path=$PATH
 dont_include_path=
 verbose_mode=
 dry_mode=
-args=()
+additonal_args=()
 
 typeset -a env_vars
 
@@ -127,6 +127,12 @@ while [[ $# > 0 ]]; do
 			option=--env=$ENV ;&
 		--env=*)
 			env_vars+=ENV=${option#--env=} ;;
+
+		-a?*) set -- ${option#-a} $@ ;&
+		-a | --arg) # don't support --arg=a=b
+			[[ ! -v 1 ]] && die 'need an argument for -a/--arg'
+			additonal_args+=($1)
+			shift ;;
 
 		# Support `-vFOO` and friends by just deleting the `-v`, and adding it to
 		# the start of the list of options
@@ -173,9 +179,9 @@ if [ -n "$sampshell_vars" ]; then
 	done
 fi
 
-command=(env -i $env_vars $shellname $@)
+command=(env -i $env_vars $shellname $additonal_args $@)
 [[ -n $verbose_mode || -n $dry_mode ]] && {
-	print ${(q)command}
+	print -r -- ${(q)command}
 	[[ -n $dry_mode ]] && return
 }
 $command
