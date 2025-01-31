@@ -51,10 +51,8 @@ cdd () {
 	# would be the previous directory.)
 	[ "$1" = - ] && set -- ./-
 
-	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
-	# use `\` to disable alias expansion for `cd`. (We could use `command`,
-	# but `zsh`)
-	CDPATH= \cd -- "$1"
+	# Don't respect `CDPATH` here, as we know the directory to go to.
+	CDPATH= cd -- "$1"
 }
 
 ## Simply prints out how many args were given to the function
@@ -67,7 +65,8 @@ p () {
 	SampShell_scratch=0
 
 	while [ "$#" != 0 ]; do
-		printf '%3d: %q\n' "$((SampShell_scratch += 1))" "$1"
+		# Sadly we can't use `%q` because it's not POSIX-compliant.
+		printf '%3d: %s\n' "$((SampShell_scratch += 1))" "$1"
 		shift
 	done
 

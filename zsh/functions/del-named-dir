@@ -7,13 +7,13 @@
 
 emulate -L zsh # Reset ZSH to its default options, just for this function.
 
-if (( $# != 1 )) then
-	print >&2 -r "usage: $0 name"
+if (( $# == 0 )) then
+	print >&2 -r "usage: $0 name [...]"
 	print >&2
-	print >&2 -r "removes 'name' as a named dir"
+	print >&2 -r "removes 'names' as a named dir"
 	return 1
 fi
 
 # NOTE: the `:t` is so you can pass paths in, as `/` is an invalid char
 # in named directories. Also, provides parity with `add-named-dir`
-builtin unhash -d -- ${1:t}
+builtin unhash -d -- ${^@:t}=

@@ -37,11 +37,11 @@ autoload -Uz ${0:P:h}/functions/*
 ####################################################################################################
 
 ## Add named directories
-[[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss    $SampShell_ROOTDIR
-[[ -n $SampShell_TRASHDIR ]] && add-named-dir trash $SampShell_TRASHDIR
-[[ -n ~/tmp               ]] && add-named-dir tmp   ~/tmp
-[[ -d ~/Desktop           ]] && add-named-dir d     ~/Desktop
-[[ -d ~/Downloads         ]] && add-named-dir dl    ~/Downloads
+[[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
+[[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
+[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because
+[[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop # `MAGIC_EQUAL_SUBST` isn't set yet)
+[[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d {
