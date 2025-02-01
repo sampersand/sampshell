@@ -147,11 +147,8 @@ if [ "$(uname)" = Darwin ]; then
 				command rm -f -- "$SampShell_scratch"/.DS_Store
 			fi
 		done
-
-		command rmdir -- "$@"
-		set -- "$?"
 		unset -v SampShell_scratch
-		return "$1"
+		command rmdir -- "$@"
 	}
 fi
 
