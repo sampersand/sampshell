@@ -1,0 +1,71 @@
+#!/bin/dash
+
+# `xx`: A helper script to repeat a string a certain amount of times
+# mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
+
+####################################################################################################
+#                                          Parse Options                                           #
+####################################################################################################
+
+usage () { cat; } <<USAGE
+usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
+	-n         Don't print the trailing newline
+	-c COUNT   Print 'string' COUNT times
+	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
+
+(There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
+USAGE
+
+width=${COLUMNS:-$(tput cols 2>&-)}
+: ${width:=80}
+
+while getopts 'nhc:w:' option; do
+	case $option in
+	n) no_newline=1 ;;
+	c) count=$OPTARG width= ;;
+	w) width=$OPTARG count= ;;
+	h) usage; exit ;;
+	\?) return 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+string=$*
+
+# Error out if no string to print was given
+if [ $# -eq 0 ]; then
+	usage >&2
+	exit 1
+fi
+
+# If no width or count were given, default width
+if [ -z "$width" ] && [ -z "$count" ]; then
+	width=${COLUMNS:-$(tput cols 2>&-)}
+	: "${width:=80}"
+fi
+
+# Actually print out the string
+if [ -z "$string" ]; then
+	# Print nothing for empty strings
+	:
+elif [ "${#string}" -eq 1 ]; then
+	# Special case for single-character strings, we can go through `tr`
+	printf "% ${width:-$count}s" "" | tr ' ' "$string"
+elif [ -n "$width" ]; then
+	# We want a `width` iteration
+	while [ "$width" -gt 0 ]; do
+		printf "%.${width}s" "$string"
+		: "$(( width -= ${#string} ))"
+	done
+else
+	# Otherwise, we want a count iteration.
+	while [ "$(( count -= 1 ))" -ge 0 ]; do
+		printf %s "$string"
+	done
+fi
+
+# Print out a newline unless it is suppressed
+[ -n "$no_newline" ] && echo
+
+# Always return successfully
+exit 0
