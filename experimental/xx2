@@ -16,8 +16,8 @@ usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
 (There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
 USAGE
 
-width=${COLUMNS:-$(tput cols 2>&-)}
-: ${width:=80}
+# default width to 80
+width=80
 
 while getopts 'nhc:w:' option; do
 	case $option in
