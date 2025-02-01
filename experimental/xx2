@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
@@ -16,10 +16,8 @@ usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
 (There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
 USAGE
 
-# default width to 80
-width=80
-
-while getopts 'nhc:w:' option; do
+while getopts 'nhc:w:' option
+do
 	case $option in
 	n) no_newline=1 ;;
 	c) count=$OPTARG width= ;;
@@ -29,43 +27,49 @@ while getopts 'nhc:w:' option; do
 	esac
 done
 
-shift $(( OPTIND - 1 ))
+shift `expr $OPTIND - 1`
 string=$*
 
 # Error out if no string to print was given
-if [ $# -eq 0 ]; then
+if test $# -eq 0
+then
 	usage >&2
 	exit 1
 fi
 
 # If no width or count were given, default width
-if [ -z "$width" ] && [ -z "$count" ]; then
-	width=${COLUMNS:-$(tput cols 2>&-)}
-	: "${width:=80}"
+if test $width -o $count
+then
+	width=$COLUMNS
+	test $width || width=`tput cols 2>&-`
+	test $width || width=80
 fi
 
-# Actually print out the string
-if [ -z "$string" ]; then
-	# Print nothing for empty strings
+if test X"$string" = X
+then
 	:
-elif [ "${#string}" -eq 1 ]; then
-	# Special case for single-character strings, we can go through `tr`
-	printf "% ${width:-$count}s" "" | tr ' ' "$string"
-elif [ -n "$width" ]; then
-	# We want a `width` iteration
-	while [ "$width" -gt 0 ]; do
-		printf "%.${width}s" "$string"
-		: "$(( width -= ${#string} ))"
+elif test ${#string} -eq 1
+then
+	test $width || width=$count
+	printf "% ${width}s" '' | tr ' ' "$string"
+elif test $width
+then
+	while test 0 \< $width; do
+		printf %.${width}s "$string"
+		width=`expr $width - ${#string}`
 	done
 else
 	# Otherwise, we want a count iteration.
-	while [ "$(( count -= 1 ))" -ge 0 ]; do
-		printf %s "$string"
+	while
+		count=`expr $count - 1`
+		test $count -ge 0
+	do
+		echo "$string\c"
 	done
 fi
 
 # Print out a newline unless it is suppressed
-[ -n "$no_newline" ] && echo
+test $no_newline && echo
 
 # Always return successfully
 exit 0

@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
