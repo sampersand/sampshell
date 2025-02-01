@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/dash
 
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
@@ -7,51 +7,65 @@
 #                                          Parse Options                                           #
 ####################################################################################################
 
-## Usage function
-usage () cat <<USAGE
-usage: ${ZSH_SCRIPT:t} [-n] (-w WIDTH | -c COUNT) [--] string
+usage () { cat; } <<USAGE
+usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
 	-n         Don't print the trailing newline
 	-c COUNT   Print 'string' COUNT times
 	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
 
-(There's a bug with a 'string' of just '-'; use -- before it to fix it, eg ${ZSH_SCRIPT:t} -w8 -- -.)
+(There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
 USAGE
 
-## Parse Command line options
-wopts=(-w 80) # Default output options
-zparseopts -D -E -K n=no_newline {w,c}+:=wopts h=help \-=q # Parse command line options
-[[ $1 == -- ]] && shift # `zparseopts` doesn't strip `--`, so we do that ourselves
+# default width to 80
+width=80
 
-## Fetch command line option values
-msg=$1
-style=$wopts[-2] # Style and width are the last two values passed in to `-w` or `-c`; if nothing ...
-width=$wopts[-1] # ... was passed in, then the default `-w 80` is used.
+while getopts 'nhc:w:' option; do
+	case $option in
+	n) no_newline=1 ;;
+	c) count=$OPTARG width= ;;
+	w) width=$OPTARG count= ;;
+	h) usage; exit ;;
+	\?) return 2 ;;
+	esac
+done
 
-## Handle `-h` and validate options.
-(( $+help ))  && { usage; exit } # If help was requested, print the usage and exit.
-(( $# != 1 )) && { usage >&2; exit 1 } # If not exactly one argument was left over, that's an error.
-[[ $width != <-> ]] && { print -- "${ZSH_SCRIPT:t}: width is not an integer: $width" >&1; exit 1 }
+shift $(( OPTIND - 1 ))
+string=$*
 
-####################################################################################################
-#                                        Do the Repetition                                         #
-####################################################################################################
+# Error out if no string to print was given
+if [ $# -eq 0 ]; then
+	usage >&2
+	exit 1
+fi
 
-## Do the repetition
-if [[ $style == -c ]] then
-	repeat $width print -nr -- $msg
+# If no width or count were given, default width
+if [ -z "$width" ] && [ -z "$count" ]; then
+	width=${COLUMNS:-$(tput cols 2>&-)}
+	: "${width:=80}"
+fi
+
+# Actually print out the string
+if [ -z "$string" ]; then
+	# Print nothing for empty strings
+	:
+elif [ "${#string}" -eq 1 ]; then
+	# Special case for single-character strings, we can go through `tr`
+	printf "% ${width:-$count}s" "" | tr ' ' "$string"
+elif [ -n "$width" ]; then
+	# We want a `width` iteration
+	while [ "$width" -gt 0 ]; do
+		printf "%.${width}s" "$string"
+		: "$(( width -= ${#string} ))"
+	done
 else
-	for (( ; 0 < width; width -= $#msg )) do
-		# Note that `%.*s` with a width larger than the string length is a no-op.
-		printf '%.*s' $width $msg
+	# Otherwise, we want a count iteration.
+	while [ "$(( count -= 1 ))" -ge 0 ]; do
+		printf %s "$string"
 	done
 fi
 
-## Print the trailing newline unless it was suppressed
-[[ $no_newline ]] || print
+# Print out a newline unless it is suppressed
+[ -n "$no_newline" ] && echo
 
-####################################################################################################
-#                                             Success                                              #
-####################################################################################################
-
-## Exit successfully
+# Always return successfully
 exit 0
