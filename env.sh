@@ -68,8 +68,9 @@ if [ -n "${SampShell_ROOTDIR-}" ]; then
 	# Already setup, nothing to do.
 	:
 elif [ -n "${ZSH_VERSION-}" ]; then
-	# ZSH: just use the builtin `${0:P:h}` to find it
-	SampShell_ROOTDIR=${0:P:h}
+	# ZSH: just use the builtin `${0:P:h}` to find it; gotta use eval b/c
+	# this isn't valid syntax.
+	eval "SampShell_ROOTDIR=\${0:P:h}"
 elif [ -n "${BASH_SOURCE-}" ]; then
 	# BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
 	# use the `&& printf x` trick, because there's no nicer way to do it.

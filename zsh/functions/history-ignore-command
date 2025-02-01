@@ -87,7 +87,11 @@ function history-ignore-command {
 		print >&2 "spaces in them, and will match subcommands (eg if command='git status',"
 		print >&2 "then it'll match 'git status', but not 'git commit'; these subcommands"
 		print >&2 "use ZSH's word splitting so no need to worry about using spaces)."
-		print >&2 "The '-g' flag ensures that "
+		print >&2 "The '-g' changes it so 'command' is actually a glob."
+		print >&2
+		print >&2 "!! NOTE: This only affects 'simple' invocations; things like 'noglob' or"
+		print >&2 "!! env vars will circumvent this. (If this becomes an issue, I should go"
+		print >&2 "!! ahead and fix _SampShell-history-ignore-commands-hook)"
 		return 1
 	fi
 
