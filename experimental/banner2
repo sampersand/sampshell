@@ -29,15 +29,27 @@ options:
 	-l, --single-line      Only print the header and then return; ignores args
 USAGE
 
-expect_numeric () case $1 in
-	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$!" ;;
+expect_numeric () case $OPTARG in
+	*[!0-9]*) die "$opt expects a numeric argument, got: %s" "$!" ;;
 	?*) ;;
-	*) die "$option expects an argument"
+	*) die "$opt expects an argument"
 esac
 
 ## Config options
 width=80 style=\# pre=0
 multiline= blank= single_line=
+
+
+while getopts 'w:p:s:mbl' opt; do
+	case $opt in
+	w) width=$OPTARG; expect_numeric;;
+	p) pre=$OPTARG; expect_numeric;;
+	s) style=$OPTARG ;;
+	m) multiline=1 ;;
+	b) blank=1 ;;
+	esac
+done
+exit
 
 while [ "$#" -ne 0 ]; do
 	option=$1
@@ -92,7 +104,7 @@ while [ "$#" -ne 0 ]; do
 
 	*)
 		set -- "$option" "$@"
-		break 
+		break
 	esac
 done
 

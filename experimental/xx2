@@ -1,4 +1,5 @@
 #!/bin/sh
+## This is just a janky way of doing # Bad sh
 
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
@@ -15,6 +16,9 @@ usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
 
 (There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
 USAGE
+
+IFS=
+set -f
 
 while getopts 'nhc:w:' option
 do
@@ -45,17 +49,17 @@ then
 	test $width || width=80
 fi
 
-if test X"$string" = X
+if test ! $string
 then
 	:
 elif test ${#string} -eq 1
 then
 	test $width || width=$count
-	printf "% ${width}s" '' | tr ' ' "$string"
+	printf "% ${width}s" '' | tr ' ' $string
 elif test $width
 then
-	while test 0 \< $width; do
-		printf %.${width}s "$string"
+	while test 0 -lt $width; do
+		printf %.${width}s $string
 		width=`expr $width - ${#string}`
 	done
 else
@@ -64,7 +68,7 @@ else
 		count=`expr $count - 1`
 		test $count -ge 0
 	do
-		echo "$string\c"
+		echo $string\\c
 	done
 fi
 

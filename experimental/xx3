@@ -1,0 +1,20 @@
+#!/bin/csh
+
+test ! -f /a
+set string = -
+set width = 100
+
+getopt abo: -bo'* 'oo -a
+exit
+while ( 0 < $width )
+	printf "%.${width}s" $string
+	@ width -= ${%string}
+end
+exit
+exit
+# echo $[ 1  + 2 ]
+	# We want a `width` iteration
+	while [ "$width" -gt 0 ]; do
+		printf "%.${width}s" "$string"
+		: "$(( width -= ${#string} ))"
+	done
