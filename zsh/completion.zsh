@@ -10,7 +10,8 @@ bindkey '^Z' undo
 bindkey 'Ω' undo # MACOS: OPTION+Z
 bindkey '¸' redo # MACOS: OPTION+SHIFT+Z
 bindkey '^W' kill-region # delete a higlighted part of a line
-
+bindkey '^[^[[D' vi-find-prev-char
+bindkey '^[^[[C' vi-find-next-char
 bindkey '^q' push-line-or-edit
 
 ## Subsumed by me just learning `^W`
