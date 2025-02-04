@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage () { cat <<USAGE; }
-usage: $(basename "$0") [-h|--help] [-u|--unique] [--] [n=16]
+usage: $(basename "$0") [-h] [-u] [--] [n=16]
 
 Print the n most recent branches. With -u, only print unique
 branches. These can be used with the '@{-N}' syntax in git.
@@ -10,8 +10,8 @@ USAGE
 until [ "$#" = 0 ]; do
 	case $1 in
 		--) shift; break;;
-		-u|--unique) shift; unique=-u ;;
-		-h|--help) usage; exit ;;
+		-u) shift; unique=-u ;;
+		-h) usage; exit ;;
 		*[!0-9]*) usage >&1; exit 1 ;;
 		*) break ;;
 	esac
@@ -24,7 +24,7 @@ fi
 
 git reflog show --grep-reflog=checkout: | # show all the `checkout` commands
 	cut -d' ' -f8         | # Keep the 8th column, separated by spaces
-	nl -nln               | # Number each branch, putting numbers on the left
+	nl -n ln              | # Number each branch, putting numbers on the left
  	sort -k2db $unique -s | # Keep unique branch names, in stable order
  	sort -n               | # Sort by the column
  	head -n "${1:-16}"      # Get the `$1`-th most recent ones

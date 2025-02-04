@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/dash
 
 ## Safety first
 set -o nounset
@@ -30,7 +30,7 @@ options:
 USAGE
 
 expect_numeric () case $OPTARG in
-	*[!0-9]*) die "$opt expects a numeric argument, got: %s" "$!" ;;
+	*[!0-9]*) die "$opt expects a numeric argument, got: %s" "$OPTARG" ;;
 	?*) ;;
 	*) die "$opt expects an argument"
 esac
@@ -40,15 +40,33 @@ width=80 style=\# pre=0
 multiline= blank= single_line=
 
 
-while getopts 'w:p:s:mbl' opt; do
+set -- --multiline=34
+# set -- -m --a=34 --b=34 -- a=x
+while getopts 'w:p:s:mbl-' opt; do
+	if [ "$opt" = '-' ]; then
+		shift $(( OPTIND - 2 ))
+		arg=$1
+		shift
+		OPTIND=1
+		echo $arg
+		continue
+		# case $arg in
+	fi
 	case $opt in
 	w) width=$OPTARG; expect_numeric;;
 	p) pre=$OPTARG; expect_numeric;;
 	s) style=$OPTARG ;;
 	m) multiline=1 ;;
 	b) blank=1 ;;
+	\?) exit 1 ;;
+		# opt=$(())
+		# shift $((OPTIND - 2))
+		# echo "$OPTIND : $@"
+		# exit
 	esac
 done
+shift $(( $OPTIND - 1 ))
+echo "$@"
 exit
 
 while [ "$#" -ne 0 ]; do

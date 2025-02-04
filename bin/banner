@@ -128,29 +128,26 @@ print_lines () {
 	done
 }
 
-[ "$pre" = 0 ] && pre= # Make yash happy?
+[ "$pre" -ne 0 ] && printf "%${pre}s"
 
 case $style in
 	\#)
-		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines '#' '#' $width "$@"
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	/)
-		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines '//' '//' $width "$@"
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	\*)
-		printf "%${pre}s"
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines ' *' '*' $((width - 1)) "$@"
-		printf " %${pre}s"
+		[ "$pre" -ne 0 ] && printf " %${pre}s"
 		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
 	*) die 'unknown style %s' "$style" ;;
 esac
