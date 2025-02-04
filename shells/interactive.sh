@@ -12,6 +12,11 @@
 # configs won't be (as they can't be located).
 ####
 
+if [ -n "${SampShell_interactive_loaded+1}" ]; then
+	return 0
+fi
+SampShell_interactive_loaded=1
+
 ################################################################################
 #                                                                              #
 #                          Common Functions & Aliases                          #

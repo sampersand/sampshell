@@ -1,5 +1,5 @@
 ## Options I'm not sure if I want to set or not.
-[[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
+# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
 
 : "${REPORTTIME=4}" # Print the duration of commands that take more than 4s of CPU time
 # DIRSTACKSIZE=30   # I just started using dirstack more, if it ever grows unwieldy I can set this.

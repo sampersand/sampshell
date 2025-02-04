@@ -25,7 +25,8 @@ alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`
 # Reloads the shell by rerunning all the ~/.zxxx` scripts.
 # TODO: should we also load in the system config?
 function reload {
-	unalias gcm >/dev/null 2>/dev/null # TODO: shoudl this be `unalias -a`?
+	unset SampShell_interactive_loaded
+	unalias h gcm >/dev/null 2>/dev/null # TODO: shoudl this be `unalias -a`?
 	setopt -L LOCAL_TRAPS
 	trap 'for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do source ${file:P}; done' EXIT
 }

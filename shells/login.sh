@@ -51,6 +51,12 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 # but that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
 
+## Set `ENV`, the POSIX-compliant environment variable that should be `.`d when
+# in in interactive. Note that we intentionally use single quotes, as POSIX
+# specifies that the variable is subject to parameter expansion, and if we used
+# double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
+export ENV='$SampShell_ROOTDIR/interactive.sh'
+
 ################################################################################
 #                                                                              #
 #                     Prepend SampShell's bin to the $PATH                     #
