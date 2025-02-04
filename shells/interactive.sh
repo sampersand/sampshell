@@ -97,11 +97,6 @@ if [ -n "${SampShell_EDITOR-}" ]; then
 	alias s=subl ss=ssubl ssubl='subl --create'
 fi
 
-## Words is something I use quite frequently; only assign `$words` though if it
-# doesn't exist, and `$SampShell_WORDS` is a file.
-export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
-[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
-
 ################################################################################
 #                                                                              #
 #                                    Safety                                    #

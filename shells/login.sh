@@ -57,6 +57,17 @@ export HOMEBREW_NO_ANALYTICS=1
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
 export ENV='$SampShell_ROOTDIR/interactive.sh'
 
+## Use `vim` for editing commands.
+export FCEDIT=vim
+
+## Set `LANG` if it's not already present.
+export LANG="${LANG-en_US}"
+
+## Words is something I use quite frequently; only assign `$words` though if it
+# doesn't exist, and `$SampShell_WORDS` is a file.
+export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
+[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
+
 ################################################################################
 #                                                                              #
 #                     Prepend SampShell's bin to the $PATH                     #

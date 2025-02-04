@@ -16,9 +16,6 @@ PS1='[?$? !$(__PS1_histno) | $(date +"%I:%M:%S %p")'
 [ "$SHLVL" -ne 1 ] && PS1="$PS1 SHLVL=$SHLVL"
 PS1="$PS1"'] $(__PS1_pwd) ${0##*/}$ '
 
-# Use `vim` for editing commands.
-FCEDIT=vim
-
 alias r='fc -s'
 alias history='fc -l'
 
