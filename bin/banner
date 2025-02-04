@@ -123,7 +123,7 @@ print_lines () {
 	do
 		spacing=$(( (${#line} + msg_width) / 2  ))
 		remainder=$(( msg_width - spacing ))
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
 	done
 }
