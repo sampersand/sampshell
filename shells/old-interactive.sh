@@ -70,8 +70,8 @@ if [ -z "$SampShell_no_experimental" ]; then
    alias cdmkdir=mkdircd
    alias cdm=mkdircd
 
-   mkd () { mkdir -p $@; }
-   mkf () { mkdir -p ${@:h} && command touch $@; }
+   mkd () ( IFS=/; mkdir -p "$*" )
+   mkf () ( IFs=/; mkdir -p "$*" && command touch $@ )
    symlink () {
       ln -s ${1?need existing file name} ${2?need name of destination}
    }
@@ -102,7 +102,7 @@ if [ -z "${HISTFILE+1}" ]; then
    else
       HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
    fi
-elif [[ -z ${HISTFILE} ]]; then
+elif [ -z ${HISTFILE} ]; then
    echo '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 SampShell_does_command_exist history || eval 'history () { fc -l "$@"; }'

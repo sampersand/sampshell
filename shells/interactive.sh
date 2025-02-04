@@ -169,6 +169,8 @@ elif [ ! -d "$SampShell_ROOTDIR" ]; then
 	return 0
 fi
 
+[ -s "$SampShell_ROOTDIR/old-interactive.sh" ] && . "$SampShell_ROOTDIR/old-interactive.sh"
+
 # ZSH
 if [ -n "${ZSH_VERSION-}" ]; then
 	. "$SampShell_ROOTDIR/zsh/zshrc"
