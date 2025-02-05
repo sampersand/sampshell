@@ -10,8 +10,9 @@ function copy-to-clipboard {
 
 [[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
 
-alias dash='dash -l' # i want normal dash to have login
-
+function ducks {
+	du -chs -- $@ | sort -h
+}
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 

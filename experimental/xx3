@@ -1,20 +1,84 @@
 #!/bin/csh
 
-test ! -f /a
-set string = -
-set width = 100
+alias warn 'echo \!* > /dev/stderr;'
 
-getopt abo: -bo'* 'oo -a
-exit
-while ( 0 < $width )
-	printf "%.${width}s" $string
-	@ width -= ${%string}
+set noglob = 1
+set argv = (`getopt 'nc:w:' "$*"`)
+if ( $status ) exit 1
+unset noglob
+
+unset no_newline width count
+while ( $#argv )
+	switch ($1)
+	case -n:
+		set no_newline = 1
+		breaksw
+
+	case -w:
+		shift
+		set width = $1
+		unset count
+		breaksw
+
+	case -c:
+		shift
+		set count = $1
+		unset width
+		breaksw
+	default:
+		break
+	endsw
+	shift
 end
-exit
-exit
-# echo $[ 1  + 2 ]
-	# We want a `width` iteration
-	while [ "$width" -gt 0 ]; do
+
+if ( $#argv == 0 ) then
+	warn "usage: .."
+	exit 1
+endif
+
+if ( $argv[1] == -- ) then
+	shift
+else if ( $argv[$#argv] =~ -- ) then
+	set argv[$#argv] = ''
+	unset argv[2]
+endif
+
+echo $#
+set string = "$argv[*]"
+
+if ( ! $?width && ! $?count ) then
+	if ( $?COLUMNS ) then
+		set width = $COLUMNS
+	else
+		set tty = `tty`
+		if ( ! $status ) then
+			set width = `tput cols $tty`
+			if ( ! $?status ) unset width
+		endif
+
+		if ( ! $?width ) set width = 80
+	endif
+endif
+
+if ( ! ${%string} ) then
+	:
+else if ( ${%string} == 1 ) then
+	if ( ! $?width ) then
+		set width = $count
+	endif
+
+	printf "% ${width}s" '' | tr ' ' "$string"
+else if ( $?width ) then
+	while ( 0 < $width )
 		printf "%.${width}s" "$string"
-		: "$(( width -= ${#string} ))"
-	done
+		@ width -= ${%string}
+	end
+else
+	while ( $count > 0 )
+		@ count--
+		echo -n "$string"
+	end
+endif
+
+if ( ! $?no_newline ) echo
+exit 0
