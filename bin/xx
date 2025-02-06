@@ -12,8 +12,6 @@ usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
 	-n         Don't print the trailing newline
 	-c COUNT   Print 'string' COUNT times
 	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
-
-(There's a bug with a 'string' of just '-'; use -- before it to fix it, eg $0 -w8 -- -.)
 USAGE
 
 while getopts 'nhc:w:' option; do
@@ -49,6 +47,8 @@ elif [ "${#string}" -eq 1 ]; then
 	# Special case for single-character strings, we can go through `tr`
 	printf "% ${width:-$count}s" "" | tr ' ' "$string"
 elif [ -n "$width" ]; then
+	# (TODO: Can you optimize this based on printing `$width / ${#string}`
+	# full entires and `$width % ${#string}` remainder)
 	# We want a `width` iteration
 	while [ "$width" -gt 0 ]; do
 		printf "%.${width}s" "$string"

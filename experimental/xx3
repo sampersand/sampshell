@@ -3,7 +3,7 @@
 alias warn 'echo \!* > /dev/stderr;'
 
 set noglob = 1
-set argv = (`getopt 'nc:w:' "$*"`)
+set argv = (`getopt 'nc:w:' $*`)
 if ( $status ) exit 1
 unset noglob
 
@@ -43,8 +43,9 @@ else if ( $argv[$#argv] =~ -- ) then
 	unset argv[2]
 endif
 
-echo $#
+# set string = "$argv[*]"
 set string = "$argv[*]"
+# set string = $1
 
 if ( ! $?width && ! $?count ) then
 	if ( $?COLUMNS ) then
@@ -69,15 +70,12 @@ else if ( ${%string} == 1 ) then
 
 	printf "% ${width}s" '' | tr ' ' "$string"
 else if ( $?width ) then
-	while ( 0 < $width )
-		printf "%.${width}s" "$string"
-		@ width -= ${%string}
-	end
+	@ whole = $width / ${%string}
+	@ partial = $width % ${%string}
+	repeat $whole echo -n $string
+	printf "%.${partial}s" "$string"
 else
-	while ( $count > 0 )
-		@ count--
-		echo -n "$string"
-	end
+	repeat $count echo -n "$string"
 endif
 
 if ( ! $?no_newline ) echo

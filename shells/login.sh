@@ -5,28 +5,28 @@
 ################################################################################
 
 if [ -n "${SampShell_ROOTDIR-}" ]; then
-	# Already setup, nothing to do.
-	:
+   # Already setup, nothing to do.
+   :
 elif [ -n "${ZSH_VERSION-}" ]; then
-	# ZSH: just use the builtin `${0:P:h}` to find it; gotta use eval b/c
-	# this isn't valid syntax.
-	eval 'SampShell_ROOTDIR=${0:P:h}'
+   # ZSH: just use the builtin `${0:P:h}` to find it; gotta use eval b/c
+   # this isn't valid syntax.
+   eval 'SampShell_ROOTDIR=${0:P:h}'
 elif [ -n "${BASH_SOURCE-}" ]; then
-	# BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
-	# use the `&& printf x` trick, because there's no nicer way to do it.
-	eval '
-	SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
-	SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
-	SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}'
+   # BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
+   # use the `&& printf x` trick, because there's no nicer way to do it.
+   eval '
+   SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
+   SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
+   SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}'
 else
-	# We are interactive, guess a default (hope it works) and warn.
-	SampShell_ROOTDIR=$HOME/.sampshell/shell
-	printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
+   # We are interactive, guess a default (hope it works) and warn.
+   SampShell_ROOTDIR=$HOME/.sampshell/shell
+   printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
 ## Warn if `SampShell_ROOTDIR` isn't a directory, and we're in interactive mode.
 if [ ! -d "$SampShell_ROOTDIR" ]; then
-	printf >&2 '[WARN] $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' "$SampShell_ROOTDIR"
+   printf >&2 '[WARN] $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' "$SampShell_ROOTDIR"
 fi
 
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
@@ -57,7 +57,9 @@ export HOMEBREW_NO_ANALYTICS=1
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
 export ENV='$SampShell_ROOTDIR/interactive.sh'
 
-## Use `vim` for editing commands.
+## Use `vim` for editing history commands. (This is only really needed for
+# shells without better history mechanisms, which are quite rare---even dash has
+# history if `set -o emacs` is enabled.)
 export FCEDIT=vim
 
 ## Set `LANG` if it's not already present.
