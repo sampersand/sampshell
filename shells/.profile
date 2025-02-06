@@ -90,7 +90,7 @@ export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
 
 ## Disable homebrew analytics.
 # If set, homebrew (the mac package manager) won't send any analytics. We set it
-# in `login.sh` and not `interactive.sh` in case any config scripts decide to
+# in `.profile` and not `interactive.sh` in case any config scripts decide to
 # use homebrew themselves. (We _could_ check to see if homebrew is installed,
 # but that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
@@ -114,7 +114,7 @@ export LANG="${LANG-en_US}"
 # in in interactive. Note that we intentionally use single quotes, as POSIX
 # specifies that the variable is subject to parameter expansion, and if we used
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
-if [ -n "${ENV+1}" ]; then
+if [ -z "${ENV+1}" ]; then
    export ENV='$SampShell_ROOTDIR/interactive.sh'
 fi
 

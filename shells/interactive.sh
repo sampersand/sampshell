@@ -158,6 +158,10 @@ fi
 #                                                                              #
 ################################################################################
 
+if [ -n "$Sampshell_EXPERIMENTAL" ] && [ -e "$SampShell_ROOTDIR/old-interactive.sh" ]
+then
+	. "$SampShell_ROOTDIR/old-interactive.sh"
+fi
 ## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
 # message than what `.` would output
 if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
