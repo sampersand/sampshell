@@ -1,25 +1,50 @@
+## Configuration universal to the login shell.
+# Login shells are the first shell that are run when someone logs in; Usually,
+# login shells setup configuration (eg env variables, config files, etc.) that
+# that all child processes inherit.
+#
+# This file only sets up and exports environment variables that should always be
+# present, such as SampShell variables expected by `bin/` programs, a few POSIX
+# variables, and a handful of misc ones (eg `HOMEBREW_NO_ANALYTICS`). It is
+# totally POSIX-compliant, as it's meant to be loaded by any login shell.
+#
+# Login files shouldn't set up anything that's shell-specific, such as prompts
+# or history expansions, as they're only run on "login"---see `interactive.sh`
+# for code that's expected to be run by every interactive shell. However, this
+# program is intentionally idempotent, so that it can be loaded from interactive
+# shells too without causing issues.
+#
+# Since the purpose of this is to setup common config across _all_ shells, there
+# are not shell-specific 
+##
+
 ################################################################################
 #                                                                              #
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
 #                                                                              #
 ################################################################################
 
+## Find and export `SampShell_ROOTDIR`, the directory containing this file,
+# which is used in numerous SampShell commands. If it's not set, the default
+# location is ascertained in a handful of shells (see the code below), with a
+# fallback of `~/.sampshell/shell`. If the file doesn't exist, it's warned.
 if [ -n "${SampShell_ROOTDIR-}" ]; then
    # Already setup, nothing to do.
    :
 elif [ -n "${ZSH_VERSION-}" ]; then
-   # ZSH: just use the builtin `${0:P:h}` to find it; gotta use eval b/c
-   # this isn't valid syntax.
+   # ZSH: just use the builtin `${0:P:h}`. We have to use `eval` because this
+   # syntax isn't valid POSIX syntax.
    eval 'SampShell_ROOTDIR=${0:P:h}'
 elif [ -n "${BASH_SOURCE-}" ]; then
-   # BASH: Use `BASH_SOURCE` (the path to this file) to get it. We need to
-   # use the `&& printf x` trick, because there's no nicer way to do it.
+   # BASH: Use `BASH_SOURCE` and the `&& printf x` trick to get the dir (as
+   # there's no nicer way to do it.) Even though the syntax is valid posix, we
+   # `eval` it so it's not parsed & compiled by shells if not needed.
    eval '
    SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
    SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
    SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}'
 else
-   # We are interactive, guess a default (hope it works) and warn.
+   # Guess a default home directory (hope it works) and warn.
    SampShell_ROOTDIR=$HOME/.sampshell/shell
    printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
@@ -34,15 +59,34 @@ export SampShell_ROOTDIR
 
 ################################################################################
 #                                                                              #
-#                           Other Exported Variables                           #
+#                    Other SampShell Environment Variables                     #
 #                                                                              #
 ################################################################################
 
-## SampShell Variables.
+## These variables are used in various SampShell utilities, and are expected to
+# always be present. The `SampShell_gendir` variable in particular is special,
+# as it's not exported, and is used exclusively for defaults for the other
+# exported values.
+
 : "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
 export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
+export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
+
+## TODO: Remove `SampShell_no_experimental`.
+export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
+
+################################################################################
+#                                                                              #
+#                          Misc Environment Variables                          #
+#                                                                              #
+################################################################################
+
+## Words is something I use quite frequently; only assign `$words` though if it
+# doesn't exist, and `$SampShell_WORDS` is a file.
+[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
 
 ## Disable homebrew analytics.
 # If set, homebrew (the mac package manager) won't send any analytics. We set it
@@ -51,24 +95,28 @@ export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 # but that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
 
-## Set `ENV`, the POSIX-compliant environment variable that should be `.`d when
-# in in interactive. Note that we intentionally use single quotes, as POSIX
-# specifies that the variable is subject to parameter expansion, and if we used
-# double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
-export ENV='$SampShell_ROOTDIR/interactive.sh'
-
 ## Use `vim` for editing history commands. (This is only really needed for
 # shells without better history mechanisms, which are quite rare---even dash has
 # history if `set -o emacs` is enabled.)
 export FCEDIT=vim
 
-## Set `LANG` if it's not already present.
+## Set `LANG` if it's not already present. (This is a POSIX env variable that I
+# don't see much of a need for, but eh whatever, why not add it in.)
 export LANG="${LANG-en_US}"
 
-## Words is something I use quite frequently; only assign `$words` though if it
-# doesn't exist, and `$SampShell_WORDS` is a file.
-export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
-[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
+################################################################################
+#                                                                              #
+#                                  Export ENV                                  #
+#                                                                              #
+################################################################################
+
+## Set `ENV`, the POSIX-compliant environment variable that should be `.`d when
+# in in interactive. Note that we intentionally use single quotes, as POSIX
+# specifies that the variable is subject to parameter expansion, and if we used
+# double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
+if [ -n "${ENV+1}" ]; then
+   export ENV='$SampShell_ROOTDIR/interactive.sh'
+fi
 
 ################################################################################
 #                                                                              #
@@ -76,24 +124,30 @@ export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 #                                                                              #
 ################################################################################
 
+## Ensure `PATH` is exported regardless of what else happens, so all other
+# programs can get the current PATH.
+export PATH
+
+## Determine the directory containing `SampShell_ROOTDIR`. This might eventually
+# be unnecessary if I reorganize my startup files.
+SampShell_scratch=$(dirname -- "$SampShell_ROOTDIR" && printf x) || {
+   unset -v SampShell_scratch
+   return 0
+}
+SampShell_scratch=${SampShell_scratch%?x}
+
 ## Add SampShell scripts to the `$PATH`, but make sure it's not already there to
 # begin with. (Not strictly necessary, but it helps prevent massive `$PATH`s in
 # case SampShell's loaded multiple times.)
-SampShell_scratch=$(dirname -- "$SampShell_ROOTDIR" && printf x) || return
-SampShell_scratch=${SampShell_scratch%?x}
-
 case :${PATH-}: in
-*:"$SampShell_scratch/bin":*) :               ;; # Already there; do nothing
-*) PATH=$SampShell_scratch/bin${PATH:+:}$PATH ;; # It doesn't exist. Prepend it.
+   *:"$SampShell_scratch/bin":*) :               ;; # Already there; do nothing
+   *) PATH=$SampShell_scratch/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
 esac
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
 [ -z "${SampShell_no_experimental-}" ] && case $PATH in
-*:"$SampShell_scratch/experimental":*) : ;;
-*) PATH=$SampShell_scratch/experimental:$PATH ;;
+   *:"$SampShell_scratch/experimental":*) : ;;
+   *) PATH=$SampShell_scratch/experimental:$PATH ;;
 esac
 
 unset -v SampShell_scratch
-
-## Ensure `PATH` is exported so other programs we execute get our changes.
-export PATH
