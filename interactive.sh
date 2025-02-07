@@ -145,6 +145,7 @@ if [ -n "$Sampshell_EXPERIMENTAL" ] && [ -e "$SampShell_ROOTDIR/old-interactive.
 then
 	. "$SampShell_ROOTDIR/old-interactive.sh"
 fi
+
 ## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
 # message than what `.` would output
 if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
@@ -155,8 +156,6 @@ elif [ ! -d "$SampShell_ROOTDIR" ]; then
 		"$SampShell_ROOTDIR" >&2
 	return 0
 fi
-
-[ -s "$SampShell_ROOTDIR/old-interactive.sh" ] && . "$SampShell_ROOTDIR/old-interactive.sh"
 
 # ZSH
 if [ -n "${ZSH_VERSION-}" ]; then

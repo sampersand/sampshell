@@ -28,10 +28,10 @@ set -o emacs
 alias r='fc -s'
 alias history='fc -l'
 
-add_to_PATH () while [ "$#" -ne 0 ]
-do	case :${PATH-}: in
-	*:"$1":*) : ;; # already exists
-	*) PATH=$1${PATH:+:}$PATH
+add_to_PATH () while [ "$#" -ne 0 ]do
+	case :${PATH-}: in
+		*:"$1":*) : ;; # already exists
+		*) PATH=$1${PATH:+:}$PATH
 	esac
 	shift
 done

@@ -128,26 +128,16 @@ fi
 # programs can get the current PATH.
 export PATH
 
-## Determine the directory containing `SampShell_ROOTDIR`. This might eventually
-# be unnecessary if I reorganize my startup files.
-SampShell_scratch=$(dirname -- "$SampShell_ROOTDIR" && printf x) || {
-   unset -v SampShell_scratch
-   return 0
-}
-SampShell_scratch=${SampShell_scratch%?x}
-
 ## Add SampShell scripts to the `$PATH`, but make sure it's not already there to
 # begin with. (Not strictly necessary, but it helps prevent massive `$PATH`s in
 # case SampShell's loaded multiple times.)
 case :${PATH-}: in
-   *:"$SampShell_scratch/bin":*) :               ;; # Already there; do nothing
-   *) PATH=$SampShell_scratch/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
+   *:"$SampShell_ROOTDIR/bin":*) :               ;; # Already there; do nothing
+   *) PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
 esac
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
 [ -n "${SampShell_EXPERIMENTAL}" ] && case $PATH in
-   *:"$SampShell_scratch/experimental":*) : ;;
-   *) PATH=$SampShell_scratch/experimental:$PATH ;;
+   *:"$SampShell_ROOTDIR/experimental":*) : ;;
+   *) PATH=$SampShell_ROOTDIR/experimental:$PATH ;;
 esac
-
-unset -v SampShell_scratch
