@@ -63,13 +63,13 @@ then
 		width=`expr $width - ${#string}`
 	done
 else
-	# Otherwise, we want a count iteration.
-	while
-		count=`expr $count - 1`
-		test $count -ge 0
-	do
-		echo $string\\c
-	done
+# Otherwise, we want a count iteration.
+while
+	count=`expr $count - 1`
+	test $count -ge 0
+do
+	echo $string\\c
+done
 fi
 
 # Print out a newline unless it is suppressed

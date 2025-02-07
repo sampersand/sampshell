@@ -9,6 +9,7 @@ env.sh might be just flat-out removed in the future.
 ```sh
 # ZSH Config
 ~/.zshenv
+	# TODO: `emulate -c sh '. xyx'`? 
 	. ${SampShell_ROOTDIR:=~/.sampshell/shells}/env.sh
 ~/.zprofile
 	# `$SampShell_ROOTDIR` was already set in `~/.zshenv`

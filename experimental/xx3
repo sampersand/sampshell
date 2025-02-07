@@ -1,6 +1,7 @@
 #!/bin/csh
 
 alias warn 'echo \!* > /dev/stderr;'
+# TODO: `$x:q` to quote things?
 
 set noglob = 1
 set argv = (`getopt 'nc:w:' $*`)

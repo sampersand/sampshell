@@ -56,26 +56,9 @@ cdd () {
 	# would be the previous directory.)
 	[ "$1" = - ] && set -- ./-
 
-	# Don't respect `CDPATH` here, as we know the directory to go to.
-	CDPATH= cd -- "$1"
-}
-
-## Simply prints out how many args were given to the function
-nargs () {
-	echo "$#"
-}
-
-## Prints out its arguments in a debug format.
-p () {
-	SampShell_scratch=0
-
-	while [ "$#" != 0 ]; do
-		# Sadly we can't use `%q` because it's not POSIX-compliant.
-		printf '%3d: %s\n' "$((SampShell_scratch += 1))" "$1"
-		shift
-	done
-
-	unset -v SampShell_scratch
+	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
+	# don't use any aliases for `cd` in case they were defined.
+	CDPATH= \cd -- "$1"
 }
 
 ## Removes a directory

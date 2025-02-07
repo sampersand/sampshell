@@ -1,0 +1,14 @@
+#!/bin/sh
+
+## Prints out its arguments in a debug format.
+
+count=0
+
+for argument; do
+	# Sadly we can't use `%q` because it's not POSIX-compliant, so we
+	# instead pipe it to the sampshell `dump` command. (We have to do this
+	# `$(( count += 1 ))` ahead-of-time and not in-line because it's being
+	# used as part of the pipeline...)
+	: "$(( count += 1 ))"
+	printf "%5d: %s\n" "$count" "$argument"
+done

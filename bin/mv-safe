@@ -235,7 +235,7 @@ try_move () {
             # deleted, but not the folder it was in. However, it's remote enough
             # that it's not worth bothering with. (Also, I dont really use
             # `.DS_Store` a lot, so it's not big deal if it gets removed.)
-            [ "$(uname)" -eq Darwin ] && rm -f -- "${target}/.DS_Store"
+            [ "$(uname)" = Darwin ] && rm -f -- "${target}/.DS_Store"
 
             # Now check to see if it's empty
             ! ls -A1q -- "${target}" | grep -q .

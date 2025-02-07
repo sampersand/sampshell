@@ -7,15 +7,17 @@ Print the n most recent branches. With -u, only print unique
 branches. These can be used with the '@{-N}' syntax in git.
 USAGE
 
-until [ "$#" = 0 ]; do
-	case $1 in
-		--) shift; break;;
-		-u) shift; unique=-u ;;
-		-h) usage; exit ;;
-		*[!0-9]*) usage >&1; exit 1 ;;
-		*) break ;;
+unset unique
+
+while getopts 'uh' opt; do
+	case $opt in
+		u) unique=-u ;;
+		h) usage; exit ;;
+		\?) exit 1 ;; # I.e. usage error
 	esac
 done
+
+shift $(( OPTIND - 1 ))
 
 if [ "$#" -gt 1 ]; then
 	usage >&1
@@ -25,6 +27,6 @@ fi
 git reflog show --grep-reflog=checkout: | # show all the `checkout` commands
 	cut -d' ' -f8         | # Keep the 8th column, separated by spaces
 	nl -n ln              | # Number each branch, putting numbers on the left
- 	sort -k2db $unique -s | # Keep unique branch names, in stable order
- 	sort -n               | # Sort by the column
- 	head -n "${1:-16}"      # Get the `$1`-th most recent ones
+	sort -k2db $unique -s | # Keep unique branch names, in stable order
+	sort -n               | # Sort by the column
+	head -n "${1:-16}"      # Get the `$1`-th most recent ones

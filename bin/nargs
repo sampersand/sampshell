@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Super simple utility program for just printing out how many arguments were
+# given to it. Used for debugging shell programs, and understanding how globbing
+# works.
+#
+# Note the `p` command's pretty much superseded this, as it also prints out all
+# of its arguments.
+echo $#

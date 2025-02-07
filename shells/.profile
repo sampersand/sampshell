@@ -145,7 +145,7 @@ case :${PATH-}: in
 esac
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
-[ -z "${SampShell_no_experimental-}" ] && case $PATH in
+[ -n "${SampShell_EXPERIMENTAL}" ] && case $PATH in
    *:"$SampShell_scratch/experimental":*) : ;;
    *) PATH=$SampShell_scratch/experimental:$PATH ;;
 esac

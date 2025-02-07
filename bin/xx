@@ -20,7 +20,7 @@ while getopts 'nhc:w:' option; do
 	c) count=$OPTARG width= ;;
 	w) width=$OPTARG count= ;;
 	h) usage; exit ;;
-	\?) return 2 ;;
+	\?) exit 2 ;;
 	esac
 done
 

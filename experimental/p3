@@ -1,0 +1,75 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+static const unsigned char escapes[][255] = {
+	"\x1B[7m\\x00\x1B[27m", "\x1B[7m\\x01\x1B[27m", "\x1B[7m\\x02\x1B[27m", "\x1B[7m\\x03\x1B[27m",
+	"\x1B[7m\\x04\x1B[27m", "\x1B[7m\\x05\x1B[27m", "\x1B[7m\\x06\x1B[27m",
+	"\x1B[7m\\a\x1B[27m", "\x1B[7m\\b\x1B[27m", "\x1B[7m\\t\x1B[27m", "\x1B[7m\\n\x1B[27m",
+	"\x1B[7m\\v\x1B[27m", "\x1B[7m\\f\x1B[27m", "\x1B[7m\\r\x1B[27m",
+	"\x1B[7m\\x0E\x1B[27m", "\x1B[7m\\x0F\x1B[27m", "\x1B[7m\\x10\x1B[27m", "\x1B[7m\\x11\x1B[27m",
+	"\x1B[7m\\x12\x1B[27m", "\x1B[7m\\x13\x1B[27m", "\x1B[7m\\x14\x1B[27m", "\x1B[7m\\x15\x1B[27m",
+	"\x1B[7m\\x16\x1B[27m", "\x1B[7m\\x17\x1B[27m", "\x1B[7m\\x18\x1B[27m", "\x1B[7m\\x19\x1B[27m",
+	"\x1B[7m\\x1A\x1B[27m", "\x1B[7m\\x1B\x1B[27m", "\x1B[7m\\x1C\x1B[27m", "\x1B[7m\\x1D\x1B[27m",
+	"\x1B[7m\\x1E\x1B[27m", "\x1B[7m\\x1F\x1B[27m",
+	" ", "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2",
+	"3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", "@", "A", "B", "C", "D", "E",
+	"F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X",
+	"Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
+	"l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~",
+	"\x1B[7m\\x7F\x1B[27m", "\x1B[7m\\x80\x1B[27m", "\x1B[7m\\x81\x1B[27m", "\x1B[7m\\x82\x1B[27m",
+	"\x1B[7m\\x83\x1B[27m", "\x1B[7m\\x84\x1B[27m", "\x1B[7m\\x85\x1B[27m", "\x1B[7m\\x86\x1B[27m",
+	"\x1B[7m\\x87\x1B[27m", "\x1B[7m\\x88\x1B[27m", "\x1B[7m\\x89\x1B[27m", "\x1B[7m\\x8A\x1B[27m",
+	"\x1B[7m\\x8B\x1B[27m", "\x1B[7m\\x8C\x1B[27m", "\x1B[7m\\x8D\x1B[27m", "\x1B[7m\\x8E\x1B[27m",
+	"\x1B[7m\\x8F\x1B[27m", "\x1B[7m\\x90\x1B[27m", "\x1B[7m\\x91\x1B[27m", "\x1B[7m\\x92\x1B[27m",
+	"\x1B[7m\\x93\x1B[27m", "\x1B[7m\\x94\x1B[27m", "\x1B[7m\\x95\x1B[27m", "\x1B[7m\\x96\x1B[27m",
+	"\x1B[7m\\x97\x1B[27m", "\x1B[7m\\x98\x1B[27m", "\x1B[7m\\x99\x1B[27m", "\x1B[7m\\x9A\x1B[27m",
+	"\x1B[7m\\x9B\x1B[27m", "\x1B[7m\\x9C\x1B[27m", "\x1B[7m\\x9D\x1B[27m", "\x1B[7m\\x9E\x1B[27m",
+	"\x1B[7m\\x9F\x1B[27m", "\x1B[7m\\xA0\x1B[27m", "\x1B[7m\\xA1\x1B[27m", "\x1B[7m\\xA2\x1B[27m",
+	"\x1B[7m\\xA3\x1B[27m", "\x1B[7m\\xA4\x1B[27m", "\x1B[7m\\xA5\x1B[27m", "\x1B[7m\\xA6\x1B[27m",
+	"\x1B[7m\\xA7\x1B[27m", "\x1B[7m\\xA8\x1B[27m", "\x1B[7m\\xA9\x1B[27m", "\x1B[7m\\xAA\x1B[27m",
+	"\x1B[7m\\xAB\x1B[27m", "\x1B[7m\\xAC\x1B[27m", "\x1B[7m\\xAD\x1B[27m", "\x1B[7m\\xAE\x1B[27m",
+	"\x1B[7m\\xAF\x1B[27m", "\x1B[7m\\xB0\x1B[27m", "\x1B[7m\\xB1\x1B[27m", "\x1B[7m\\xB2\x1B[27m",
+	"\x1B[7m\\xB3\x1B[27m", "\x1B[7m\\xB4\x1B[27m", "\x1B[7m\\xB5\x1B[27m", "\x1B[7m\\xB6\x1B[27m",
+	"\x1B[7m\\xB7\x1B[27m", "\x1B[7m\\xB8\x1B[27m", "\x1B[7m\\xB9\x1B[27m", "\x1B[7m\\xBA\x1B[27m",
+	"\x1B[7m\\xBB\x1B[27m", "\x1B[7m\\xBC\x1B[27m", "\x1B[7m\\xBD\x1B[27m", "\x1B[7m\\xBE\x1B[27m",
+	"\x1B[7m\\xBF\x1B[27m", "\x1B[7m\\xC0\x1B[27m", "\x1B[7m\\xC1\x1B[27m", "\x1B[7m\\xC2\x1B[27m",
+	"\x1B[7m\\xC3\x1B[27m", "\x1B[7m\\xC4\x1B[27m", "\x1B[7m\\xC5\x1B[27m", "\x1B[7m\\xC6\x1B[27m",
+	"\x1B[7m\\xC7\x1B[27m", "\x1B[7m\\xC8\x1B[27m", "\x1B[7m\\xC9\x1B[27m", "\x1B[7m\\xCA\x1B[27m",
+	"\x1B[7m\\xCB\x1B[27m", "\x1B[7m\\xCC\x1B[27m", "\x1B[7m\\xCD\x1B[27m", "\x1B[7m\\xCE\x1B[27m",
+	"\x1B[7m\\xCF\x1B[27m", "\x1B[7m\\xD0\x1B[27m", "\x1B[7m\\xD1\x1B[27m", "\x1B[7m\\xD2\x1B[27m",
+	"\x1B[7m\\xD3\x1B[27m", "\x1B[7m\\xD4\x1B[27m", "\x1B[7m\\xD5\x1B[27m", "\x1B[7m\\xD6\x1B[27m",
+	"\x1B[7m\\xD7\x1B[27m", "\x1B[7m\\xD8\x1B[27m", "\x1B[7m\\xD9\x1B[27m", "\x1B[7m\\xDA\x1B[27m",
+	"\x1B[7m\\xDB\x1B[27m", "\x1B[7m\\xDC\x1B[27m", "\x1B[7m\\xDD\x1B[27m", "\x1B[7m\\xDE\x1B[27m",
+	"\x1B[7m\\xDF\x1B[27m", "\x1B[7m\\xE0\x1B[27m", "\x1B[7m\\xE1\x1B[27m", "\x1B[7m\\xE2\x1B[27m",
+	"\x1B[7m\\xE3\x1B[27m", "\x1B[7m\\xE4\x1B[27m", "\x1B[7m\\xE5\x1B[27m", "\x1B[7m\\xE6\x1B[27m",
+	"\x1B[7m\\xE7\x1B[27m", "\x1B[7m\\xE8\x1B[27m", "\x1B[7m\\xE9\x1B[27m", "\x1B[7m\\xEA\x1B[27m",
+	"\x1B[7m\\xEB\x1B[27m", "\x1B[7m\\xEC\x1B[27m", "\x1B[7m\\xED\x1B[27m", "\x1B[7m\\xEE\x1B[27m",
+	"\x1B[7m\\xEF\x1B[27m", "\x1B[7m\\xF0\x1B[27m", "\x1B[7m\\xF1\x1B[27m", "\x1B[7m\\xF2\x1B[27m",
+	"\x1B[7m\\xF3\x1B[27m", "\x1B[7m\\xF4\x1B[27m", "\x1B[7m\\xF5\x1B[27m", "\x1B[7m\\xF6\x1B[27m",
+	"\x1B[7m\\xF7\x1B[27m", "\x1B[7m\\xF8\x1B[27m", "\x1B[7m\\xF9\x1B[27m", "\x1B[7m\\xFA\x1B[27m",
+	"\x1B[7m\\xFB\x1B[27m", "\x1B[7m\\xFC\x1B[27m", "\x1B[7m\\xFD\x1B[27m", "\x1B[7m\\xFE\x1B[27m",
+	"\x1B[7m\\xFF\x1B[27m",
+};
+#define MAX_ESCAPE_LEN sizeof("\x1B[7m\\xFF\x1B[27m")
+#define BUFLEN (4096*4)
+
+int main() {
+	unsigned char inbuf[BUFLEN], outbuf[BUFLEN * MAX_ESCAPE_LEN], *ibuf, *obuf;
+	unsigned char const *repr;
+	size_t len;
+
+	while ((len = fread(inbuf, 1, sizeof(inbuf), stdin))) {
+		for (ibuf = inbuf, obuf = outbuf; ibuf != inbuf + len; ++ibuf) {
+			repr = escapes[*ibuf];
+			memcpy(obuf, repr, strlen((const char *) repr));
+			obuf += strlen((const char *) repr);
+		}
+		fwrite(outbuf, 1, obuf - outbuf, stdout);
+		// unsigned char *cur = inbuf, *end = inbuf + len;
+		// for (size_t i = 0; i < len; ++cur, ++i) {
+		// 	fwrite(escapes[*cur], 1, sizeof(escapes[*cur]), stdout);
+		// }
+	}
+}
+

@@ -3,9 +3,16 @@
 ## Dash doesn't actually support SHLVL, so this does it for us
 export SHLVL="$(( SHLVL + 1 ))"
 
-# Dash doesn't support `!`, sadly.
+# vv commented out because i dont actually need history number, as there's no `!X` vv
+# # Dash doesn't support `!`, sadly.
 __PS1_histno () {
 	{ fc -l -1 2>/dev/null || command -p echo 0; } | command -p awk 'NR==1{print $1}'
+}
+__PS1_histno () {
+    for count in $(command fc -l -1 2>/dev/null) ''; do
+        echo ${count:-0}
+        break
+    done
 }
 
 __PS1_pwd () case $PWD in
