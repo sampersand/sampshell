@@ -247,8 +247,8 @@ bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LE
 ####################################################################################################
 ## TODO:
 autoload -U compinit
-[[ -d $SampShell_ROOTDIR && ! -d $SampShell_ROOTDIR/.caches ]] && mkdir $SampShell_ROOTDIR/.caches
-compinit -d $SampShell_ROOTDIR/.caches/.zcompdump
+[[ -d $SampShell_ROOTDIR && ! -d $SampShell_ROOTDIR/.cache ]] && mkdir $SampShell_ROOTDIR/.cache
+compinit -d $SampShell_ROOTDIR/.cache/.zcompdump
 
 # ZLE_REMOVE_SUFFIX_CHARS
 # ZLE_SPACE_SUFFIX_CHARS

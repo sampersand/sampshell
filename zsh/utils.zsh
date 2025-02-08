@@ -49,11 +49,11 @@ puts ($*.empty? ? $stdin.map{_1.chomp.split} : [$*])
 RUBY
 
 # Copies a previous command
-cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | SampShell-copy }
-cc () { print -r $history[$(($#history - 0))] | SampShell-copy; }
+cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | pbc }
+copycmd () { print -r $history[$(($#history - 0))] | pbc; }
 
-pr () print -zr -- $ZLE_LINE_ABORTED
-cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | SampShell-copy }
+prl () print -zr -- $ZLE_LINE_ABORTED
+cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbc }
 
 
 grep () command grep --color=auto $@

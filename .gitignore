@@ -2,3 +2,4 @@
 .trash
 .zcompdump
 .zsh_sessions
+.cache
