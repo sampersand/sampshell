@@ -166,6 +166,6 @@ fi
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
 case "$0" in dash | */dash)
-	. "$SampShell_ROOTDIR/dash/profile.dash"
+	. "$SampShell_ROOTDIR/dash/.interactive.dash"
 	return
 esac
