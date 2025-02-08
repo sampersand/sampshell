@@ -1,3 +1,5 @@
+## My "IRB" config I always want loaded.
+
 if RUBY_VERSION < '3.3'
   # TODO: is this necessary? it was originally for cause `;` wasnt recognized at end of line
   IRB.conf[:ECHO_ON_ASSIGNMENT] = false
@@ -54,7 +56,7 @@ end
 class Method; def subl; TOPLEVEL_BINDING.subl(source_location.join(':')) end end
 class Object
   def sublm(m)
-    method(m).subl # DOESN'T WORK W/ REFINEMENTS
+    method(m).subl # TODO: DOESN'T WORK W/ REFINEMENTS
   end
 end
 
