@@ -5,3 +5,5 @@
 
 # Source the the POSIX-compliant profile, in sh-style emulation mode.
 emulate sh -c '. "$SampShell_ROOTDIR/.profile"'
+
+## TODO: Do we want to set `fpath` here?
