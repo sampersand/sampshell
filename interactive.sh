@@ -141,7 +141,7 @@ fi
 #                                                                              #
 ################################################################################
 
-if [ -n "$Sampshell_EXPERIMENTAL" ] && [ -e "$SampShell_ROOTDIR/old-interactive.sh" ]
+if [ -n "${SampShell_EXPERIMENTAL-}" ] && [ -e "$SampShell_ROOTDIR/old-interactive.sh" ]
 then
 	. "$SampShell_ROOTDIR/old-interactive.sh"
 fi

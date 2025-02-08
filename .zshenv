@@ -1,16 +1,14 @@
-#!zsh
-
 #### Basic SampShell definitions for _all_ ZSH shell instances.
-# While this file is usually `.`d from the top-level `env.sh` file, it can be `.`d on its own.
-#
 # Since this file is going to be `source`d for _every_ zsh instance, it should be kept short. Not
 # only will this make it faster to load (which speeds up execution of scripts), but also keeps our
 # config minimal. Again, this file is `source`d` for EVERY SINGLE ZSH INSTANCE, including scripts
 # that we didn't write, so we don't want to do anything that's potentially disruptive!
 #
-# Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
-# a user's `.zshenv`. (Instead, `source` the top-level `env.sh` file if needed.)
+# ZSH executes `.zshenv`s for _every_ script invocation, regardless of whether it's interactive or not.
 ####
+
+# Load universal options.
+source ${0:h}/env.sh
 
 ####################################################################################################
 #                                  Enable Profiling if Requested                                   #
@@ -28,19 +26,21 @@ zmodload zsh/zprof'
 ####################################################################################################
 
 # Set the debug prompt to something a bit more informative. I'm still not sure how much I like this.
-[[ -n $SampShell_no_experimental ]] && PS4='+%x:%N:%I> '
+[[ -n ${Sampshell_EXPERIMENTAL:-} ]] && PS4='+%x:%N:%I> '
 
-## Set sourcetrace prompt (temporary)
-[[ -o sourcetrace && -n ${SampShell_SOURCETRACE} ]] && {
+## Set sourcetrace prompt (temporary hack I think)
+if [[ -o sourcetrace && -n ${SampShell_SOURCETRACE} ]]; then
+	eval "
 	typeset -Fg SECONDS
 	setopt promptsubst
-	PS4='+$SECONDS:%x:%I> '
-}
+	PS4='+\$SECONDS:%x:%I> '"
+fi
 
 ####################################################################################################
 #                                       SampShell_{un,}debug                                       #
 ####################################################################################################
-
+# I've had this around forever, and idk if I still need it?
+if [[ -n ${Sampshell_EXPERIMENTAL:-} ]]; then
 ## Re-define the `SampShell_debug` and `SampShell_undebug` functions that were previously declared
 # in `posix/env.sh`. Because ZSH has more debugging options, we want to make sure we use the same
 # name so that POSIX-compliant scripts run under ZSH will automatically use the enhanced debug fns.
@@ -56,26 +56,16 @@ zmodload zsh/zprof'
 # surrounding environment when `undebug` is called. While I could maybe do that one day (eg by using
 # a stack for old options or something), I haven't used the `debug`/`undebug` functions enough to
 # warrant delving into that. Possible future TODO?
-function SampShell_debug {
-	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	export SampShell_XTRACE=1
-	trap 'setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
-}
+	eval '
+	function SampShell_debug {
+		setopt LOCAL_OPTIONS LOCAL_TRAPS
+		export SampShell_XTRACE=1
+		trap "setopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR" EXIT
+	}
 
-function SampShell_undebug {
-	setopt LOCAL_OPTIONS LOCAL_TRAPS
-	unset SampShell_XTRACE
-	trap 'unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR' EXIT
-}
-
-####################################################################################################
-#                                     Respect SampShell_XTRACE                                      #
-####################################################################################################
-
-## Respect `SampShell_XTRACE` in all scripts, regardless of whether they're a SampShell script.
-# We want this as the last thing in this file, so we don't print traces for the other setup config.
-if [[ -n $SampShell_XTRACE ]]; then
-	export SampShell_XTRACE # in case it's not already exported for some reason
-	setopt SOURCE_TRACE XTRACE
+	function SampShell_undebug {
+		setopt LOCAL_OPTIONS LOCAL_TRAPS
+		unset SampShell_XTRACE
+		trap "unsetopt XTRACE VERBOSE WARN_CREATE_GLOBAL WARN_NESTED_VAR" EXIT
+	}'
 fi
-

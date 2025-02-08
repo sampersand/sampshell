@@ -11,8 +11,8 @@
 # always be executed in non-interactive scripts. In zsh, you can use `~/.zshenv`.
 #
 # This file really only enables `xtrace` (set -o xtrace) if the `SampShell_XTRACE`
-# variable is defined; This way it can be used for
-
+# variable is defined; This way it can be used for debugging scripts.
+####
 
 ################################################################################
 #                                                                              #
@@ -23,9 +23,4 @@
 if [ -n "${SampShell_XTRACE-}" ]; then
 	export SampShell_XTRACE # Export it in case it's not already exported.
 	set -o xtrace
-fi
-
-if [ -n "${ZSH_VERSION-}" ]; then
-	eval '. "${SampShell_ROOTDIR-${0:P:h}}/zsh/zshenv"'
-	return
 fi
