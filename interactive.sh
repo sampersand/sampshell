@@ -157,15 +157,10 @@ elif [ ! -d "$SampShell_ROOTDIR" ]; then
 	return 0
 fi
 
-# ZSH
-if [ -n "${ZSH_VERSION-}" ]; then
-	. "$SampShell_ROOTDIR/zsh/zshrc"
-	return
-fi
-
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
+## TODO: Make this not required?
 case "$0" in dash | */dash)
-	. "$SampShell_ROOTDIR/dash/.interactive.dash"
+	. "$SampShell_ROOTDIR/.interactive.dash"
 	return
 esac

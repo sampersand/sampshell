@@ -18,6 +18,9 @@
 # a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
+# Load universal sampshell config
+source ${SampShell_ROOTDIR:=${${(%):-%N}:P:h}}/interactive.sh
+
 ####################################################################################################
 #                                           Setup $PATH                                            #
 ####################################################################################################
@@ -34,7 +37,7 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
 # the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
 # paths, they won't use the normal `$fpath` expansion.)
-autoload -Uz ${0:P:h}/functions/*
+autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 
 ####################################################################################################
 #                                                                                                  #
@@ -45,7 +48,7 @@ autoload -Uz ${0:P:h}/functions/*
 ## Add named directories
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
-[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because
+[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because...
 [[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop # `MAGIC_EQUAL_SUBST` isn't set yet)
 [[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
 
@@ -70,7 +73,7 @@ setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing dir
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
-	source ${0:P:h}/record-every-command.zsh
+	source $SampShell_ROOTDIR/zsh/record-every-command.zsh
 fi
 
 	#### TODO: Update this comment
@@ -150,8 +153,8 @@ unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
 unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
-source ${0:P:h}/prompt/ps1.zsh
-source ${0:P:h}/prompt/rps1.zsh
+source $SampShell_ROOTDIR/zsh/prompt/ps1.zsh
+source $SampShell_ROOTDIR/zsh/prompt/rps1.zsh
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -200,7 +203,7 @@ alias bkg='bindkey | noglob fgrep -ie'
 	for fn in $1/*(:t); do
 		zle -N $fn
 	done
-} ${0:P:h}/widgets
+} $SampShell_ROOTDIR/zsh/widgets
 
 ## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
 bindkey -N sampshell emacs
@@ -259,7 +262,7 @@ zstyle ':completion:*' list-colors '' # Add colours to completions
 zstyle ':completion:*:*:cd:*' file-sort modification
 zstyle ':completion:*:*:rm:*' completer _ignored
 zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
-. ${0:P:h}/completion.zsh
+. $SampShell_ROOTDIR/zsh/completion.zsh
 # zstyle ':completion:*:files' file-sort '!ignored-patterns '*.DS_Store'
 
 ####################################################################################################
@@ -269,14 +272,14 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
-[[ -z $SampShell_no_experimental ]] && source ${0:P:h}/experimental.zsh
+[[ -z $SampShell_no_experimental ]] && source $SampShell_ROOTDIR/zsh/experimental.zsh
 
 ####################################################################################################
 #                                                                                                  #
 #                                          Git Shorthands                                          #
 #                                                                                                  #
 ####################################################################################################
-source ${0:P:h}/git.sh
+source $SampShell_ROOTDIR/zsh/git.sh
 
 ####################################################################################################
 #                                                                                                  #
@@ -285,4 +288,4 @@ source ${0:P:h}/git.sh
 ####################################################################################################
 
 ## All helper functions and aliases should be defined here.
-source ${0:P:h}/utils.zsh
+source $SampShell_ROOTDIR/zsh/utils.zsh
