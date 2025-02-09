@@ -32,9 +32,12 @@ if [ -n "${SampShell_ROOTDIR-}" ]; then
    # Already setup, nothing to do.
    :
 elif [ -n "${ZSH_VERSION-}" ]; then
-   # ZSH: just use the builtin `${0:P:h}`. We have to use `eval` because this
-   # syntax isn't valid POSIX syntax.
-   eval 'SampShell_ROOTDIR=${0:P:h}'
+   # ZSH: Use the builtin `${${(%):-%N}:P:h}`. (This abuses the fact prompt-
+   # expansion (via `${(%):-}`) to get the current file's path; We could also
+   # use `${0:P:h}` instead, but that might get tripped up with the different
+   # options zsh has to set `$0`, and this one's guarantee dto work.) We also
+   # use `eval` because this syntax isn't valid POSIX syntax.
+   eval 'SampShell_ROOTDIR=${${(%):-%N}:P:h}'
 elif [ -n "${BASH_SOURCE-}" ]; then
    # BASH: Use `BASH_SOURCE` and the `&& printf x` trick to get the dir (as
    # there's no nicer way to do it.) Even though the syntax is valid posix, we
@@ -73,6 +76,7 @@ export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
 export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
 export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
+export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$SampShell_gendir/.cache}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 
 ## TODO: Remove `SampShell_no_experimental`.
@@ -124,10 +128,6 @@ fi
 #                                                                              #
 ################################################################################
 
-## Ensure `PATH` is exported regardless of what else happens, so all other
-# programs can get the current PATH.
-export PATH
-
 ## Add SampShell scripts to the `$PATH`, but make sure it's not already there to
 # begin with. (Not strictly necessary, but it helps prevent massive `$PATH`s in
 # case SampShell's loaded multiple times.)
@@ -141,3 +141,12 @@ esac
    *:"$SampShell_ROOTDIR/experimental":*) : ;;
    *) PATH=$SampShell_ROOTDIR/experimental:$PATH ;;
 esac
+
+## Add in any cached binaries?
+[ -n "$SampShell_EXPERIMENTAL" ] && case :${PATH-}: in
+   *:"$SampShell_CACHEDIR/bin":*) :               ;; # Already there; do nothing
+   *) PATH=$SampShell_CACHEDIR/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
+esac
+
+## Ensure `PATH` is exported so programs can get sampshell executables.
+export PATH

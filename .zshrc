@@ -19,7 +19,11 @@
 #####
 
 # Load universal sampshell config
-source ${SampShell_ROOTDIR:=${${(%):-%N}:P:h}}/interactive.sh
+if [[ -z "${SampShell_ROOTDIR-}" ]]; then
+	print >&2 '[ERROR] Cannot initialize interactive SampShell: SampShell_ROOTDIR not set.'
+	return 1
+fi
+emulate sh -c '. "${SampShell_ROOTDIR}/interactive.sh"'
 
 ####################################################################################################
 #                                           Setup $PATH                                            #
@@ -247,8 +251,8 @@ bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LE
 ####################################################################################################
 ## TODO:
 autoload -U compinit
-[[ -d $SampShell_ROOTDIR && ! -d $SampShell_ROOTDIR/.cache ]] && mkdir $SampShell_ROOTDIR/.cache
-compinit -d $SampShell_ROOTDIR/.cache/.zcompdump
+[[ ! -e $SampShell_CACHEDIR ]] && mkdir "$SampShell_CACHEDIR"
+compinit -d $SampShell_CACHEDIR/.zcompdump
 
 # ZLE_REMOVE_SUFFIX_CHARS
 # ZLE_SPACE_SUFFIX_CHARS

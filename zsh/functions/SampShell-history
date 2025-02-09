@@ -20,6 +20,6 @@ local sep amount REPLY
 
 # Number the output lines
 history $@ | while read -r; do
-	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} ))
+	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} + 1 ))
 	printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
 done

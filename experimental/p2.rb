@@ -1,3 +1,26 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+line = +""
+output = +""
+loop do
+  $<.readpartial 4096, line
+
+  output.clear
+  line.each_char do |char|
+    q = char.dump[1..-2]
+    if q == char
+      output.concat char
+    else
+      output.concat "\e[7m#{q}\e[27m"
+    end
+  end
+  $>.syswrite output
+
+rescue EOFError
+  puts
+  exit
+end
+__END__
 #!/bin/dash
 
 [ $# = 0 ] && exec $0 1 <<EOS
@@ -38,6 +61,6 @@ printf "%s" "$line"
 
 # # IFS=
 # # while read -r line; do
-# # 	for
+# #   for
 # # done
 # # cat | dump
