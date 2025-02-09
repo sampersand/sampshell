@@ -1,7 +1,11 @@
 #!/bin/dash
 
-# TODO: Change parent process's `env` to update `$PATH`
+## THIS IS experimental!!! (It's just not in `./experimental`)
+
+# TODO: Change parent process's `env` to `rehash` if the command exists `$PATH`
 readonly cached_exe="${SampShell_CACHEDIR:?}/bin/dump2"
+[ -x "$cached_exe" ] && exec "$cached_exe" "$@"
+
 mkdir -p "$SampShell_CACHEDIR/bin" || return
 
 "${CC:-$(command -v cc 2>/dev/null)}" -xc -o"$cached_exe" -O3 - <<'C' && exec "$cached_exe" "$@"

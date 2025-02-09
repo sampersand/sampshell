@@ -8,7 +8,7 @@
 ####
 
 # Load universal options.
-source ${0:h}/env.sh
+source $SampShell_ROOTDIR/env.sh
 
 ####################################################################################################
 #                                  Enable Profiling if Requested                                   #

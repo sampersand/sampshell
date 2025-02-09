@@ -73,3 +73,16 @@ tracezsh2 () {
 		-o promptsubst \
 		-c exit
 }
+
+tracezsh () {
+	clean-shell --none \
+		--var SampShell_PROFILE= \
+		--var SampShell_SOURCETRACE=1 \
+		--var SampShell_XTRACE=1 \
+		--var SampShell_just_for_testing_should_disable_rvm=1 \
+		--xtrace \
+		--sourcetrace \
+		${@:?}
+		# --command :
+		# -xilcosourcetrace :
+}
