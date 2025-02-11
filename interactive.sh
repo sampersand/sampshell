@@ -133,19 +133,6 @@ if [ "$(uname)" = Darwin ]; then
 	if alias ls >/dev/null 2>&1; then
 		eval "alias $([ -n "${BASH_VERSION-}" ] && set -o posix; alias ls)hGb"
 	fi
-
-	## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
-	rd () {
-		for SampShell_scratch; do
-			## TODO: This will fail on `.DS_Store\n` filenames, but how likely is that?
-			if [ .DS_Store = "$(command ls -A1q -- "$SampShell_scratch")" ]
-			then
-				command rm -f -- "$SampShell_scratch"/.DS_Store
-			fi
-		done
-		unset -v SampShell_scratch
-		command rmdir -- "$@"
-	}
 fi
 
 ################################################################################

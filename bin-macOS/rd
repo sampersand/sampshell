@@ -1,0 +1,40 @@
+#!/bin/sh
+
+## Remove an empty directory; A single `.DS_Store` file in the directory
+## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
+
+if [ $# -eq 0 ]; then
+	cat <<USAGE >&2; exit 1;
+usage: $(basename -- "$0") dir [..]
+
+Alias for 'rmdir', except it'll also remove directories which
+only contain a '.DS_Store' file. (.DS_Store is a hidden macOS
+file in each directory Finder.app opens to store GUI info, eg
+file positions, "preview icon size", etc. If we are trying to
+remove an empty directory, then it can be removed too.)
+USAGE
+fi
+
+exit_status=0
+for directory; do
+	# Some notes:
+	# - The `-A` flag is used to ensure we print out all hidden files in the
+	#   directory (excluding `.` and `..`, which `-a` does), to see if any other
+	#   files exist.
+	# - The `-1` flag ensures each directory is printed on its own line
+	# - The `-q` flag ensures that any odd characters in paths are replaced with
+	#   the `?` character; This means that any bizarre file (like `.DS_Store\n`)
+	#   will show up with `?` in them, and won't match the expected `.DS_Store`.
+	#
+	# Thus, we only delete the `.DS_Store` file if the directory _only_ contains
+	# that file. (Technically, files could be added after the `rm` command and
+	# before the `rmdir` command, but `rmdir` would then fail So worst-case is
+	# the `.DS_Store` gets deleted, and not the new files.)
+	if [ .DS_Store = "$(command -p ls -A1q -- "$directory")" ]; then
+		command -p rm -f -- "$directory"/.DS_Store
+	fi
+
+	command rmdir -- "$directory" || exit_status=$?
+done
+
+exit $exit_status
