@@ -79,12 +79,7 @@ p () {
 	unset -v SampShell_scratch
 }
 
-## Removes a directory
-rd () {
-	rmdir -- "$@"
-}
-
-## Creates a directory, and then changes to it.
+## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {
 	# (use `\cd` so that we don't get alias expansion that might exist)
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"

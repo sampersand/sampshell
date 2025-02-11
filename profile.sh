@@ -130,7 +130,7 @@ fi
 #                                                                              #
 ################################################################################
 
-## Add stuff to the path if it's not already there.
+## Prepend things to `PATH` unless they're already there.
 SampShell_add_to_path () {
    case :${PATH-}: in
    *:"${1:?need a path}":*) :                      ;; # It's already there!
@@ -144,13 +144,15 @@ SampShell_add_to_path "$SampShell_ROOTDIR/bin"
 ## MacOS-specific scripts
 [ "$(uname)" = Darwin ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin-macOS"
 
-## Add in "experimental" scripts I'm working on and haven't quite completed.
-[ -n "$SampShell_EXPERIMENTAL" ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin-experimental"
+if [ -n "$SampShell_EXPERIMENTAL" ]; then
+   ## Add in "experimental" scripts I'm working on and haven't quite completed.
+   SampShell_add_to_path "$SampShell_ROOTDIR/bin-experimental"
 
-## Lastly add in the "cached bin"
-[ -n "$SampShell_EXPERIMENTAL" ] && SampShell_add_to_path "$SampShell_CACHEDIR/bin"
+   ## Add in the "cached bin"
+   SampShell_add_to_path "$SampShell_CACHEDIR/bin"
+fi
 
-# Make sure `SampShell_add_to_path` doesn't escape
+# Make sure `SampShell_add_to_path` doesn't escape the function.
 unset -f SampShell_add_to_path
 
 ## Ensure `PATH` is exported so programs can get sampshell executables.
