@@ -59,7 +59,7 @@ autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d {
 	emulate -L zsh
-	dirs ${@:--v}
+	builtin dirs ${@:--v}
 }
 
 ## Setup `cd` options
@@ -137,11 +137,10 @@ unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-unalias j
 function j {
 	emulate -L zsh
-	jobs -d $@ | paste - -
-	# jobs -d $@ | sed 'N;s/\n/ /'
+	builtin jobs -d $@ | command -p paste - -
+	# builtin jobs -d $@ | sed 'N;s/\n/ /'
 }
 
 ####################################################################################################

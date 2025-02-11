@@ -87,7 +87,7 @@ md () {
 
 alias ls='ls -AFq'
 alias l='ls -l'
-alias j=jobs
+j () { jobs "$@"; }
 
 if [ -n "${SampShell_EDITOR-}" ]; then
 	alias s=subl

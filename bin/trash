@@ -40,8 +40,8 @@ usage: $scriptname [options] [--] file [...]
 SHORTUSAGE
 longusage () { shortusage; cat <<LONGUSAGE; }
 options:
-	-h, --help           print this message, then exit
-	-tPATH, --trash=PATH set the trash directory
+	-h           print this message, then exit
+	-tPATH        set the trash directory
 In the first form, moves files to the trash, possibly renaming them; in the
 second, empties the trash directory. The trash dir is set by the environment
 variable \$SampShell_TRASHDIR, but can be overwritten by '-t'; it's an error if
@@ -115,4 +115,4 @@ fi
 
 ## Call `mv-safe` with all the arguments. Note we `exec` so we don't need to
 # fork and spawn a new process.
-exec mv-safe --rename --no-clobber-empty -- "$@" "$trashdir"
+exec mv-safe -rC -- "$@" "$trashdir"
