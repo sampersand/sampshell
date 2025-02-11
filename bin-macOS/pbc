@@ -1,0 +1,11 @@
+#!/bin/sh
+
+## Copy its commands to the macOS clipboard. If not given any args,
+# instead read them from stdin.
+
+if [ "$#" -eq 0 ]; then
+	pbcopy
+else
+	# Make sure not to print out a trailing `\n`, as it'll be copied.
+	printf %s "$*" | pbcopy
+fi

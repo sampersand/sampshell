@@ -8,7 +8,7 @@
 ####
 
 # Load universal options.
-source ${SampShell_ROOTDIR:-${0:P:h}}/.sampshell_env
+emulate sh -c '. "$SampShell_ROOTDIR/env.sh"'
 
 ####################################################################################################
 #                                  Enable Profiling if Requested                                   #

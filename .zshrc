@@ -23,7 +23,7 @@ if [[ -z "${SampShell_ROOTDIR-}" ]]; then
 	print >&2 '[ERROR] Cannot initialize interactive SampShell: SampShell_ROOTDIR not set.'
 	return 1
 fi
-emulate sh -c '. "${SampShell_ROOTDIR}/.sampshell_rc"'
+emulate sh -c '. "${SampShell_ROOTDIR}/interactive.sh"'
 
 ####################################################################################################
 #                                           Setup $PATH                                            #

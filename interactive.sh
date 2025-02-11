@@ -47,16 +47,17 @@ cdd () {
 	# We have to do this whole rigmarole in case the directory ends in a
 	# newline. (Odd, but a possibility, and I don't want to be blindsided by
 	# it later.)
-	SampShell_scratch=$(dirname -- "$1" && printf x) || {
+	if ! SampShell_scratch=$(dirname -- "$1" && printf x); then
 		unset -v SampShell_scratch
 		return 1
-	}
-	set -- "${SampShell_scratch%?x}"
-	unset -v SampShell_scratch # Delete the variable so it doesn't leak
+	else
+		set -- "${SampShell_scratch%?x}"
+		unset -v SampShell_scratch # Unset the variable so it won't leak
+	fi
 
 	# In case the directory's name is `-`, we don't want to `cd -` (which
 	# would be the previous directory.)
-	[ "$1" = - ] && set -- ./-
+	[ "$1" = - ] && set ./-
 
 	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
 	# don't use any aliases for `cd` in case they were defined.
@@ -124,13 +125,6 @@ alias r=trash
 ################################################################################
 
 if [ "$(uname)" = Darwin ]; then
-	## Copy its commands to the macOS clipboard. If not given any args,
-	# instead read them from stdin.
-	pbc ()	if [ "$#" -eq 0 ]
-		then pbcopy
-		else (unset -v IFS; printf %s "$*" | pbcopy)
-		fi
-
 	## Paste from macOS's clipboard
 	alias pbp=pbpaste
 
@@ -165,21 +159,21 @@ then
 	. "$SampShell_ROOTDIR/old-interactive.sh"
 fi
 
-## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
-# message than what `.` would output
-if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
-	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not set\n' >&2
-	return 0
-elif [ ! -d "$SampShell_ROOTDIR" ]; then
-	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not a dir: %s\n' \
-		"$SampShell_ROOTDIR" >&2
-	return 0
-fi
-
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
 ## TODO: Make this not required?
 case "$0" in dash | */dash)
-	. "$SampShell_ROOTDIR/.interactive.dash"
+	## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
+	# message than what `.` would output
+	if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
+		printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not set\n' >&2
+		return 0
+	elif [ ! -d "$SampShell_ROOTDIR" ]; then
+		printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not a dir: %s\n' \
+			"$SampShell_ROOTDIR" >&2
+		return 0
+	fi
+
+	. "$SampShell_ROOTDIR/interactive.dash"
 	return
 esac

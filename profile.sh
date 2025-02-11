@@ -130,25 +130,28 @@ fi
 #                                                                              #
 ################################################################################
 
-## Add SampShell scripts to the `$PATH`, but make sure it's not already there to
-# begin with. (Not strictly necessary, but it helps prevent massive `$PATH`s in
-# case SampShell's loaded multiple times.)
-case :${PATH-}: in
-   *:"$SampShell_ROOTDIR/bin":*) :               ;; # Already there; do nothing
-   *) PATH=$SampShell_ROOTDIR/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
-esac
+## Add stuff to the path if it's not already there.
+SampShell_add_to_path () {
+   case :${PATH-}: in
+   *:"${1:?need a path}":*) :                      ;; # It's already there!
+   *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
+   esac
+}
+
+## Universal scripts I always want available
+SampShell_add_to_path "$SampShell_ROOTDIR/bin"
+
+## MacOS-specific scripts
+[ "$(uname)" = Darwin ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin-macOS"
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
-[ -n "${SampShell_EXPERIMENTAL}" ] && case $PATH in
-   *:"$SampShell_ROOTDIR/experimental":*) : ;;
-   *) PATH=$SampShell_ROOTDIR/experimental:$PATH ;;
-esac
+[ -n "$SampShell_EXPERIMENTAL" ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin-experimental"
 
-## Add in any cached binaries?
-[ -n "$SampShell_EXPERIMENTAL" ] && case :${PATH-}: in
-   *:"$SampShell_CACHEDIR/bin":*) :               ;; # Already there; do nothing
-   *) PATH=$SampShell_CACHEDIR/bin${PATH:+:}$PATH ;; # Doesn't exist. Prepend it.
-esac
+## Lastly add in the "cached bin"
+[ -n "$SampShell_EXPERIMENTAL" ] && SampShell_add_to_path "$SampShell_CACHEDIR/bin"
+
+# Make sure `SampShell_add_to_path` doesn't escape
+unset -f SampShell_add_to_path
 
 ## Ensure `PATH` is exported so programs can get sampshell executables.
 export PATH
