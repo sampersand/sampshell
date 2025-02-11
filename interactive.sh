@@ -147,16 +147,16 @@ fi
 # `$0` and hope, lol.
 ## TODO: Make this not required?
 case "$0" in dash | */dash)
-	## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
-	# message than what `.` would output
-	if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
-		printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not set\n' >&2
-		return 0
-	elif [ ! -d "$SampShell_ROOTDIR" ]; then
-		printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not a dir: %s\n' \
-			"$SampShell_ROOTDIR" >&2
-		return 0
-	fi
+	# ## Check to make sure `SampShell_ROOTDIR` is set, to provide a nicer error
+	# # message than what `.` would output
+	# if [ ! -n "${SampShell_ROOTDIR+1}" ]; then
+	# 	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not set\n' >&2
+	# 	return 0
+	# elif [ ! -d "$SampShell_ROOTDIR" ]; then
+	# 	printf '[WARN] Cant init SampShell: SampShell_ROOTDIR not a dir: %s\n' \
+	# 		"$SampShell_ROOTDIR" >&2
+	# 	return 0
+	# fi
 
 	. "$SampShell_ROOTDIR/interactive.dash"
 	return

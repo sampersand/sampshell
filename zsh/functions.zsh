@@ -11,7 +11,7 @@ alias  clzsh='clean-shell --shell =zsh  --none --arg -fd $@'
 alias cldash='clean-shell --shell =dash --none $@'
 
 ## Banner utility
-function _SampShell-banner { ~ss/../bin/banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
+function _SampShell-banner { banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
 alias banner='noglob _SampShell-banner'
 alias b80='banner -w80'
 alias b100='banner -w100'

@@ -119,9 +119,12 @@ if [ -n "$create" ]; then
 	done
 fi
 
-if [ -z "${SampShell_no_experimental-}" ] && [ "$editor" = "sublime4" ]; then
+if [ -n "${SampShell_EXPERIMENTAL-}" ] && [ "$editor" = "sublime4" ]; then
+	for file; do
+		[ ! -e "$file" ] && die 'file does not exist: %s' "$file"
+	done
+
 	/Applications/sublime4.app/Contents/SharedSupport/bin/subl "$@"
-	exit
 fi
 
 ## Now that all the files are created, go ahead and open them.
