@@ -1,3 +1,5 @@
+#!/bin/sh
+
 ## Configuration universal to the login shell.
 # Login shells are the first shell that are run when someone logs in; Usually,
 # login shells setup configuration (eg env variables, config files, etc.) that

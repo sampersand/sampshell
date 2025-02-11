@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/dash
 
 # This file is sadly not POSIX-compliant, because POSIX doesn't define the `%q`
 # specifier. Sad!
@@ -7,5 +7,5 @@
 
 count=0
 for argument; do
-	printf "%5d: %q\n" "$(( count += 1 ))" "$argument"
+	printf "%5d: %s\n" "$(( count += 1 ))" "$argument"
 done

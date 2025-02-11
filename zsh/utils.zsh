@@ -86,3 +86,7 @@ tracezsh () {
 		# --command :
 		# -xilcosourcetrace :
 }
+
+sublzfiles () {
+	subl ~/.z(shenv|shrc|profile|login|logout)
+}

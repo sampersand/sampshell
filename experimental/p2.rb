@@ -1,66 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-line = +""
-output = +""
-loop do
-  $<.readpartial 4096, line
 
-  output.clear
-  line.each_char do |char|
-    q = char.dump[1..-2]
-    if q == char
-      output.concat char
-    else
-      output.concat "\e[7m#{q}\e[27m"
-    end
-  end
-  $>.syswrite output
-
-rescue EOFError
-  puts
-  exit
+idx = 0
+$*.each do |argument|
+  printf "%5d: %s\n", (idx += 1), argument.inspect
 end
-__END__
-#!/bin/dash
-
-[ $# = 0 ] && exec $0 1 <<EOS
-$(printf 'a\01b  \\ \r')
-$(cat /Users/sampersand/Desktop/2024-01-06_14.10.38.png)
-lolwhat
-EOS
-readonly esc=$(printf '\033')
-
-LC_CTYPE=C od -An -c -v | sed 's/^ \{9\}//' | head -n 10 \
-  | sed '
-s/ \(\\.\)/'"$esc"'[7m\1'"$esc"'[27m/
-s/ \([0-9][0-9][0-9]\)/'"$esc"'[7m\\\1'"$esc"'[27m/
-s/  \(.\)/\1/g
-'
-
-exit
-IFS=
-while read -r line; do
-  # while [ "$#line" ]
-  printf "%d [%s]" "${#line}" "$line"
-done
-printf "%s" "$line"
-
-# exit
-# #!/usr/bin/env ruby
-# while line = gets
-#   endl = line.chomp!
-#   line.encode! 'utf-8', invalid: :replace
-#   line.gsub! /[[:cntrl:]]/ do
-#     "\e[7m#{_1.dump[1..-2]}\e[27m"
-#   end
-
-#   # \e[7ma\e[27m\n
-#   print line
-#   print "\n" if endl
-# end
-
-# # IFS=
-# # while read -r line; do
-# #   for
-# # done
-# # cat | dump

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 #### Interactive config for all POSIX-compliant shells.
 # This file sets up the minimum interactive environment I want on all shells (a
 # couple of essential functions, some aliases, and a few macOS-specific things),
@@ -59,6 +61,23 @@ cdd () {
 	# Don't respect `CDPATH` here, as we know the directory to go to. Also,
 	# don't use any aliases for `cd` in case they were defined.
 	CDPATH= \cd -- "$1"
+}
+
+## Add in a `p` program which prints out a debugging form of its arguments.
+# (This program isn't its own executable script because some variables might
+# contain `NUL` bytes (which we want to print), but aren't preserved when passed
+# between programs.) We pipe the output to `dump` so it can display it for us.
+p () {
+	SampShell_scratch=0
+	while
+		[ "$#" -ne 0 ]
+	do
+		# Can't put in next line b/c the `| dump` forks
+		: "$(( SampShell_scratch += 1 ))"
+		printf '%5d: %s' "$SampShell_scratch" "$1" | dump
+		shift
+	done
+	unset -v SampShell_scratch
 }
 
 ## Removes a directory

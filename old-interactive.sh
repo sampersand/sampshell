@@ -6,6 +6,7 @@ clean_shell () {
    env -i "$@"
 }
 
+alias pi=SampShell_parallelize_it
 SampShell_parallelize_it () {
    [ -n "$ZSH_VERSION" ] && setopt LOCAL_OPTIONS GLOB_SUBST SH_WORD_SPLIT
 
@@ -35,7 +36,6 @@ SampShell_parallelize_it () {
       printf 'SampShell_parallelize_it: fn is not executable: %s\n' "$1" >&2
       return 1
    fi
-
 
    while [ "$#" -gt 1 ]; do
       if [ -n "${SampShell_scratch-}" ]; then
@@ -95,15 +95,17 @@ SampShell_unalias () {
    unalias "$@" >/dev/null 2>&1 || : # To ensure we always succeed
 }
 
-HISTSIZE=500 # How many history entries for the editor to keep.
-if [ -z "${HISTFILE+1}" ]; then
-   if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
-      echo '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
-   else
-      HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+if false; then
+   HISTSIZE=500 # How many history entries for the editor to keep.
+   if [ -z "${HISTFILE+1}" ]; then
+      if [ -n "${SampShell_HISTDIR+1}" ] && [ -z "$SampShell_HISTDIR" ]; then
+         echo '[INFO] Not setting HISTFILE; SampShell_HISTDIR is set to the empty string'
+      else
+         HISTFILE=${SampShell_HISTDIR-$HOME}/.sampshell_history
+      fi
+   elif [ -z ${HISTFILE} ]; then
+      echo '[INFO] Not defaulting HISTFILE; it is set to the empty string'
    fi
-elif [ -z ${HISTFILE} ]; then
-   echo '[INFO] Not defaulting HISTFILE; it is set to the empty string'
 fi
 SampShell_does_command_exist history || eval 'history () { fc -l "$@"; }'
 

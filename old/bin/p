@@ -1,0 +1,12 @@
+#!/bin/dash
+
+## Print out its arguments, in a debugging format. (Note that we can't simply
+# use the `%q` specifier because posix doesn't define it, so instead we pipe
+# it to `dump`.)
+
+SampShell_scratch=0
+for argument; do
+	printf '%5d: %s' "$((SampShell_scratch += 1))" "$argument" | dump2
+done
+
+unset -v SampShell_scratch
