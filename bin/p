@@ -1,0 +1,9 @@
+#!/bin/zsh
+
+## Prints out its arguments in a debugging format. (We sadly can't use `%q` b/c
+# it is not POSIX-compliant, so we need to use bash.)
+
+idx=0
+for argument do
+	printf '%5d: %q\n' "$((++idx))" "$argument"
+done

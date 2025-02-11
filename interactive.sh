@@ -70,9 +70,7 @@ cdd () {
 # between programs.) We pipe the output to `dump` so it can display it for us.
 p () {
 	SampShell_scratch=0
-	while
-		[ "$#" -ne 0 ]
-	do
+	while [ "$#" -ne 0 ]; do
 		# Can't put in next line b/c the `| dump` forks
 		: "$(( SampShell_scratch += 1 ))"
 		printf '%5d: %s' "$SampShell_scratch" "$1" | dump
@@ -97,7 +95,9 @@ alias l='ls -l'
 alias j=jobs
 
 if [ -n "${SampShell_EDITOR-}" ]; then
-	alias s=subl ss=ssubl ssubl='subl --create'
+	alias s=subl
+	alias ss=ssubl
+	alias ssubl='subl --create'
 fi
 
 ################################################################################
@@ -110,9 +110,14 @@ fi
 set -o noclobber
 
 ## Make `rm`, `mv`, and `cp` safe by default; repeat the second arg for unsafe
-alias rm='rm -i' rmm='command rm'
-alias mv='mv -i' mvv='command mv'
-alias cp='cp -i' cpp='command cp'
+alias rm='rm -i'
+alias rmm='command rm'
+
+alias mv='mv -i'
+alias mvv='command mv'
+
+alias cp='cp -i'
+alias cpp='command cp'
 
 ## Shorthand aliases for "safe alternatives" foundin `bin`
 alias m=mv-safe
@@ -125,13 +130,10 @@ alias r=trash
 ################################################################################
 
 if [ "$(uname)" = Darwin ]; then
-	## Paste from macOS's clipboard
-	alias pbp=pbpaste
-
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
-	if alias ls >/dev/null 2>&1; then
-		eval "alias $([ -n "${BASH_VERSION-}" ] && set -o posix; alias ls)hGb"
+	if alias l >/dev/null 2>&1; then
+		eval "alias $([ -n "${BASH_VERSION-}" ] && set -o posix; alias l)hGb"
 	fi
 fi
 
