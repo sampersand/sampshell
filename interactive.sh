@@ -29,10 +29,13 @@ SampShell_interactive_loaded=1
 # If any arguments are given, they're forwarded to `fc -l` (ie list that many
 # arguments). Without arguments, if not connected to a tty, all commands are
 # printed out (for usage with `grep`).
-h ()	if [ "$#" -eq 0 ] && [ ! -t 1 ]
-	then fc -ln 0
-	else fc -l "$@"
+h () {
+	if [ "$#" -eq 0 ] && [ ! -t 1 ]
+	then set -- -n 0
 	fi
+
+	fc -l "$@"
+}
 
 ## Changes to the directory containing its argument.
 # (Useful for dragging files in from Finder to Terminal on MacOS.)
@@ -73,7 +76,12 @@ p () {
 	while [ "$#" -ne 0 ]; do
 		# Can't put in next line b/c the `| dump` forks
 		: "$(( SampShell_scratch += 1 ))"
-		printf '%5d: %s' "$SampShell_scratch" "$1" | dump
+
+		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | dump; then
+			unset -v SampShell_scratch
+			return 1
+		fi
+
 		shift
 	done
 	unset -v SampShell_scratch

@@ -59,15 +59,13 @@ autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d {
 	emulate -L zsh
-	builtin dirs ${@:--v}
+		builtin dirs ${@:--v}
 }
 
 ## Setup `cd` options
-setopt AUTO_CD           # Enables `dir` to be shorthand for `cd dir` if `dir` isn't a valid command
-setopt CDABLE_VARS       # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
-setopt AUTO_PUSHD        # Have `cd` push directories onto the directory stack like `pushd`
-setopt PUSHD_IGNORE_DUPS # Delete old duplicate entries on the directory stack when adding new ones.
-setopt CHASE_LINKS       # Ensure symlinks are always resolved when changing directories.
+setopt CDABLE_VARS  # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
+setopt AUTO_PUSHD   # Have `cd` push directories onto the directory stack like `pushd`
+setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing directories.
 
 ####################################################################################################
 #                                                                                                  #
@@ -105,13 +103,12 @@ SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to en
 # HISTFILE=...     # HISTFILE is already setup within `posix/interactive.sh`.
 
 ## Setup history options
-setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
-setopt HIST_ALLOW_CLOBBER     # Add `|` to `>` and `>>`, so that re-running the command can clobber.
 setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
+setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 
 ## Disable options that might've been set
 unsetopt HIST_IGNORE_ALL_DUPS # Ensure that non-contiguous duplicates are kept around.
@@ -131,7 +128,6 @@ history-ignore-command h SampShell-history
 	
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
 setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
-unsetopt NO_MONITOR            # Enable job control, in case it's not already sent
 unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
 unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
@@ -242,6 +238,9 @@ bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARR
 bindkey '^[[1;5B' down-history  # (Added as a custom sequence for "CTRL + DOWN ARROW")
 bindkey '^[[1;5C' undefined-key # Terminal.app's default sequence for "CTRL + RIGHT ARROW"
 bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LEFT ARROW"
+
+### Completion
+setopt MENU_COMPLETE
 
 ####################################################################################################
 #                                                                                                  #
