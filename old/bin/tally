@@ -1,0 +1,20 @@
+#!/bin/sh
+exec ruby -nsx -- "$0" "$@"
+#!ruby
+
+BEGIN {
+  $h and abort "usage: #{File.basename $0} [-r]\n-r is used to reverse the output"
+  lines = Hash.new 0
+}
+
+lines[chomp] += 1
+
+END {
+  lines = lines.sort_by(&:last)
+  num_digits = lines.last.last.digits.count
+  lines.reverse! if $r
+
+  lines.each do |line, count|
+    printf "%#{num_digits}d\t%s\n", count, line
+  end
+}

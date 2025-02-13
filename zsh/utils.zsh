@@ -90,3 +90,6 @@ tracezsh () {
 sublzfiles () {
 	subl ~/.z(shenv|shrc|profile|login|logout)
 }
+
+awkf () awk "BEGIN{$1; exit}"
++x-exp () +x ~ss/bin-experimental/${^@}

@@ -93,8 +93,8 @@ md () {
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
-alias ls='ls -AFq'
-alias l='ls -l'
+alias l='ls -AFq'
+alias ll='l -l'
 j () { jobs "$@"; }
 
 if [ -n "${SampShell_EDITOR-}" ]; then
@@ -135,7 +135,7 @@ alias r=trash
 if [ "$(uname)" = Darwin ]; then
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
-	alias ls='ls -AFqhGb'
+	alias l='ls -AFqhGb'
 fi
 
 ################################################################################
