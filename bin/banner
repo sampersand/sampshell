@@ -121,25 +121,27 @@ print_lines () {
 	do
 		spacing=$(( (${#line} + msg_width) / 2  ))
 		remainder=$(( msg_width - spacing ))
+
 		prpre
 		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
 	done
 }
 
-prpre
-
 case $style in
 	\#)
+		prpre
 		printf "%${width}s\n" | tr ' ' "$style"
 		print_lines '#' '#' $width "$@"
 		prpre
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	/)
+		prpre
 		printf "%${width}s\n" | tr ' ' "$style"
 		print_lines '//' '//' $width "$@"
 		prpre
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	\*)
+		prpre
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
 		print_lines ' *' '*' $((width - 1)) "$@"
 		prpre ' '

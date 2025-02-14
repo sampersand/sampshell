@@ -62,7 +62,7 @@ else
 fi
 
 # Print out a newline unless it is suppressed
-[ -n "$no_newline" ] && echo
+[ -z "$no_newline" ] && echo
 
 # Always return successfully
 exit 0
