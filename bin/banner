@@ -18,7 +18,6 @@ die () {
 
 usage () { cat; } <<USAGE
 usage: $scriptname [options] [--] message here
-                   -l [options]
                    -m [options] [--] lines here
 options:
 	-wN, --width=N         total width of the line
@@ -26,18 +25,17 @@ options:
 	-sC, --style=CHAR      print out in STYLE style
 	-m, --multiline        interpret each argument as a separate line, instead of just one line.
 	-b, --blank            Add a blank line before and after input
-	-l, --single-line      Only print the header and then return; ignores args
 USAGE
 
 expect_numeric () case $1 in
-	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$!" ;;
+	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$1" ;;
 	?*) ;;
 	*) die "$option expects an argument"
 esac
 
 ## Config options
 width=80 style=\# pre=0
-multiline= blank= single_line=
+multiline= blank=
 
 while [ "$#" -ne 0 ]; do
 	option=$1
@@ -51,7 +49,6 @@ while [ "$#" -ne 0 ]; do
 	# Flag options
 	-m | --multiline)   multiline=1 ;;
 	-b | --blank)       blank=1 ;;
-	-l | --single-line) single_line=1 ;;
 
 	# Numeric options
 	-w | --line-width) width=${1:-}; expect_numeric "$width"; shift ;;
@@ -99,19 +96,20 @@ done
 # for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
 
 # Expect at least one banner argument
-if { [ -n "$single_line" ] && [ $# -ne 0 ]; } || { [ -z "$single_line" ] && [ $# -eq 0 ]; } ; then
-	usage >&2
-	exit 1
-fi
+[ $# -eq 0 ] && { usage >&2; exit 1; }
 
 # If multiline isn't set, all args are just separated by spaces
 [ -n "$multiline" ] || set -- "$*"
 
 # If blank is set, add in an extra line before and after
-[ -n "$blank" ]     && set -- '' "$@" ''
+[ -n "$blank" ] && set -- '' "$@" ''
 
 # Calculate the width
 width=$((width - pre))
+
+prpre () {
+	[ "$pre" -ne 0 ] && printf "${1-}%${pre}s"
+}
 
 print_lines () {
 	prefix=$1
@@ -123,31 +121,28 @@ print_lines () {
 	do
 		spacing=$(( (${#line} + msg_width) / 2  ))
 		remainder=$(( msg_width - spacing ))
-		[ "$pre" -ne 0 ] && printf "%${pre}s"
+		prpre
 		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
 	done
 }
 
-[ "$pre" -ne 0 ] && printf "%${pre}s"
+prpre
 
 case $style in
 	\#)
 		printf "%${width}s\n" | tr ' ' "$style"
-		[ -n "$single_line" ] && exit
 		print_lines '#' '#' $width "$@"
-		[ "$pre" -ne 0 ] && printf "%${pre}s"
+		prpre
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	/)
 		printf "%${width}s\n" | tr ' ' "$style"
-		[ -n "$single_line" ] && exit
 		print_lines '//' '//' $width "$@"
-		[ "$pre" -ne 0 ] && printf "%${pre}s"
+		prpre
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	\*)
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
-		[ -n "$single_line" ] && exit
 		print_lines ' *' '*' $((width - 1)) "$@"
-		[ "$pre" -ne 0 ] && printf " %${pre}s"
+		prpre ' '
 		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
 	*) die 'unknown style %s' "$style" ;;
 esac

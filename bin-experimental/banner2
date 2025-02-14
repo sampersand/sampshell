@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 ## Safety first
 set -o nounset
@@ -29,45 +29,15 @@ options:
 	-l, --single-line      Only print the header and then return; ignores args
 USAGE
 
-expect_numeric () case $OPTARG in
-	*[!0-9]*) die "$opt expects a numeric argument, got: %s" "$OPTARG" ;;
+expect_numeric () case $1 in
+	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$!" ;;
 	?*) ;;
-	*) die "$opt expects an argument"
+	*) die "$option expects an argument"
 esac
 
 ## Config options
 width=80 style=\# pre=0
 multiline= blank= single_line=
-
-
-set -- --multiline=34
-# set -- -m --a=34 --b=34 -- a=x
-while getopts 'w:p:s:mbl-' opt; do
-	if [ "$opt" = '-' ]; then
-		shift $(( OPTIND - 2 ))
-		arg=$1
-		shift
-		OPTIND=1
-		echo $arg
-		continue
-		# case $arg in
-	fi
-	case $opt in
-	w) width=$OPTARG; expect_numeric;;
-	p) pre=$OPTARG; expect_numeric;;
-	s) style=$OPTARG ;;
-	m) multiline=1 ;;
-	b) blank=1 ;;
-	\?) exit 1 ;;
-		# opt=$(())
-		# shift $((OPTIND - 2))
-		# echo "$OPTIND : $@"
-		# exit
-	esac
-done
-shift $(( $OPTIND - 1 ))
-echo "$@"
-exit
 
 while [ "$#" -ne 0 ]; do
 	option=$1
@@ -153,34 +123,31 @@ print_lines () {
 	do
 		spacing=$(( (${#line} + msg_width) / 2  ))
 		remainder=$(( msg_width - spacing ))
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
 	done
 }
 
-[ "$pre" = 0 ] && pre= # Make yash happy?
+[ "$pre" -ne 0 ] && printf "%${pre}s"
 
 case $style in
 	\#)
-		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines '#' '#' $width "$@"
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	/)
-		printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines '//' '//' $width "$@"
-		printf "%${pre}s"
+		[ "$pre" -ne 0 ] && printf "%${pre}s"
 		printf "%${width}s\n" | tr ' ' "$style" ;;
 	\*)
-		printf "%${pre}s"
 		printf "/%$((width-2))s\n" | tr ' ' "$style"
 		[ -n "$single_line" ] && exit
 		print_lines ' *' '*' $((width - 1)) "$@"
-		printf " %${pre}s"
+		[ "$pre" -ne 0 ] && printf " %${pre}s"
 		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
 	*) die 'unknown style %s' "$style" ;;
 esac
