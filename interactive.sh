@@ -77,7 +77,7 @@ p () {
 		# Can't put in next line b/c the `| dump` forks
 		: "$(( SampShell_scratch += 1 ))"
 
-		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | dump; then
+		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | inspect; then
 			unset -v SampShell_scratch
 			return 1
 		fi
