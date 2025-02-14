@@ -19,10 +19,9 @@ $escape_whitespace = true
 $suppress_trailing_newline = false
 
 OptParse.new do |op|
-  op.on '-w', '--dont-escape-whitespace', "Don't escape non-space whitespace." do
-    $escape_whitespace = false
+  op.on '-w', '--[no-]dont-escape-whitespace', "Don't escape non-space whitespace." do |ews|
+    $escape_whitespace = !ews
   end
-  op.on '-W' do $escape_whitespace = true end
 
   op.on '-i', '--input-encoding=ENCODING', Encoding, 'Set input encoding (default: UTF-8)' do |enc|
     $input_encoding = enc
@@ -32,7 +31,7 @@ OptParse.new do |op|
     $output_encoding = enc
   end
 
-  op.on '-b', '-\\', '--[no-]escape-backslash', 'Also escape backslashes. Defaults to on when standout is enabled' do |bs|
+  op.on '-\\', '--[no-]escape-backslash', 'Also escape backslashes. Defaults to on when standout is enabled' do |bs|
     $escape_backslash = bs
   end
 
@@ -48,8 +47,12 @@ OptParse.new do |op|
     $cstyle = true
   end
 
-  op.on '-s', '--[no-]standout', 'Enables (or disables) standout' do |so|
-    $standout = so
+  op.on '-s', '--disable-standout', 'Disables standout mode' do
+    $standout = false
+  end
+
+  op.on '-S', '--enable-standout', 'Enables standout mode' do
+    $standout = true
   end
 
   op.on '-U', '--escape-larger', 'Escape things larger than 0xff' do
@@ -58,10 +61,8 @@ OptParse.new do |op|
 
   op.on '-a', '--ascii-only', 'Escape upper bits too' do
     $input_encoding = $output_encoding = 'ASCII'
-    $escape_larger = true
   end
 
-  ## Options
   op.on '-u', '--utf-8', 'Assume input is in UTF-8 format' do
     $input_encoding = $output_encoding = 'UTF-8'
     $escape_larger = false
@@ -69,9 +70,7 @@ OptParse.new do |op|
 
   op.on '-b', '--binary' do
     $input_encoding = $output_encoding = 'binary'
-    $escape_larger = true
-    $escape_whitespace = false
-    $cstyle = false
+    $escape_whitespace = true
   end
 
   op.parse! rescue abort "#{op.program_name}: #$!"
@@ -87,8 +86,8 @@ BEGIN_STANDOUT = "\e[7m"
 END_STANDOUT = "\e[27m"
 
 C_CODEPOINTS = {
-  0=>"\x00", 7=>"\a", 8=>"\b", 9=>"\t", 10=>"\n", 11=>"\v",
-  12=>"\f", 13=>"\r", 27=>"\e"
+  0=>'\x00', 7=>'\a', 8=>'\b', 9=>'\t', 10=>'\n', 11=>'\v',
+  12=>'\f', 13=>'\r', 27=>'\e'
 }
 
 WHITESPACE = [9, 10]
@@ -107,7 +106,7 @@ end
 while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
   INPUT_LINE.each_codepoint do |char|
     if (WHITESPACE.include?(char) ? $escape_whitespace : char < 0x20)
-      escape ($cstyle && C_CODEPOINTS[char]) || ('\x%02x' % char)
+      escape ($cstyle && C_CODEPOINTS[char]) || ('\x%02X' % char)
     elsif char == '\\'.ord and $escape_backslash
       escape '\\\\'
     elsif (0x7F..0xFF).include? char
