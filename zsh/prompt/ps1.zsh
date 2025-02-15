@@ -127,7 +127,7 @@ function _SampShell-prompt-git-hook {
 	## If there's a prefix pattern, then set `psvar[2]` to that replacement.
 	local pattern
 	if zstyle -s ":sampshell:prompt:git:$PWD" pattern pattern; then
-		psvar[2]=${psvar[2]/${~pattern}/…}
+		psvar[2]=${(*)psvar[2]/${~pattern}/…}
 	fi
 }
 
@@ -140,7 +140,7 @@ if zstyle -T ':sampshell:prompt:git' display; then
 	precmd_functions+=(_SampShell-prompt-git-hook)
 
 	# Only expand the full thing if there's a significant amount of space left.
-	PS1+='%F{43}%$((COLUMNS / 3))(l.%2v.%1v)'
+	PS1+='%F{43}%$((COLUMNS / 5))(l.%2v.%1v)'
 fi
 
 ####################################################################################################

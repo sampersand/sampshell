@@ -63,6 +63,9 @@ alias ps='ps -ax'
 alias hd='hexdump -C'
 alias psg='noglob ps -ax | grep '
 
+hr () xx ${@:--}
+hrc () { hr | pbcopy }
+
 ################################################################################
 
 tracezsh2 () {
@@ -79,10 +82,11 @@ tracezsh () {
 		--var SampShell_PROFILE= \
 		--var SampShell_SOURCETRACE=1 \
 		--var SampShell_XTRACE=1 \
+		--var SampShell_ROOTDIR \
 		--var SampShell_just_for_testing_should_disable_rvm=1 \
 		--xtrace \
 		--sourcetrace \
-		${@:?}
+		${@:?need a command to run!}
 		# --command :
 		# -xilcosourcetrace :
 }

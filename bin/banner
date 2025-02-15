@@ -130,6 +130,8 @@ print_lines () {
 case $style in
 	\#)
 		prpre
+		xx -w"$width" -- "$style"
+		prpre
 		printf "%${width}s\n" | tr ' ' "$style"
 		print_lines '#' '#' $width "$@"
 		prpre
