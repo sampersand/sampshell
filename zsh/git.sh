@@ -97,21 +97,6 @@ alias gbrmv=grename
 # Custom git "functions" #
 ##########################
 
-# Squash all commits down lightly.
-gsquash () {
-	if [ "$#" != 1 ]; then
-		echo "usage: $0 <branch-or-commit>"
-		return 255
-	fi
-
-	git reset --soft "$(git merge-base "${1?}" HEAD)"
-}
-
-# Fixup code
-function goops {
-	git add --all && git commit --amend --no-edit && git push --force
-}
-
 gclear () {
 	# git add --all && git stash push && git status
 	echo 'todo'

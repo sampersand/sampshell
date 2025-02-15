@@ -1,0 +1,17 @@
+#!/bin/sh
+
+##
+# Quick fixup for code in a commit that wasn't there
+##
+
+# No arguments are allowed
+if [ "$#" -ne 0 ]
+then
+	echo >&2 "usage: $(basename "$0" | tr '-' ' ')"
+	echo >&2
+	echo >&2 "Add changes in and push them up to the remote"
+	exit 255
+fi
+
+# TODO: Only `git push --force` if a remote is available
+git add --all && git commit --amend --no-edit && git push --force

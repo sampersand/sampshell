@@ -135,7 +135,7 @@ alias r=trash
 if [ "$(uname)" = Darwin ]; then
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
-	alias l='ls -AFqhGb'
+	alias ls='ls -AFqhGb'
 fi
 
 ################################################################################

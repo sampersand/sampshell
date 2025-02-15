@@ -1,0 +1,15 @@
+#!/bin/sh
+
+##
+# Squash all commits down lightly.
+##
+
+# Only one argument is allowed
+if [ "$#" -ne 1 ]
+then
+	echo >&2 "usage: $(basename "$0" | tr '-' ' ') <branch-or-commit>"
+	exit 255
+fi
+
+# Perform the reset. TODO: Stash this somehow, so it's not destructive?
+git reset --soft "$(git merge-base "$1" HEAD)"

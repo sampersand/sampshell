@@ -139,14 +139,15 @@ SampShell_add_to_path () {
 }
 
 ## Universal scripts I always want available
-SampShell_add_to_path "$SampShell_ROOTDIR/bin"
+SampShell_add_to_path "$SampShell_ROOTDIR/bin/universal"
+SampShell_add_to_path "$SampShell_ROOTDIR/bin/git"
 
 ## MacOS-specific scripts
-[ "$(uname)" = Darwin ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin-macOS"
+[ "$(uname)" = Darwin ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin/macOS"
 
 if [ -n "$SampShell_EXPERIMENTAL" ]; then
    ## Add in "experimental" scripts I'm working on and haven't quite completed.
-   SampShell_add_to_path "$SampShell_ROOTDIR/bin-experimental"
+   SampShell_add_to_path "$SampShell_ROOTDIR/bin/experimental"
 
    ## Add in the "cached bin"
    SampShell_add_to_path "$SampShell_CACHEDIR/bin"
