@@ -7,7 +7,7 @@
 # Only one argument is allowed
 if [ "$#" -ne 1 ]
 then
-	echo >&2 "usage: $(basename "$0" | tr '-' ' ') <branch-or-commit>"
+	echo >&2 "usage: $(basename -- "$0" | sed 's/-/ /1') <branch-or-commit>"
 	exit 80
 fi
 

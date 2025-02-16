@@ -113,7 +113,7 @@ verbose_level=1 # verbosity level, should be an integer.
 ## Parse command line options.
 # I'm not using the POSIX-supplied `getopts` here, as it does not support long-
 # form options (ie `--foo`) which I use.
-while getopts ':nirRcCqvh' opt; do
+while getopts ':nirRcCqvVh' opt; do
    case $opt in
       n) move_flag=n     ;;
       i) move_flag=i     ;;

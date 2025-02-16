@@ -12,20 +12,8 @@ alias g=git
 
 ## Spellcheck
 alias gti=git
-
-ignore () {
-	if [ "$#" -eq 0 ]; then
-		printf >&2 'usage: ignore file [...]. Used to add files to gitignore'
-		return 1
-	fi
-
-	while [ "$#" -ne 0 ]; do
-		mv "$1" "$1.ignore"
-		shift
-	done
-}
-alias ig=ignore
-alias gignore=ignore
+alias ig='git ignore'
+alias gignore='git ignore'
 
 : "${SampShell_git_default_master_branch:=master}"
 : "${SampShell_git_branch_prefix:="$(whoami)"}"

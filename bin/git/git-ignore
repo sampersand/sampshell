@@ -1,0 +1,24 @@
+#!/bin/sh
+
+extension=ignore
+force=
+
+while getopts 'fe:' opt; do
+	case $opt in
+		e) extension=${OPTARG#.} ;;
+		\?) exit 80 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+if [ "$#" -eq 0 ]
+then
+	printf >&2 'usage: %s file [...]\nUsed to add files to gitignore' \
+		"$(basename -- "$0" | sed 's/-/ /1')"
+	exit 80
+fi
+
+for filename; do
+	mv-safe -r -- "$1" "$1.$extension"
+done

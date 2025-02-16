@@ -2,7 +2,7 @@
 
 set -eu
 
-program_name=$(basename "$0" | sed 's/-/ /1')
+program_name=$(basename -- "$0" | sed 's/-/ /1')
 
 usage () { cat ; } <<EOS
 usage: $program_name [-d DATE] [-p PREFIX] branch name here"
@@ -36,7 +36,7 @@ while getopts 'hp:d:' opt; do
 		exit ;;
 
 	\?)
-		exit 1 ;;
+		exit 80 ;;
 	esac
 done
 

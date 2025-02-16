@@ -19,3 +19,5 @@
 
 [alias]
 	unstage = reset HEAD --
+	a = add
+	aa = add --all
