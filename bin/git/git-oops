@@ -10,7 +10,7 @@ then
 	echo >&2 "usage: $(basename "$0" | tr '-' ' ')"
 	echo >&2
 	echo >&2 "Add changes in and push them up to the remote"
-	exit 255
+	exit 80
 fi
 
 # TODO: Only `git push --force` if a remote is available

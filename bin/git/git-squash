@@ -8,7 +8,7 @@
 if [ "$#" -ne 1 ]
 then
 	echo >&2 "usage: $(basename "$0" | tr '-' ' ') <branch-or-commit>"
-	exit 255
+	exit 80
 fi
 
 # Perform the reset. TODO: Stash this somehow, so it's not destructive?

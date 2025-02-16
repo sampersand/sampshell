@@ -36,22 +36,6 @@ SampShell_master_branch () {
 	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
-SampShell_git_branch_prefix () {
-	if [ -z "$1" ]; then
-		set -- "${date:-"$(date +%y-%m-%d)"}"
-	fi
-
-	case "$1" in
-		[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
-			;;
-		*)
-			echo "$0: Date isn't in the right format: $1" >&2
-			return 1 ;;
-	esac
-
-	echo "${SampShell_git_branch_prefix?}/$1"
-}
-
 ################################
 # Interacting with remote code #
 ################################
@@ -67,15 +51,7 @@ alias gstp='git stash pop'
 # Changing branches #
 #####################
 
-# Create a new branch; date is optional.
-gnb () {
-	if [ "$#" = 0 ]; then
-		echo "[date=YY-MM-DD] $0 (branch name here)" >&2
-		return 255
-	fi
-
-	git switch --create "$(SampShell_git_branch_prefix)/$(IFS='-' ; echo "$*")"
-}
+alias gnb='git new-branch'
 
 alias gswm='gsw "$(SampShell_master_branch)"'
 gsw () {
@@ -136,7 +112,6 @@ alias gco='git checkout'
 alias gcp='git cherry-pick'
 alias gg='git grep'
 alias ginit='git init'
-alias gnit='git commit --amend --no-edit'
 
 gnita () { gaa && gnit; }
 

@@ -16,3 +16,6 @@
 
 [init]
 	defaultBranch = master
+
+[alias]
+	unstage = reset HEAD --

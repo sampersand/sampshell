@@ -1,0 +1,54 @@
+#!/bin/sh
+
+set -eu
+
+program_name=$(basename "$0" | sed 's/-/ /1')
+
+usage () { cat ; } <<EOS
+usage: $program_name [-d DATE] [-p PREFIX] branch name here"
+options:
+    -d DATE   Set the date (format: YYYY-MM-DD); Defaults to the current date.
+    -p PREFIX Set the branch prefix; Defaults to 'id -nu', ie 'whoami'.
+
+If multiple non-flag args are given, they're separated by a '-'
+EOS
+
+date=
+prefix=${SampShell_git_branch_prefix-} # If this is empty, it's set below.
+while getopts 'hp:d:' opt; do
+	case $opt in
+	p)
+		prefix=$OPTARG ;;
+
+	d)
+		# TODO: deal with LC_COLLATE here
+		case $OPTARG in
+		[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+			date=$OPTARG ;;
+		*)
+			printf >&2 '%s: date in wrong format: %s\n' \
+				"$program_name" "$OPTARG"
+			exit 2
+		esac ;;
+
+	h)
+		usage
+		exit ;;
+
+	\?)
+		exit 1 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+if [ "$#" -eq 0 ]
+then
+	usage >&2
+	exit 80
+fi
+
+printf %s/%s/%s \
+	"${prefix:-$(id -un)}" \
+	"${date:-$(date +%F)}" \
+	"$(IFS=-; echo "$*")"
