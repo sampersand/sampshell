@@ -42,10 +42,10 @@ then
 fi
 
 # If no width or count were given, default width
-if test $width -o $count
+if test "$width" -o "$count"
 then
 	width=$COLUMNS
-	test $width || width=`tput cols 2>&-`
+	test $width || width=`stty size 2>&- | cut -f2 -d ' '`
 	test $width || width=80
 fi
 
@@ -60,7 +60,7 @@ elif test $width
 then
 	while test 0 -lt $width; do
 		printf %.${width}s $string
-		width=`expr $width - ${#string}`
+		width=`expr $width - \( \( X$string : .* \) - 1`
 	done
 else
 # Otherwise, we want a count iteration.

@@ -24,6 +24,12 @@ SampShell_master_branch () {
 	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
+if false; then
+	git log limit
+fi
+##
+#
+
 ################################
 # Interacting with remote code #
 ################################
@@ -86,7 +92,7 @@ alias gam='git commit --amend'
 alias gcma='git commit --amend'
 alias gammend='git commit --amend'
 
-alias gs='git status'
+alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
 alias grb='git rebase'
 alias grbm='git rebase "$(master-branch)"'
 alias grba='git rebase --abort'

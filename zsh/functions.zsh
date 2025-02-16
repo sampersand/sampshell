@@ -11,13 +11,14 @@ alias  clzsh='clean-shell --shell =zsh  --none --arg -fd $@'
 alias cldash='clean-shell --shell =dash --none $@'
 
 ## Banner utility
-function _SampShell-banner { banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
+function _SampShell-banner { ~ss/bin/universal/banner $@ | pbcopy } # TODO: Fix `$PATH` so no macOS banner.
 alias banner='noglob _SampShell-banner'
 alias b80='banner -w80'
 alias b100='banner -w100'
 
 ## Debugging utilities
-function -x { { set -x; "$@" } always { set +x } } # enable xtrace for a single invocation
+function SampShell--x { { set -x; "$@" } always { set +x } } # enable xtrace for a single invocation
+alias -- '-x=SampShell--x '
 function pa {
 	local a b i=0
 	if [[ ${(tP)1} = array-* ]]; then

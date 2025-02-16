@@ -107,9 +107,9 @@ done
 # Calculate the width
 width=$((width - pre))
 
-prpre () {
-	[ "$pre" -ne 0 ] && printf "${1-}%${pre}s"
-}
+prpre () if [ "$pre" -ne 0 ]; then
+	printf "${1-}%${pre}s"
+fi
 
 print_lines () {
 	prefix=$1
@@ -129,8 +129,6 @@ print_lines () {
 
 case $style in
 	\#)
-		prpre
-		xx -w"$width" -- "$style"
 		prpre
 		printf "%${width}s\n" | tr ' ' "$style"
 		print_lines '#' '#' $width "$@"
