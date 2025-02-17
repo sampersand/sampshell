@@ -1,0 +1,4 @@
+#!/bin/zsh
+args=( ${0:P:h}/${^${@:?usage: $0 args}:t} )
+touch $args
+chmod +x $args

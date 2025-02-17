@@ -1,0 +1,15 @@
+#!zsh
+emulate -L zsh
+
+local buf
+
+: ${NUMERIC:=0}
+if (( NUMERIC )) then
+	echo todo
+	return 1
+else
+	buf=${BUFFER:-$history[$#history]}
+fi
+
+print -rn -- $buf | pbcopy
+zle -M "Command copied: $(psvar[1]=$buf print -P '%30>…>%v%>>')"

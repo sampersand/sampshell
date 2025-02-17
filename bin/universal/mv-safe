@@ -45,7 +45,7 @@ fi
 # I've just manually checked all commands that might fail and returned.
 set -o nounset
 set -o noglob
-unset IFS 
+unset IFS
 
 ## The name of the script
 # This is used in `usage` and `warn`. Note that this doesn't use the `basename`

@@ -20,11 +20,8 @@
 [alias]
 	alias = config --get-regexp ^alias\\.
 	nit  = commit --amend --no-edit
-	oops = !git add --all && git commit --amend --no-edit && git push --force
+	# oops = !git add --all && git commit --amend --no-edit && git push --force
 # TODO: Only `git push --force` if a remote is available
-
-
-
 
 	unstage = reset HEAD --
 	a = add

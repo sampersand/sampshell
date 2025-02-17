@@ -35,20 +35,9 @@ bindkey '^q' push-line-or-edit
 
 # bindkey -r '^[ '
 
-function copy-current-command {
-	: ${NUMERIC:=0}
-	if (( NUMERIC )) then
-		echo todo
-	else
-		print -rn -- $BUFFER | pbcopy
-	fi
-	zle -M "Command copied"
-}
-zle -N copy-current-command
-
 # pr () print -zr -- $ZLE_LINE_ABORTED
 # bindkey '^[ z' put-back-zle
-bindkey '^[ c' copy-current-command
+bindkey '^[ c' SampShell-copy-command
 bindkey '^[ p' SampShell-add-pbcopy
 bindkey -s '^[ l' '^Qls^M'
 
