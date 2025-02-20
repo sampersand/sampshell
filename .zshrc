@@ -238,6 +238,8 @@ bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARR
 bindkey '^[[1;5B' down-history  # (Added as a custom sequence for "CTRL + DOWN ARROW")
 bindkey '^[[1;5C' undefined-key # Terminal.app's default sequence for "CTRL + RIGHT ARROW"
 bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LEFT ARROW"
+bindkey '^[[H'    undefined-key # TODO: Add into terminal.app as a sequence for `HOME`
+bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for `END`
 
 ### Completion
 setopt MENU_COMPLETE

@@ -1,7 +1,19 @@
 # Convert base-10 integers to other bases
-function hex { bc <(print -l obase=16 $@ quit) }
-function oct { bc <(print -l obase=8 $@ quit) }
-function bin { bc <(print -l obase=2 $@ quit) }
+function d2h { bc --ibase=10 --obase=16 -e${(U)^@:?need something to convert} }
+function d2o { bc --ibase=10 --obase=8  -e${(U)^@:?need something to convert} }
+function d2b { bc --ibase=10 --obase=2  -e${(U)^@:?need something to convert} }
+
+function h2d { bc --ibase=16 --obase=10 -e${(U)^@:?need something to convert} }
+function h2o { bc --ibase=16 --obase=8  -e${(U)^@:?need something to convert} }
+function h2b { bc --ibase=16 --obase=2  -e${(U)^@:?need something to convert} }
+
+function o2h { bc --ibase=8 --obase=16  -e${(U)^@:?need something to convert} }
+function o2d { bc --ibase=8 --obase=10 -e${(U)^@:?need something to convert} }
+function o2b { bc --ibase=8 --obase=2  -e${(U)^@:?need something to convert} }
+
+function b2h { bc --ibase=2 --obase=16  -e${(U)^@:?need something to convert} }
+function b2d { bc --ibase=2 --obase=10 -e${(U)^@:?need something to convert} }
+function b2o { bc --ibase=2 --obase=8  -e${(U)^@:?need something to convert} }
 
 # Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.

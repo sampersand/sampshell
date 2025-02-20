@@ -7,8 +7,7 @@ Print the n most recent branches. With -u, only print unique
 branches. These can be used with the '@{-N}' syntax in git.
 USAGE
 
-unset unique
-
+unique=
 while getopts 'uh' opt; do
 	case $opt in
 		u) unique=-u ;;

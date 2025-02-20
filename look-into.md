@@ -1,3 +1,35 @@
+stty -echoctl echok
+stty -noflsh <-- seems actually useful
+CTRL+T gives system status, kinda nifty
+
+     icanon (-icanon)
+                 Enable (disable) canonical input (ERASE and KILL processing).
+
+     iexten (-iexten)
+                 Enable (disable) any implementation-defined special control characters that are not currently
+                 controlled by icanon, isig, ixoff, or ixon.
+
+chflags
+ditto
+dsenableroot
+dscl
+execsnoop
+kextstat
+mdfind
+mdls
+mdutil
+
+networkQuality
+powermetrics
+textutil
+wait4path
+touch FOLDER/.metadata_never_index  # disable for FOLDER
+
+           uappnd, uappend
+                       set the user append-only flag (owner or super-user only)
+
+           uchg, uchange, uimmutable
+
 what is "zsh/mapfile", zsh/sched
 The zsh/attr Module
     what is an extended attribute

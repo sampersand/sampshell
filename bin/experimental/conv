@@ -1,0 +1,50 @@
+#!/bin/dash
+
+output= input= multiline=
+while getopts 'i:o:' opt; do
+	case $opt in
+	o) output=$OPTARG ;;
+	i) input=$OPTARG ;;
+	m) multiline=1 ;;
+	\?) exit 1 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+conv () while [ -n "$argument" ]
+	do
+		rest=${argument#?}
+		arg=${argument%"$rest"}
+		argument=$rest
+
+		case $input in
+		d) arg=$(printf %d "$arg")   ;;
+		x) arg=$(printf %d "0x$arg") ;;
+		o) arg=$(printf %d "0$arg")  ;;
+		c) arg=$(printf %d "'$arg") ;;
+		*) printf "invalid input: %s\n" "$input" >&2; exit 1 ;;
+		esac || continue 2
+
+		case $output in
+		d) printf %d "$arg" ;;
+		x) printf %x "$arg" ;;
+		o) printf %o "$arg" ;;
+		c) printf %b "\0$(printf %o "$arg")" ;;
+		*) printf "invalid output: %s\n" "$output" >&2; exit 1 ;;
+		esac || continue 2
+
+		[ -n "$argument" ] && printf ' '
+	done
+
+if [ $# -eq 0 ]
+then
+	while	IFS= read -r argument
+	do	
+		echo hi $argument; conv; echo
+	done
+else
+	for argument
+	do	conv; echo
+	done
+fi

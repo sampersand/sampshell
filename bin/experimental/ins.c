@@ -50,16 +50,43 @@ static struct escape escapes[256] = {
 static unsigned char	in[BUFLEN],
 			out[sizeof(in) * MAX_ESCAPE_LEN];
 
+#include <unistd.h>
+
+int whitespace, escape_backslash;
+
+int parse_opts(int argc, char **argv) {
+	int c;
+	while ((c = getopt(argc, argv, "nw\\b")) != -1) {
+		switch (c) {
+		case 'n':
+			escapes['\n'].len = 1;
+			escapes['\n'].escape[0] = '\n';
+			escapes['\n'].escape[1] = '\0';
+			break;
+
+		case 'w':
+			whitespace = 1;
+			break;
+
+		case 'b': case '\\':
+			escape_backslash = 1;
+			break;
+
+		default:
+			return EXIT_FAILURE;
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 	unsigned char *ibuf, *obuf;
 	const struct escape *esc;
 	ssize_t len;
 
-	if (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-		escapes['\n'].len = 1;
-		escapes['\n'].escape[0] = '\n';
-		escapes['\n'].escape[1] = '\0';
-	} else if (argc != 1) {
+	if (!parse_opts(argc, argv)) exit(0);
+
+
+	if (optind != argc) {
 		fprintf(stderr, "usage: %s [-n]\n(everything else comes from stdin)\n", argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -71,16 +98,16 @@ int main(int argc, char **argv) {
 		}
 
 		for (ibuf = in, obuf = out; ibuf < in + len; ++ibuf) {
-			if (0xC0 <= esc && esc <= 0xDF) {
-				*obuf++ = *ibuf++;
-				*obuf++ = *ibuf++;
-				continue;
-			} else if (0xE0 <= esc && esc <= 0xEF) {
-				*obuf++ = *ibuf++;
-				*obuf++ = *ibuf++;
-				*obuf++ = *ibuf++;
-				continue;
-			} else if ()
+			// if (0xC0 <= esc && esc <= 0xDF) {
+			// 	*obuf++ = *ibuf++;
+			// 	*obuf++ = *ibuf++;
+			// 	continue;
+			// } else if (0xE0 <= esc && esc <= 0xEF) {
+			// 	*obuf++ = *ibuf++;
+			// 	*obuf++ = *ibuf++;
+			// 	*obuf++ = *ibuf++;
+			// 	continue;
+			// } else if ()
 			esc = &escapes[*ibuf];
 			memcpy(obuf, esc->escape, esc->len);
 			obuf += esc->len;
@@ -96,4 +123,4 @@ int main(int argc, char **argv) {
 	putchar('\n');
 	return EXIT_SUCCESS;
 }
-C
+
