@@ -132,6 +132,7 @@ fi
 
 ## Prepend things to `PATH` unless they're already there.
 SampShell_add_to_path () {
+   set -- "$SampShell_ROOTDIR/$1"
    case :${PATH-}: in
    *:"${1:?need a path}":*) :                      ;; # It's already there!
    *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
@@ -139,18 +140,15 @@ SampShell_add_to_path () {
 }
 
 ## Universal scripts I always want available
-SampShell_add_to_path "$SampShell_ROOTDIR/bin/universal"
-SampShell_add_to_path "$SampShell_ROOTDIR/bin/git"
+SampShell_add_to_path bin/universal
+SampShell_add_to_path bin/git
 
 ## MacOS-specific scripts
-[ "$(uname)" = Darwin ] && SampShell_add_to_path "$SampShell_ROOTDIR/bin/macOS"
+[ "$(uname)" = Darwin ] && SampShell_add_to_path bin/macOS
 
 if [ -n "$SampShell_EXPERIMENTAL" ]; then
    ## Add in "experimental" scripts I'm working on and haven't quite completed.
-   SampShell_add_to_path "$SampShell_ROOTDIR/bin/experimental"
-
-   ## Add in the "cached bin"
-   SampShell_add_to_path "$SampShell_CACHEDIR/bin"
+   SampShell_add_to_path bin/experimental
 fi
 
 # Make sure `SampShell_add_to_path` doesn't escape the function.

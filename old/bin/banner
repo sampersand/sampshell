@@ -20,35 +20,78 @@ usage () { cat; } <<USAGE
 usage: $scriptname [options] [--] message here
                    -m [options] [--] lines here
 options:
-	-wNUM         total width of the line
-	-pNUM         Add N blank characters before the banner
-	-sSTYLE       print out in STYLE style
-	-m            interpret each argument as a separate line, instead of just one line.
-	-b            Add a blank line before and after input
+	-wN, --width=N         total width of the line
+	-pN, --pre=N           Add N blank characters before the banner
+	-sC, --style=CHAR      print out in STYLE style
+	-m, --multiline        interpret each argument as a separate line, instead of just one line.
+	-b, --blank            Add a blank line before and after input
 USAGE
 
-expect_numeric () case $OPTARG in
-	*[!0-9]*) die "-$opt expects a numeric argument, got: %s" "$OPTARG" ;;
+expect_numeric () case $1 in
+	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$1" ;;
 	?*) ;;
-	*) die "-$opt expects an argument"
+	*) die "$option expects an argument"
 esac
 
 ## Config options
-width=80 style=\# pre=0 multiline= blank=
+width=80 style=\# pre=0
+multiline= blank=
 
-while getopts 'w:p:s:mbh' opt; do
-	case $opt in
-	h) usage; exit ;;
-	m) multiline=1 ;;
-	b) blank=1 ;;
-	w) width=$OPTARG; expect_numeric ;;
-	p) pre=$OPTARG; expect_numeric ;;
-	s) style=$OPTARG ;;
-	?) exit 1 ;;
+while [ "$#" -ne 0 ]; do
+	option=$1
+	shift
+
+	case $option in
+
+	# Usage
+	-h | --help) usage; exit 0 ;;
+
+	# Flag options
+	-m | --multiline)   multiline=1 ;;
+	-b | --blank)       blank=1 ;;
+
+	# Numeric options
+	-w | --line-width) width=${1:-}; expect_numeric "$width"; shift ;;
+	-p | --pre)        pre=${1:-};   expect_numeric "$pre";   shift ;;
+
+	# Style options
+	-s?*) # Support `-sN...`, as style only takes a single charcater
+		rest=${option#-s?}
+		tmp=${option%"$rest"}
+		style=${tmp#-s}
+		[ -n "$rest" ] && set -- "-$rest" "$@" ;;
+	-s | --style)
+		style=${1:-}
+		[ -z "$style" ] && die "$option expects an argument"
+		shift ;;
+
+	# Convert `--a=b` into `--a b`
+	--*=*)
+		set -- "${option%%=*}" "${option#*=}" "$@" ;;
+
+	# Convert options which take arguments into the option and its arg.
+	-[wp]?*)
+		value=${option#-?}
+		flag=${option%"$value"}
+		set -- "$flag" "$value" "$@" ;;
+
+	# Support `-abc`
+	-[!-]?*)
+		rest=${option#-?}
+		flag=${option%"$rest"}
+		set -- "$flag" "-$rest" "$@" ;;
+
+	--)
+		break ;;
+
+        -*)
+		die 'unknown option given: %s' "$option" ;;
+
+	*)
+		set -- "$option" "$@"
+		break 
 	esac
 done
-
-shift $(( OPTIND - 1 ))
 
 # for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
 

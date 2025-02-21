@@ -1,0 +1,97 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+OPTIONS = {
+	shell: ENV['SHELL'],
+	vars: [],
+}
+
+REQUIRED_VARIABLES = (%w[
+  TERM
+  HOME
+  SHLVL
+  LANG
+] + %w[COLLAGE CTYPE MESSAGES MONETARY NUMERIC TIME ALL].map{"LC_#{_1}" })
+  .filter_map { [_1, ENV[_1] || next] }.to_h
+SAMPSHELL_VARS = ENV.select { |key| key.start_with? 'SampShell_' }
+
+$vars = REQUIRED_VARIABLES.dup
+
+def $vars.add(key, value=nil)
+	self[key] = value || ENV.fetch(key) { fail "ENV variable #{key.inspect} is unassigned" }
+end
+
+def $vars.delete_all(keys)
+  reject! { |key| keys.include?(key) }
+end
+
+$vars.add('PATH') rescue warn "no path given"
+
+$shell = ENV.fetch('SHELL', '/bin/sh')
+$verbose = false
+
+OptParse.new do |op|
+	op.on '-V', '--verbose', 'Print out the command before running it' do
+    $verbose = true
+  end
+
+	# op.on '-E', '--env[=VAL]', 'Same as --var ENV=VAL; VAL defaults to $ENV'
+
+	op.on '-s', '--shell=SHELL', 'The shell to run' do |shell|
+    $shell = shell
+  end
+
+  op.on '-a', '--all', 'Re-exports all variables' do
+    $vars.merge!(ENV)
+  end
+
+	op.on '-n', '--none', 'Clears out all variables (also resets -r and -p)' do
+    $vars.clear
+  end
+
+	op.on '-p', '--[no-]path[=PATH]', 'Includes the $PATH value; Without a var, uses $PATH. no- disables' do |path|
+    case path
+    when false then $vars.delete 'PATH'
+    when true  then $vars.add 'PATH' rescue raise "bad -p: #$!"
+    else            $vars.add 'PATH', path
+    end
+  end
+
+	op.on '-r', '--[no-]required', 'Set (or dont) all the "required" variables (eg TERM/HOME/SHLVL)' do |req|
+    if req
+      $vars.merge! REQUIRED_VARIABLES
+    else
+      $vars.delete_all REQUIRED_VARIABLES
+    end
+  end
+
+	op.on '-S', '--[no-]sampshell', 'Set (or dont) all SampShell_XXX variables' do |ss|
+    if ss
+      $vars.merge! SAMPSHELL_VARS
+    else
+      $vars.delete_all SAMPSHELL_VARS
+    end
+  end
+	op.on
+
+	op.on '-v', '--var KEY[=VAL]', 'sets VAR=VAL in the shell to execute; Without VAL defaults to the value in ENV' do |key|
+		$vars.add(*key.split('=', 2)) rescue raise "bad --var: #$!"
+	end
+
+	op.on '--unset-var KEY', 'Unsets KEY from the env' do |key|
+		$vars.delete key
+	end
+
+  op.on_tail 'The -r and -p flags are set by default, but can be unset with -n'
+
+	op.parse! rescue op.abort($!)
+end
+
+cmd = [$shell, *ARGV]
+
+if $verbose
+  puts "Executing #{cmd} with env: #$vars"
+end
+
+exec($vars, *cmd, unsetenv_others: true)

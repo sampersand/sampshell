@@ -1,0 +1,100 @@
+#!/bin/dash
+
+## THIS IS experimental!!! (It's just not in `./experimental`)
+
+# TODO: Change parent process's `env` to `rehash` if the command exists `$PATH`
+readonly cached_exe="${SampShell_CACHEDIR:?}/bin/dump"
+[ -x "$cached_exe" ] && exec "$cached_exe" "$@"
+
+mkdir -p "$SampShell_CACHEDIR/bin" || return
+
+"${CC:-$(command -v cc 2>/dev/null)}" -xc -o"$cached_exe" -O3 - <<'C' && exec "$cached_exe" "$@"
+#include <stdio.h>  /* putchar */
+#include <string.h> /* memcpy */
+#include <stdlib.h> /* EXIT_FAILURE, EXIT_SUCCESS */
+#include <unistd.h> /* read, write, STDIN_FILENO, STDOUT_FILENO, ssize_t */
+
+#define BUFLEN 4096
+#define MAX_ESCAPE_LEN sizeof("\x1B[7m\\xFF\x1B[27m")
+
+struct escape {
+	unsigned char len, escape[MAX_ESCAPE_LEN];
+};
+
+#define E(x) N("\033[7m" x "\033[27m")
+#define N(x) { sizeof(x), x },
+
+static struct escape escapes[256] = {
+	E("\\0") E("\\x01") E("\\x02") E("\\x03") E("\\x04") E("\\x05") E("\\x06") E("\\a") E("\\b")
+	E("\\t") E("\\n") E("\\v") E("\\f") E("\\r") E("\\x0E") E("\\x0F") E("\\x10") E("\\x11")
+	E("\\x12") E("\\x13") E("\\x14") E("\\x15") E("\\x16") E("\\x17") E("\\x18") E("\\x19")
+	E("\\x1A") E("\\e") E("\\x1C") E("\\x1D") E("\\x1E") E("\\x1F")
+
+	N(" ") N("!") N("\"") N("#") N("$") N("%") N("&") N("'") N("(") N(")") N("*") N("+") N(",")
+	N("-") N(".") N("/") N("0") N("1") N("2") N("3") N("4") N("5") N("6") N("7") N("8") N("9")
+	N(":") N(";") N("<") N("=") N(">") N("?") N("@") N("A") N("B") N("C") N("D") N("E") N("F")
+	N("G") N("H") N("I") N("J") N("K") N("L") N("M") N("N") N("O") N("P") N("Q") N("R") N("S")
+	N("T") N("U") N("V") N("W") N("X") N("Y") N("Z") N("[") N("\\") N("]") N("^") N("_") N("`")
+	N("a") N("b") N("c") N("d") N("e") N("f") N("g") N("h") N("i") N("j") N("k") N("l") N("m")
+	N("n") N("o") N("p") N("q") N("r") N("s") N("t") N("u") N("v") N("w") N("x") N("y") N("z")
+	N("{") N("|") N("}") N("~") E("\\x7F")
+
+	E("\\x80") E("\\x81") E("\\x82") E("\\x83") E("\\x84") E("\\x85") E("\\x86") E("\\x87")
+	E("\\x88") E("\\x89") E("\\x8A") E("\\x8B") E("\\x8C") E("\\x8D") E("\\x8E") E("\\x8F")
+	E("\\x90") E("\\x91") E("\\x92") E("\\x93") E("\\x94") E("\\x95") E("\\x96") E("\\x97")
+	E("\\x98") E("\\x99") E("\\x9A") E("\\x9B") E("\\x9C") E("\\x9D") E("\\x9E") E("\\x9F")
+	E("\\xA0") E("\\xA1") E("\\xA2") E("\\xA3") E("\\xA4") E("\\xA5") E("\\xA6") E("\\xA7")
+	E("\\xA8") E("\\xA9") E("\\xAA") E("\\xAB") E("\\xAC") E("\\xAD") E("\\xAE") E("\\xAF")
+	E("\\xB0") E("\\xB1") E("\\xB2") E("\\xB3") E("\\xB4") E("\\xB5") E("\\xB6") E("\\xB7")
+	E("\\xB8") E("\\xB9") E("\\xBA") E("\\xBB") E("\\xBC") E("\\xBD") E("\\xBE") E("\\xBF")
+	E("\\xC0") E("\\xC1") E("\\xC2") E("\\xC3") E("\\xC4") E("\\xC5") E("\\xC6") E("\\xC7")
+	E("\\xC8") E("\\xC9") E("\\xCA") E("\\xCB") E("\\xCC") E("\\xCD") E("\\xCE") E("\\xCF")
+	E("\\xD0") E("\\xD1") E("\\xD2") E("\\xD3") E("\\xD4") E("\\xD5") E("\\xD6") E("\\xD7")
+	E("\\xD8") E("\\xD9") E("\\xDA") E("\\xDB") E("\\xDC") E("\\xDD") E("\\xDE") E("\\xDF")
+	E("\\xE0") E("\\xE1") E("\\xE2") E("\\xE3") E("\\xE4") E("\\xE5") E("\\xE6") E("\\xE7")
+	E("\\xE8") E("\\xE9") E("\\xEA") E("\\xEB") E("\\xEC") E("\\xED") E("\\xEE") E("\\xEF")
+	E("\\xF0") E("\\xF1") E("\\xF2") E("\\xF3") E("\\xF4") E("\\xF5") E("\\xF6") E("\\xF7")
+	E("\\xF8") E("\\xF9") E("\\xFA") E("\\xFB") E("\\xFC") E("\\xFD") E("\\xFE") E("\\xFF")
+};
+
+
+static unsigned char	in[BUFLEN],
+			out[sizeof(in) * MAX_ESCAPE_LEN];
+
+int main(int argc, char **argv) {
+	unsigned char *ibuf, *obuf;
+	const struct escape *esc;
+	ssize_t len;
+
+	if (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
+		escapes['\n'].len = 1;
+		escapes['\n'].escape[0] = '\n';
+		escapes['\n'].escape[1] = '\0';
+	} else if (argc != 1) {
+		fprintf(stderr, "usage: %s [-n]\n(everything else comes from stdin)\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	while ((len = read(STDIN_FILENO, in, sizeof(in)))) {
+		if (len == -1) {
+		failure:
+			return perror(argv[0]), EXIT_FAILURE;
+		}
+
+		for (ibuf = in, obuf = out; ibuf < in + len; ++ibuf) {
+			esc = &escapes[*ibuf];
+			memcpy(obuf, esc->escape, esc->len);
+			obuf += esc->len;
+		}
+
+		for (
+			unsigned char const *outp = out;
+			(len = write(STDOUT_FILENO, outp, obuf - outp));
+			outp += len
+		) if (len == -1) goto failure;
+	}
+
+	putchar('\n');
+	return EXIT_SUCCESS;
+}
+C

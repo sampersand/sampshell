@@ -1,150 +1,85 @@
-#!/bin/sh
+#!/usr/bin/env ruby
 
-## Safety first
-set -o nounset
-set -o noglob
-set -o errexit
+require 'optparse'
 
-## Script name, used in error messages and usage
-readonly scriptname="${0##*/}"
-
-## Print error message and exit
-die () {
-	fmt="%s: $1\\n"
-	shift
-	printf >&2 "$fmt" "$scriptname" "$@"
-	exit 1
+OPTIONS = {
+  width: 80,
+  pre: 0,
+  style: '#',
+  justify: :center,
 }
 
-usage () { cat; } <<USAGE
-usage: $scriptname [options] [--] message here
-                   -m [options] [--] lines here
-options:
-	-wN, --width=N         total width of the line
-	-pN, --pre=N           Add N blank characters before the banner
-	-sC, --style=CHAR      print out in STYLE style
-	-m, --multiline        interpret each argument as a separate line, instead of just one line.
-	-b, --blank            Add a blank line before and after input
-USAGE
+OptParse.new nil, 20 do |op|
+  op.banner.concat ' message [...]'
 
-expect_numeric () case $1 in
-	*[!0-9]*) die "$option expects a numeric argument, got: %s" "$1" ;;
-	?*) ;;
-	*) die "$option expects an argument"
-esac
+  op.on '-w', '--width=N', Integer, 'Total line width; Width of 0 is "auto"'
+  op.on '-p', '--pre=N', Integer, 'Length to add before the line'
+  op.on '-s', '--style=STYLE', 'Use STYLE instead of default `#`'
 
-## Config options
-width=80 style=\# pre=0
-multiline= blank=
+  op.on '-m', '--multiline', 'Interpret each arg as a separate line'
+  op.on '-b', '--blank', 'Add a blank line before and after input'
+  op.on '-c', '--copy', 'Pipe output to pbcopy command'
+  op.on '-S', '--squash', 'When enabled, extra padding isnt added to lines'
 
-while [ "$#" -ne 0 ]; do
-	option=$1
-	shift
+  op.on '-j', '--justify=HOW', %i[left center right l c r], 'left, center, or right justify'
 
-	case $option in
+  op.parse! into: OPTIONS rescue op.abort $!
+  ARGV.empty? and abort op.help
+end
 
-	# Usage
-	-h | --help) usage; exit 0 ;;
+OPTIONS[:multiline] or  ARGV.replace [ARGV.join(' ')]
+OPTIONS[:blank]     and (ARGV.unshift ''; ARGV.push '')
+OPTIONS[:copy]      and $stdout = IO.popen('pbcopy', 'w')
 
-	# Flag options
-	-m | --multiline)   multiline=1 ;;
-	-b | --blank)       blank=1 ;;
+OPTIONS[:width] == 0 and OPTIONS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
 
-	# Numeric options
-	-w | --line-width) width=${1:-}; expect_numeric "$width"; shift ;;
-	-p | --pre)        pre=${1:-};   expect_numeric "$pre";   shift ;;
+if (OPTIONS[:width] -= OPTIONS[:pre]).negative?
+  abort "#{File.basename($0)}: -p > -w; no space remaining for text"
+end
 
-	# Style options
-	-s?*) # Support `-sN...`, as style only takes a single charcater
-		rest=${option#-s?}
-		tmp=${option%"$rest"}
-		style=${tmp#-s}
-		[ -n "$rest" ] && set -- "-$rest" "$@" ;;
-	-s | --style)
-		style=${1:-}
-		[ -z "$style" ] && die "$option expects an argument"
-		shift ;;
+$width = OPTIONS.fetch(:width, 80)
+$pre   = OPTIONS.fetch(:pre, 0)
 
-	# Convert `--a=b` into `--a b`
-	--*=*)
-		set -- "${option%%=*}" "${option#*=}" "$@" ;;
+$width -= $pre
 
-	# Convert options which take arguments into the option and its arg.
-	-[wp]?*)
-		value=${option#-?}
-		flag=${option%"$value"}
-		set -- "$flag" "$value" "$@" ;;
+def ppre(*a)
+  print(' ' * $pre, *a, "\n")
+end
 
-	# Support `-abc`
-	-[!-]?*)
-		rest=${option#-?}
-		flag=${option%"$rest"}
-		set -- "$flag" "-$rest" "$@" ;;
+def print_lines(prefix, suffix=prefix, lines: ARGV)
+  unless OPTIONS[:squash]
+    (suffix = +suffix).prepend ' ' # `+suffix` in case it's the default
+    prefix.concat ' '
+  end
 
-	--)
-		break ;;
+  msg_width = $width - prefix.length - suffix.length
+  method = case OPTIONS[:justify]
+           when :l, :left   then :ljust
+           when :r, :right  then :rjust
+           when :c, :center then :center
+           else fail "<bug: bad justify given: #$justify>"
+           end
 
-        -*)
-		die 'unknown option given: %s' "$option" ;;
+  lines.each do |line|
+    ppre prefix, line.public_send(method, msg_width), suffix
+  end
+end
 
-	*)
-		set -- "$option" "$@"
-		break 
-	esac
-done
+print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $-d
 
-# for i in `seq -w 1 $((width + 1))`; do printf %d ${i#?}; done; echo
-
-# Expect at least one banner argument
-[ $# -eq 0 ] && { usage >&2; exit 1; }
-
-# If multiline isn't set, all args are just separated by spaces
-[ -n "$multiline" ] || set -- "$*"
-
-# If blank is set, add in an extra line before and after
-[ -n "$blank" ] && set -- '' "$@" ''
-
-# Calculate the width
-width=$((width - pre))
-
-prpre () if [ "$pre" -ne 0 ]; then
-	printf "${1-}%${pre}s"
-fi
-
-print_lines () {
-	prefix=$1
-	suffix=$2
-	msg_width=$(($3 - ${#prefix} - ${#suffix}))
-	shift 3
-
-	for line
-	do
-		spacing=$(( (${#line} + msg_width) / 2  ))
-		remainder=$(( msg_width - spacing ))
-
-		prpre
-		printf "${prefix}%${spacing}s%${remainder}s${suffix}\n" "$line"
-	done
-}
-
-case $style in
-	\#)
-		prpre
-		printf "%${width}s\n" | tr ' ' "$style"
-		print_lines '#' '#' $width "$@"
-		prpre
-		printf "%${width}s\n" | tr ' ' "$style" ;;
-	/)
-		prpre
-		printf "%${width}s\n" | tr ' ' "$style"
-		print_lines '//' '//' $width "$@"
-		prpre
-		printf "%${width}s\n" | tr ' ' "$style" ;;
-	\*)
-		prpre
-		printf "/%$((width-2))s\n" | tr ' ' "$style"
-		print_lines ' *' '*' $((width - 1)) "$@"
-		prpre ' '
-		printf "%$((width-2))s/\n" | tr ' ' "$style" ;;
-	*) die 'unknown style %s' "$style" ;;
-esac
+case OPTIONS[:style]
+when '#'
+  ppre '#' * $width
+  print_lines('#')
+  ppre '#' * $width
+when '/'
+  ppre '/' * $width
+  print_lines('//')
+  ppre '/' * $width
+when '*'
+  ppre '/', '*' * ($width - 2), ' '
+  print_lines(' *', '* ')
+  ppre ' ', '*' * ($width - 2), '/'
+else
+  abort 'unknown style %s' % OPTIONS[:style]
+end

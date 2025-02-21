@@ -59,7 +59,7 @@ scriptname=${0##*/}
 warn () {
    fmt="%s: $1\\n" # Double up the `\` so `printf` will always get a `\` and `n`
    shift
-   printf "$fmt" "$scriptname" "$@" >&2
+   printf >&2 "$fmt" "$scriptname" "$@"
 }
 
 ## Prints a short usage message
@@ -185,7 +185,7 @@ try_move () {
       # is no good way to solve that...
       if [ -n "$clobber_empty" ]; then
          ## If the target is a file and it's empty, then forcibly remove it.
-         if [ -f "$target" ] && ! [ -s "$target" ]; then
+         if [ -f "$target" ] && [ ! -s "$target" ]; then
             rm "-f$verbose_flag" -- "$target" || return 2
 
          ## If the target is a folder, and there's nothing in it, delete it.
@@ -201,6 +201,8 @@ try_move () {
          # of the program will cause the entire `! ls | grep` to be false, and
          # the `rm` command will not be run.
          elif [ -d "$target" ] && {
+         # elif [ -d "$target" ]; then
+         #    rd -- "$target" || return 2
             # On macOS, we allow "empty folders" to contain `.DS_Store`. With
             # bizarre race conditions, it might end up where the `.DS_Store` is
             # deleted, but not the folder it was in. However, it's remote enough
@@ -236,24 +238,21 @@ try_move () {
       # then just return; returning 0 mimics the behaviour of `mv -n`, where
       # not moving files returns 0.
       if [ -z "$rename" ]; then
-         if [ "$verbose_level" -ge 1 ]; then
-            printf 'not overwriting %s\n' "$target"
-         fi
-
+         [ "$verbose_level" -ge 1 ] && printf 'not overwriting %s\n' "$target"
          return 0
       fi
 
       # Now we attempt to find a new name for the file
 
-      ## An index of 1 means that awe have not yet tried to find a new name for
+      ## An index of 1 means that we have not yet tried to find a new name for
       # this file. As such, let's go ahead and setup all the required variables
       # for it.
       if [ "$attempt" -eq 1 ]; then
          # Note that we have to do this silly dance here with the `printf` in
          # case the filename ends with a newline, as command substitution strips
          # all ending newlines. So by having `printf x`, we'll print out `x`,
-         # which we can then strip via `%x`. Note that `$target` is safe to use
-         # here because we haven't yet updated it.
+         # which we can then strip via `%?x`. (Note that `$target` is safe to
+         # use here because we haven't yet updated it.)
          base=$(basename -- "$target" && printf x) || {
             warn 'unable to get basename of %s' "$target"
             return 3

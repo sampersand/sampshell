@@ -1,0 +1,141 @@
+#!/usr/bin/env sh
+
+#### trash -- a safer alternative to `rm`
+# Unlike `rm`, which completely deletes files, `trash` instead moves them to a
+# trash directory, so mistakenly trashed files can be retrieved in the future.
+#
+# This file is 100% POSIX-compliant, as it's intended to be usable in even the
+# most barebones of shells. Note that it does call `mv-safe`, which is only
+# POSIX-compliant with the 2024 edition (however, only via `-ef` which even
+# dash supports).
+#
+# This program is really just a wrapper around `mv-safe` that handles creating
+# the trash dir itself, along with the `--empty` argument.
+####
+
+## Respect the 'SampShell_XTRACE' environment variable
+if [ "${SampShell_XTRACE-}" = 1 ]; then
+	set -o xtrace
+fi
+
+## Safety first!
+set -o nounset
+set -o errexit
+
+## Script variables
+scriptname=${0##*/}             # Used only in usage and error messages.
+
+## Utility functions
+die () {
+	fmt="%s: $1\\n";
+	shift
+	printf >&2 "$fmt" "$scriptname" "$@"
+	exit 1
+}
+
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] file [...]
+       $scriptname [options] -E
+       $scriptname [options] -P
+options:
+	-h           print this message, then exit
+	-tPATH       set the trash directory
+	-E           empties the trash
+	-P           prints out the trash dir
+	-d           dry run; implies -v
+	-v           verbose mode
+In the first form, moves files to the trash, possibly renaming them; in the
+second, empties the trash directory. The trash dir is set by the environment
+variable \$SampShell_TRASHDIR, but can be overwritten by '-t'; it's an error if
+it's unspecified.
+USAGE
+
+## Parse options
+print= empty= trashdir=${SampShell_TRASHDIR-} dry= verbose=
+while getopts 'het:PEdv' opt; do
+	case $opt in
+	h) usage; exit;;
+	t) trashdir=$OPTARG ;;
+	P) print=1 ;;
+	E) empty=1 ;;
+	d) dry=1 verbose=1 ;;
+	v) verbose=1 ;;
+
+	?) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+# Make sure no arguments are given in the `-P` and `-E` forms
+if { [ -n "$print" ] || [ -n "$empty" ]; } && [ $# -ne 0 ]; then
+	die "when -E or -P are passed, no arguments can be supplied"
+fi
+
+## Ensure that the trashdir was somehow given; if not, that's a fatal error.
+if [ -z "$trashdir" ]; then
+	die "missing trashdir; pass it with '-t' or set \$SampShell_TRASHDIR"
+fi
+
+## Create the trashdir if it doesn't exist.
+if [ ! -e "$trashdir" ]; then
+	[ -n "$verbose" ] && printf 'creating trashdir: %s\n' "$trashdir"
+	[ -z "$dry"     ] && { mkdir -p -- "$trashdir" || exit; }
+fi
+
+## If the trashdir exists, but isn't a directory, that's a problem; quit.
+if [ ! -d "$trashdir" ]; then
+	die 'trashdir exists, but is not a directory: %s' "$trashdir"
+fi
+
+if [ -n "$print" ] || [ -n "$empty" ]; then
+	if [ $# -ne 0 ]; then
+		die "when -E or -P are passed, no arguments can be supplied"
+	fi
+
+	if [ -n "$print" ]; then
+		printf '%s\n' "$trashdir"
+	fi
+
+	if [ -n "$empty" ]; then
+		[ -n "$verbose" ] && printf "removing %s\n" "$trashdir"
+		[ -z "$dry" ] && echo rm -rf -- "$trashdir"
+	fi
+
+	exit 0
+fi
+exit 0
+
+if [ -n "$print" ]; then
+	printf '%s\n' "$trashdir"
+fi
+
+
+
+## Handle the second variant: emptying the trash directory.
+if [ -n "$empty_trash" ]; then
+	# Make sure `--empty` is not passed along with any positional arguments
+	[ "$#" -ne 0 ] && die 'arguments passed along with --empty'
+
+	# Recursively remove the trash directory; use `-f` to force the removal.
+	rm -rf -- "$trashdir"
+	exit
+fi
+
+## At least one argument is required; if none are given, print usage and exit.
+if [ "$#" -eq 0 ]; then
+	usage >&2
+	exit 1
+fi
+
+## Create the trashdir if it doesn't exist.
+if [ ! -e "$trashdir" ]; then
+	mkdir -p -- "$trashdir" || exit
+
+## If the trashdir exists, but isn't a directory, that's a problem; quit.
+elif [ ! -d "$trashdir" ]; then
+	die "trashdir exists, but isn't a dir: %s" "$trashdir"
+fi
+
+## Call `mv-safe` with all the arguments. Note we `exec` so we don't need to
+# fork and spawn a new process.
+exec mv-safe -rC -- "$@" "$trashdir"

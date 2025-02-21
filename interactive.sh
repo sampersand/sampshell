@@ -93,7 +93,8 @@ md () {
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
-alias l='ls -AFq'
+alias ls='ls -AFq'
+alias l=ls
 alias ll='l -l'
 j () { jobs "$@"; }
 
