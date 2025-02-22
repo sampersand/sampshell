@@ -2,11 +2,6 @@
 
 require 'optparse'
 
-OPTIONS = {
-	shell: ENV['SHELL'],
-	vars: [],
-}
-
 REQUIRED_VARIABLES = (%w[
   TERM
   HOME
@@ -16,31 +11,43 @@ REQUIRED_VARIABLES = (%w[
   .filter_map { [_1, ENV[_1] || next] }.to_h
 SAMPSHELL_VARS = ENV.select { |key| key.start_with? 'SampShell_' }
 
-$vars = REQUIRED_VARIABLES.dup
+$vars = {}
 
-def $vars.add(key, value=nil)
-	self[key] = value || ENV.fetch(key) { fail "ENV variable #{key.inspect} is unassigned" }
+def $vars.add(key, value=nil, option:)
+	self[key] = value || ENV.fetch(key) {
+    raise "invalid argument to #{option}: ENV variable #{key.inspect} is unassigned"
+  }
 end
 
 def $vars.delete_all(keys)
   reject! { |key| keys.include?(key) }
 end
 
+# [REQUIRED_VARIABLES + ['PATH']].each do |var|
 $vars.add('PATH') rescue warn "no path given"
 
 $shell = ENV.fetch('SHELL', '/bin/sh')
 $verbose = false
+$arguments = []
 
 OptParse.new do |op|
+  op.version = '1.0'
+  op.banner.concat ' [-- [options to the shell]]'
+  # op.on '-h', '--help' do
+
 	op.on '-V', '--verbose', 'Print out the command before running it' do
     $verbose = true
   end
 
-	# op.on '-E', '--env[=VAL]', 'Same as --var ENV=VAL; VAL defaults to $ENV'
+  op.on '-D', '--dry', 'Do not actually execute the command' do
+    $dry = true
+  end
 
 	op.on '-s', '--shell=SHELL', 'The shell to run' do |shell|
     $shell = shell
   end
+
+  op.on
 
   op.on '-a', '--all', 'Re-exports all variables' do
     $vars.merge!(ENV)
@@ -50,10 +57,14 @@ OptParse.new do |op|
     $vars.clear
   end
 
-	op.on '-p', '--[no-]path[=PATH]', 'Includes the $PATH value; Without a var, uses $PATH. no- disables' do |path|
+  op.on '-p', 'Include the $PATH variable; The same as --path, but doesnt accept arguments' do
+    $vars.add('PATH', option: '-p')
+  end
+
+	op.on '--[no-]path[=PATH]', 'Includes the $PATH value; Without a var, uses $PATH. no- disables' do |path|
     case path
     when false then $vars.delete 'PATH'
-    when true  then $vars.add 'PATH' rescue raise "bad -p: #$!"
+    when true  then $vars.add 'PATH', option: '--path'
     else            $vars.add 'PATH', path
     end
   end
@@ -75,23 +86,30 @@ OptParse.new do |op|
   end
 	op.on
 
-	op.on '-v', '--var KEY[=VAL]', 'sets VAR=VAL in the shell to execute; Without VAL defaults to the value in ENV' do |key|
-		$vars.add(*key.split('=', 2)) rescue raise "bad --var: #$!"
+	op.on '-v', '--var=KEY[=VAL]', 'sets VAR=VAL in the shell to execute; Without VAL defaults to the value in ENV' do |key|
+		$vars.add(*key,split('=', 2), option: '--var')
 	end
 
 	op.on '--unset-var KEY', 'Unsets KEY from the env' do |key|
 		$vars.delete key
 	end
 
+  op.on '-A', '--arg=VALUE', 'Give an argument to the CMD without stopping parsing' do |value|
+    $arguments.append value
+  end
+
   op.on_tail 'The -r and -p flags are set by default, but can be unset with -n'
 
-	op.parse! rescue op.abort($!)
+  # op.require_exact = true
+	op.permute! rescue op.abort
 end
 
-cmd = [$shell, *ARGV]
+cmd = [$shell, *$arguments, *$*]
 
 if $verbose
   puts "Executing #{cmd} with env: #$vars"
 end
+
+return if $dry
 
 exec($vars, *cmd, unsetenv_others: true)

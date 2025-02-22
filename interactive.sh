@@ -110,7 +110,7 @@ fi
 
 # IDK if i want this.
 if [ -n "${SampShell_EXPERIMENTAL-}" ]; then
-	stty noflsh
+	[ -t 0 ] && stty noflsh
 fi
 
 ################################################################################
