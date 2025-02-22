@@ -1,0 +1,107 @@
+#!/bin/dash
+
+set -euf
+
+# set -- -D "$@"
+# set -- -sdash -vfoo=' bar baz' -D -- -l -f
+unset dry
+
+dry=
+verbose=
+shell=/bin/sh
+
+preset=default
+include_path=
+sampshell_vars=
+shell_vars=
+shell_vars_index=0
+
+unset_vars=
+prepend_vars=
+default_variable () while [ $# -ne 0 ]; do
+	if eval 'test -n ${'$1'+1}'; then
+		prepend_vars="$prepend_vars \"$1=\$$1\""
+	fi
+	shift
+done
+
+cmdline_variable () {
+	name=${OPTARG%=*}
+	value=${OPTARG#"$name"}
+
+	if [ -n "$value" ]; then
+		value=${value#=}
+	else
+		case $name in
+			*[!a-zA-Z0-9_-]*)
+				echo >&2 "cant get default name for env var with special chars"
+				exit 1
+		esac
+		eval "value=\$$name"
+	fi
+
+	varname=SampShell_cleanshell_$((shell_vars_index += 1))
+	eval "$varname=\$value"
+	shell_vars="$shell_vars \"$name=\$$varname\""
+}
+
+while getopts 'DVs:anrpP:v:u:' opt; do
+	case $opt in
+	D) dry=1 verbose=1 ;;
+	V) verbose=1 ;;
+	s) shell=$OPTARG ;;
+
+	a) preset=all     ;;
+	n) preset=none    ;;
+	r) preset=default ;;
+	p) include_path=$PATH   ;;
+	P) include_path=$OPTARG ;;
+	S) sampshell_vars=1 ;;
+	v) cmdline_variable "$OPTARG" ;;
+	u) unset_vars="$unset_vars $OPTARG" ;;
+	?) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+if ! shell=$(command -pv "$shell"); then
+	echo >&2 "unable to locate the shell '$shell'; exiting"
+	exit 1
+fi
+
+if ! cmd=$(command -pv env); then
+	echo >&2 "unable to locate the 'env' command"
+fi
+
+[ "$dry" = 1 ] && cmd="echo $cmd"
+[ -n "$include_path" ] && default_variable PATH
+
+if [ "$preset" != all ]; then
+	cmd="$cmd -i"
+
+	[ "$preset" = default ] && default_variable TERM HOME SHLVL LANG
+fi
+
+# If no variables to unset, then just expand out the easy way
+if [ -z "$unset_vars" ]; then
+	cmd="$cmd $prepend_vars $shell_vars"
+else
+	for var in $prepend_vars $shell_vars; do
+		for unset in $unset_vars; do
+			echo $var $unset
+			case $var in
+				\"${unset}=*) continue 2
+			esac
+		done
+		cmd="$cmd $var"
+	done
+
+	if [ "$preset" = all ]; then
+		unset $unset_vars
+	fi
+fi
+
+cmd="$cmd $shell"
+[ "$verbose" ] && echo "$cmd $@"
+eval "exec $cmd \"\$@\""
