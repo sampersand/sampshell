@@ -1,107 +1,128 @@
-#!/bin/dash
+#!/bin/sh
 
-set -euf
+\unalias -a # in case we are `.`d
 
-# set -- -D "$@"
-# set -- -sdash -vfoo=' bar baz' -D -- -l -f
-unset dry
+# Safety First!
+set -ef
 
-dry=
-verbose=
-shell=/bin/sh
+# Unset all the variables that're used within the program. We have to be careful
+# with the naming of these variables so they don't conflict with any environment
+# variables we may have inherited. (We `unset` these variables to remove their
+# "export"-edness, as just assigning to a blank string leaves them exported.)
+#
+# Note that setting the `-a` flag, which is used to to pass through inherited
+# variables, does not affect these variables; they're never passed onwards.
+unset -v __clenv_unset_vars \
+         __clenv_prepend_vars \
+         __clenv_user_vars \
+         __clenv_user_vars_index \
+         __clenv_all_variables \
+         __clenv_verbose \
+         __clenv_dry \
+	 __clenv_default_vars \
+	 __clenv_cmd \
+	 __clenv_tmp
 
-preset=default
-include_path=
-sampshell_vars=
-shell_vars=
-shell_vars_index=0
+# The list of variables that are added by default to all invocations unless -a
+# or -n are specified.
+__clenv_default_vars='TERM HOME SHLVL LANG'
+__clenv_cmd='env'
 
-unset_vars=
-prepend_vars=
-default_variable () while [ $# -ne 0 ]; do
-	if eval 'test -n ${'$1'+1}'; then
-		prepend_vars="$prepend_vars \"$1=\$$1\""
-	fi
-	shift
-done
 
 cmdline_variable () {
-	name=${OPTARG%=*}
-	value=${OPTARG#"$name"}
-
-	if [ -n "$value" ]; then
-		value=${value#=}
-	else
-		case $name in
-			*[!a-zA-Z0-9_-]*)
-				echo >&2 "cant get default name for env var with special chars"
-				exit 1
-		esac
-		eval "value=\$$name"
-	fi
-
-	varname=SampShell_cleanshell_$((shell_vars_index += 1))
-	eval "$varname=\$value"
-	shell_vars="$shell_vars \"$name=\$$varname\""
+	# Use `set` so we get local variables
+	set -- "$1" "$2" "__clenv_var_$((__clenv_user_vars_index += 1))"
+	unset -v $3
+	eval "$3=\$2"
+	__clenv_user_vars="$__clenv_user_vars \"$1=\$$3\""
 }
 
-while getopts 'DVs:anrpP:v:u:' opt; do
+while getopts 'DVs:anpP:v:u:' opt; do
 	case $opt in
-	D) dry=1 verbose=1 ;;
-	V) verbose=1 ;;
-	s) shell=$OPTARG ;;
 
-	a) preset=all     ;;
-	n) preset=none    ;;
-	r) preset=default ;;
-	p) include_path=$PATH   ;;
-	P) include_path=$OPTARG ;;
+	# Dry mode and verbose mode. Enabling dry mode also enables verbose.
+	D) __clenv_dry=1 __clenv_verbose=1 ;;
+	V) __clenv_verbose=1 ;;
+
+	# Flags for specifying groups of variables to pass onwards.
+	a) __clenv_all_variables=1 __clenv_default_vars= ;;
+	n) __clenv_all_variables=  __clenv_default_vars= ;;
+	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
 	S) sampshell_vars=1 ;;
-	v) cmdline_variable "$OPTARG" ;;
-	u) unset_vars="$unset_vars $OPTARG" ;;
+
+	P)
+		cmdline_variable PATH "$OPTARG" ;;
+	v)
+		name=${OPTARG%=*}
+		value=${OPTARG#"$name"}
+
+		if [ -n "$value" ]; then
+			value=${value#=}
+		else
+			case $name in
+				*[!a-zA-Z0-9_-]*)
+					echo >&2 "cant get default name for env var with special chars"
+					exit 1
+			esac
+			# TODO: ERR ON UNSET?
+			eval "value=\$$name"
+		fi
+		cmdline_variable "$name" "$value" ;;
+
+	## Unset a variable
+	u) __clenv_unset_vars="$__clenv_unset_vars $OPTARG" ;;
+
+	# Everything else is an error
 	?) exit 2 ;;
 	esac
 done
 
+## Finish argument parsing.
 shift $(( OPTIND - 1 ))
 
-if ! shell=$(command -pv "$shell"); then
-	echo >&2 "unable to locate the shell '$shell'; exiting"
-	exit 1
-fi
-
-if ! cmd=$(command -pv env); then
-	echo >&2 "unable to locate the 'env' command"
-fi
-
-[ "$dry" = 1 ] && cmd="echo $cmd"
-[ -n "$include_path" ] && default_variable PATH
-
-if [ "$preset" != all ]; then
-	cmd="$cmd -i"
-
-	[ "$preset" = default ] && default_variable TERM HOME SHLVL LANG
-fi
-
-# If no variables to unset, then just expand out the easy way
-if [ -z "$unset_vars" ]; then
-	cmd="$cmd $prepend_vars $shell_vars"
-else
-	for var in $prepend_vars $shell_vars; do
-		for unset in $unset_vars; do
-			echo $var $unset
-			case $var in
-				\"${unset}=*) continue 2
-			esac
-		done
-		cmd="$cmd $var"
-	done
-
-	if [ "$preset" = all ]; then
-		unset $unset_vars
+# If any arguments were given, then take a look at them.
+if [ $# -ne 0 ]; then
+	# Ensure we find the program, as passing `PATH=` to env will overwrite it.
+	if ! __clenv_tmp=$(command -v -- "$1"); then
+		echo >&2 "unable to locate the program '$1'; exiting"
+		exit 1
+	else
+		shift
+		set -- "$__clenv_tmp" "$@"
 	fi
 fi
 
-cmd="$cmd $shell"
-[ "$verbose" ] && echo "$cmd $@"
-eval "exec $cmd \"\$@\""
+[ "$__clenv_dry" = 1 ] && __clenv_cmd="echo $__clenv_cmd"
+
+if [ -z "$__clenv_all_variables" ]; then
+	__clenv_cmd="$__clenv_cmd -i"
+
+	for __clenv_tmp in $__clenv_default_vars; do
+		if eval 'test -n ${'$__clenv_tmp'+1}'; then
+			__clenv_prepend_vars="$__clenv_prepend_vars \"$__clenv_tmp=\$$__clenv_tmp\""
+		fi
+	done
+fi
+
+# If no variables to unset, then just expand out the easy way
+if [ -z "$__clenv_unset_vars" ]; then
+	__clenv_cmd="$__clenv_cmd$__clenv_prepend_vars$__clenv_user_vars"
+else
+	for __clenv_tmp in $__clenv_prepend_vars $__clenv_user_vars; do
+		for __clenv_tmp2 in $__clenv_unset_vars; do
+			case $__clenv_tmp in
+				\"${__clenv_tmp2}=*)
+					continue 2
+			esac
+		done
+		__clenv_cmd="$__clenv_cmd $var"
+	done
+
+	if [ -n $__clenv_all_variables ]; then
+		unset $__clenv_unset_vars
+	fi
+fi
+
+__clenv_cmd="exec $__clenv_cmd"
+[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+eval "$__clenv_cmd \"\$@\""
