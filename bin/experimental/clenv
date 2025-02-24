@@ -13,7 +13,6 @@ set -ef
 # Note that setting the `-a` flag, which is used to to pass through inherited
 # variables, does not affect these variables; they're never passed onwards.
 unset -v __clenv_unset_vars \
-         __clenv_prepend_vars \
          __clenv_user_vars \
          __clenv_user_vars_index \
          __clenv_all_variables \
@@ -21,53 +20,75 @@ unset -v __clenv_unset_vars \
          __clenv_dry \
 	 __clenv_default_vars \
 	 __clenv_cmd \
-	 __clenv_tmp
+	 __clenv_tmp \
+	 __clenv_name \
+	 __clenv_value \
 
 # The list of variables that are added by default to all invocations unless -a
 # or -n are specified.
-__clenv_default_vars='TERM HOME SHLVL LANG'
-__clenv_cmd='env'
+__clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
+readonly scriptname="${0##*/}"
+usage () { cat; } <<USAGE
+usage: $scriptname [-DVansp] [-v name[=value] ...] [-u name ...]
+       $(printf "%${#scriptname}s") [utility [argument ...]]
+options:
+    -D              Enables "dry mode"--don't actually run the program; Sets -V.
+    -V              Enables "verbose mode," so it prints out the invocation
+    -a              Pass _all_ environment variables in by default.
+    -n              Don't set any_arguments by default, including essential ones
+    -s              Pass in env variables prefixed with "SampShell_"
+    -p              Shorthand for -vPATH
+    -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
+                    omitted, it defaults to the current value of 'name' (which,
+                    if unset, is an error.)
+    -u name         Unset 'name'. If both -v and -u are given, -u wins.
 
-cmdline_variable () {
-	# Use `set` so we get local variables
-	set -- "$1" "$2" "__clenv_var_$((__clenv_user_vars_index += 1))"
-	unset -v $3
-	eval "$3=\$2"
-	__clenv_user_vars="$__clenv_user_vars \"$1=\$$3\""
-}
+"clean-env": A wrapper around 'env' which (by default) forwards a few essential
+arguments. Without arguments, prints out the variables
+USAGE
 
-while getopts 'DVs:anpP:v:u:' opt; do
+__clenv_cmd='exec env'
+while getopts 'hDVanpSP:v:u:' opt; do
 	case $opt in
 
+	h) usage; exit;;
+
 	# Dry mode and verbose mode. Enabling dry mode also enables verbose.
+	# [ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
+	# [ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 	D) __clenv_dry=1 __clenv_verbose=1 ;;
 	V) __clenv_verbose=1 ;;
 
 	# Flags for specifying groups of variables to pass onwards.
-	a) __clenv_all_variables=1 __clenv_default_vars= ;;
+	a) __clenv_all_variables=1 ;;
 	n) __clenv_all_variables=  __clenv_default_vars= ;;
 	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
-	S) sampshell_vars=1 ;;
-
-	P)
-		cmdline_variable PATH "$OPTARG" ;;
+	s) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
+		for (k in ENVIRON)
+			if(k ~ /^SampShell[_-][a-zA-Z_0-9-]+$/) print k
+	}')";;
 	v)
-		name=${OPTARG%=*}
-		value=${OPTARG#"$name"}
+		__clenv_name=${OPTARG%=*}
+		__clenv_value=${OPTARG#"$__clenv_name"}
 
-		if [ -n "$value" ]; then
-			value=${value#=}
+		if [ -n "$__clenv_value" ]; then
+			__clenv_value=${__clenv_value#=}
 		else
-			case $name in
+			case $__clenv_name in
 				*[!a-zA-Z0-9_-]*)
 					echo >&2 "cant get default name for env var with special chars"
 					exit 1
 			esac
 			# TODO: ERR ON UNSET?
-			eval "value=\$$name"
+			eval "__clenv_value=\$$__clenv_name"
 		fi
-		cmdline_variable "$name" "$value" ;;
+
+		cmdline_variable "$__clenv_name" "$__clenv_value"
+		# Use `set` so we get local variables
+		__clenv_tmp=__clenv_var_$((__clenv_user_vars_index += 1))
+		eval "$__clenv_tmp=\$__clenv_value"
+		__clenv_user_vars="$__clenv_user_vars \"$__clenv_name=\$$__clenv_tmp\"" ;;
 
 	## Unset a variable
 	u) __clenv_unset_vars="$__clenv_unset_vars $OPTARG" ;;
@@ -92,37 +113,34 @@ if [ $# -ne 0 ]; then
 	fi
 fi
 
-[ "$__clenv_dry" = 1 ] && __clenv_cmd="echo $__clenv_cmd"
+__clenv_cmd='exec env'
+[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
+[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+
+unset $__clenv_unset_vars # TODO: See if there's a way to make this not overwrite `__clenv` vars.
 
 if [ -z "$__clenv_all_variables" ]; then
 	__clenv_cmd="$__clenv_cmd -i"
 
 	for __clenv_tmp in $__clenv_default_vars; do
-		if eval 'test -n ${'$__clenv_tmp'+1}'; then
-			__clenv_prepend_vars="$__clenv_prepend_vars \"$__clenv_tmp=\$$__clenv_tmp\""
-		fi
+		eval 'test -z ${'$__clenv_tmp'+1}' && continue
+		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
 	done
 fi
 
 # If no variables to unset, then just expand out the easy way
 if [ -z "$__clenv_unset_vars" ]; then
-	__clenv_cmd="$__clenv_cmd$__clenv_prepend_vars$__clenv_user_vars"
+	__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
 else
-	for __clenv_tmp in $__clenv_prepend_vars $__clenv_user_vars; do
+	for __clenv_tmp in  $__clenv_user_vars; do
 		for __clenv_tmp2 in $__clenv_unset_vars; do
 			case $__clenv_tmp in
 				\"${__clenv_tmp2}=*)
 					continue 2
 			esac
 		done
-		__clenv_cmd="$__clenv_cmd $var"
+		__clenv_cmd="$__clenv_cmd $__clenv_tmp"
 	done
-
-	if [ -n $__clenv_all_variables ]; then
-		unset $__clenv_unset_vars
-	fi
 fi
 
-__clenv_cmd="exec $__clenv_cmd"
-[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 eval "$__clenv_cmd \"\$@\""
