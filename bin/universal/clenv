@@ -37,15 +37,15 @@ unset -v __clenv_user_vars \
 __clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
-usage: $scriptname [-DVansp] [-v name[=value] ...] [-u name ...]
+usage: $scriptname [-DVansp] [-m pattern ...] [-v name[=value] ...] [-u name ...]
        $(printf "%${#scriptname}s") [utility [argument ...]]
 options:
     -D              Enables "dry mode"--don't actually run the program; Sets -V.
     -V              Enables "verbose mode," so it prints out the invocation
     -a              Pass _all_ environment variables in by default.
     -n              Don't set any_arguments by default, including essential ones
-    -s              Pass in env variables prefixed with "SampShell_"
     -p              Shorthand for -vPATH
+    -m pattern      Pass in any variables matching awk pattern.
     -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
                     omitted, it defaults to the current value of 'name' (which,
                     if unset, is an error.)
@@ -64,7 +64,7 @@ validate_variable_name () case $1 in
 esac
 
 __clenv_cmd='exec env'
-while getopts 'hDVanpS:v:u:' opt; do
+while getopts 'hDVanpm:v:u:' opt; do
 	case $opt in
 
 	h) usage; exit;;
@@ -79,10 +79,9 @@ while getopts 'hDVanpS:v:u:' opt; do
 	a) __clenv_all_variables=1 __clenv_default_vars= ;;
 	n) __clenv_all_variables=  __clenv_default_vars= ;;
 	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
-	s) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
-		for (k in ENVIRON)
-			if(k ~ /^SampShell[_-][a-zA-Z_0-9-]+$/) print k
-	}')";;
+	m) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
+		for (k in ENVIRON) if(k ~ ARGV[1]) print k
+	}' "$OPTARG")";;
 	v)
 		__clenv_name=${OPTARG%=*}
 		__clenv_value=${OPTARG#"$__clenv_name"=}
