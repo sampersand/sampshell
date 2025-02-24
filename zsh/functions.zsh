@@ -17,10 +17,10 @@ function b2o { bc --ibase=2 --obase=8  -e${(U)^@:?need something to convert} }
 
 # Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
-alias   clsh='clean-shell --shell =sh   --none $@'
-alias clbash='clean-shell --shell =bash --none --arg --noprofile --arg --norc $@'
-alias  clzsh='clean-shell --shell =zsh  --none --arg -fd $@'
-alias cldash='clean-shell --shell =dash --none $@'
+alias   clsh='clean-shell sh'
+alias clbash='clean-shell bash'
+alias  clzsh='clean-shell zsh'
+alias cldash='clean-shell dash'
 
 ## Banner utility
 alias banner='noglob ~ss/bin/universal/banner'

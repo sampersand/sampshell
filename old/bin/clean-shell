@@ -1,0 +1,187 @@
+#!/usr/bin/env zsh
+
+## <BEGIN OLD scripting.zsh FILE, WHICH THIS USED TO IMPROT>
+	## Todo, should this always be used? or even be here?
+	[[ -n ${SampShell_no_experimental-} && -n $SampShell_ROOTDIR ]] && hash -d ss=$SampShell_ROOTDIR
+
+	####################################################################################################
+	#                                            Reset ZSH                                             #
+	####################################################################################################
+
+	## Reset ZSH options to their expected default values, in case something messed with them.
+	emulate zsh
+
+	# ## Remove the `SampShell-script` alias, as it's only needed once per script.
+	# unalias SampShell-script
+
+	####################################################################################################
+	#                                        Guardrail Options                                         #
+	####################################################################################################
+	setopt NO_ALIASES         # Do not use aliases at all when scripting.
+	setopt NO_MULTI_FUNC_DEF  # Disables `a b () { ... }`; use `function a b { ... }` instead.
+	setopt NO_SHORT_LOOPS     # Disallow short-forms of commands in scripts, as they lead to subtle bugs
+	setopt NO_GLOBAL_EXPORT   # Exporting variables via `typeset -x foo` doesn't also make them global in the script.
+	setopt WARN_CREATE_GLOBAL # Warn when an assignment in a function creates a global variable
+	setopt WARN_NESTED_VAR    # Warn when an assignment to a function clobbers an enclosing one.
+	setopt LOCAL_LOOPS        # Disallow `break`/`continue` from propagating to the parent scope
+	# setopt NO_UNSET         # Unset variables are errors; I use this often enough it's better to not set it.
+
+
+	####################################################################################################
+	#                                    Additional Feature Options                                    #
+	####################################################################################################
+	setopt RC_QUOTES       # Let you do type `''` within single quotes, eg `'let''s go, friend!'`a
+	setopt EXTENDED_GLOB   # Enable additional globbing patterns
+	setopt GLOB_STAR_SHORT # Enable `**.foo` as an alias for `**/*.foo`
+	setopt SHORT_REPEAT    # Enable short `repeat` form, as it's convenient occasionally
+
+	####################################################################################################
+	#                                        Utility Functions                                         #
+	####################################################################################################
+
+	## Warns the user that something happened; `$ZSH_SCRIPT` is the path to the script, not of this file
+	function warn {
+		print -r -- "[WARN] ${ZSH_SCRIPT:t}:" $@
+	}
+
+	## Prints out an error and then aborts the script. `die` and `abort` are the same fn.
+	function die abort {
+		print -r -- "${ZSH_SCRIPT:t}:" $@
+		exit 1
+	}
+## <END OLD scripting.zsh FILE, WHICH THIS USED TO IMPROT>
+
+
+shortusage () { cat; } <<EOS
+usage: ${ZSH_SCRIPT:t} [options] [--] [shell=\$SHELL] [shell options]
+EOS
+
+longusage () { cat; } <<EOS
+options: (any time '=' is present after an argname, you can omit and put a space)
+   -h, --help show this message
+
+   -V, --verbose print out the invocation before running it
+       --dry     don't actually execute the command; implies -v
+
+   -E, --env[=VAL]  same as --var ENV=VAL; VAL defaults to \$ENV (err if env doesnt exist); -E always uses \$ENV
+   -sSHELL, --shell=PROG  sets the shell; if unset, assumed to be the first non-positional arg
+   -s                     same -s/bin/sh
+
+   -n, --none clear all current variables for export; keeps -R though
+   -N, --absolutely-none same as -n, except also clears -R
+   -P, --[no-]path[=PATH] includes path in the output
+   -R, --[no-]required-vars set (or dont) all the "required" variables (eg TERM/HOME/SHLVL)
+   -S, --[no-]sampshell-vars add all sampshell (or dont) vars to the variables to export
+
+   -aVAL, --arg VAL  adds 'VAL' as an argument to the shell without ending shell option parsing.
+
+   -vVAR=VAL, --var VAR=VAL   sets VAR=VAL in the shell to execute
+   -vVAR, --var VAR           same as --var VAR=\$VAR; VAR must be defined
+EOS
+
+
+shellname=
+sampshell_vars=1
+required_vars=1
+include_path=$PATH
+dont_include_path=
+verbose_mode=
+dry_mode=
+additonal_args=()
+
+typeset -a env_vars
+
+while [[ $# > 0 ]]; do
+	option=$1
+	shift
+	case $option in
+		-h | --help) shortusage; [[ $option == --help ]] && longusage; exit ;;
+
+		-s?*) set -- --shell ${option#-s} $@; continue ;;
+		-s) shellname=/bin/sh ;;
+
+		--shell=*) set -- ${option#--shell=} $@ ;&
+		--shell)
+			[[ -z $1 ]] && die "need an argument for $option"
+			shellname=$1; shift
+			;;
+
+		--no-path) dont_include_path=1 ;;
+		-P | --path) dont_include_path= include_path=$PATH ;;
+		--path=*) dont_include_path= include_path=${option#--path=} ;;
+
+		-V | --verbose) verbose_mode=1;;
+		--dry) verbose_mode=1 dry_mode=1 ;;
+
+		--no-required-vars) required_vars= ;;
+		-R | --required-vars) required_vars=1 ;;
+
+		--no-sampshell-vars) sampshell_vars= ;;
+		-S | --sampshell-vars) sampshell_vars=1 ;;
+
+		-N | --absolutely-none) required_vars= ;&
+		-n | --none) dont_include_path=1 sampshell_vars= env_vars=() ;;
+
+		-E | --env)
+			[[ -z $ENV ]] && die 'need an ENV defined for --env; try --env=FOO'
+			option=--env=$ENV ;&
+		--env=*)
+			env_vars+=ENV=${option#--env=} ;;
+
+		-a?*) set -- ${option#-a} $@ ;&
+		-a | --arg) # don't support --arg=a=b
+			[[ ! -v 1 ]] && die 'need an argument for -a/--arg'
+			additonal_args+=($1)
+			shift ;;
+
+		# Support `-vFOO` and friends by just deleting the `-v`, and adding it to
+		# the start of the list of options
+		-v?*) set -- ${option#-v} $@ ;&
+		-v | --var) # don't support --var=a=b
+			[[ ! -v 1 ]] && die 'need an argument for -v/--var'
+			if [[ $1 = *=* ]]; then
+				env_vars+=$1
+			else
+				env_vars+=$1=${(P)1}
+			fi
+			shift ;;
+
+		# Support chaining `-abc` options
+		-[^-]?*) set -- $option[1,2] -${option#-?} $@ ;;
+		--) break;;
+		*) set -- $option $@; break ;;
+	esac
+done
+
+if [[ -z $shellname ]]; then
+	[[ $1 = [^-]* ]] && { shellname=$1; shift; }
+	: ${shellname:=${SHELL:?no shell provided, and no SHELL in scope}}
+fi
+
+## Setup required variables, if that's defined.
+if [[ -n $required_vars ]]; then
+	env_vars[1,0]=SHELL=$shellname
+	for v in TERM HOME LANG LC_{COLLAGE,CTYPE,MESSAGES,MONETARY,NUMERIC,TIME,ALL}; do
+		if [[ -v $v ]] then
+			env_vars[1,0]=( $v=${(P)v} )
+		fi
+	done
+	[[ -v SHLVL ]] && env_vars[1,0]=SHLVL=$((SHLVL-1))
+fi
+
+if [[ -z $dont_include_path ]]; then
+	env_vars[1,0]=PATH=$include_path
+fi
+
+if [ -n "$sampshell_vars" ]; then
+	for param in ${parameters[(I)SampShell_*]}; do
+		[[ $parameters[$param] = scalar-export ]] && env_vars[1,0]=$param=${(P)param}
+	done
+fi
+
+command=(env -i $env_vars $shellname $additonal_args $@)
+[[ -n $verbose_mode || -n $dry_mode ]] && {
+	print -r -- ${(q)command}
+	[[ -n $dry_mode ]] && return
+}
+$command

@@ -10,6 +10,13 @@
 # Load universal options.
 emulate sh -c '. "$SampShell_ROOTDIR/env.sh"'
 
+if [[ -n "${SampShell_XTRACE-}" ]]
+then
+	export SampShell_XTRACE # Export it in case it's not already exported.
+	set -o xtrace
+fi
+
+
 ####################################################################################################
 #                                  Enable Profiling if Requested                                   #
 ####################################################################################################
