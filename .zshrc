@@ -1,5 +1,3 @@
-#!zsh
-
 #### Basic SampShell definitions for interactive ZSH shell instances.
 # This file shouldn't be sourced directly; instead, the top-level `interactive.sh` file sources it.
 #

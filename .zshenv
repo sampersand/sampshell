@@ -4,18 +4,18 @@
 # config minimal. Again, this file is `source`d` for EVERY SINGLE ZSH INSTANCE, including scripts
 # that we didn't write, so we don't want to do anything that's potentially disruptive!
 #
-# ZSH executes `.zshenv`s for _every_ script invocation, regardless of whether it's interactive or not.
+# ZSH executes `.zshenv`s for every script invocation, regardless of whether it's interactive.
 ####
 
-# Load universal options.
-emulate sh -c '. "$SampShell_ROOTDIR/env.sh"'
+####################################################################################################
+#                                          Enable xtrace                                           #
+####################################################################################################
 
-if [[ -n "${SampShell_XTRACE-}" ]]
-then
+## Enable XTRACE if the `SampShell_XTRACE` option was set.
+if [[ -n "${SampShell_XTRACE-}" ]] then
 	export SampShell_XTRACE # Export it in case it's not already exported.
 	set -o xtrace
 fi
-
 
 ####################################################################################################
 #                                  Enable Profiling if Requested                                   #
@@ -36,11 +36,11 @@ zmodload zsh/zprof'
 [[ -n ${Sampshell_EXPERIMENTAL-} ]] && PS4='+%x:%N:%I> '
 
 ## Set sourcetrace prompt (temporary hack I think)
-if [[ -o sourcetrace && -n ${SampShell_SOURCETRACE} ]]; then
-	eval "
-	typeset -Fg SECONDS
-	setopt promptsubst
-	PS4='+\$SECONDS:%x:%I> '"
+if [[ -o sourcetrace && -n "${SampShell_SOURCETRACE-}" ]] then
+	eval '
+typeset -Fg SECONDS
+setopt promptsubst
+PS4='\''+$SECONDS:%x:%I> '\'
 fi
 
 ####################################################################################################

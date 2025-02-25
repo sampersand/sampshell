@@ -356,3 +356,59 @@ set-local-history
 
 Hi all! I'm learning how to use `bindkey` in ZSH, and i'm coming across a problem: How on earth do you bind the option key, or the shift key? from what I can tell, `^` stands for "control" (eg `^x` is ctlr+x) and `^[` means escape (`^[x` is escape + x). I'm pretty sure you cant bind the command key at all, but if you could, being able to bind cmd+z would be amazing lol
 im posting hereon the off chance thatsomeone knows
+
+--
+    Alternately, just tell anyone who uses spaces in arguments to perform an impossible biological act. I've learned this from my colleges, who've come to the conclusion that anyone who worries about spaces inside arguments is someone who has way too much free time. I don't know anyone like that, however.
+https://www.grymoire.com/Unix/Csh.html#uh-39
+
+The third method is to use variables as commands. Many people forget about this particular approach. The following commands will execute the contents of the C shell script in the current shell, changing the current directory:
+
+    set DO = "source ~/bin/myscript"
+    $DO
+
+$ echo ~/foo:~/bar
+/Users/me/foo:~/bar
+$ x=~/foo:~/bar
+$ echo $x
+/Users/me/foo:/Users/me/bar
+
+
+how'd you used to get length of things? expr? before `${#..}`?
+
+huh?
+---
+
+he rules for parameter expansion with double-quotes:
+
+
+
+    "${...}"
+
+
+
+are changed to require that any single- or double-quotes must be paired within the curly-braces. A consequence of this rule is that single-quotes cannot be used to quote the } within:
+
+
+
+    "${...}"
+
+
+
+For example:
+
+
+
+    unset bar
+    foo="${bar-'}'}"
+
+
+
+is invalid because the:
+
+
+
+    "${...}"
+
+
+
+substitution contains an unpaired unescaped single-quote. The backslash can be used to escape the } in this example to achieve the desired result: 

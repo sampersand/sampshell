@@ -94,23 +94,20 @@ env.sh might be just flat-out removed in the future.
 # ZSH Config
 ~/.zshenv
 	# TODO: `emulate -c sh '. xyx'`?
-	. ${SampShell_ROOTDIR:=~/.sampshell/shells}/env.sh
+	. ${SampShell_ROOTDIR:=~/.sampshell/shells}/.zshenv
 ~/.zprofile
 	# `$SampShell_ROOTDIR` was already set in `~/.zshenv`
-	. $SampShell_ROOTDIR/.profile
+	. $SampShell_ROOTDIR/.zprofile
 ~/.zshrc
-	. $SampShell_ROOTDIR/interactive.sh
+	. $SampShell_ROOTDIR/.zshrc
 
 # BASH Config
 ~/.bash_profile
 	# Bash doesn't have a "bash env" startup file, so add here and load it
-	export BASH_ENV="${SampShell_ROOTDIR:=~/.sampshell/shells}/env.sh"
-	. "$BASH_ENV"
-	. "$SampShell_ROOTDIR/.profile"
+	. "${SampShell_ROOTDIR:=~/.sampshell/shells}/.bash_profile"
 ~/.bashrc
 	# `$SampShell_ROOTDIR` was already set in `~/.bash_profile`
-	[ -e "$BASH_ENV" ] && . "$BASH_ENV" # Since it's the "universal config" stuff.
-	. "$SampShell_ROOTDIR/.interactive.sh"
+	. "$SampShell_ROOTDIR/interactive.sh"
 
 # Other shells
 ~/.profile
@@ -119,3 +116,13 @@ env.sh might be just flat-out removed in the future.
 
 	[ -e "$ENV" ] && . "$ENV" # Load interactive stuff, even tho this is login code.
 ```
+
+## TODOS
+- Maybe also have a `profile.zsh`  file?
+- `gclear`
+- `ppurge`
+- cleanup `clean-shell`
+- autocompletion and ZLE
+- `setopt HIST_LEX_WORDS`
+- `add-named-dir trash $SampShell_TRASHDIR` when trashdir doesnt exist logs errors great
+- `SampShell_dot_if_exists` doesn't play nicely with unadorned `typeset` that 3rd party code might have, which by default sets vars local
