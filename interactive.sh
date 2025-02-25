@@ -154,12 +154,6 @@ fi
 #                                                                              #
 ################################################################################
 
-if [ -n "${SampShell_EXPERIMENTAL-}" ]
-then
-	[ -e "$SampShell_ROOTDIR/old-interactive.sh" ] && . "$SampShell_ROOTDIR/old-interactive.sh"
-	[ -e "$SampShell_ROOTDIR/experimental.sh" ] && . "$SampShell_ROOTDIR/experimental.sh"
-fi
-
 # Dash doesn't expose a nice variable like `ZSH_VERSION`, so we have to check
 # `$0` and hope, lol.
 ## TODO: Make this not required?
