@@ -22,23 +22,23 @@ die () {
 # Note that setting the `-a` flag, which is used to to pass through inherited
 # variables, does not affect these variables; they're never passed onwards.
 unset -v __clenv_user_vars \
-         __clenv_user_vars_index \
          __clenv_all_variables \
          __clenv_verbose \
          __clenv_dry \
-	 __clenv_default_vars \
-	 __clenv_cmd \
-	 __clenv_tmp \
-	 __clenv_name \
-	 __clenv_value \
+         __clenv_underscore \
+         __clenv_default_vars \
+         __clenv_cmd \
+         __clenv_tmp \
+         __clenv_name \
+         __clenv_value \
 
 # The list of variables that are added by default to all invocations unless -a
 # or -n are specified.
 __clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
-usage: $scriptname [-DVansp] [-m pattern ...] [-v name[=value] ...] [-u name ...]
-       $(printf "%${#scriptname}s") [utility [argument ...]]
+usage: $scriptname [-DVansp_] [-m pattern ...] [-v name[=value] ...]
+       $(printf "%${#scriptname}s") [-u name ...] [utility [argument ...]]
 options:
     -D              Enables "dry mode"--don't actually run the program; Sets -V.
     -V              Enables "verbose mode," so it prints out the invocation
@@ -50,6 +50,7 @@ options:
                     omitted, it defaults to the current value of 'name' (which,
                     if unset, is an error.)
     -u name         Unset 'name'. If both -v and -u are given, -u wins.
+    -_              Set the '_' variable in the env to the path to the executable
 
 "clean-env": A wrapper around 'env' which (by default) forwards a few essential
 arguments. Without arguments, prints out the variables
@@ -64,16 +65,15 @@ validate_variable_name () case $1 in
 esac
 
 __clenv_cmd='exec env'
-while getopts 'hDVanpm:v:u:' opt; do
+while getopts 'hDVanp_m:v:u:' opt; do
 	case $opt in
 
 	h) usage; exit;;
 
 	# Dry mode and verbose mode. Enabling dry mode also enables verbose.
-	# [ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
-	# [ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 	D) __clenv_dry=1 __clenv_verbose=1 ;;
 	V) __clenv_verbose=1 ;;
+	_) __clenv_underscore=1 ;;
 
 	# Flags for specifying groups of variables to pass onwards.
 	a) __clenv_all_variables=1 __clenv_default_vars= ;;
@@ -95,7 +95,7 @@ while getopts 'hDVanpm:v:u:' opt; do
 
 		# Instead of having to figure out escaping with the different variables, instead we
 		# use `__clenv_var_XXX` variables
-		__clenv_tmp=__clenv_var_$((__clenv_user_vars_index += 1))
+		__clenv_tmp=__clenv_var_${#__clenv_user_vars}
 		eval "$__clenv_tmp=\$__clenv_value"
 		__clenv_user_vars="$__clenv_user_vars \"$__clenv_name=\$$__clenv_tmp\""
 		;;
@@ -125,16 +125,6 @@ __clenv_cmd='exec env'
 [ -n "$__clenv_verbose" ]       && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 [ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
 
-## Add in default variables
-for __clenv_tmp in $__clenv_default_vars; do
-	if eval '[ -n ${'$__clenv_tmp'+1} ]'; then
-		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
-	fi
-done
-
-## Add in user variables
-__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
-
 ## If any arguments are passed, then figure out the path to the executable. (We
 # need to do this, as `env` dictates if any of its args are `PATH=`, it'll use
 # _that_ as the path to search, which is not generally what I want when using
@@ -145,9 +135,23 @@ if [ $# -ne 0 ]; then
 		die 'unable to locate executable program: %s' "$1"
 	fi
 
+	if [ -n "$__clenv_underscore" ]; then
+		__clenv_cmd="\"_=$__clenv_tmp\""
+	fi
+
 	shift
 	set -- "$__clenv_tmp" "$@"
 fi
+
+## Add in default variables
+for __clenv_tmp in $__clenv_default_vars; do
+	if eval '[ -n ${'$__clenv_tmp'+1} ]'; then
+		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
+	fi
+done
+
+## Add in user variables
+__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
 
 
 ## Execute the command

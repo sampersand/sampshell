@@ -23,7 +23,7 @@ fi
 
 ## If the `$SampShell_PROFILE` variable is defined and nonempty, then we enable profiling.
 # (We eval it so we doesn't parse it if it's not profiling)
-[[ -n ${SampShell_PROFILE:-} ]] && eval '
+[[ -n ${SampShell_PROFILE-} ]] && eval '
 zshexit_functions+=(_SampShell_profile_exit)
 function _SampShell_profile_exit { zprof }
 zmodload zsh/zprof'
@@ -33,7 +33,7 @@ zmodload zsh/zprof'
 ####################################################################################################
 
 # Set the debug prompt to something a bit more informative. I'm still not sure how much I like this.
-[[ -n ${Sampshell_EXPERIMENTAL:-} ]] && PS4='+%x:%N:%I> '
+[[ -n ${Sampshell_EXPERIMENTAL-} ]] && PS4='+%x:%N:%I> '
 
 ## Set sourcetrace prompt (temporary hack I think)
 if [[ -o sourcetrace && -n ${SampShell_SOURCETRACE} ]]; then
@@ -47,7 +47,7 @@ fi
 #                                       SampShell_{un,}debug                                       #
 ####################################################################################################
 # I've had this around forever, and idk if I still need it?
-if [[ -n ${Sampshell_EXPERIMENTAL:-} ]]; then
+if [[ -n ${Sampshell_EXPERIMENTAL-} ]]; then
 ## Re-define the `SampShell_debug` and `SampShell_undebug` functions that were previously declared
 # in `posix/env.sh`. Because ZSH has more debugging options, we want to make sure we use the same
 # name so that POSIX-compliant scripts run under ZSH will automatically use the enhanced debug fns.
