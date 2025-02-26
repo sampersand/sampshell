@@ -134,28 +134,27 @@ fi
 ################################################################################
 
 ## Prepend things to `PATH` unless they're already there.
-SampShell_add_to_path () {
-   set -- "$SampShell_ROOTDIR/$1"
+SampShell_add_bin_to_PATH () {
+   set -- "$SampShell_ROOTDIR/bin/${1:?}"
+
    case :${PATH-}: in
-   *:"${1:?need a path}":*) :                      ;; # It's already there!
-   *)                       PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
+   *:"$1":*) :                      ;; # It's already there!
+   *)        PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
    esac
 }
 
 ## Universal scripts I always want available
-SampShell_add_to_path bin/universal
-SampShell_add_to_path bin/git
+SampShell_add_bin_to_PATH universal
+SampShell_add_bin_to_PATH git
 
 ## MacOS-specific scripts
-[ "$(uname)" = Darwin ] && SampShell_add_to_path bin/macOS
+[ "$(uname)" = Darwin ] && SampShell_add_bin_to_PATH macOS
 
-if [ -n "$SampShell_EXPERIMENTAL" ]; then
-   ## Add in "experimental" scripts I'm working on and haven't quite completed.
-   SampShell_add_to_path bin/experimental
-fi
+## Add in "experimental" scripts I'm working on and haven't quite completed.
+[ -n "${SampShell_EXPERIMENTAL-}" ] && SampShell_add_bin_to_PATH experimental
 
-# Make sure `SampShell_add_to_path` doesn't escape the function.
-unset -f SampShell_add_to_path
+# Make sure `SampShell_add_bin_to_PATH` doesn't escape this startup file.
+unset -f SampShell_add_bin_to_PATH
 
 ## Ensure `PATH` is exported so programs can get sampshell executables.
 export PATH

@@ -1,14 +1,21 @@
+#!/bin/sh
+
 ## TODO: This file was originally 100%` sh-compliant, so now we should clean that up and make it more
 # zsh-like.
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
-() while (( $# )) do
-	alias -g "@-$1=@{-$1}"
-	shift
-done $(seq 0 10)
+if [ -n "${ZSH_VERSION-}" ]; then
+	eval '() {
+		while (( $# )) do
+			alias -g "@-$1=@{-$1}"
+			shift
+		done $(seq 0 10)
+	'
+fi
 
 alias g=git
+alias gdirs='git prev-branches'
 
 ## Spellcheck
 alias gti=git
@@ -74,13 +81,13 @@ gclear () {
 }
 
 # Adds everything and prints out the status
-function gaa {
+gaa () {
 	git add --all && git status
 }
 
 # Commits untracked files; all arguments are joined with a space.
 function _SampShell-gcm {
-	if [[ "$#" = 0 ]]; then
+	if [ "$#" -eq 0 ]; then
 		git commit
 	else
 		git commit --message "$*"

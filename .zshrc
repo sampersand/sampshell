@@ -127,7 +127,7 @@ unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-function j {
+function jobs {
 	emulate -L zsh
 	builtin jobs -d $@ | command -p paste - -
 	# builtin jobs -d $@ | sed 'N;s/\n/ /'

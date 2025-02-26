@@ -93,22 +93,24 @@ md () {
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
+## Common aliases
 alias ls='ls -AFq'
 alias l=ls
 alias ll='l -l'
-j () { jobs "$@"; }
+alias j=jobs
 
-if [ -n "${SampShell_EDITOR-}" ]; then
-	alias s=subl
-	alias ss=ssubl
-	alias ssubl='subl --create'
-fi
+## Sublime Text editor shorthand aliases
+alias s=subl
+alias ss=ssubl
+alias ssubl='subl --create'
 
 ################################################################################
-#                                 STTY Setup?                                  #
+#                                                                              #
+#                                 STTY Setup                                   #
+#                                                                              #
 ################################################################################
 
-# IDK if i want this.
+## TODO: IDK IF I WANT THIS
 if [ -n "${SampShell_EXPERIMENTAL-}" ]; then
 	[ -t 0 ] && stty noflsh
 fi
