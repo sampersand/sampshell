@@ -120,8 +120,11 @@ export LANG="${LANG-en_US}"
 # in in interactive. Note that we intentionally use single quotes, as POSIX
 # specifies that the variable is subject to parameter expansion, and if we used
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
+#
+# Note that this uses the basename of the executable, eg `dash`, which isn't
+# totally portable.
 if [ -z "${ENV+1}" ]; then
-   export ENV='$SampShell_ROOTDIR/interactive.sh'
+   export ENV='$SampShell_ROOTDIR/interactive.${0##*/}'
 fi
 
 ################################################################################

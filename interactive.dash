@@ -5,6 +5,16 @@
 # This file's name is not the actual filename dash uses.)
 ##
 
+################################################################################
+#                                                                              #
+#                         Source Shell-Specific Config                         #
+#                                                                              #
+################################################################################
+
+[ -n "${SampShell_ROOTDIR+1}" ] && \
+	[ -z "$SampShell_ROOTDIR/interactive.sh" ] && \
+	. "$SampShell_ROOTDIR/interactive.sh"
+
 ## Dash doesn't support SHLVL natively, so let's do it ourselves.
 export SHLVL="$(( SHLVL + 1 ))"
 
@@ -19,8 +29,9 @@ __PS1_pwd () case $PWD in
 	*)        printf  '%s' "$PWD"
 esac
 
-PS1='[?$? $(command -p date +"%I:%M:%S %p")'
-[ "$SHLVL" -ne 1 ] && PS1="$PS1 | SHLVL=$SHLVL"
+# No need for SHLVL, because dash is never our login shell,...
+PS1='[$(command -p date +"%I:%M:%S %p") | ?$?'
+[ "$SHLVL" -ne 1 ] && PS1="$PS1 L$SHLVL"
 PS1="$PS1] \$(__PS1_pwd) ${0##*/}\$ "
 
 set -o emacs
@@ -58,3 +69,4 @@ add_to_CDPATH () {
 	unset -v SampShell_scratch
 	return 0
 }
+

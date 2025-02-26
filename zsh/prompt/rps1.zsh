@@ -12,8 +12,9 @@
 #                                              Setup                                               #
 ####################################################################################################
 
-## Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
-setopt TRANSIENT_RPROMPT
+## This has been removed, as the "ESC+$" replacement has obviated its need
+# ## Remove RPS1 when a line is accepted. (Makes it easier to copy stuff.)
+# setopt TRANSIENT_RPROMPT
 
 ## Mark `RPS1` as global (so functions can interact with it), but not exported (as then other shells
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
@@ -92,7 +93,7 @@ function _SampShell-prompt-ruby-version () {
 ####################################################################################################
 
 zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile for `strftime`
-typeset -FH _SampShell_last_exec_time=0
+typeset -FH _SampShell_last_exec_time=$EPOCHREALTIME
 
 # Add this to the end of preexec so we don't get all the other functions
 preexec_functions+=(_SampShell-prompt-set-start-time-hook)
