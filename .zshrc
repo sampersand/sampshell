@@ -16,12 +16,8 @@
 # a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
-# Load universal sampshell config
-if [[ -z "${SampShell_ROOTDIR-}" ]]; then
-	print >&2 '[ERROR] Cannot initialize interactive SampShell: SampShell_ROOTDIR not set.'
-	return 1
-fi
-emulate sh -c '. "${SampShell_ROOTDIR}/interactive.sh"'
+# Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
+emulate sh -c '. "${SampShell_ROOTDIR:?}/interactive.sh"'
 
 ####################################################################################################
 #                                           Setup $PATH                                            #

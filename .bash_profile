@@ -1,1 +1,0 @@
-. "$SampShell_ROOTDIR/.profile"
