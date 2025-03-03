@@ -44,6 +44,7 @@ autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 ####################################################################################################
 
 ## Add named directories
+alias add-named-dir='hash -d'
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
 [[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because...

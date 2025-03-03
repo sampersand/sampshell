@@ -69,21 +69,25 @@ hrc () { hr | pbcopy }
 ################################################################################
 
 tracezsh2 () {
-	clean-shell --none \
-		--var PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
-		--var SampShell_just_for_testing_should_disable_rvm=1 \
+	clean-shell -n \
+		-v PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
+		-v SampShell_just_for_testing_should_disable_rvm=1 \
+		-- \
+		=zsh \
 		-xil \
 		-o promptsubst \
 		-c exit
 }
 
 tracezsh () {
-	clean-shell --none \
-		--var SampShell_PROFILE= \
-		--var SampShell_SOURCETRACE=1 \
-		--var SampShell_XTRACE=1 \
-		--var SampShell_ROOTDIR \
-		--var SampShell_just_for_testing_should_disable_rvm=1 \
+	clean-shell -n \
+		-v SampShell_PROFILE= \
+		-v SampShell_SOURCETRACE=1 \
+		-v SampShell_XTRACE=1 \
+		-v SampShell_ROOTDIR \
+		-v SampShell_just_for_testing_should_disable_rvm=1 \
+		-- \
+		=zsh \
 		--xtrace \
 		--sourcetrace \
 		${@:?need a command to run!}

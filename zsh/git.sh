@@ -6,8 +6,7 @@
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
 if [ -n "${ZSH_VERSION-}" ]; then
-	eval '() {
-		while (( $# )) do
+	eval '() while (( $# )) do
 			alias -g "@-$1=@{-$1}"
 			shift
 		done $(seq 0 10)
