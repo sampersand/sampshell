@@ -1,11 +1,19 @@
 #!zsh
 
+# typeset -Fg SECONDS
+# setopt promptsubst
+# PS4='\''+$SECONDS:%x:%I> '\'
+
 clean-shell \
 	-n \
 	-v SampShell_PROFILE= \
-	-v SampShell_SOURCETRACE=1 \
 	-v SampShell_XTRACE=1 \
 	-v SampShell_ROOTDIR \
 	-v SampShell_just_for_testing_should_disable_rvm=1 \
+	-v PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
 	-- \
-	=zsh --xtrace --sourcetrace $@
+	=zsh \
+	--xtrace \
+	--sourcetrace \
+	--prompt-subst \
+	${==@}

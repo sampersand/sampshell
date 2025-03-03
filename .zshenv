@@ -35,14 +35,6 @@ zmodload zsh/zprof'
 # Set the debug prompt to something a bit more informative. I'm still not sure how much I like this.
 [[ -n ${Sampshell_EXPERIMENTAL-} ]] && PS4='+%x:%N:%I> '
 
-## Set sourcetrace prompt (temporary hack I think)
-if [[ -o sourcetrace && -n "${SampShell_SOURCETRACE-}" ]] then
-	eval '
-typeset -Fg SECONDS
-setopt promptsubst
-PS4='\''+$SECONDS:%x:%I> '\'
-fi
-
 ####################################################################################################
 #                                       SampShell_{un,}debug                                       #
 ####################################################################################################

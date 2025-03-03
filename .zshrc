@@ -236,9 +236,6 @@ bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LE
 bindkey '^[[H'    undefined-key # TODO: Add into terminal.app as a sequence for `HOME`
 bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for `END`
 
-### Completion
-setopt MENU_COMPLETE
-
 ####################################################################################################
 #                                                                                                  #
 #                                           Autocomplete                                           #

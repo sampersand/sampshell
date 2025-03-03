@@ -20,3 +20,6 @@ unsetopt IGNORE_EOF         # In case it was set, as I use `ctrl+d` to exit a lo
 unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
 
 : command_not_found_handler # <-- thing executed when a command'snot found
+### Completion
+# setopt MENU_COMPLETE
+

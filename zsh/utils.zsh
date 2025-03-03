@@ -58,17 +58,6 @@ hrc () { hr | pbcopy }
 
 ################################################################################
 
-tracezsh2 () {
-	clean-shell -n \
-		-v PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
-		-v SampShell_just_for_testing_should_disable_rvm=1 \
-		-- \
-		=zsh \
-		-xil \
-		-o promptsubst \
-		-c exit
-}
-
 sublzfiles () {
 	subl ~/.z(shenv|shrc|profile|login|logout)
 }
