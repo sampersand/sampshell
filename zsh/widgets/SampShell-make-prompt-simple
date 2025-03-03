@@ -1,5 +1,2 @@
 #!zsh
-
-local PS1 RPS1=
-zstyle -s ':sampshell:bindkey:simple-prompt' PS1 PS1 || PS1='%% '
-zle reset-prompt
+PS1='%% ' RPS1= zle reset-prompt

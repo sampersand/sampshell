@@ -1,15 +1,41 @@
-## TODO: This file was originally 100%` sh-compliant, so now we should clean that up and make it more
-# zsh-like.
+#!/bin/sh
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
-() while (( $# )) do
-	alias -g "@-$1=@{-$1}"
-	shift
-done $(seq 0 10)
+if [ -n "${ZSH_VERSION-}" ]; then
+	eval '() while (( $# )) do
+			alias -g "@-$1=@{-$1}"
+			shift
+		done $(seq 0 10)
+	'
+fi
+
+#------------------------------------------------------------------------------#
+
+gm  () { [ "$#" = 0 ] && set -- '@{-1}'; git merge "$@"; }
+gmm () { git merge git merge "$(SampShell_master_branch)"
+gma () git merge --abort
+
+grb  () git rebase ${@:-'@{-1}'}
+grbm () git rebase "$(SampShell_master_branch)"
+grba () git rebase --abort
+
+gcp  () git cherry-pick $@
+gcpa () git cherry-pick --abort
+
+ga   () git add $@
+gaa  () { git add --all && git status }
+
+#------------------------------------------------------------------------------#
+
+alias g=git
+alias gdirs='git prev-branches'
+alias gnit='git nit'
 
 ## Spellcheck
 alias gti=git
+alias ig='git ignore'
+alias gignore='git ignore'
 
 : "${SampShell_git_default_master_branch:=master}"
 : "${SampShell_git_branch_prefix:="$(whoami)"}"
@@ -21,7 +47,7 @@ SampShell_master_branch () {
 }
 
 if false; then
-	alias idea: git log limit
+	git log limit
 fi
 ##
 #
@@ -29,20 +55,35 @@ fi
 ################################
 # Interacting with remote code #
 ################################
+alias gf='git fetch'
+alias gpl='git pull'
+alias gph='git push'
+alias gphf='git push --force'
+alias gst='git stash'
+alias gstash=gst
+alias gstp='git stash pop'
 
 #####################
 # Changing branches #
 #####################
 
+alias gnb='git new-branch'
+
+alias gswm='gsw "$(SampShell_master_branch)"'
 gsw () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git switch "$@"
 }
+alias gbr='git branch'
 
 gdb () {
 	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
 	git branch --delete "$@"
 }
+alias grename='git branch --move'
+alias gbmv=grename
+alias gbrmv=grename
+
 
 ##########################
 # Custom git "functions" #
@@ -55,16 +96,39 @@ gclear () {
 }
 
 # Adds everything and prints out the status
-gaa () { git add --all && git status; }
+gaa () {
+	git add --all && git status
+}
 
 # Commits untracked files; all arguments are joined with a space.
 function _SampShell-gcm {
-	if [[ "$#" = 0 ]]; then
+	if [ "$#" -eq 0 ]; then
 		git commit
 	else
 		git commit --message "$*"
 	fi
 }
+alias gcm='noglob _SampShell-gcm'
+
+alias gam='git commit --amend'
+alias gcma='git commit --amend'
+alias gammend='git commit --amend'
+
+alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
+alias grb='git rebase'
+alias grbm='git rebase "$(master-branch)"'
+alias grba='git rebase --abort'
+alias ga='git add'
+
+alias grs='git reset'
+alias greset=grs
+alias grm='git rm'
+alias gco='git checkout'
+
+alias gcp='git cherry-pick'
+alias gg='git grep'
+alias ginit='git init'
+
 gnita () { gaa && gnit; }
 
 gcl () {
@@ -73,63 +137,25 @@ gcl () {
 	cd -- "${1%%.*}"
 }
 
+alias gl='git log'
+
+alias gmm='gm "$(SampShell_master_branch)"'
 gm () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git merge "$@"
 }
+alias gma='git merge --abort'
 
+alias gdm='gd "$(SampShell_master_branch)"'
+alias gd='git diff'
 gdh () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	gdh "$@"
 }
 
+alias gddm='gdd "$(SampShell_master_branch)"'
 gdd () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff --name-status "$@"
 }
-
-################################################################################
-#                             Straight-up aliases                              #
-################################################################################
 alias gdol=gdd
-alias gddm='gdd "$(SampShell_master_branch)"'
-alias gdm='gd "$(SampShell_master_branch)"'
-alias gd='git diff'
-alias gma='git merge --abort'
-alias gl='git log'
-alias gmm='gm "$(SampShell_master_branch)"'
-alias gcm='noglob _SampShell-gcm'
-alias gam='git commit --amend'
-alias gcma='git commit --amend'
-alias gammend='git commit --amend'
-alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
-alias grb='git rebase'
-alias grbm='git rebase "$(master-branch)"'
-alias grba='git rebase --abort'
-alias ga='git add'
-alias grs='git reset'
-alias greset=grs
-alias grm='git rm'
-alias gco='git checkout'
-alias gcp='git cherry-pick'
-alias gg='git grep'
-alias ginit='git init'
-
-alias gbr='git branch'
-alias grename='git branch --move'
-alias gbmv=grename
-alias gbrmv=grename
-alias gnb='git new-branch'
-alias gswm='gsw "$(SampShell_master_branch)"'
-alias g=git
-alias ig='git ignore'
-alias gignore='git ignore'
-
-alias gf='git fetch'
-alias gpl='git pull'
-alias gph='git push'
-alias gphf='git push --force'
-alias gst='git stash'
-alias gstash=gst
-alias gstp='git stash pop'
-

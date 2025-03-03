@@ -316,7 +316,7 @@ while [ $# -gt 1 ]; do
    ## Get the basename of the file, used for moving it to the folder. Check the
    # body of the `try_move`'s while loop for why we have to do this convoluted.
    base=$(basename -- "$1" && printf x) || {
-      warn 'unable to get basename of %s' "$2"
+      warn 'unable to get basename of %s' "$1"
       exit_status=3
       continue
    }; base=${base%?x}
