@@ -1,0 +1,11 @@
+#!zsh
+
+clean-shell \
+	-n \
+	-v SampShell_PROFILE= \
+	-v SampShell_SOURCETRACE=1 \
+	-v SampShell_XTRACE=1 \
+	-v SampShell_ROOTDIR \
+	-v SampShell_just_for_testing_should_disable_rvm=1 \
+	-- \
+	=zsh --xtrace --sourcetrace $@

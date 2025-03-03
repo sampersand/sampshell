@@ -8,7 +8,7 @@
 ####################################################################################################
 
 usage () { cat; } <<USAGE
-usage: $0 [-n] (-w WIDTH | -c COUNT) [--] string
+usage: $(basename -- "$0") [-n] (-w WIDTH | -c COUNT) [--] string
 	-n         Don't print the trailing newline
 	-c COUNT   Print 'string' COUNT times
 	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]

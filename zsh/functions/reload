@@ -1,0 +1,14 @@
+#!zsh
+
+# Reloads the shell by rerunning all the ~/.zxxx` scripts.
+# TODO: should we also load in the system config?
+unset -v SampShell_interactive_loaded
+
+unalias h gcm >/dev/null 2>/dev/null # TODO: should this be `unalias -a`?
+
+setopt -L LOCAL_TRAPS
+TRAPEXIT () {
+	for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do
+		source ${file:P}
+	done
+}

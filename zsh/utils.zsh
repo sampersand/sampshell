@@ -23,17 +23,8 @@ alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own i
 alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
-# Reloads the shell by rerunning all the ~/.zxxx` scripts.
-# TODO: should we also load in the system config?
-function reload {
-	unset SampShell_interactive_loaded
-	unalias h gcm >/dev/null 2>/dev/null # TODO: shoudl this be `unalias -a`?
-	setopt -L LOCAL_TRAPS
-	trap 'for file in ${ZDOTDIR:-$HOME}/.z(shenv|profile|shrc|login); do source ${file:P}; done' EXIT
-}
-
 # Removedir and mkdir aliases. Only removes directories with `.DS_Store` in them
-rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
+# rd () { command rm -f -- ${1:?need a dir}/.DS_Store && command rmdir -- $1 }
 # md () { command mkdir -p -- "${1:?missing a directory}" && command cd -- "$1" }
 
 # utility functions and what have you that I've accumulated over the years
@@ -54,9 +45,8 @@ copycmd () { print -r $history[$(($#history - 0))] | pbc; }
 
 prl () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbc }
-
-
 grep () command grep --color=auto $@
+
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 alias ps='ps -ax'
@@ -77,22 +67,6 @@ tracezsh2 () {
 		-xil \
 		-o promptsubst \
 		-c exit
-}
-
-tracezsh () {
-	clean-shell -n \
-		-v SampShell_PROFILE= \
-		-v SampShell_SOURCETRACE=1 \
-		-v SampShell_XTRACE=1 \
-		-v SampShell_ROOTDIR \
-		-v SampShell_just_for_testing_should_disable_rvm=1 \
-		-- \
-		=zsh \
-		--xtrace \
-		--sourcetrace \
-		${@:?need a command to run!}
-		# --command :
-		# -xilcosourcetrace :
 }
 
 sublzfiles () {
