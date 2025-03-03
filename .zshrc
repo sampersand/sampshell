@@ -53,7 +53,7 @@ autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d {
 	emulate -L zsh
-		builtin dirs ${@:--v}
+	builtin dirs ${@:--v}
 }
 
 ## Setup `cd` options

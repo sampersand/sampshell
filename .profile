@@ -158,3 +158,19 @@ unset -f SampShell_add_bin_to_PATH
 
 ## Ensure `PATH` is exported so programs can get sampshell executables.
 export PATH
+
+################################################################################
+#                                                                              #
+#                                 Setup CDPATH                                 #
+#                                                                              #
+################################################################################
+export SampShell_CDPATH="${SampShell_CDPATH:-$HOME/.cdpath}"
+
+## Add named directories
+[[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
+[[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
+[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because...
+[[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop # `MAGIC_EQUAL_SUBST` isn't set yet)
+[[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
+
+

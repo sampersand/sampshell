@@ -71,13 +71,13 @@ cdd () {
 # (This program isn't its own executable script because some variables might
 # contain `NUL` bytes (which we want to print), but aren't preserved when passed
 # between programs.) We pipe the output to `dump` so it can display it for us.
-p () {
+_old_p () {
 	SampShell_scratch=0
 	while [ "$#" -ne 0 ]; do
 		# Can't put in next line b/c the `| dump` forks
 		: "$(( SampShell_scratch += 1 ))"
 
-		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | inspect; then
+		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | dump; then
 			unset -v SampShell_scratch
 			return 1
 		fi
@@ -148,4 +148,13 @@ if [ "$(uname)" = Darwin ]; then
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	alias ls='ls -AFqhGb'
+fi
+
+################################################################################
+#                                                                              #
+#                                 CDPATH Setup                                 #
+#                                                                              #
+################################################################################
+if [ -n "$SampShell_CDPATH" ]; then
+	CDPATH=:$SampShell_CDPATH${CDPATH:+:}${CDPATH#:}
 fi

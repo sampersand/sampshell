@@ -6,4 +6,4 @@
 emulate -L zsh
 
 zmodload zsh/deltochar
-zle delete-to-char -n $(( - ${NUMERIC:-1} ))
+zle zap-to-char -n $(( - ${NUMERIC:-1} ))
