@@ -6,9 +6,8 @@ if [ -n "${SampShell_XTRACE-}" ]; then
 	export SampShell_XTRACE
 fi
 
-\unalias -a # in case we are `.`d
-
 # Safety First!
+\unalias -a # in case we are `.`d
 set -ef
 
 readonly scriptname="${0##*/}"

@@ -13,6 +13,8 @@ fi
 alias g=git
 alias gdirs='git prev-branches'
 alias gnit='git nit'
+alias goops='git oops'
+alias gsquash='git squash'
 
 ## Spellcheck
 alias gti=git
