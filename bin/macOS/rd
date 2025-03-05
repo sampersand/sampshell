@@ -30,7 +30,8 @@ for directory; do
 	# that file. (Technically, files could be added after the `rm` command and
 	# before the `rmdir` command, but `rmdir` would then fail So worst-case is
 	# the `.DS_Store` gets deleted, and not the new files.)
-	if [ .DS_Store = "$(command -p ls -A1q -- "$directory")" ]; then
+	if test .DS_Store = "$(command -p ls -A1q -- "$directory")"
+	then
 		command -p rm -f -- "$directory"/.DS_Store
 	fi
 
