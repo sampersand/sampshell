@@ -68,24 +68,11 @@ cdd () {
 }
 
 ## Add in a `p` program which prints out a debugging form of its arguments.
-# (This program isn't its own executable script because some variables might
-# contain `NUL` bytes (which we want to print), but aren't preserved when passed
-# between programs.) We pipe the output to `dump` so it can display it for us.
-_old_p () {
-	SampShell_scratch=0
-	while [ "$#" -ne 0 ]; do
-		# Can't put in next line b/c the `| dump` forks
-		: "$(( SampShell_scratch += 1 ))"
-
-		if ! printf '%5d: %s' "$SampShell_scratch" "$1" | dump; then
-			unset -v SampShell_scratch
-			return 1
-		fi
-
-		shift
-	done
-	unset -v SampShell_scratch
-}
+# This program `.`s the `p` program, instead of being an alias or something, as
+# that way variables with `NUL` in them can be passed in.
+p () (
+	. p
+)
 
 ## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {

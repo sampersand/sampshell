@@ -1,9 +1,45 @@
-#!/bin/zsh
+#!/bin/sh
 
-## Prints out its arguments in a debugging format. (We sadly can't use `%q` b/c
-# it is not POSIX-compliant, so we need to use bash.)
+# Safety first, in the situation where we're `.`d.
+\unalias -a
+set -euf
+unset -v IFS
 
-idx=0
-for argument do
-	printf '%5d: %q\n' "$((++idx))" "$argument"
+# Escaped characters. Since we support shells that don't support POSIX-2024, we
+# can't use the `$'...'` syntax and need to use `printf` with escapes. A few
+# notes: The `\n`, `\r` and `\0` escapes have to be handled specially: \n and \r
+# can't be done directly with `$(...)` (`\r` is just a safeguard), and not all
+# shells support `\0`, so i do that here.
+nl=$(printf '\na') cr=$(printf '\ra') nul="$(printf \\0)"
+readonly nl="${nl%?}"         cr="${cr%?}"        nul="${nul:-a}" \
+         alrm="$(printf \\a)" bsp="$(printf \\b)" esc="$(printf \\e)" \
+         ff="$(printf \\f) "  tab="$(printf \\t)" vtab="$(printf \\v)"
+
+# Print out a character and escape
+presc () {
+	printf '\033[7m\\'${2-%s}'\033[27m' "$1"
+}
+
+argno=0
+for arg do
+	printf '%5d: ' $(( argno += 1 ))
+
+	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
+	while test ${#arg} -ne 0; do
+		case $arg in
+		[[:print:]]*) printf %c "$arg" ;;
+		$nul*)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
+		$alrm*)       presc a ;;
+		$bsp*)        presc b ;;
+		$esc*)        presc e ;;
+		$ff*)         presc f ;;
+		$nl*)         presc n ;;
+		$cr*)         presc r ;;
+		$tab*)        presc t ;;
+		$vtab*)       presc v ;;
+		*)            presc  "'$arg" 'x%02X' ;;
+		esac
+		arg=${arg#?}
+	done
+	echo
 done
