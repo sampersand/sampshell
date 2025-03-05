@@ -16,11 +16,16 @@ end
 
 $standout = true
 $escape_whitespace = true
+$escape_newlines = true
 $suppress_trailing_newline = false
 
 OptParse.new do |op|
   op.on '-w', '--[no-]dont-escape-whitespace', "Don't escape non-space whitespace." do |ews|
     $escape_whitespace = !ews
+  end
+
+  op.on '-l', '--[no-]dont-escape-lines', "Don't escape newlines." do |enl|
+    $escape_newlines = !enl
   end
 
   op.on '-i', '--input-encoding=ENCODING', Encoding, 'Set input encoding (default: UTF-8)' do |enc|
@@ -101,7 +106,9 @@ end
 
 while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
   INPUT_LINE.each_codepoint do |char|
-    if (WHITESPACE.include?(char) ? $escape_whitespace : char < 0x20)
+    if char == 10 and !$escape_newlines
+      OUTPUT.concat char
+    elsif (WHITESPACE.include?(char) ? $escape_whitespace : char < 0x20)
       escape ($cstyle && C_CODEPOINTS[char]) || ('\x%02X' % char)
     elsif char == '\\'.ord and $escape_backslash
       escape '\\\\'

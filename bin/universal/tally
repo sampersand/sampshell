@@ -7,10 +7,10 @@ max < ++counts[$0] {
 
 END {
   # Create the format string, using the length of the max number as the padding.
-  fmt = "%" length(max) "d %s\n"
+  fmt = "%-" (width ? width : length(max)) "d %s\n"
 
   # Print out the lines, and pipe it to `sort`.
   for (line in counts) {
-    printf fmt, counts[line], line | "sort -n"
+    printf fmt, counts[line], line | "LC_ALL=C sort -n -k1"
   }
 }
