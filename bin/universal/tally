@@ -1,48 +1,13 @@
-#!/usr/bin/env ruby
-require 'optparse'
+#!/usr/bin/awk -f
 
-# Parse options
-OptParse.new do |op|
-  op.on '-r', '--reverse', 'Reverse the output' do
-    $reverse = true
-  end
+max < ++counts[$0] {
+  max = counts[$0]
+}
 
-  op.on '-c', '--[no-]count', 'Print the total count out as well; enabled by default with `-h`' do |count|
-    $count = count
-  end
+END {
+  fmt = "%" length(max) "d %s\n"
 
-  op.on '-h', '--no-header', "Don't print out headers" do
-    $no_header = true
-  end
-
-  op.on '-p', '--percentage[=PLACES]', Integer, 'Print out percentages; PLACES defaults to 3' do |places|
-    $percentage = places&.to_i || 3
-  end
-
-  op.parse!
-end
-
-## Read all the input lines, and then sort them by their counts
-lines = Hash.new 0
-lines[$_] += 1 while gets(chomp: true)
-lines = lines.sort_by(&:last)
-
-# Get the amount of digits (used for the format string)
-NUM_DIGITS =
-
-## The format string to use
-FORMAT_STRING = "%1$-#{lines.last&.then{ |line| line[1].digits.count } || 0}d"
-FORMAT_STRING.concat "\t%2$#{$percentage+3}.#{$percentage}f%%" if $percentage
-FORMAT_STRING.concat "\t%3$s\n"
-
-## Print the header
-printf "COUNT\t#{$percentage && "PERCENTAGE\t"}LINE\n" unless $no_header
-
-lines.reverse! if $reverse
-lines.each do |line, count|
-  printf FORMAT_STRING, count, count.fdiv($.) * 100, line
-end
-
-if $count || ($count.nil? && !$no_header)
-  puts "TOTAL: #$. lines"
-end
+  for (line in counts) {
+    printf fmt, counts[line], line | "sort"
+  }
+}
