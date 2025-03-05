@@ -16,7 +16,7 @@ end
 
 $standout = true
 $escape_whitespace = true
-$escape_newlines = true
+$escape_newlines = nil
 $suppress_trailing_newline = false
 
 OptParse.new do |op|
@@ -79,6 +79,7 @@ end
 
 $input_encoding ||= Encoding::UTF_8
 $output_encoding ||= $input_encoding
+$escape_newlines = $*.empty? if $escape_newlines.nil?
 
 $cstyle = true unless defined? $cstyle
 $escape_backslash = !$standout if $escape_backslash.nil?

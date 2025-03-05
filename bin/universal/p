@@ -26,20 +26,24 @@ for arg do
 
 	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
 	while test ${#arg} -ne 0; do
-		case $arg in
-		[[:print:]]*) printf %c "$arg" ;;
-		$nul*)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
-		$alrm*)       presc a ;;
-		$bsp*)        presc b ;;
-		$esc*)        presc e ;;
-		$ff*)         presc f ;;
-		$nl*)         presc n ;;
-		$cr*)         presc r ;;
-		$tab*)        presc t ;;
-		$vtab*)       presc v ;;
-		*)            presc  "'$arg" 'x%02X' ;;
+		tail=${arg#?}
+		head=${arg%"$tail"}
+		arg=$tail
+
+		case $head in
+		[[:print:]]) printf %s "$head" ;;
+		$nul)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
+		$alrm)       presc a ;;
+		$bsp)        presc b ;;
+		$esc)        presc e ;;
+		$ff)         presc f ;;
+		$nl)         presc n ;;
+		$cr)         presc r ;;
+		$tab)        presc t ;;
+		$vtab)       presc v ;;
+		*)           presc "'$head" 'x%02X' ;;
 		esac
-		arg=${arg#?}
 	done
+
 	echo
 done
