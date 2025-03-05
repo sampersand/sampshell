@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 #### trash -- a safer alternative to `rm`
 # Unlike `rm`, which completely deletes files, `trash` instead moves them to a
@@ -16,11 +16,11 @@
 ## Respect the 'SampShell_XTRACE' environment variable
 if [ "${SampShell_XTRACE-}" = 1 ]; then
 	set -o xtrace
+	export SampShell_XTRACE
 fi
 
 ## Safety first!
-set -o nounset
-set -o errexit
+set -eu
 
 ## Script variables
 scriptname=${0##*/}             # Used only in usage and error messages.

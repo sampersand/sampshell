@@ -1,0 +1,107 @@
+#!/bin/sh
+
+while getopts 'D' opt; do
+	case $opt in
+		D) ds_store=1 ;;
+		[fin]) mode=$opt ;;
+	esac
+done
+
+exit
+## Remove an empty directory; A single `.DS_Store` file in the directory
+## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
+usage () { cat; } <<USAGE
+usage: $(basename -- "$0") [opts] dir [..]
+
+Alias for 'rmdir', except it'll also remove directories which
+only contain a '.DS_Store' file. (.DS_Store is a hidden macOS
+file in each directory Finder.app opens to store GUI info, eg
+file positions, "preview icon size", etc. If we are trying to
+remove an empty directory, then it can be removed too.)
+USAGE
+
+dstore=; test Darwin = $(uname) && dstore=1
+recursive= force=
+
+while getopts 'dDrf' opt; do
+	case $opt in
+	d) dstore=1 ;;
+	D) dstore= ;;
+	r) recursive=1 ;;
+	f) force=1 ;;
+	*) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+if test $# -eq 0; then
+	usage >&2; exit 1
+fi
+
+remdir () {
+	# Some notes:
+	# - The `-A` flag is used to ensure we print out all hidden files in the
+	#   directory (excluding `.` and `..`, which `-a` does), to see if any other
+	#   files exist.
+	# - The `-1` flag ensures each directory is printed on its own line
+	# - The `-q` flag ensures that any odd characters in paths are replaced with
+	#   the `?` character; This means that any bizarre file (like `.DS_Store\n`)
+	#   will show up with `?` in them, and won't match the expected `.DS_Store`.
+	#
+	# Thus, we only delete the `.DS_Store` file if the directory _only_ contains
+	# that file. (Technically, files could be added after the `rm` command and
+	# before the `rmdir` command, but `rmdir` would then fail So worst-case is
+	# the `.DS_Store` gets deleted, and not the new files.)
+	if test $dstore && test .DS_Store = "$(ls -A1q -- "$1")"; then
+		echo rm -f -- "$1"/.DS_Store
+	fi
+
+	echo rmdir -- "$1"
+}
+
+red () {
+	ds_store_found=
+	for file in "$1"/* "$1"/.*; do
+		base=${file#"$1"/}
+
+		# Ignore `.` / `..`, or failed globs
+		if test "$base" = . || test "$base" = .. || test ! -e "$file"; then
+			continue
+		fi
+
+		# Set `ds_store_found` if ds store is fond dont remove it immediately if
+		# there were other files.
+		if test "$base" = .DS_Store; then
+			ds_store_found=1
+			continue
+		fi
+
+		# If it's a dir, and we're recursive, then try to recursive delete it
+		if test -d "$file" && test $recursive; then
+			red "$file" || return
+		fi
+
+		if test $force; then
+			rm -f -- "$file" || return
+		fi
+
+		echo >&2 "directory $1 not empty: $file"
+		return 1
+	done
+
+	if test $ds_store_found && test $dstore; then
+		rm -f -- "$1"/.DS_Store
+	fi
+
+	rmdir -- "$1"
+
+	true
+}
+
+exit_status=0
+for directory do
+	red "$directory" || exit_status=$?
+done
+
+exit $exit_status

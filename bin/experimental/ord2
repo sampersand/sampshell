@@ -1,6 +1,10 @@
 #!/bin/sh
 
+o=$IFS
+IFS='
+'
 input=$*
+IFS=$o
 if test -z "$input"
 then
 	exit

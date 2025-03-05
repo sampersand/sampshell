@@ -63,10 +63,10 @@ USAGE
 
 validate_variable_name () case $1 in
 	__clenv_var_*)
-		die 'invalid variable name (cannot start with __clenv_var_): %s' "%1" ;;
+		die 'invalid variable name (cannot start with __clenv_var_): %s' "$1" ;;
 
 	*[!a-zA-Z0-9_-]*)
-		die 'invalid variable name (must match [\w_-]): %s' "%1" ;;
+		die 'invalid variable name (must match [\w_-]): %s' "$1" ;;
 esac
 
 while getopts 'hDVanp_m:v:u:' opt; do
