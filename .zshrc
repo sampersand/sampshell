@@ -44,7 +44,20 @@ autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 ####################################################################################################
 
 ## Add named directories
-alias add-named-dir='hash -d'
+function add-named-dir {
+	emulate -L zsh
+
+	if (( ! $# )) then
+		print >&2 -r "usage: $0 [name=]dir [[name=]dir ...]"
+		print >&2 "adds 'dir' to the list of named directories; if no name is"
+		print >&2 "given, it defaults to the base of 'dir'."
+		return 1
+	fi
+
+	local MATCH MBEGIN MEND
+	hash -d -- ${(*)@/#%(#m)^*=*/$MATCH:t=$MATCH}
+}
+
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
 [[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because...

@@ -1,2 +1,19 @@
 #!zsh
-PS1='%% ' RPS1= zle reset-prompt
+
+# If a prompt was previously pushed, then restore it.
+if (( $+_SampShell_old_prompt )) then
+	PS1=$_SampShell_old_prompt[1]
+	RPS1=$_SampShell_old_prompt[2]
+	unset -v _SampShell_old_prompt
+else
+	if (( $+NUMERIC )) then
+		# If a count was given, then push the old prompt
+		typeset -g +x _SampShell_old_prompt=($PS1 $RPS1)
+	else
+		# If no count was given, then make the changes local to the function
+		local PS1 RPS1
+	fi
+	PS1='%% ' RPS1=
+fi
+
+zle reset-prompt

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Just join all newlines with spaces (or whatever the first arg is)
+
+tr '\n' "${1- }"
+exec echo
