@@ -55,7 +55,7 @@ function add-named-dir {
 	fi
 
 	local MATCH MBEGIN MEND
-	hash -d -- ${(*)@/#%(#m)^*=*/$MATCH:t=$MATCH}
+	hash -d -- ${(*)@/#%(#m)^[[:alnum:]_-]#=*/${MATCH:t}=$MATCH}
 }
 
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
