@@ -1,11 +1,53 @@
 #!/bin/dash
 
-## Copy its commands to the macOS clipboard. If not given any args,
-# instead read them from stdin.
+\unalias -a
+set -eu
+nl='
+'
 
-if [ $# -eq 0 ]; then
-	pbcopy
-else
-	# Make sure not to print out a trailing `\n`, as it'll be copied.
-	printf %s "$*" | pbcopy
-fi
+readonly scriptname="${0##*/}"
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] [message [...]]
+       $(printf "%${#scriptname}s") [options] [-f] [--] [files [...]]
+
+   -h         show help and exit
+   -c         put single backticks around the copied text
+   -b         put triple backticks aroundthe copied text
+   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -t
+   -f         instead of interpreting args as strings, interpet as files
+   -n         put newline after the message; only useful without -s or -t.
+   -p FUNC    specify clipbord func; defaults to 'pbcopy'.
+
+Copies 'message' to the clipboard; if more than one argument is given, they are
+concatenated with spaces. If no arguments are given, stdin is copied.
+USAGE
+
+start='' end='' newline='' clipboard=pbcopy files=''
+while getopts 'hcbs:np:f' opt; do
+	case $opt in
+	c) start='`' end='`' ;;
+	[bs]) start='```'"${OPTARG-}$nl" end="$nl"'```' ;;
+	n) newline=$nl ;;
+	p) clipboard=$OPTARG ;;
+	f) files=1 ;;
+	h) usage; exit; ;;
+	*) p $OPTERR ;exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+{
+	# Print prefix
+	printf %s "$start"
+
+	# If no args are given, or if `-f` was specified, use `cat`.
+	if [ $# -eq 0 ] || [ -n "$files" ]; then
+		cat "$@"
+	else
+		printf %s "$*"
+	fi
+
+	# Print suffix, and optional trailing newline
+	printf %s "$end$newline"
+} | "$clipboard"

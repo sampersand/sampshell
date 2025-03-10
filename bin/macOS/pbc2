@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+require 'optparse'
+
+$*.replace %w[ -cn hello world what is up ]
+
+OPTIONS = {
+  backticks: nil
+}
+OptParse.new do |op|
+  op.banner.concat ' [message [...]]'
+  op.on '-c', '--code', 'Put single backticks around copied text' do
+    OPTIONS[:backticks] = :single
+  end
+
+  op.on '-b', '--block', 'Put triple backticks around copied text' do
+    OPTIONS[:backticks] = :block
+  end
+
+  op.on '-s', '--syntax=SYNTAX', 'Specify the syntax of -b; implies -b' do |syn|
+    OPTIONS[:backticks] = :block
+    OPTIONS[:syntax] = syn
+  end
+
+  op.on '-f', '--files', 'Interpret args as files instead of paths'
+  op.on '-n', '--newline', 'Print a trailing newline'
+
+  op.on_tail 'Copies args to system clipboard; With ...'
+  op.parse! into: OPTIONS rescue op.abort $!
+end
+
+$stdout = IO.popen 'pbcopy', 'w'
+
+__END__
+
+\unalias -a
+set -eu
+nl='
+'
+
+readonly scriptname="${0##/}"
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] [message [...]]
+       $(printf "%${#scriptname}s") [options] [-f] [--] [files [...]]
+   -h         show help and exit
+   -c         put single backticks around the copied text
+   -b         put triple backticks aroundthe copied text
+   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -t
+   -f         instead of interpreting args as strings, interpet as files
+   -n         put newline after the message; only useful without -s or -t.
+
+Copies 'message' to the clipboard; if more than one argument is given, they are
+concatenated with spaces. If no arguments are given, stdin is copied.
+USAGE
+
+start= end= syntax= newline=
+while getopts 'hc`tf:n' opt; do
+  case $opt in
+  [c\`]) start='`' end='`' ;;
+  [tf]) start='```'"${OPTARG-}$nl" end="$nl"'```' ;;
+  n) newline=$nl ;;
+  h) usage; exit; ;;
+  *) exit 2 ;;
+  esac
+done
+
+shift $(( OPTIND - 1 ))
+
+## Copy its commands to the macOS clipboard. If not given any args,
+# instead read them from stdin.
+{
+  printf %s "$start"
+  if [ $# -ne 0 ]; then
+    printf %s "$*"
+  else
+    cat
+  fi
+  printf %s "$end$newline"
+} | cat #pbcopy
