@@ -1,15 +1,14 @@
 #!zsh
 
-# typeset -Fg SECONDS
-# setopt promptsubst
-# PS4='\''+$SECONDS:%x:%I> '\'
 (( ! $# )) && set -- -ilc :
+# SampShell_DISABLED=1 tracezsh
 
 clean-shell \
 	-n \
 	-v SampShell_PROFILE= \
 	-v SampShell_XTRACE= \
 	-v SampShell_ROOTDIR \
+	${SampShell_DISABLED+-vSampShell_DISABLED=1} \
 	-v SampShell_CACHEDIR \
 	-v SampShell_just_for_testing_should_disable_rvm=1 \
 	-v PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
