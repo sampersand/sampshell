@@ -137,12 +137,3 @@ if [ "$(uname)" = Darwin ]; then
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	alias ls='ls -AFqhGb'
 fi
-
-################################################################################
-#                                                                              #
-#                                 CDPATH Setup                                 #
-#                                                                              #
-################################################################################
-if [ -n "$SampShell_CDPATH" ]; then
-	CDPATH=:$SampShell_CDPATH${CDPATH:+:}${CDPATH#:}
-fi
