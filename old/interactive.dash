@@ -1,0 +1,45 @@
+#!sh
+
+# Dash (the default macos versoin at least) doesnt have `fc`, so these aren't used
+alias r='fc -s'
+alias history='fc -l'
+
+# vv commented out because i dont actually need history number, as there's no `!X` vv
+# # Dash doesn't support `!`, sadly.
+__PS1_histno () {
+	{ fc -l -1 2>/dev/null || command -p echo 0; } | command -p awk 'NR==1{print $1}'
+}
+
+# These things are no longer needed in dash, as i want it more minimal
+add_to_PATH () while [ "$#" -ne 0 ]; do
+	case :${PATH-}: in
+		*:"$1":*) : ;; # already exists
+		*) PATH=$1${PATH:+:}$PATH
+	esac
+	shift
+done
+
+add_to_CDPATH () {
+	if [ "$#" -eq 0 ]; then
+		echo 'usage: add_to_CDPATH path [more ...]' >&2
+		return 64
+	fi
+
+	SampShell_scratch=
+	while [ "$#" -ne 0 ]; do
+		SampShell_scratch=$(realpath -- "$1" && printf x) || return
+		SampShell_scratch=${SampShell_scratch%?x} || return
+
+		# TODO: make sure it's not already in CDPATH
+		case :${CDPATH-}: in
+			*:"$1":*) : ;; # already exists
+			*) CDPATH=":${SampShell_scratch%?x}${CDPATH}" ;;
+		esac
+
+		shift
+	done
+
+	unset -v SampShell_scratch
+	return 0
+}
+

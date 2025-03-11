@@ -84,6 +84,7 @@ md () {
 alias ls='ls -AFq'
 alias l=ls
 alias ll='l -l'
+alias lt='l -tl'
 alias j=jobs
 
 ## Sublime Text editor shorthand aliases

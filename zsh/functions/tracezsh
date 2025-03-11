@@ -3,7 +3,7 @@
 # typeset -Fg SECONDS
 # setopt promptsubst
 # PS4='\''+$SECONDS:%x:%I> '\'
-(( ! $# )) && set -- -ic :
+(( ! $# )) && set -- -ilc :
 
 clean-shell \
 	-n \
