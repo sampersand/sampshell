@@ -1,4 +1,5 @@
 #!/bin/sh
+p unused
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak

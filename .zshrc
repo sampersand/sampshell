@@ -287,7 +287,7 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
-[[ -z $SampShell_no_experimental ]] && source $SampShell_ROOTDIR/zsh/experimental.zsh
+[[ -n $SampShell_EXPERIMENTAL ]] && source $SampShell_ROOTDIR/zsh/experimental.zsh
 
 ####################################################################################################
 #                                                                                                  #

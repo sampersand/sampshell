@@ -1,3 +1,4 @@
+p unused
 ## TODO: This file was originally 100%` sh-compliant, so now we should clean that up and make it more
 # zsh-like.
 

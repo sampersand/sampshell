@@ -1,4 +1,6 @@
 #!zsh
+p unused
+
 
 ## Overwrite the builtin `clear-screen` command by having it call `cls` instead.
 function clear-screen {
