@@ -37,3 +37,5 @@ awkf () awk "BEGIN{$1; exit}"
 
 zfns () typeset -m '*_functions'
 
+function -- -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
+compdef -- _precommand -x

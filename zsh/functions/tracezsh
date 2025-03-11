@@ -8,7 +8,7 @@
 clean-shell \
 	-n \
 	-v SampShell_PROFILE= \
-	-v SampShell_XTRACE=1 \
+	-v SampShell_XTRACE= \
 	-v SampShell_ROOTDIR \
 	-v SampShell_CACHEDIR \
 	-v SampShell_just_for_testing_should_disable_rvm=1 \

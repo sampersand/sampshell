@@ -28,8 +28,6 @@ alias b80='banner -c -w80'
 alias b100='banner -c -w100'
 
 ## Debugging utilities
-function -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
-
 function pa {
 	local a b i=0
 	if [[ ${(tP)1} = array-* ]]; then

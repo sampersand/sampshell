@@ -7,6 +7,9 @@
 # ZSH executes `.zshenv`s for every script invocation, regardless of whether it's interactive.
 ####
 
+# If SampShell_DISABLED is set to a non-empty value, then don't do any setup
+[[ -n ${SampShell_DISABLED-} ]] && return
+
 ####################################################################################################
 #                                          Enable xtrace                                           #
 ####################################################################################################

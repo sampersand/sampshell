@@ -16,6 +16,9 @@
 # a user's `.zshrc`. (Instead, `source` the top-level `interactive.sh` file if needed.)
 #####
 
+# If SampShell_DISABLED is set to a non-empty value, then don't do any setup
+[[ -n $SampShell_DISABLED ]] && return
+
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
 emulate sh -c '. "${SampShell_ROOTDIR:?}/interactive.sh"'
 
