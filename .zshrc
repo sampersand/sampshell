@@ -257,7 +257,11 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 ## TODO:
 autoload -U compinit
 [[ ! -e $SampShell_CACHEDIR ]] && mkdir "$SampShell_CACHEDIR"
-compinit -d $SampShell_CACHEDIR/.zcompdump
+if [[ -f $SampShell_CACHEDIR/.zcompdump ]] then
+	compinit -d $SampShell_CACHEDIR/.zcompdump
+else
+	compinit
+fi
 
 # ZLE_REMOVE_SUFFIX_CHARS
 # ZLE_SPACE_SUFFIX_CHARS

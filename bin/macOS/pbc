@@ -8,22 +8,23 @@ nl='
 readonly scriptname="${0##*/}"
 usage () { cat; } <<USAGE
 usage: $scriptname [options] [--] [message [...]]
-       $(printf "%${#scriptname}s") [options] [-f] [--] [files [...]]
+       $(printf "%${#scriptname}s") [options] -f [--] [files [...]]
 
    -h         show help and exit
-   -c         put single backticks around the copied text
-   -b         put triple backticks aroundthe copied text
-   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -t
    -f         instead of interpreting args as strings, interpet as files
-   -n         put newline after the message; only useful without -s or -t.
+   -c         put single backticks (\`) around the copied text
+   -b         put copied text into a code block (surround with \`\`\`)
+   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -b
+   -n         put newline after the message. Only really useful without -f
    -p FUNC    specify clipbord func; defaults to 'pbcopy'.
 
 Copies 'message' to the clipboard; if more than one argument is given, they are
-concatenated with spaces. If no arguments are given, stdin is copied.
+concatenated with spaces. If no arguments are given, stdin is copied. The '-f'
+argument instead interprets all the args as files.
 USAGE
 
 start='' end='' newline='' clipboard=pbcopy files=''
-while getopts 'hcbs:np:f' opt; do
+while getopts 'hfcbs:np:' opt; do
 	case $opt in
 	c) start='`' end='`' ;;
 	[bs]) start='```'"${OPTARG-}$nl" end="$nl"'```' ;;

@@ -6,14 +6,15 @@ if (( $+_SampShell_old_prompt )) then
 	RPS1=$_SampShell_old_prompt[2]
 	unset -v _SampShell_old_prompt
 else
+	# If a count was given, then save the old prompt value. If no count's given, then assume
+	# mark `PS1` and `RPS1` as local so their changes are only in this function.
 	if (( $+NUMERIC )) then
-		# If a count was given, then push the old prompt
 		typeset -g +x _SampShell_old_prompt=($PS1 $RPS1)
 	else
-		# If no count was given, then make the changes local to the function
 		local PS1 RPS1
 	fi
 	PS1='%% ' RPS1=
 fi
 
+# Reset the prompt so as to display the changes.
 zle reset-prompt

@@ -1,5 +1,12 @@
 #!/bin/sh
 
+## clenv -- like 'env', except with a few more QoL features
+# Features that env doesn't have:
+# 1. Only pass in variables that match a patter (`-m "SampShell_*"`)
+# 2. Just have to specify variable names if they already exist (`-vPATH`)
+# 3. Commonly needed variables for shells exported by default (TERM, HOME, etc.)
+#
+
 # Respect `SampShell_XTRACE`
 if [ -n "${SampShell_XTRACE-}" ]; then
 	set -o xtrace
