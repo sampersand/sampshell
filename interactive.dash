@@ -19,12 +19,10 @@ fi
 export SHLVL="$(( SHLVL + 1 ))"
 
 __PS1_pwd () case $PWD in
-	"$HOME"*) printf '~%s' "${PWD#"$HOME"}" ;;
-	*)        printf  '%s' "$PWD"
+	"$HOME"*) printf "~%s" "${PWD#"$HOME"}" ;;
+	*)        printf  "%s" "$PWD"
 esac
 
 # No need for SHLVL, because dash is never our login shell,...
-PS1='[$(command -p date +"%I:%M:%S %p") | ?$?'
-[ "$SHLVL" -ne 1 ] && PS1="$PS1 L$SHLVL"
-PS1="$PS1] \$(__PS1_pwd) ${0##*/}\$ "
+PS1='[?$? | $(command -p date +"%I:%M:%S %p")] $(case $PWD in ("$HOME"*) printf "~"; esac)${PWD#"${HOME%/}"} ${0##*/}$ '
 set -o emacs
