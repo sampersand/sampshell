@@ -14,12 +14,17 @@
 # configs won't be (as they can't be located).
 ####
 
-# If SampShell_DISABLED is set to a non-empty value, then don't do any setup
+################################################################################
+#                                                                              #
+#                          Ensure We Want to Startup                           #
+#                                                                              #
+################################################################################
+
+## If SampShell_DISABLED is set to a non-empty value, then don't do any setup.
 [ -n "${SampShell_DISABLED-}" ] && return
 
-if [ -n "${SampShell_interactive_loaded+1}" ]; then
-	return 0
-fi
+## Ensure we only load this file once.
+[ -n "${SampShell_interactive_loaded+1}" ] && return 0
 SampShell_interactive_loaded=1
 
 ################################################################################
