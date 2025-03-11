@@ -39,3 +39,10 @@ zfns () typeset -m '*_functions'
 
 function -- -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
 compdef -- _precommand -x
+
+ufns () {
+	preexec_functions=${preexec_functions:#_SampShell*}
+	chpwd_functions=${chpwd_functions:#_SampShell*}
+	precmd_functions=${precmd_functions:#_SampShell*}
+	zshaddhistory_functions=${zshaddhistory_functions:#_SampShell*}
+}

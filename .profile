@@ -11,7 +11,7 @@
 # totally POSIX-compliant, as it's meant to be loaded by any login shell.
 #
 # Login files shouldn't set up anything that's shell-specific, such as prompts
-# or history expansions, as they're only run on "login"---see `interactive.sh`
+# or history expansions, as they're only run on "login"---see `.rc`
 # for code that's expected to be run by every interactive shell. However, this
 # program is intentionally idempotent, so that it can be loaded from interactive
 # shells too without causing issues.
@@ -96,7 +96,7 @@ export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
 
 ## Disable homebrew analytics.
 # If set, homebrew (the mac package manager) won't send any analytics. We set it
-# in `.profile` and not `interactive.sh` in case any config scripts decide to
+# in `.profile` and not `.rc` in case any config scripts decide to
 # use homebrew themselves. (We _could_ check to see if homebrew is installed,
 # but that significantly complicates things, and there's no harm in setting it.)
 export HOMEBREW_NO_ANALYTICS=1
@@ -120,11 +120,8 @@ export LANG="${LANG-en_US}"
 # in in interactive. Note that we intentionally use single quotes, as POSIX
 # specifies that the variable is subject to parameter expansion, and if we used
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
-#
-# Note that this uses the basename of the executable, eg `dash`, which isn't
-# totally portable.
 if [ -z "${ENV+1}" ]; then
-   export ENV='$SampShell_ROOTDIR/interactive.${0##*/}'
+   export ENV='$SampShell_ROOTDIR/.rc'
 fi
 
 ################################################################################

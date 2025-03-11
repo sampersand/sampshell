@@ -50,7 +50,7 @@ typeset +x -g SampShell_current_record_all_history_file
 # We rotate the file we store it in each day, so as to not have one massive history file.
 _SampShell-record-every-command () {
 	## Setup
-	local -A opts=("${(kv@)options}") # Store options, so we can check for hist options later.
+	local -A opts=("${(kv@)options[@]}") # Store options, so we can check for hist options later.
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
 
 	## Return early if we're not saving history, or there isn't even a place to store history.

@@ -78,9 +78,7 @@ cdd () {
 ## Add in a `p` program which prints out a debugging form of its arguments.
 # This program `.`s the `p` program, instead of being an alias or something, as
 # that way variables with `NUL` in them can be passed in.
-p () (
-	. p
-)
+p () ( set +xv; . p )
 
 ## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {
@@ -140,3 +138,32 @@ if [ "$(uname)" = Darwin ]; then
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	alias ls='ls -AFqhGb'
 fi
+
+################################################################################
+#                                                                              #
+#                                    Prompt                                    #
+#                                                                              #
+################################################################################
+
+# If the prompt is a blank prompt, then set it to something slightly better
+if test -z "${PS1:+x}" || [ "$PS1" = '$ ' ]; then
+	PS1='[?$? !!! L$SHLVL] ${PWD#"${HOME%/}"/} ${0##*/}$ '
+fi
+
+################################################################################
+#                                                                              #
+#                             Shell-Specific Setup                             #
+#                                                                              #
+################################################################################
+
+case $0 in
+	dash|-dash|*/dash)
+		# Dash doesn't do shlvl on its own
+		export SHLVL="$(( SHLVL + 1 ))"
+
+		# Dash doesn't support `!` expansions sadly
+		PS1=$(printf %s "$PS1" | sed 's/!!! //')
+		set -o emacs ;;
+	ksh|-ksh|*/ksh|yash|-yash|*/yash)
+		set -o emacs ;;
+esac

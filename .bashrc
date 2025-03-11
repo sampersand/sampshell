@@ -1,1 +1,1 @@
-. "$SampShell_ROOTDIR/interactive.sh"
+. "$SampShell_ROOTDIR/.rc"
