@@ -6,7 +6,7 @@
 ## Mark `PS1` as global (so functions can interact with it), but not exported (as then other shells
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
 # empty string (so we can construct it down below)
-typeset -g +x PS1=''
+typeset -g PS1=''
 
 ####################################################################################################
 #                                          Bracket Prefix                                          #

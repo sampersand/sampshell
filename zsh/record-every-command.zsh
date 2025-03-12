@@ -14,11 +14,11 @@ zshaddhistory_functions+=(_SampShell-record-every-command)
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
 #
 # This variable is also `typeset` within `disable-history.zsh`.
-typeset +x -gH _SampShell_history_disabled
+typeset -gH _SampShell_history_disabled
 
 ## Global, non-exported variable that's the current history file; let's you do
 # `tail SampShell_current_record_all_history_file`. I might shorten its name later.
-typeset +x -g SampShell_current_record_all_history_file 
+typeset -g SampShell_current_record_all_history_file
 
 ## Record all commands entered interactively
 # This function is called every time the user enters a command on the command line. It saves each

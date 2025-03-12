@@ -19,7 +19,7 @@
 ## Mark `RPS1` as global (so functions can interact with it), but not exported (as then other shells
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
 # empty string (so we can construct it down below)
-typeset -g +x RPS1=''
+typeset -g RPS1=''
 
 ## Don't indent the right prompt. (Normally set to `1` b/c some terminals don't handle it properly,
 # but Terminal.app on macOS does, so I've set it to 0.)
@@ -93,12 +93,12 @@ function _SampShell-prompt-ruby-version () {
 ####################################################################################################
 
 zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile for `strftime`
-typeset -FH _SampShell_last_exec_time=$EPOCHREALTIME
+typeset -gFH _SampShell_last_exec_time=$EPOCHREALTIME
 
 # Add this to the end of preexec so we don't get all the other functions
 preexec_functions+=(_SampShell-prompt-set-start-time-hook)
 function _SampShell-prompt-set-start-time-hook {
-	_SampShell_last_exec_time=$EPOCHREALTIME
+	typeset -g _SampShell_last_exec_time=$EPOCHREALTIME
 }
 
 # Add this as the very first precmd function, so that we get more accurate timing.

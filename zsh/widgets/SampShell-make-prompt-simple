@@ -9,7 +9,7 @@ else
 	# If a count was given, then save the old prompt value. If no count's given, then assume
 	# mark `PS1` and `RPS1` as local so their changes are only in this function.
 	if (( $+NUMERIC )) then
-		typeset -g +x _SampShell_old_prompt=($PS1 $RPS1)
+		typeset -g _SampShell_old_prompt=($PS1 $RPS1)
 	else
 		local PS1 RPS1
 	fi

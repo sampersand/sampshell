@@ -8,10 +8,9 @@ function  toggle-wifi { disable-wifi; sleep 2; enable-wifi }
 # Disable `xtrace` for each line, as apple does some setups with cwd and wahtnot
 # which catches us offguard.
 if [[ $TERM_PROGRAM == Apple_Terminal ]] then
-	typeset +x -gH _SampShell_was_xtrace_on
 
 	function _SampShell_disable_xtrace {
-		_SampShell_was_xtrace_on=$options[xtrace]
+		typeset -g _SampShell_was_xtrace_on=$options[xtrace]
 		trap 'unsetopt xtrace' EXIT
 	}
 
