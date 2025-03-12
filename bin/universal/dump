@@ -82,6 +82,7 @@ OptParse.new do |op|
     $number_lines = true
   end
 
+  op.default_argv = %w[-f -]
   op.parse! rescue abort "#{op.program_name}: #$!"
 end
 
