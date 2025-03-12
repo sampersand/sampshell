@@ -78,7 +78,7 @@ cdd () {
 ## Add in a `p` program which prints out a debugging form of its arguments.
 # This program `.`s the `p` program, instead of being an alias or something, as
 # that way variables with `NUL` in them can be passed in.
-p () ( set +xv; . p )
+p () ( . p )
 
 ## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {

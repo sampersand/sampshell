@@ -74,12 +74,21 @@ OptParse.new do |op|
     $escape_whitespace = true
   end
 
+  op.on '-f', '--files', 'Interpret arguments as files, not messages to print' do
+    $files = true
+  end
+
+  op.on '-N', '--number-files', 'Number the input lines' do
+    $number_lines = true
+  end
+
   op.parse! rescue abort "#{op.program_name}: #$!"
 end
 
 $input_encoding ||= Encoding::UTF_8
 $output_encoding ||= $input_encoding
 $escape_newlines = $*.empty? if $escape_newlines.nil?
+$number_lines = true if !defined?($number_lines) && !$files
 
 $cstyle = true unless defined? $cstyle
 $escape_backslash = !$standout if $escape_backslash.nil?
@@ -94,7 +103,7 @@ C_CODEPOINTS = {
 
 WHITESPACE = [9, 10]
 
-ARGF.set_encoding $input_encoding
+$files and ARGF.set_encoding $input_encoding
 
 OUTPUT = String.new(capacity: 4096 * 8, encoding: $output_encoding)
 INPUT_LINE = String.new(capacity: 4096, encoding: $input_encoding)
@@ -105,7 +114,7 @@ def escape(...)
   $standout and OUTPUT.concat END_STANDOUT
 end
 
-while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
+def handle
   INPUT_LINE.each_codepoint do |char|
     if char == 10 and !$escape_newlines
       OUTPUT.concat char
@@ -123,9 +132,22 @@ while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
   end
 
   print OUTPUT
-  ended_with_newline = OUTPUT.end_with? "\n"
+  $ended_with_newline = OUTPUT.end_with? "\n"
   OUTPUT.clear
 end
 
-puts unless $suppress_trailing_newline || ended_with_newline
+if $files
+  while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
+    handle
+  end
+  puts unless $suppress_trailing_newline || $ended_with_newline
+else
+  $*.each_with_index do |arg, idx|
+    printf "%5d: ", idx+1 if $number_lines
+    INPUT_LINE.replace arg
+    handle
+    puts
+  end
+end
+
 

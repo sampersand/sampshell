@@ -2,7 +2,7 @@
 
 # Safety first, in the situation where we're `.`d.
 \unalias -a
-set -euf
+set -euf +xv
 unset -v IFS
 
 # Escaped characters. Since we support shells that don't support POSIX-2024, we
