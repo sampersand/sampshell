@@ -1,1 +1,1 @@
-. "$SampShell_ROOTDIR/.rc"
+. "$SampShell_ROOTDIR/.posix_rc"

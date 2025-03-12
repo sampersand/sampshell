@@ -146,9 +146,14 @@ fi
 ################################################################################
 
 # If the prompt is a blank prompt, then set it to something slightly better
-if test -z "${PS1:+x}" || [ "$PS1" = '$ ' ]; then
+if [ -z "${PS1:+x}" ] || [ "$PS1" = '$ ' ]; then
 	PS1='[?$? !!! L$SHLVL] ${PWD#"${HOME%/}"/} ${0##*/}$ '
 fi
+
+
+# Set the editor to use `emacs` keybinds; Sadly, zsh doesn't like it when we use
+# `emulate sh -c '...'` (which we do in `.zshrc`) and then set emacs...
+[ -z "$ZSH_VERSION" ] && set -o emacs
 
 ################################################################################
 #                                                                              #
@@ -157,13 +162,10 @@ fi
 ################################################################################
 
 case $0 in
-	dash|-dash|*/dash)
-		# Dash doesn't do shlvl on its own
-		export SHLVL="$(( SHLVL + 1 ))"
+dash|-dash|*/dash)
+	# Dash doesn't do shlvl on its own
+	export SHLVL="$(( SHLVL + 1 ))"
 
-		# Dash doesn't support `!` expansions sadly
-		PS1=$(printf %s "$PS1" | sed 's/!!! //')
-		set -o emacs ;;
-	ksh|-ksh|*/ksh|yash|-yash|*/yash)
-		set -o emacs ;;
+	# Dash doesn't support `!` expansions sadly
+	PS1=$(printf %s "$PS1" | sed 's/!!! //')
 esac
