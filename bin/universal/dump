@@ -74,15 +74,15 @@ OptParse.new do |op|
     $escape_whitespace = true
   end
 
-  op.on '-f', '--files', 'Interpret arguments as files, not messages to print' do
-    $files = true
+  $files = true
+  op.on '--no-files', 'Interpret arguments not as files, but as messages to print' do
+    $files = false
   end
 
   op.on '-N', '--number-files', 'Number the input lines' do
     $number_lines = true
   end
 
-  op.default_argv = %w[-f -]
   op.parse! rescue abort "#{op.program_name}: #$!"
 end
 

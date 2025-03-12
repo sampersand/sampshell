@@ -1,7 +1,8 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env -S ruby -Ebinary
+
 require 'optparse'
 
-$*.replace %w[ -h -x --c-escapes -h hello world ]
+# $*.replace %w[ -h -x --c-escapes -h hello world ]
 OptParse.new do |op|
   op.on 'Options'
   op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not'
@@ -10,20 +11,21 @@ OptParse.new do |op|
   op.on '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set'
 
   op.on 'What to escape'
-  op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20'
-  op.on '--escape-backslash', 'Escape backslashes; defaults to off when in visual'
-  op.on '--escape-whitespace', 'Escape all whitespace but actual spaces'
-  op.on '--dont-escape-newlines', 'Disable escaping newlines; useful when escape whitespace is set'
+  op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
+  op.on '--escape-backslash', 'Escape backslashes; defaults to off when in visual' do $escape_backslash = true end
+  $escape_tab = true
+  op.on '--escape-tab', 'Escape tabs' do $escape_tab = true end
+  $escape_newline = true
+  op.on '--dont-escape-newlines', 'Disable escaping newlines; useful when escape whitespace is set' do $escape_newline = false end
 
   op.on 'Escape Methods'
-  op.on '--c-escapes', 'Use C escapes when available (default)' do |x| p "yas"; exit end
-  op.on '-x', '--no-c-escapes', "Don't use C escapes; output in hex" do |x|
-    p x
-    exit
-  end
+  $c_escapes = true
+  op.on '--c-escapes', 'Use C escapes when available (default)' do $c_escapes = true end
+  op.on '-x', '--no-c-escapes', "Don't use C escapes; output in hex" do $c_escapes = false end
+
   # op.on '--no-c-escapes', 'Output C escapes in \xHEX instead'
-  op.on '--codepoints', 'Output larger values as codepoint escapes, instead of the char itself'
-  op.on '-v', '--[no-]visualize', 'Enable visual effects; when enabled, defaults for other escapes change.'
+  op.on '--codepoints', 'Output larger values as codepoint escapes, instead of the char itself' do $codepoints = true end
+  op.on '-v', '--[no-]visualize', 'Enable visual effects; when enabled, defaults for other escapes change.' do |x| $visual = x end
 
   op.on 'Encodings'
   op.on '--input-encoding=XYZ', 'Set the input encoding'
@@ -61,15 +63,55 @@ END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
 BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
 END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 
-
 OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $output_encoding)
+
+def escape_error(char)
+  OUTPUT.concat(BEGIN_ERR, char.each_byte.map { "\\x%02X" % _1 }.join, END_ERR)
+end
+
+def visualize_c(char, **b)
+  visualize char.each_byte.map { "\\x%02X" % _1 }.join, **b
+end
+
+def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
+  if $visual
+    OUTPUT.concat(start, val, stop)
+  else
+    OUTPUT.concat(alt)
+  end
+end
+
 def escape(char)
   OUTPUT.concat char.inspect
 end
 
-escape "\n"
-OUTPUT.display
-OUTPUT.clear
+def handle(line)
+  line.chars do |char|
+    unless char.valid_encoding?
+      visualize_c char, start: BEGIN_ERR, stop: END_ERR
+      next
+    end
+
+    case char
+    when $escape_space && ' ' then visualize char, '\x20'
+    when $escape_backslash && '\\' then visualize '\\\\'
+    when "\t" then $escape_tab ? visualize($c_escapes ? '\t' : '\x09') : OUTPUT.concat(char)
+    when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
+
+    when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)  # TODO: C escapes
+    when $codepoints && ->{ _1.codepoints.sum > 0x7f } then char.codepoints.each { visualize '\u{%x}' % _1 }
+    else OUTPUT.concat char
+    end
+  end
+end
+
+$OUTPUT_ENCODING = 'UTF-8'
+
+while gets
+  handle $_.force_encoding($OUTPUT_ENCODING)
+  OUTPUT.display
+  OUTPUT.clear
+end
 
 
 __END__
