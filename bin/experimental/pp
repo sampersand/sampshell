@@ -5,6 +5,12 @@ require 'optparse'
 $isatty = $stdout.tty?
 OptParse.new do |op|
   op.on 'Options'
+
+  op.on '-h', '--help', 'Print this and then exit' do
+    puts op
+    exit
+  end
+
   op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not' do $isatty = true end
   op.on '--number-lines', 'Number outputs by adding `%5d:` before them; used when -f isnt present' do $number_lines = true end
   op.on '-n', '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set' do $no_newline = true end
@@ -12,13 +18,9 @@ OptParse.new do |op|
   op.on '-N' do $number_lines = false end
   op.on '-f', '--files', 'Interpret arguments as files to be read; also disables line numbering' do $files = true; $number_lines = false end
 
-  op.on '-h', '--help', 'Print this and then exit' do
-    puts op
-    exit
-  end
-
   op.on 'What to escape'
   op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
+  op.on '-s', '--[no-]escape-surrounding-spaces', 'Escape leading and trailing spaces' do |es| $escape_surrounding_spaces = es end
   op.on '-\\', '--[no-]escape-backslash', 'Escape backslashes; defaults to off when in visual' do |eb| $escape_backslash = eb end
   op.on '-t', '--[no-]escape-tab', 'Escape tabs' do |et| $escape_tab = et end
   op.on '--[no-]escape-newline', 'Enables (or not) escaping of newlines' do |en| $escape_newline = en end
@@ -87,7 +89,7 @@ END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 $files = !$stdin.tty? if !defined?($files) && $*.empty?
 $visual = $isatty unless defined? $visual
 $encoding_failure_error = !$isatty unless defined? $visual
-$escape_space = !$files unless defined? $escape_space
+$escape_surrounding_spaces = !$files unless defined? $escape_surrounding_spaces
 $escape_tab = $visual unless defined? $escape_tab
 $escape_newline = true unless defined? $escape_newline
 $number_lines = !$files unless defined? $number_lines
@@ -111,7 +113,8 @@ def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
   end
 end
 
-def vis_c(char, **b)
+def vis_c(char, c_escape=nil, **b)
+  return vis c_escape if $c_escapes && c_escape
   vis char.each_byte.map { "\\x%02X" % _1 }.join, **b
 end
 
@@ -124,77 +127,59 @@ def vis(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
 end
 
 ESCAPES = Hash.new
-(0x00..0x20).map(&:chr).each do |char|
-  ESCAPES[char] = $c_escapes ? vis(char.inspect[1..-2]) : vis_c(char)
-end
-ESCAPES[' ']  = $escape_space     ? vis(' ') : ' '
-ESCAPES['\\'] = $escape_backslash ? vis('\\\\') : '\\'
-ESCAPES["\t"] = $escape_tab       ? vis($c_escapes ? '\t' : '\x09') : "\t"
-ESCAPES["\n"] = $escape_newline   ? vis($c_escapes ? '\n' : '\x0A') : "\n"
 
+ESCAPES["\0"] = vis('\0') if $c_escapes
+ESCAPES["\n"] = "\n" unless $escape_newline
+ESCAPES["\t"] = "\t" unless $escape_tab
+
+$c_escapes and %W[\a \b \t \n \v \f \r \e].each do |chr|
+  ESCAPES[chr] ||= vis_c chr, chr.inspect[1..-2]
+end
+
+# All the lower escapes that haven't been done yet
+(0x00...0x20).each { ESCAPES[_1.chr] ||= vis_c(_1.chr) }
+
+## print escapes, barring the escapes that've
+(0x20..0x7F).map{ _1.chr $encoding }.each do |char|
+  ESCAPES[char] = char
+end
+ESCAPES["\\"] = vis("\\\\") if $escape_backslash
+ESCAPES[" "]  = vis(" ") if $escape_space
+
+# Upper bits, for binary encodings
 if $encoding == Encoding::BINARY
-  (0x80..0xFF).map(&:chr).each do |char|
+  (0x80..0xFF).map{ _1.chr $encoding }.each do |char|
     ESCAPES[char] = vis_c(char)
+  end
+end
+
+ESCAPES.default_proc = proc do |hash, char|
+  hash[char] = if !char.valid_encoding?
+    $ENCODING_FAILED = true
+    vis_c(char, start: BEGIN_ERR, stop: END_ERR)
+  elsif $escape_unicode
+    vis('\u{%04X}' % char.codepoints.sum)
+  else
+    char
   end
 end
 
 def handle(line)
   line.each_char do |char|
-    unless char.valid_encoding?
-      visualize_c char, start: BEGIN_ERR, stop: END_ERR
-      $ENCODING_FAILED = true
-      next
-    end
-
-    if esc = ESCAPES[char]
-      OUTPUT.concat esc
-    elsif char.bytesize > 1 && $escape_unicode
-      # if char.codepoints.sum > 0x7F
-      #   if char.bytes.length > 1
-      #     if $escape_unicode
-            visualize '\u{%04X}' % char.codepoints.sum
-      #       next
-      #     end
-      #   else
-      #     p [char, ESCAPES.keys, $encoding == Encoding::BINARY]
-      #     exit
-      #     visualize_c char
-      #     next
-      #   end
-      # end
-    else
-      OUTPUT.concat char
-    end
-
-    next
-
-    # case char
-    # when $escape_space && ' ' then visualize char, '\x20'
-    # when $escape_backslash && '\\' then visualize '\\\\'
-    # when "\t" then $escape_tab ? visualize($c_escapes ? '\t' : '\x09') : OUTPUT.concat(char)
-    # when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
-    # when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
-    # else
-    #   if char.codepoints.sum > 0x7F
-    #     if char.bytes.length > 1
-    #       if $escape_unicode
-    #         visualize '\u{%04X}' % char.codepoints.sum
-    #         next
-    #       end
-    #     else
-    #       visualize_c char
-    #       next
-    #     end
-    #   end
-    #   OUTPUT.concat char
-    # end
+    OUTPUT.concat ESCAPES[char]
   end
 end
 
 if !$files
   $*.each_with_index do |arg, idx|
     $number_lines and printf "%5d: ", idx += 1
-    handle (+arg).force_encoding($encoding)
+    arg = (+arg).force_encoding $encoding
+    if $escape_surrounding_spaces
+      x = arg.slice!(/\A */) and OUTPUT.concat vis(x)
+      rest = arg.slice!(/ *\Z/)
+    end
+    handle arg
+    rest and OUTPUT.concat vis rest
     OUTPUT.display
     OUTPUT.clear
     puts; $nl = true
