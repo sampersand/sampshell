@@ -3,20 +3,21 @@
 require 'optparse'
 
 # $*.replace %w[ -h -x --c-escapes -h hello world ]
+$isatty = $stdout.tty?
 OptParse.new do |op|
   op.on 'Options'
-  op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not'
-  op.on '--number-lines', 'Number outputs by adding `%5d:` before them; used when -f isnt present'
-  op.on '--arguments', 'Interpret arguments as strings themselves, not as filenames'
+  op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not' do $isatty = true end
+  op.on '--number-lines', 'Number outputs by adding `%5d:` before them; used when -f isnt present' do $number_lines = true end
+  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = true end
   op.on '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set'
 
   op.on 'What to escape'
   op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
-  op.on '--escape-backslash', 'Escape backslashes; defaults to off when in visual' do $escape_backslash = true end
-  $escape_tab = true
-  op.on '--escape-tab', 'Escape tabs' do $escape_tab = true end
-  $escape_newline = true
-  op.on '--dont-escape-newlines', 'Disable escaping newlines; useful when escape whitespace is set' do $escape_newline = false end
+  op.on '-b', '--[no-]escape-backslash', 'Escape backslashes; defaults to off when in visual' do |eb| $escape_backslash = eb end
+  op.on '-t', '--[no-]escape-tab', 'Escape tabs' do |et| $escape_tab = et end
+  op.on '-n', '--[no-]escape-newline', 'Enables (or not) escaping of newlines' do |en| $escape_newline = en end
+  op.on '-u', '--[no-]escape-unicode', 'Escape values larger than 0xff (via \u{...})' do |eu| $escape_unicode = eu end
+  op.on '-a', '--escape-all' do $escape_space = $escape_backslash = $escape_tab = $escape_newline = $escape_unicode = true end
 
   op.on 'Escape Methods'
   $c_escapes = true
@@ -24,12 +25,12 @@ OptParse.new do |op|
   op.on '-x', '--no-c-escapes', "Don't use C escapes; output in hex" do $c_escapes = false end
 
   # op.on '--no-c-escapes', 'Output C escapes in \xHEX instead'
-  op.on '--codepoints', 'Output larger values as codepoint escapes, instead of the char itself' do $codepoints = true end
   op.on '-v', '--[no-]visualize', 'Enable visual effects; when enabled, defaults for other escapes change.' do |x| $visual = x end
+  op.on '-V', 'Same as --no-visualize' do $visual = false end
 
   op.on 'Encodings'
   op.on '--input-encoding=XYZ', 'Set the input encoding'
-  op.on '--output-encoding=XYZ', 'Set the input encoding'
+  op.on '--output-encoding=XYZ', 'Set the input encoding' do |enc| $OUTPUT_ENCODING = enc end
   op.on '--binary', 'Sets the input/output to handle binary data---no utf8'
   op.on '--locale', 'Sets the input/output to the locale (default)'
   op.on '--utf-8', 'Sets the input/output to handle utf8; invalid bytes will be highlighted in red'
@@ -55,13 +56,21 @@ controls: `\c` if avaliable by default; can be set to `\xSEQ` (or `\u{codepoint}
 
 
   op.parse! rescue op.abort #"#{op.program_name}: #$!"
-  if $*.empty? then $files = true; $*.replace %w[-] end
 end
 
 BEGIN_STANDOUT = ENV.fetch('PP_BEGIN_STANDOUT', "\e[7m")
 END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
 BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
 END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
+
+$visual = $isatty unless defined? $visual
+$escape_space = $visual unless defined? $escape_space
+$escape_tab = $visual unless defined? $escape_tab
+$escape_newline = $arguments unless defined? $escape_newline
+$number_lines = $arguments unless defined? $number_lines
+$INPUT_ENCODING ||= 'locale'
+$OUTPUT_ENCODING ||= $INPUT_ENCODING
+
 
 OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $output_encoding)
 
@@ -87,6 +96,7 @@ end
 
 def handle(line)
   line.chars do |char|
+    p [char, char.encoding, char.valid_encoding?]
     unless char.valid_encoding?
       visualize_c char, start: BEGIN_ERR, stop: END_ERR
       next
@@ -99,13 +109,25 @@ def handle(line)
     when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
 
     when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)  # TODO: C escapes
-    when $codepoints && ->{ _1.codepoints.sum > 0x7f } then char.codepoints.each { visualize '\u{%x}' % _1 }
+    when $escape_unicode && ->{ _1.codepoints.sum > 0x7f } then p(char.codepoints).each { visualize '\u{%x}' % _1 }
     else OUTPUT.concat char
     end
   end
 end
 
-$OUTPUT_ENCODING = 'UTF-8'
+if $arguments
+  # $*.each { _1.force_encoding $INPUT_ENCODING }
+  $*.each_with_index do |arg, idx|
+    $number_lines and printf "%5d: ", idx + 1
+    handle (+arg).force_encoding($OUTPUT_ENCODING)
+    OUTPUT.display
+    OUTPUT.clear
+    puts
+  end
+  exit
+end
+
+ARGF.set_encoding $INPUT_ENCODING
 
 while gets
   handle $_.force_encoding($OUTPUT_ENCODING)
