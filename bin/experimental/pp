@@ -11,18 +11,12 @@ OptParse.new do |op|
   op.on '-n', '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set' do $no_newline = true end
 
   op.on '-N' do $number_lines = false end
-  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = 'strings' end
-  op.on '-f', '--files', 'Interpret arguments as files; without either -A or -f, it attempts to read the file, and then if it doesnt exist interpetsas a file' do $arguments = 'files' end
-
-  op.on '--arguments=files/strings/auto', %W[files strings auto], 'Set how arguments are handled. When no tty, and args are given, this must be given' do |how|
-    $arguments = how
-  end
+  op.on '-f', '--files', 'Interpret arguments as files to be read; also disables line numbering' do $files = true; $number_lines = false end
 
   op.on '-h', '--help', 'Print this and then exit' do
     puts op
     exit
   end
-
 
   op.on 'What to escape'
   op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
@@ -94,6 +88,7 @@ END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
 BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
 END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 
+$files = !$stdin.tty? if !defined?($files) && $*.empty?
 $visual = $isatty unless defined? $visual
 $encoding_failure_error = !$isatty unless defined? $visual
 $escape_space = $arguments unless defined? $escape_space
@@ -121,7 +116,7 @@ def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
 end
 
 def handle(line)
-  line.chars do |char|
+  line.each_char do |char|
     unless char.valid_encoding?
       visualize_c char, start: BEGIN_ERR, stop: END_ERR
       $ENCODING_FAILED = true
@@ -151,50 +146,22 @@ def handle(line)
   end
 end
 
-idx = 0
-until ARGV.empty? && ARGF.eof?
-  $number_lines and printf "%5d: ", idx += 1
-
-  if (arguments = $arguments) == 'auto'
-    arguments = (File.exist?($*.first) rescue true) ? 'files' : 'strings'
+if !$files
+  $*.each_with_index do |arg, idx|
+    $number_lines and printf "%5d: ", idx += 1
+    handle (+arg).force_encoding($encoding)
+    OUTPUT.display
+    OUTPUT.clear
+    puts; $nl = true
   end
-
-  case arguments
-  when 'strings' then handle (+$*.first).force_encoding($encoding); $*.shift
-  when 'files' then handle ARGF.gets(nil).force_encoding($encoding)
-  else raise "bad arguments: #{arguments}"
+else
+  $<.binmode
+  while gets
+    handle $_.force_encoding($encoding)
+    OUTPUT.display
+    OUTPUT.clear
   end
-
-  OUTPUT.display
-  OUTPUT.clear
-  (puts; $nl=true) if arguments == 'strings' or $number_lines
+  puts unless $no_newline
 end
 
-$nl or puts unless $no_newline
 exit 1 if $ENCODING_FAILED && $encoding_failure_error
-
-
-# argc = 0
-# until ARGV.empty? && ARGF.eof?
-
-#   p ARGF.class.instance_methods false
-#   p ARGF.fileno
-#   p ARGV
-#   exit
-# end
-
-
-# INPUT_LINE = String.new(capacity: 4096)
-# while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
-#   handle INPUT_LINE.force_encoding($encoding)
-#   INPUT_LINE.force_encoding 'binary'
-#   OUTPUT.display
-#   OUTPUT.clear
-# end
-
-# $<.binmode
-# while gets
-#   handle $_.force_encoding($encoding)
-#   OUTPUT.display
-#   OUTPUT.clear
-# end
