@@ -92,48 +92,30 @@ $encoding_failure_error = !$isatty unless defined? $visual
 $escape_surrounding_spaces = !$files unless defined? $escape_surrounding_spaces
 $escape_tab = $visual unless defined? $escape_tab
 $escape_newline = true unless defined? $escape_newline
-$number_lines = !$files unless defined? $number_lines
+$number_lines = !$files && $isatty unless defined? $number_lines
 $encoding ||= Encoding.find('locale')
 
 OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $encoding)
 
-def escape_error(char)
-  OUTPUT.concat(BEGIN_ERR, char.each_byte.map { "\\x%02X" % _1 }.join, END_ERR)
-end
-
-def visualize_c(char, **b)
-  visualize char.each_byte.map { "\\x%02X" % _1 }.join, **b
-end
-
-def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
-  if $visual
-    OUTPUT.concat(start, val, stop)
-  else
-    OUTPUT.concat(alt)
-  end
-end
-
-def vis_c(char, c_escape=nil, **b)
-  return vis c_escape if $c_escapes && c_escape
-  vis char.each_byte.map { "\\x%02X" % _1 }.join, **b
+def vis_c(char, **b)
+  vis char.each_byte.map { |b| "\\x%02X" % b }.join, **b
 end
 
 def vis(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
   if $visual
-    start + val + stop
+    "#{start}#{val}#{stop}"
   else
     alt
   end
 end
 
 ESCAPES = Hash.new
-
 ESCAPES["\0"] = vis('\0') if $c_escapes
 ESCAPES["\n"] = "\n" unless $escape_newline
 ESCAPES["\t"] = "\t" unless $escape_tab
 
 $c_escapes and %W[\a \b \t \n \v \f \r \e].each do |chr|
-  ESCAPES[chr] ||= vis_c chr, chr.inspect[1..-2]
+  ESCAPES[chr] ||= vis_c chr.inspect[1..-2]
 end
 
 # All the lower escapes that haven't been done yet
