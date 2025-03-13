@@ -3,13 +3,26 @@
 require 'optparse'
 
 $isatty = $stdout.tty?
+$arguments = 'auto'
 OptParse.new do |op|
   op.on 'Options'
   op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not' do $isatty = true end
   op.on '--number-lines', 'Number outputs by adding `%5d:` before them; used when -f isnt present' do $number_lines = true end
-  op.on '-N' do $number_lines = false end
-  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = true end
   op.on '-n', '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set' do $no_newline = true end
+
+  op.on '-N' do $number_lines = false end
+  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = 'files' end
+  op.on '-f', '--files', 'Interpret arguments as files; without either -A or -f, it attempts to read the file, and then if it doesnt exist interpetsas a file' do $arguments = true end
+
+  op.on '--arguments=files/strings/auto', %W[files strings auto], 'Set how arguments are handled. When no tty, and args are given, this must be given' do |how|
+    $arguments = how
+  end
+
+  op.on '-h', '--help', 'Print this and then exit' do
+    puts op
+    exit
+  end
+
 
   op.on 'What to escape'
   op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
@@ -39,20 +52,41 @@ OptParse.new do |op|
   $c_escapes = true
   op.on '--c-escapes', 'Use C escapes when available (default)' do $c_escapes = true end
   op.on '-x', '--no-c-escapes', "Don't use C escapes; output in hex" do $c_escapes = false end
-  op.on '-v', '--[no-]visualize', 'Enable visual effects; when enabled, defaults for other escapes change.' do |x| $visual = x end
-  op.on '-V', 'Same as --no-visualize' do $visual = false end
+  op.on '-v', '--visualize', 'Enable visual effects; when enabled, defaults for other escapes change.' do |x| $visual = p x end
+  op.on '-V', '--no-visualize', 'Same as --no-visualize' do $visual = false end
 
   op.on 'Encodings (all inputs are assumed to be binary)'
-  op.on '-E', '--encoding=ENC', 'Set the input encoding' do |enc| $output_encoding = Encoding.find enc rescue op.abort end
-  op.on '-b', '--binary', 'Sets the input/output to handle binary data---no utf8' do $output_encoding = Encoding::BINARY end
-  op.on '--locale', 'Sets the input/output to the locale (default)' do $output_encoding = Encoding.find('locale') end
-  op.on '-u', '--utf-8', 'Sets the input/output to handle utf8; invalid bytes will be highlighted in red' do $output_encoding = Encoding::UTF_8 end
-  op.on '--[no-]encoding-failure-error', 'If enabled (default when not a tty), invalid bytes causes an error' do |efe| $encoding_failure_error = efe end
+  op.on '-E', '--encoding=ENCODING', 'The output encoding. (defaults to "locale", set by LC_CTYPE)' do |enc|
+    if enc == 'list'
+      puts "available encodings: #{(Encoding.name_list - %w[external internal]).join(', ')}"
+      exit
+    end
+
+    $encoding = Encoding.find enc rescue op.abort
+  end
+
+  op.on '-b', '--binary', '--bytes', 'Sets the output encoding to binary data. (equiv to -Ebinary)' do
+    $encoding = Encoding::BINARY
+  end
+
+  op.on '-u', '--utf-8', 'Sets the output encoding to UTF-8. (equiv to -Eutf-8)' do
+    $encoding = Encoding::UTF_8
+  end
+
+  op.on '--locale', 'Sets the input/output to the `LC_CTYPE` environment variablelocale (default)' do
+    $encoding = Encoding.find('locale')
+  end
+
+  op.on '--[no-]encoding-failure-err', 'If enabled (default when not a tty), invalid bytes causes an error' do |efe| $encoding_failure_error = efe end
 
   op.require_exact = true
   op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
 
   op.parse! rescue op.abort
+
+  if $arguments == 'auto' && !$isatty
+    op.abort "--arguments must be given when not on a tty"
+  end
 end
 
 BEGIN_STANDOUT = ENV.fetch('PP_BEGIN_STANDOUT', "\e[7m")
@@ -66,9 +100,9 @@ $escape_space = $arguments unless defined? $escape_space
 $escape_tab = $visual unless defined? $escape_tab
 $escape_newline = ($arguments; true) unless defined? $escape_newline
 $number_lines = $arguments unless defined? $number_lines
-$output_encoding ||= Encoding.find('locale')
+$encoding ||= Encoding.find('locale')
 
-OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $output_encoding)
+OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $encoding)
 
 def escape_error(char)
   OUTPUT.concat(BEGIN_ERR, char.each_byte.map { "\\x%02X" % _1 }.join, END_ERR)
@@ -117,18 +151,15 @@ def handle(line)
         end
       end
       OUTPUT.concat char
-    # when ($output_encoding == 'utf-8' && $escape_unicode && ->{ _1.codepoints.sum > 0x7f }) then char.codepoints.each { visualize '\u{%x}' % _1 }
-    # when "\x00"..."\x20", ($output_encoding != 'utf-8' && "\x80"...)  then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
-    # else OUTPUT.concat char
     end
   end
 end
 
-if $arguments
+if $arguments == 'strings'
   # $*.each { _1.force_encoding $INPUT_ENCODING }
   $*.each_with_index do |arg, idx|
     $number_lines and printf "%5d: ", idx + 1
-    handle (+arg).force_encoding($output_encoding)
+    handle (+arg).force_encoding($encoding)
     OUTPUT.display
     OUTPUT.clear
     puts
@@ -136,10 +167,19 @@ if $arguments
   exit
 end
 
+# argc = 0
+# until ARGV.empty? && ARGF.eof?
+
+#   p ARGF.class.instance_methods false
+#   p ARGF.fileno
+#   p ARGV
+#   exit
+# end
+
 ARGF.set_encoding $INPUT_ENCODING
 
 while gets
-  handle $_.force_encoding($output_encoding)
+  handle $_.force_encoding($encoding)
   OUTPUT.display
   OUTPUT.clear
 end
