@@ -11,8 +11,8 @@ OptParse.new do |op|
   op.on '-n', '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set' do $no_newline = true end
 
   op.on '-N' do $number_lines = false end
-  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = 'files' end
-  op.on '-f', '--files', 'Interpret arguments as files; without either -A or -f, it attempts to read the file, and then if it doesnt exist interpetsas a file' do $arguments = true end
+  op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = 'strings' end
+  op.on '-f', '--files', 'Interpret arguments as files; without either -A or -f, it attempts to read the file, and then if it doesnt exist interpetsas a file' do $arguments = 'files' end
 
   op.on '--arguments=files/strings/auto', %W[files strings auto], 'Set how arguments are handled. When no tty, and args are given, this must be given' do |how|
     $arguments = how
@@ -120,10 +120,6 @@ def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
   end
 end
 
-def escape(char)
-  OUTPUT.concat char.inspect
-end
-
 def handle(line)
   line.chars do |char|
     unless char.valid_encoding?
@@ -155,17 +151,28 @@ def handle(line)
   end
 end
 
-if $arguments == 'strings'
-  # $*.each { _1.force_encoding $INPUT_ENCODING }
-  $*.each_with_index do |arg, idx|
-    $number_lines and printf "%5d: ", idx + 1
-    handle (+arg).force_encoding($encoding)
-    OUTPUT.display
-    OUTPUT.clear
-    puts
+idx = 0
+until ARGV.empty? && ARGF.eof?
+  $number_lines and printf "%5d: ", idx += 1
+
+  if (arguments = $arguments) == 'auto'
+    arguments = (File.exist?($*.first) rescue true) ? 'files' : 'strings'
   end
-  exit
+
+  case arguments
+  when 'strings' then handle (+$*.first).force_encoding($encoding); $*.shift
+  when 'files' then handle ARGF.gets(nil).force_encoding($encoding)
+  else raise "bad arguments: #{arguments}"
+  end
+
+  OUTPUT.display
+  OUTPUT.clear
+  (puts; $nl=true) if arguments == 'strings' or $number_lines
 end
+
+$nl or puts unless $no_newline
+exit 1 if $ENCODING_FAILED && $encoding_failure_error
+
 
 # argc = 0
 # until ARGV.empty? && ARGF.eof?
@@ -176,13 +183,18 @@ end
 #   exit
 # end
 
-ARGF.set_encoding $INPUT_ENCODING
 
-while gets
-  handle $_.force_encoding($encoding)
-  OUTPUT.display
-  OUTPUT.clear
-end
+# INPUT_LINE = String.new(capacity: 4096)
+# while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
+#   handle INPUT_LINE.force_encoding($encoding)
+#   INPUT_LINE.force_encoding 'binary'
+#   OUTPUT.display
+#   OUTPUT.clear
+# end
 
-puts unless $no_newline
-exit 1 if $ENCODING_FAILED && $encoding_failure_error
+# $<.binmode
+# while gets
+#   handle $_.force_encoding($encoding)
+#   OUTPUT.display
+#   OUTPUT.clear
+# end
