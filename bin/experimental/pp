@@ -2,7 +2,6 @@
 
 require 'optparse'
 
-# $*.replace %w[ -h -x --c-escapes -h hello world ]
 $isatty = $stdout.tty?
 OptParse.new do |op|
   op.on 'Options'
@@ -10,15 +9,31 @@ OptParse.new do |op|
   op.on '--number-lines', 'Number outputs by adding `%5d:` before them; used when -f isnt present' do $number_lines = true end
   op.on '-N' do $number_lines = false end
   op.on '-A', '--arguments', 'Interpret arguments as strings themselves, not as filenames' do $arguments = true end
-  op.on '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set'
+  op.on '-n', '--no-trailing-newline', 'Suppress trailing newline; only helpful when --arguments isnt set' do $no_newline = true end
 
   op.on 'What to escape'
   op.on '--escape-space', 'Escape spaces; when in visual, they standout, otherwise they use \x20' do $escape_space = true end
   op.on '-\\', '--[no-]escape-backslash', 'Escape backslashes; defaults to off when in visual' do |eb| $escape_backslash = eb end
   op.on '-t', '--[no-]escape-tab', 'Escape tabs' do |et| $escape_tab = et end
-  op.on '-n', '--[no-]escape-newline', 'Enables (or not) escaping of newlines' do |en| $escape_newline = en end
-  op.on '-u', '--[no-]escape-unicode', 'Escape values larger than 0xff (via \u{...})' do |eu| $escape_unicode = eu end
+  op.on '--[no-]escape-newline', 'Enables (or not) escaping of newlines' do |en| $escape_newline = en end
+  op.on '-l', 'Line-oriented mode: Do not escape newlines' do $escape_newline = false end
+  op.on '-U', '--[no-]escape-unicode', 'Escape values larger than 0xff (via \u{...})' do |eu| $escape_unicode = eu end
   op.on '-a', '--escape-all' do $escape_space = $escape_backslash = $escape_tab = $escape_newline = $escape_unicode = true end
+  op.on '-w', '--escape-whitespace' do $escape_space = $escape_tab = $escape_newline = true end
+  op.on '--escape=WHAT', Array, 'What to escape; use `?` for a list; prefix with `!,` to disable escapes' do |escape|
+    escape.each do |arg|
+      escape = !arg.slice!(/\A!/)
+      case arg
+      when 'space', "\s", '\s'   then $escape_space = escape
+      when 'tab', "\t", '\t'     then $escape_tab = escape
+      when 'newline', "\n", '\n' then $escape_newline = escape
+      when 'backslash', '\\', '\\\\' then $escape_backslash = escape
+      else op.abort "unknown escape: #{arg}"
+      # when 'space' then $escape_space = negate
+      end
+    end
+  end
+
 
   op.on 'Escape Methods'
   $c_escapes = true
@@ -28,32 +43,16 @@ OptParse.new do |op|
   op.on '-V', 'Same as --no-visualize' do $visual = false end
 
   op.on 'Encodings (all inputs are assumed to be binary)'
-  op.on '--encoding=ENC', 'Set the input encoding' do |enc| $output_encoding = enc end
-  op.on '--binary', 'Sets the input/output to handle binary data---no utf8' do $output_encoding = 'binary' end
-  op.on '--locale', 'Sets the input/output to the locale (default)' do $output_encoding = 'locale' end
-  op.on '--utf-8', 'Sets the input/output to handle utf8; invalid bytes will be highlighted in red' do $output_encoding = 'utf-8' end
+  op.on '-E', '--encoding=ENC', 'Set the input encoding' do |enc| $output_encoding = Encoding.find enc rescue op.abort end
+  op.on '-b', '--binary', 'Sets the input/output to handle binary data---no utf8' do $output_encoding = Encoding::BINARY end
+  op.on '--locale', 'Sets the input/output to the locale (default)' do $output_encoding = Encoding.find('locale') end
+  op.on '-u', '--utf-8', 'Sets the input/output to handle utf8; invalid bytes will be highlighted in red' do $output_encoding = Encoding::UTF_8 end
   op.on '--[no-]encoding-failure-error', 'If enabled (default when not a tty), invalid bytes causes an error' do |efe| $encoding_failure_error = efe end
 
-  # p op.class.instance_methods false
+  op.require_exact = true
   op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
 
-
-=begin
-large things: normally themselves, optional `\u{codepoint}`
-invalid: `\xBYTE` but in bad standout
-prints: always htemselves
-backslash: `\` when in standout mode, `\\` when not, or when requested
-space: itself unless explicitly requested otherwise. then in standout, or with an escape
-newline, tab: either themselves or escaped with `\n`/`\t`
-other whitespace: escaped unless asked for
-controls: `\c` if avaliable by default; can be set to `\xSEQ` (or `\u{codepoint}`?)
-
-
-=end
-  ## by default:
-
-
-  op.parse! rescue op.abort #"#{op.program_name}: #$!"
+  op.parse! rescue op.abort
 end
 
 BEGIN_STANDOUT = ENV.fetch('PP_BEGIN_STANDOUT', "\e[7m")
@@ -63,11 +62,11 @@ END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 
 $visual = $isatty unless defined? $visual
 $encoding_failure_error = !$isatty unless defined? $visual
-$escape_space = $visual unless defined? $escape_space
+$escape_space = $arguments unless defined? $escape_space
 $escape_tab = $visual unless defined? $escape_tab
-$escape_newline = $arguments unless defined? $escape_newline
+$escape_newline = ($arguments; true) unless defined? $escape_newline
 $number_lines = $arguments unless defined? $number_lines
-$output_encoding ||= 'locale'
+$output_encoding ||= Encoding.find('locale')
 
 OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $output_encoding)
 
@@ -93,7 +92,6 @@ end
 
 def handle(line)
   line.chars do |char|
-    # p [char, char.encoding, char.valid_encoding?]
     unless char.valid_encoding?
       visualize_c char, start: BEGIN_ERR, stop: END_ERR
       $ENCODING_FAILED = true
@@ -105,10 +103,23 @@ def handle(line)
     when $escape_backslash && '\\' then visualize '\\\\'
     when "\t" then $escape_tab ? visualize($c_escapes ? '\t' : '\x09') : OUTPUT.concat(char)
     when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
-
-    when ($output_encoding == 'utf-8' && $escape_unicode && ->{ _1.codepoints.sum > 0x7f }) then char.codepoints.each { visualize '\u{%x}' % _1 }
-    when "\x00"..."\x20", ($output_encoding != 'utf-8' && "\x80"...)  then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
-    else OUTPUT.concat char
+    when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
+    else
+      if char.codepoints.sum > 0x7F
+        if char.bytes.length > 1
+          if $escape_unicode
+            visualize '\u{%04X}' % char.codepoints.sum
+            next
+          end
+        else
+          visualize_c char
+          next
+        end
+      end
+      OUTPUT.concat char
+    # when ($output_encoding == 'utf-8' && $escape_unicode && ->{ _1.codepoints.sum > 0x7f }) then char.codepoints.each { visualize '\u{%x}' % _1 }
+    # when "\x00"..."\x20", ($output_encoding != 'utf-8' && "\x80"...)  then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
+    # else OUTPUT.concat char
     end
   end
 end
@@ -133,4 +144,5 @@ while gets
   OUTPUT.clear
 end
 
+puts unless $no_newline
 exit 1 if $ENCODING_FAILED && $encoding_failure_error
