@@ -3,7 +3,6 @@
 require 'optparse'
 
 $isatty = $stdout.tty?
-$arguments = 'auto'
 OptParse.new do |op|
   op.on 'Options'
   op.on '--tty', 'Assume that stdout is a tty (for defaults) even if it is not' do $isatty = true end
@@ -26,7 +25,8 @@ OptParse.new do |op|
   op.on '-l', 'Line-oriented mode: Do not escape newlines' do $escape_newline = false end
   op.on '-U', '--[no-]escape-unicode', 'Escape values larger than 0xff (via \u{...})' do |eu| $escape_unicode = eu end
   op.on '-a', '--escape-all' do $escape_space = $escape_backslash = $escape_tab = $escape_newline = $escape_unicode = true end
-  op.on '-w', '--escape-whitespace' do $escape_space = $escape_tab = $escape_newline = true end
+  op.on '-w', '--no-escape-whitespace' do $escape_space = $escape_tab = $escape_newline = false end
+  # op.on '--unescape=WHAT', Array, 'What to escape; use `?` for a list; prefix with `!,` to disable escapes' do |escape|
   op.on '--escape=WHAT', Array, 'What to escape; use `?` for a list; prefix with `!,` to disable escapes' do |escape|
     escape.each do |arg|
       escape = !arg.slice!(/\A!/)
@@ -76,11 +76,7 @@ OptParse.new do |op|
   op.require_exact = true
   op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
 
-  op.parse! rescue op.abort
-
-  if $arguments == 'auto' && !$isatty
-    op.abort "--arguments must be given when not on a tty"
-  end
+  op.order! rescue op.abort
 end
 
 BEGIN_STANDOUT = ENV.fetch('PP_BEGIN_STANDOUT', "\e[7m")
@@ -91,10 +87,10 @@ END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 $files = !$stdin.tty? if !defined?($files) && $*.empty?
 $visual = $isatty unless defined? $visual
 $encoding_failure_error = !$isatty unless defined? $visual
-$escape_space = $arguments unless defined? $escape_space
+$escape_space = !$files unless defined? $escape_space
 $escape_tab = $visual unless defined? $escape_tab
-$escape_newline = ($arguments; true) unless defined? $escape_newline
-$number_lines = $arguments unless defined? $number_lines
+$escape_newline = true unless defined? $escape_newline
+$number_lines = !$files unless defined? $number_lines
 $encoding ||= Encoding.find('locale')
 
 OUTPUT = String.new(capacity: 4096 * 8)#, encoding: $encoding)
@@ -115,6 +111,33 @@ def visualize(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
   end
 end
 
+def vis_c(char, **b)
+  vis char.each_byte.map { "\\x%02X" % _1 }.join, **b
+end
+
+def vis(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
+  if $visual
+    start + val + stop
+  else
+    alt
+  end
+end
+
+ESCAPES = Hash.new
+(0x00..0x20).map(&:chr).each do |char|
+  ESCAPES[char] = $c_escapes ? vis(char.inspect[1..-2]) : vis_c(char)
+end
+ESCAPES[' ']  = $escape_space     ? vis(' ') : ' '
+ESCAPES['\\'] = $escape_backslash ? vis('\\\\') : '\\'
+ESCAPES["\t"] = $escape_tab       ? vis($c_escapes ? '\t' : '\x09') : "\t"
+ESCAPES["\n"] = $escape_newline   ? vis($c_escapes ? '\n' : '\x0A') : "\n"
+
+if $encoding == Encoding::BINARY
+  (0x80..0xFF).map(&:chr).each do |char|
+    ESCAPES[char] = vis_c(char)
+  end
+end
+
 def handle(line)
   line.each_char do |char|
     unless char.valid_encoding?
@@ -123,26 +146,48 @@ def handle(line)
       next
     end
 
-    case char
-    when $escape_space && ' ' then visualize char, '\x20'
-    when $escape_backslash && '\\' then visualize '\\\\'
-    when "\t" then $escape_tab ? visualize($c_escapes ? '\t' : '\x09') : OUTPUT.concat(char)
-    when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
-    when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
-    else
-      if char.codepoints.sum > 0x7F
-        if char.bytes.length > 1
-          if $escape_unicode
+    if esc = ESCAPES[char]
+      OUTPUT.concat esc
+    elsif char.bytesize > 1 && $escape_unicode
+      # if char.codepoints.sum > 0x7F
+      #   if char.bytes.length > 1
+      #     if $escape_unicode
             visualize '\u{%04X}' % char.codepoints.sum
-            next
-          end
-        else
-          visualize_c char
-          next
-        end
-      end
+      #       next
+      #     end
+      #   else
+      #     p [char, ESCAPES.keys, $encoding == Encoding::BINARY]
+      #     exit
+      #     visualize_c char
+      #     next
+      #   end
+      # end
+    else
       OUTPUT.concat char
     end
+
+    next
+
+    # case char
+    # when $escape_space && ' ' then visualize char, '\x20'
+    # when $escape_backslash && '\\' then visualize '\\\\'
+    # when "\t" then $escape_tab ? visualize($c_escapes ? '\t' : '\x09') : OUTPUT.concat(char)
+    # when "\n" then $escape_newline ? visualize($c_escapes ? '\n' : '\x0A') : OUTPUT.concat(char)
+    # when "\x00"..."\x20" then char.inspect.length < 6 && $c_escapes ? visualize(char.inspect[1..-2]) : visualize_c(char)
+    # else
+    #   if char.codepoints.sum > 0x7F
+    #     if char.bytes.length > 1
+    #       if $escape_unicode
+    #         visualize '\u{%04X}' % char.codepoints.sum
+    #         next
+    #       end
+    #     else
+    #       visualize_c char
+    #       next
+    #     end
+    #   end
+    #   OUTPUT.concat char
+    # end
   end
 end
 
