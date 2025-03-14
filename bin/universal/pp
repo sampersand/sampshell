@@ -57,12 +57,14 @@ OptParse.new do |op|
     $encoding = Encoding.find enc rescue op.abort
   end
 
-  op.on '-8', '--utf-8', 'Equivalent to --encoding=UTF-8. (default)' do $encoding = Encoding::UTF_8 end
+  op.on '-u', '-8', '--utf-8', 'Equivalent to --encoding=UTF-8. (default)' do $encoding = Encoding::UTF_8 end
   op.on '-b', '--binary', '--bytes', 'Equivalent to --encoding=binary. (All bytes are valid.)' do $encoding = Encoding::BINARY end
   op.on '-a', '--ascii', 'Equivalent to --encoding=ascii. (8th bit bytes are invalid.)' do $encoding = Encoding::ASCII end
-  op.on       '--locale', 'Equivalent to --encoding=locale, i.e. what LC_ALL/LC_CTYPE/LANG specify.' do $encoding = Encoding.find('locale') end
+  op.on '-L', '--locale', 'Equivalent to --encoding=locale, i.e. what LC_ALL/LC_CTYPE/LANG specify.' do $encoding = Encoding.find('locale') end
 
   op.on '--[no-]encoding-failure-err', 'Invalid bytes cause non-zero exit. (default: output isnt a tty)' do |efe| $encoding_failure_error = efe end
+
+  op.on_tail "\nnote: IF any invalid bytes for the output encoding are read, the exit status is based on `--encoding-failure-err`"
 
   op.require_exact = true
   op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
