@@ -144,6 +144,7 @@ def handle(line)
   end
 end
 
+# TODO: allow for `pp filename` 
 if !$files
   $*.each_with_index do |arg, idx|
     $number_lines and printf "%5d: ", idx += 1
@@ -161,7 +162,7 @@ if !$files
   end
 else
   $<.binmode
-  while gets
+  while gets # TODO: handle directories
     handle $_.force_encoding($encoding)
     OUTPUT.display
     OUTPUT.clear
