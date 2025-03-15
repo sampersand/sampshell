@@ -75,10 +75,10 @@ cdd () {
 	CDPATH= \cd -- "$1"
 }
 
-## Add in a `p` program which prints out a debugging form of its arguments.
-# This program `.`s the `p` program, instead of being an alias or something, as
-# that way variables with `NUL` in them can be passed in.
-p () ( . p )
+## Add in a `p_sh` program which prints out a debugging form of its arguments.
+# This program `.`s the `p_sh` program, instead of executing it, as that way
+# `NUL` can be passed by shells which support it.
+p_sh () ( . p _sh)
 
 ## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {

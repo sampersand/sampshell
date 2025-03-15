@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/bin/csh -f
 
 # Just join all newlines with spaces (or whatever the first arg is)
-
-tr '\n' "${1- }"
+cat $argv:q | tr -s '\n' ' '
 exec echo

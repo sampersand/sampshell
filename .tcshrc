@@ -1,3 +1,4 @@
+#!/bin/tcsh
 if ( $?prompt ) then # only do load up this file if a prompt is defined
 alias cdd 'cd `dirname \!*`'
 alias reload 'source ~/.cshrc'
@@ -5,10 +6,11 @@ alias h history
 alias gs 'git status'
 alias +x 'chmod +x \!*'
 alias md 'mkdir -p \!*:q && \cd -- \!*q'
+alias ls 'ls -AFqhGb'
 
 set cdpath = ( ~/.cdpath )
 
-set globstar noclobber printextivalue rmstar savehist
+set globstar noclobber printextivalue rmstar savehist autolist
 
 set symlinks = chase
 set echo_style = both
