@@ -18,7 +18,7 @@ readonly nl="${nl%?}"         cr="${cr%?}"        nul="${nul:-a}" \
 # Print out a character and escape
 smso=`tput smso` rmso=`tput rmso`
 presc () {
-	printf %s${2-%s}%s "$smso" "$1" "$rmso"
+	printf %s\\${2-%s}%s "$smso" "$1" "$rmso"
 }
 
 argno=0
@@ -33,18 +33,19 @@ for arg do
 
 		case $head in
 		[[:print:]]) printf %s "$head" ;;
-		# $nul)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
-		# $alrm)       presc a ;;
-		# $bsp)        presc b ;;
-		# $esc)        presc e ;;
-		# $ff)         presc f ;;
-		# $nl)         presc n ;;
-		# $cr)         presc r ;;
-		# $tab)        presc t ;;
-		# $vtab)       presc v ;;
-		*)
-			printf '\033[7m\\'${2-%s}'\033[27m' "$1"
-           presc "'$head" 'x%02X' ;;
+		$nul)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
+		$alrm)       presc a ;;
+		$bsp)        presc b ;;
+		$esc)        presc e ;;
+		$ff)         presc f ;;
+		$nl)         presc n ;;
+		$cr)         presc r ;;
+		$tab)        presc t ;;
+		$vtab)       presc v ;;
+		*) printf '%s\\x%02X%s' "$smso" "'$head" "$rmso"
+# printf '\033[7m\\'${2-%s}'\033[27m' "$1"
+           # presc "'$head" 'x%02X'
+           ;;
 		esac
 	done
 
