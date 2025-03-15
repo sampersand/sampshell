@@ -2,17 +2,18 @@
 
 # Safety first, in the situation where we're `.`d.
 \unalias -a
-\set -euf +xv
-\unset -v IFS
+set -euf +xv
+unset -v IFS
 
 # Print out a character and escape
-smso=`tput smso` rmso=`tput rmso`
+smso=`command -p tput smso` rmso=`command -p tput rmso`
 argno=0
 for arg do
 	printf '%5d: ' $(( argno += 1 ))
 
 	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
-	while test ${#arg} -ne 0; do
+	while command -p test ${#arg} -ne 0
+	do
 		tail=${arg#?}
 		head=${arg%"$tail"}
 		arg=$tail

@@ -1,5 +1,6 @@
 #!/bin/sh
 
 ## Clears the entire screen, and resets the scroll buffer.
+exec tput reset
 
-printf '\ec\e[3J'
+## printf '\ec\e[3J' <-- older way I've done it
