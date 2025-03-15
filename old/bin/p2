@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Safety first, in the situation where we're `.`d.
+\unalias -a
+set -euf +xv
+unset -v IFS
+
+# Escaped characters. Since we support shells that don't support POSIX-2024, we
+# can't use the `$'...'` syntax and need to use `printf` with escapes. A few
+# notes: The `\n`, `\r` and `\0` escapes have to be handled specially: \n and \r
+# can't be done directly with `$(...)` (`\r` is just a safeguard), and not all
+# shells support `\0`, so i do that here.
+nl=$(printf '\na') cr=$(printf '\ra') nul="$(printf \\0)"
+readonly nl="${nl%?}"         cr="${cr%?}"        nul="${nul:-a}" \
+         alrm="$(printf \\a)" bsp="$(printf \\b)" esc="$(printf \\e)" \
+         ff="$(printf \\f) "  tab="$(printf \\t)" vtab="$(printf \\v)"
+
+# Print out a character and escape
+smso=`tput smso` rmso=`tput rmso`
+presc () {
+	printf %s\\${2-%s}%s "$smso" "$1" "$rmso"
+}
+
+argno=0
+for arg do
+	printf '%5d: ' $(( argno += 1 ))
+
+	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
+	while test ${#arg} -ne 0; do
+		tail=${arg#?}
+		head=${arg%"$tail"}
+		arg=$tail
+
+		case $head in
+		[[:print:]]) printf %s "$head" ;;
+		$nul)        presc 0 ;; # `nul` defaults to `a`, which is `[[:print:]]`
+		$alrm)       presc a ;;
+		$bsp)        presc b ;;
+		$esc)        presc e ;;
+		$ff)         presc f ;;
+		$nl)         presc n ;;
+		$cr)         presc r ;;
+		$tab)        presc t ;;
+		$vtab)       presc v ;;
+		*) printf '%s\\x%02X%s' "$smso" "'$head" "$rmso"
+# printf '\033[7m\\'${2-%s}'\033[27m' "$1"
+           # presc "'$head" 'x%02X'
+           ;;
+		esac
+	done
+
+	echo
+done
