@@ -66,7 +66,7 @@ OptParse.new do |op|
 
   op.on_tail "\nnote: IF any invalid bytes for the output encoding are read, the exit status is based on `--encoding-failure-err`"
 
-  op.require_exact = true
+  op.require_exact = true if defined? op.require_exact = true
   op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
 
   op.parse! rescue op.abort # <-- only cares about flags when POSIXLY_CORRECT is set.
@@ -78,7 +78,7 @@ END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
 BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
 END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 
-$files = !$stdin.tty? if !defined?($files) && $*.empty?
+$files = !$stdin.tty? && !$*.empty? unless defined?($files)
 $visual = $stdout.tty? unless defined? $visual
 $encoding_failure_error = !$stdout.tty? unless defined? $visual
 $escape_spaces = !$files unless defined? $escape_spaces
@@ -113,10 +113,10 @@ $c_escapes and %W[\a \b \t \n \v \f \r \e].each do |chr|
 end
 
 # All the lower escapes that haven't been done yet
-(0x00...0x20).each { ESCAPES[_1.chr] ||= vis_c(_1.chr) }
+(0x00...0x20).each { |c| ESCAPES[c.chr] ||= vis_c(c.chr) }
 
 ## Normal print characters
-(0x20..0x7F).map{ _1.chr $encoding }.each do |char|
+(0x20..0x7F).map{ |c| c.chr $encoding }.each do |char|
   ESCAPES[char] = char
 end
 ESCAPES["\\"] = vis("\\\\") if $escape_backslash
@@ -124,7 +124,7 @@ ESCAPES[" "]  = vis(" ") if $escape_space
 
 # Upper bits, for binary encodings
 if $encoding == Encoding::BINARY
-  (0x80..0xFF).map{ _1.chr $encoding }.each do |char|
+  (0x80..0xFF).map{ |c| c.chr $encoding }.each do |char|
     ESCAPES[char] = vis_c(char)
   end
 end

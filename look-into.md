@@ -1,3 +1,5 @@
+`sched` is quite cool, look more into that. amazing
+
 stty -echoctl echok
 stty -noflsh <-- seems actually useful
 CTRL+T gives system status, kinda nifty
