@@ -1,35 +1,38 @@
 #!/bin/csh -f
 
-alias die 'echo \!*; exit 1'
+alias die 'echo \!* > /dev/stderr ; exit 1'
 
 if ( $#argv < 3 ) then
-	die "usage: $0:t ibase obase numbers [...]"
+   die "usage: $0:t input-base output-base numbers [...]"
 endif
 
 alias convert 'eval "              \\
 switch ( $\!:1 )                   \\
 case x:                            \\
-	set \!:2base = 16               \\
-	breaksw                         \\
+   set \!:2base = 16               \\
+   breaksw                         \\
 case o:                            \\
-	set \!:2base = 8                \\
-	breaksw                         \\
+   set \!:2base = 8                \\
+   breaksw                         \\
 case d:                            \\
-	set \!:2base = 2                \\
-	breaksw                         \\
+   set \!:2base = 10               \\
+   breaksw                         \\
+case b:                            \\
+   set \!:2base = 2                \\
+   breaksw                         \\
 case "\"\"":                       \\
 case *[^0-9]*:                     \\
-	die argument \#\!:1 is not a   \\\
-		number or xodb >/dev/stderr  \\
+   die argument \#\!:1 is not a   \\\
+      number or xodb >/dev/stderr  \\
 default:                           \\
-	set \!:2base = $\!:1            \\
+   set \!:2base = $\!:1            \\
 endsw"'
 
 convert 1 i
 convert 2 o
 
 shift; shift
-cat <<EOS
-ibase=$ibase
+bc <<EOS
 obase=$obase
-`echo $argv | tr ' ' '\n'`
+ibase=$ibase
+`echo "$argv" | tr 'a-z ' 'A-Z\n'`

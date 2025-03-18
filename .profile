@@ -92,7 +92,9 @@ export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
 
 ## Words is something I use quite frequently; only assign `$words` though if it
 # doesn't exist, and `$SampShell_WORDS` is a file.
-[ -z "$words" ] && [ -f "$SampShell_WORDS" ] && export words="$SampShell_WORDS"
+if [ -z "${words-}" ] && [ -f "${SampShell_WORDS-}" ]; then
+   export words="$SampShell_WORDS"
+fi
 
 ## Disable homebrew analytics.
 # If set, homebrew (the mac package manager) won't send any analytics. We set it

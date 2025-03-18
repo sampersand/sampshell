@@ -28,9 +28,8 @@ hrc () { hr | pbcopy }
 
 ################################################################################
 
-sublzfiles () {
-	subl ~/.z(shenv|shrc|profile|login|logout)
-}
+szfiles () subl ~/.z(shenv|shrc|profile|login|logout)
+szrc () subl ~/.zshrc
 
 awkf () awk "BEGIN{$1; exit}"
 +x-exp () +x ~ss/bin/experimental/${^@}

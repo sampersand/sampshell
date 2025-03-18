@@ -78,7 +78,7 @@ END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
 BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
 END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
 
-$files = !$stdin.tty? && !$*.empty? unless defined?($files)
+$files = !$stdin.tty? && $*.empty? unless defined?($files)
 $visual = $stdout.tty? unless defined? $visual
 $encoding_failure_error = !$stdout.tty? unless defined? $visual
 $escape_spaces = !$files unless defined? $escape_spaces

@@ -185,6 +185,7 @@ unsetopt NO_BANG_HIST     # Lets you do `!!` and friends on the command line.
 ## Options that modify valid syntax 
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
+setopt RC_EXPAND_PARAM      # `ary=(x y z); echo a${ary}b` is `axb ayb azb`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
 setopt GLOB_STAR_SHORT      # Enable the `**.c` shorthand for `**/*.c`
 setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
