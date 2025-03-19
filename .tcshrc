@@ -1,67 +1,67 @@
-#!/bin/tcsh
+#!tcsh
+alias warn 'echo >/dev/stderr'
 if ( $?prompt ) then # only do load up this file if a prompt is defined
-alias cdd       'cd `dirname \!*`'
-alias reload    'source ~/.tcshrc'
-alias h         'history'
-alias gs        'git status'
-alias +x        'chmod +x \!*'
-alias md        'mkdir -p \!*:q && \cd -- \!*q'
-alias ls        'ls -AFqhGb'
-alias s         'subl'
-alias ss        'subl --create'
-alias cdss      'cd $SampShell_ROOTDIR:q'
+	alias cdd       'cd `dirname \!*`'
+	alias reload    'source ~/.tcshrc'
+	alias h         'history'
+	alias gs        'git status'
+	alias +x        'chmod +x \!*'
+	alias md        'mkdir -p \!*:q && \cd -- \!*q'
+	alias ls        'ls -AFqhGb'
+	alias s         'subl'
+	alias ss        'subl --create'
+	alias cdss      'cd $SampShell_ROOTDIR:q'
 
-set cdpath = ( ~/.cdpath )
-# TODO, look at highlight
-set globstar noclobber printexitvalue rmstar autolist correct \
-	dunique highlight pushdsilent
-
-
-set shell       = /bin/sh
-set symlinks    = chase
-set echo_style  = both
-set complete    = Enhance
-set histchars   = '\!,'
-set histdup     = prev
-set history     = 1000
-set savehist    = ( 10000 merge lock )
-set histfile    = ~/.tcsh_history
-set ignoreeof   = 2
-set listflags   = A color
-
-unset promptchars # MACOS SETS THIS FOR SOME REASON
-set prompt                    = '%S%B[%b%p \\!%U\!%u ?%?'
-if ( $SHLVL != 1 ) set prompt = "$prompt L%"\$SHLVL
-set prompt                    = "$prompt%B]%b %c03 %n%B%#%b%s "
+	set cdpath = ( ~/.cdpath )
+	# TODO, look at highlight
+	set globstar noclobber printexitvalue rmstar autolist correct \
+		dunique highlight pushdsilent
 
 
-# Ignore `>`, eg from the examples
-alias '>' = ''
+	set shell       = /bin/sh
+	set symlinks    = chase
+	set echo_style  = both
+	set complete    = Enhance
+	set histchars   = '\!,'
+	set histdup     = prev
+	set history     = 1000
+	set savehist    = ( 10000 merge lock )
+	set histfile    = ~/.tcsh_history
+	set ignoreeof   = 2
+	set listflags   = A color
 
-alias helpcommand '\!:1 --help'
-## OTHER STUFF I HAVENT FIGURE DOUT IF I WANT
-# alias '>' = ''
-# alias subl 'open \!* -a sublime4'
-# set histchars = '`\!,'
-# # set cdpath =
-# # Ignore `>`, eg from the examples
-# alias '>' = ''
-# # alias precmd date
-# # set backslash_quote <-- let's live dangerouslynadnot set it
-# set color dunique
-# set correct = cmd
-# # set ellipsis
-#               Under very rare circumstances, the shell may report `You have mail.' instead of `You have new mail.'
+	unset promptchars # MACOS SETS THIS FOR SOME REASON
+	set prompt                    = '%S%B[%b%p \\!%U\!%u ?%?'
+	if ( $SHLVL != 1 ) set prompt = "$prompt L%"\$SHLVL
+	set prompt                    = "$prompt%B]%b %c03 %n%B%#%b%s "
 
-alias h 'history \!:* 16 | awk '\''  \\
-{ a[NR] = $0 }                       \\
-END {                                \\
-   x = $1 + 1                        \\
-   sep = "%" length(-x) "d %s\n"     \\
-   for (i = 1; i < NR; i++) {        \\
-      $0 = a[i]                      \\
-      printf sep, $1-x, a[i]         \\
-   }                                 \\
-}'\'
 
+	# Ignore `>`, eg from the examples
+	alias '>' = ''
+
+	alias helpcommand '\!:1 --help'
+	## OTHER STUFF I HAVENT FIGURE DOUT IF I WANT
+	# alias '>' = ''
+	# alias subl 'open \!* -a sublime4'
+	# set histchars = '`\!,'
+	# # set cdpath =
+	# # Ignore `>`, eg from the examples
+	# alias '>' = ''
+	# # alias precmd date
+	# # set backslash_quote <-- let's live dangerouslynadnot set it
+	# set color dunique
+	# set correct = cmd
+	# # set ellipsis
+	#               Under very rare circumstances, the shell may report `You have mail.' instead of `You have new mail.'
+
+	alias h 'history \!:* 16 | awk '\''  \\
+	{ a[NR] = $0 }                       \\
+	END {                                \\
+	   x = $1 + 1                        \\
+	   sep = "%" length(-x) "d %s\n"     \\
+	   for (i = 1; i < NR; i++) {        \\
+	      $0 = a[i]                      \\
+	      printf sep, $1-x, a[i]         \\
+	   }                                 \\
+	}'\'
 endif
