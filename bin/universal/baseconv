@@ -1,9 +1,15 @@
-#!/bin/csh -f
+#!/bin/tcsh -f
+
+## This file's a shim around `bc` to convert between different bases. While it
+# does work, it's really just me having fun with tcsh, as this can be much more
+# easily done in sh/zsh.
+##
 
 alias die 'echo \!* > /dev/stderr ; exit 1'
 
 if ( $#argv < 3 ) then
-   die "usage: $0:t input-base output-base numbers [...]"
+   die "usage: $0:t input-base output-base numbers [...]\
+(you can also aliases for bases: x=16, o=8, d=10, b=2.)"
 endif
 
 alias convert 'eval "              \\
