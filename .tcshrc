@@ -9,6 +9,7 @@ if ( $?prompt ) then # only do load up this file if a prompt is defined
 	alias md        'mkdir -p \!*:q && \cd -- \!*q'
 	alias ls        'ls -AFqhGb'
 	alias s         'subl'
+	alias g         'git'
 	alias ss        'subl --create'
 	alias cdss      'cd $SampShell_ROOTDIR:q'
 

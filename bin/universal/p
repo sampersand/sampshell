@@ -21,7 +21,7 @@ OptParse.new do |op|
 
   op.on '-N', '--[no-]number-args', "Number args; Not useful with -f. (default: when output's a tty)" do |nl| $number_lines = nl end
   op.on       '--trailing-newline', 'Print a final trailing newline; only useful with -f. (default)' do $no_newline = false end
-  op.on '-n',  '--no-trailing-newline', 'Suppress final trailing newline.' do $no_newline = true end
+  op.on '-n', '--no-trailing-newline', 'Suppress final trailing newline.' do $no_newline = true end
   # op.on '-N', '--[no-]number-lines', 'Number arguments; defaults to on when output is a TTY' do |nl| $number_lines = nl end
 
   op.separator "\nWhat to Escape"
@@ -32,7 +32,7 @@ OptParse.new do |op|
   op.on '-s', '--[no-]escape-space', 'Escape spaces; only useful when in visual mode.' do |es| $escape_space = es end
   op.on       '--[no-]escape-outer-space', 'Like --escape-space, but only leading/trailing spaces',
                                            'Not useful with -f. (default)' do |ess| $escape_surronding_spaces = ess end
-  op.on '-\\', '--[no-]escape-backslash', 'Escape backslashes (default: off when in --visual)' do |eb| $escape_backslash = eb end
+  op.on '-B', '--[no-]escape-backslash', 'Escape backslashes (default: off when in --visual)' do |eb| $escape_backslash = eb end
   op.on '-U', '--[no-]escape-unicode', 'Escape non-ASCII Unicode characters via `\u{...}`' do |eu| $escape_unicode = eu end
   # op.on '-a', '--escape-all', 'Escapes all characters' do $escape_space = $escape_backslash = $escape_tab = $escape_newline = $escape_unicode = true end
   # op.on '-w', '--no-escape-whitespace', 'Do not escape whitespace' do $escape_space = $escape_tab = $escape_newline = $escape_surronding_spaces = false end
@@ -67,29 +67,32 @@ OptParse.new do |op|
   op.on_tail "\nnote: IF any invalid bytes for the output encoding are read, the exit status is based on `--encoding-failure-err`"
 
   op.require_exact = true if defined? op.require_exact = true
-  op.on 'ENVIRONMENT: PP_BEGIN_STANDOUT; PP_END_STANDOUT; PP_BEGIN_ERR; PP_END_ERR'
+  op.on 'ENVIRONMENT: P_BEGIN_STANDOUT; P_END_STANDOUT; P_BEGIN_ERR; P_END_ERR'
 
   op.parse! rescue op.abort # <-- only cares about flags when POSIXLY_CORRECT is set.
   # op.order! rescue op.abort <-- does care about order of flags
 end
 
-BEGIN_STANDOUT = ENV.fetch('PP_BEGIN_STANDOUT', "\e[7m")
-END_STANDOUT   = ENV.fetch('PP_END_STANDOUT',   "\e[27m")
-BEGIN_ERR      = ENV.fetch('PP_BEGIN_ERR',      "\e[37m\e[41m")
-END_ERR        = ENV.fetch('PP_END_ERR',        "\e[49m\e[39m")
+# Fetch standouts (regardless of whether they're being used)
+BEGIN_STANDOUT = ENV.fetch('P_BEGIN_STANDOUT', "\e[7m")
+END_STANDOUT   = ENV.fetch('P_END_STANDOUT',   "\e[27m")
+BEGIN_ERR      = ENV.fetch('P_BEGIN_ERR',      "\e[37m\e[41m")
+END_ERR        = ENV.fetch('P_END_ERR',        "\e[49m\e[39m")
 
-$files = !$stdin.tty? && $*.empty? unless defined?($files)
-$visual = $stdout.tty? unless defined? $visual
-$encoding_failure_error = !$stdout.tty? unless defined? $visual
-$escape_spaces = !$files unless defined? $escape_spaces
-$escape_tab = true unless defined? $escape_tab
-$escape_newline = true unless defined? $escape_newline
-$number_lines = !$files && $stdout.tty? unless defined? $number_lines
-$encoding ||= Encoding.find('locale')
-$escape_backslash = !$visual unless defined? $escape_backslash
-$invalid_visual = true unless defined? $invalid_visual
-$escape_surronding_spaces = true unless defined? $escape_surronding_spaces
-OUTPUT = String.new(capacity: 4096 * 8)#, encoding: Encoding::BINARY)
+# Specify defaults
+defined? $files                    or $files = !$stdin.tty? && $*.empty?
+defined? $visual                   or $visual = $stdout.tty?
+defined? $encoding_failure_error   or $encoding_failure_error = !$stdout.tty?
+defined? $escape_spaces            or $escape_spaces = !$files
+defined? $escape_tab               or $escape_tab = true
+defined? $escape_newline           or $escape_newline = true
+defined? $number_lines             or $number_lines = !$files && $stdout.tty?
+defined? $escape_backslash         or $escape_backslash = !$visual
+defined? $invalid_visual           or $invalid_visual = true
+defined? $escape_surronding_spaces or $escape_surronding_spaces = true
+defined? $encoding                 or $encoding = Encoding.find('locale')
+
+OUTPUT = String.new(capacity: 4096 * 8)
 
 def vis_c(char, **b)
   vis char.each_byte.map { |b| "\\x%02X" % b }.join, **b
@@ -103,6 +106,7 @@ def vis(val, alt=val, start: BEGIN_STANDOUT, stop: END_STANDOUT)
   end
 end
 
+## Construct Escapes
 ESCAPES = Hash.new
 ESCAPES["\0"] = vis('\0') if $c_escapes
 ESCAPES["\n"] = "\n" unless $escape_newline
