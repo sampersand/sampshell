@@ -1,15 +1,14 @@
 #!tcsh
 alias warn 'echo >/dev/stderr'
 if ( $?prompt ) then # only do load up this file if a prompt is defined
+	alias cd        'pushd'
 	alias cdd       'cd `dirname \!*`'
 	alias reload    'source ~/.tcshrc'
 	alias h         'history'
-	alias gs        'git status'
 	alias +x        'chmod +x \!*'
 	alias md        'mkdir -p \!*:q && \cd -- \!*q'
 	alias ls        'ls -AFqhGb'
 	alias s         'subl'
-	alias g         'git'
 	alias ss        'subl --create'
 	alias cdss      'cd $SampShell_ROOTDIR:q'
 
@@ -65,4 +64,9 @@ if ( $?prompt ) then # only do load up this file if a prompt is defined
 	      printf sep, $1-x, a[i]         \\
 	   }                                 \\
 	}'\'
+
+	alias gs        'git status'
+	alias g         'git'
+
+
 endif

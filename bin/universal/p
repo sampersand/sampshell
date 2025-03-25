@@ -150,13 +150,13 @@ def handle(line)
   end
 end
 
-# TODO: allow for `pp filename`
+# TODO: allow for `p filename`
 if !$files
   $*.each_with_index do |arg, idx|
     $number_lines and printf "%5d: ", idx += 1
     arg = (+arg)
     if $escape_surronding_spaces
-      arg.force_encoding 'binary'
+      arg.force_encoding Encoding::BINARY
       x = arg.slice!(/\A */) and OUTPUT.concat vis(x)
       rest = arg.slice!(/ *\z/)
     end

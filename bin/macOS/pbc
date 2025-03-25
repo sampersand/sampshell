@@ -32,7 +32,7 @@ while getopts 'hfcbs:np:' opt; do
 	p) clipboard=$OPTARG ;;
 	f) files=1 ;;
 	h) usage; exit; ;;
-	*) p $OPTERR ;exit 2 ;;
+	*) exit 2 ;;
 	esac
 done
 
