@@ -161,9 +161,8 @@ fi
 #                                                                              #
 ################################################################################
 
-case $0 in
-dash|-dash|*/dash)
-	# Dash doesn't do shlvl on its own
+case $0 in dash|-dash|*/dash)
+	# Dash doesn't do SHLVL on its own
 	export SHLVL="$(( SHLVL + 1 ))"
 
 	# Dash doesn't support `!` expansions sadly

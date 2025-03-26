@@ -1,6 +1,14 @@
-#!/usr/bin/env -S ruby -Ebinary
+#!/usr/bin/env -S ruby -Ebinary --disable=all
+# frozen-string-literal: true
+defined?(RubyVM::YJIT.enable) and RubyVM::YJIT.enable
 
 require 'optparse'
+
+####################################################################################################
+#                                                                                                  #
+#                                         Parse Arguments                                          #
+#                                                                                                  #
+####################################################################################################
 
 $isatty = $stdout.tty?
 OptParse.new do |op|
@@ -11,6 +19,7 @@ OptParse.new do |op|
     With no arguments, second form is assumed if stdin isnt a tty.
   BANNER
 
+  op.on '--old' do $old=1 end
 
   op.separator "\nOptions"
 
@@ -28,12 +37,13 @@ OptParse.new do |op|
   op.on       '--escape-newline', 'Escape newlines. (default)' do $escape_newline = true end
   op.on '-l', '--no-escape-newline', "Don't escape newlines (\"Line-oriented mode\")" do $escape_newline = false end
   op.on       '--escape-tab', 'Escape tabs. (default)' do $escape_tab = true end
-  op.on '-t', '--no-escape-tab', "Don't escape tabs" do $escape_tab = et end
+  op.on '-t', '--no-escape-tab', "Don't escape tabs" do $escape_tab = false end
   op.on '-s', '--[no-]escape-space', 'Escape spaces; only useful when in visual mode.' do |es| $escape_space = es end
   op.on       '--[no-]escape-outer-space', 'Like --escape-space, but only leading/trailing spaces',
                                            'Not useful with -f. (default)' do |ess| $escape_surronding_spaces = ess end
   op.on '-B', '--[no-]escape-backslash', 'Escape backslashes (default: off when in --visual)' do |eb| $escape_backslash = eb end
   op.on '-U', '--[no-]escape-unicode', 'Escape non-ASCII Unicode characters via `\u{...}`' do |eu| $escape_unicode = eu end
+  op.on '-P', '--[no-]escape-print', 'Escape all non-print characters (including unicode ones)' do |ep| $escape_print = ep end
   # op.on '-a', '--escape-all', 'Escapes all characters' do $escape_space = $escape_backslash = $escape_tab = $escape_newline = $escape_unicode = true end
   # op.on '-w', '--no-escape-whitespace', 'Do not escape whitespace' do $escape_space = $escape_tab = $escape_newline = $escape_surronding_spaces = false end
 
@@ -86,13 +96,19 @@ defined? $encoding_failure_error   or $encoding_failure_error = !$stdout.tty?
 defined? $escape_spaces            or $escape_spaces = !$files
 defined? $escape_tab               or $escape_tab = true
 defined? $escape_newline           or $escape_newline = true
+defined? $escape_print             or $escape_print = true
 defined? $number_lines             or $number_lines = !$files && $stdout.tty?
 defined? $escape_backslash         or $escape_backslash = !$visual
 defined? $invalid_visual           or $invalid_visual = true
 defined? $escape_surronding_spaces or $escape_surronding_spaces = true
 defined? $encoding                 or $encoding = Encoding.find('locale')
 
-OUTPUT = String.new(capacity: 4096 * 8)
+####################################################################################################
+#                                                                                                  #
+#                                        Create Escape Hash                                        #
+#                                                                                                  #
+####################################################################################################
+
 
 def vis_c(char, **b)
   vis char.each_byte.map { |b| "\\x%02X" % b }.join, **b
@@ -117,10 +133,10 @@ $c_escapes and %W[\a \b \t \n \v \f \r \e].each do |chr|
 end
 
 # All the lower escapes that haven't been done yet
-(0x00...0x20).each { |c| ESCAPES[c.chr] ||= vis_c(c.chr) }
+[*0x00...0x20, 0x7F].each { |c| ESCAPES[c.chr] ||= vis_c(c.chr) }
 
 ## Normal print characters
-(0x20..0x7F).map{ |c| c.chr $encoding }.each do |char|
+(0x20...0x7F).map{ |c| c.chr $encoding }.each do |char|
   ESCAPES[char] = char
 end
 ESCAPES["\\"] = vis("\\\\") if $escape_backslash
@@ -144,9 +160,17 @@ ESCAPES.default_proc = proc do |hash, char|
   end
 end
 
+####################################################################################################
+#                                                                                                  #
+#                                         Handle Arguments                                         #
+#                                                                                                  #
+####################################################################################################
+
+OUTPUT = String.new(capacity: 4096 * 8)
+
 def handle(line)
   line.each_char do |char|
-    OUTPUT.concat ESCAPES[char]
+    OUTPUT.concat q= ESCAPES[char]
   end
 end
 
@@ -168,11 +192,41 @@ if !$files
   end
 else
   $<.binmode
-  while gets # TODO: handle directories
-    handle $_.force_encoding($encoding)
-    OUTPUT.display
-    OUTPUT.clear
+  if $old
+    while gets # TODO: handle directories
+      handle $_.force_encoding($encoding)
+      OUTPUT.display
+      OUTPUT.clear
+    end
+  else
+    INPUT = String.new(capacity: 4096, encoding: $encoding)
+    loop do # TODO: handle directories
+      begin
+        $<.file.sysread(4096, INPUT)
+      rescue EOFError
+        break
+      end
+      (INPUT.prepend $tmp; $tmp = nil) if $tmp
+      if !(q=INPUT.byteslice(-1..)).valid_encoding?
+        if !(q=INPUT.byteslice(-2..)).valid_encoding?
+          if !(q=INPUT.byteslice(-3..)).valid_encoding?
+            $tmp = q; INPUT.force_encoding('binary').slice!(-3..); INPUT.force_encoding $encoding
+          else
+            $tmp = q; INPUT.force_encoding('binary').slice!(-2..); INPUT.force_encoding $encoding
+          end
+        else
+          $tmp = q; INPUT.force_encoding('binary').slice!(-1..); INPUT.force_encoding $encoding
+        end
+      end
+
+      handle INPUT
+      OUTPUT.display
+      OUTPUT.clear
+      print ""
+    end
+    (handle $tmp; OUTPUT.display) if $tmp
   end
+
   puts unless $no_newline
 end
 

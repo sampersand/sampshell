@@ -14,6 +14,7 @@ usage: $(basename -- "$0") [-n] (-w WIDTH | -c COUNT) [--] string
 	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
 USAGE
 
+no_newline= count= width=
 while getopts 'nhc:w:' option; do
 	case $option in
 	n) no_newline=1 ;;

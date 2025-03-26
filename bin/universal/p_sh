@@ -1,15 +1,21 @@
 #!/bin/sh
 
+# Like `p`, but it uses `/bin/sh`, so it should always work.
+
 # Safety first, in the situation where we're `.`d.
 \unalias -a
-set -euf +xv
+set -uf +xve
 unset -v IFS
 
 # Print out a character and escape
-smso=`command -p tput smso` rmso=`command -p tput rmso`
+if [ -n "${TERM-}" ]; then
+	smso=$(command -p tput -T "$TERM" smso) || :
+	rmso=$(command -p tput -T "$TERM" rmso) || :
+fi
+
 argno=0
 for arg do
-	printf '%5d: ' $(( argno += 1 ))
+	printf '%5d (len=%d): ' $(( argno += 1 )) "${#arg}"
 
 	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
 	while command -p test ${#arg} -ne 0
