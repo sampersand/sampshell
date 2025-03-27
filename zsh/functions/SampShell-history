@@ -15,20 +15,20 @@ if [[ $# -ne 0 && $1 != (-|)<-> ]]; then
 	return
 fi
 
-history $@ | awk '
-{ a[NR] = $0 }
-END {
-	x = $1 + 1
-	sep = "%" length(x) "d %s\n"
-	for (i = 1; i < NR; i++) {
-		$0 = a[i]
-		printf sp, $1-x, a[i]
-	}
-}'
+# history $@ | awk '
+# { a[NR] = $0 }
+# END {
+# 	x = $1 + 1
+# 	sep = "%" length(x) "d %s\n"
+# 	for (i = 1; i < NR; i++) {
+# 		$0 = a[i]
+# 		printf sp, $1-x, a[i]
+# 	}
+# }'
 
-# local sep amount REPLY
-# # Number the output lines
-# history $@ | while read -r; do
-# 	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} + 1 ))
-# 	printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
-# done
+local sep amount REPLY
+# Number the output lines
+history $@ | while read -r; do
+	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} + 1 ))
+	printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
+done

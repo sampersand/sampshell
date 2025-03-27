@@ -111,6 +111,7 @@ defined? $encoding                 or $encoding = Encoding.find('locale')
 #                                                                                                  #
 ####################################################################################################
 
+
 def vis_c(char, **b)
   vis char.each_byte.map { |b| "\\x%02X" % b }.join, **b
 end
@@ -135,16 +136,14 @@ $c_escapes and %W[\a \b \t \n \v \f \r \e].each do |chr|
 end
 
 # All the lower escapes that haven't been done yet
-[*0x00...0x20, 0x7F].each do |c|
-  ESCAPES[c.chr] ||= vis_c(c.chr)
-end
+[*0x00...0x20, 0x7F].each { |c| ESCAPES[c.chr] ||= vis_c(c.chr) }
 
 ## Normal print characters
 (0x20...0x7F).map{ |c| c.chr $encoding }.each do |char|
   ESCAPES[char] = char
 end
-ESCAPES['\\'] = vis('\\\\') if $escape_backslash
-ESCAPES[' ']  = vis(' ') if $escape_space
+ESCAPES["\\"] = vis("\\\\") if $escape_backslash
+ESCAPES[" "]  = vis(" ") if $escape_space
 
 # Upper bits, for binary encodings
 if $encoding == Encoding::BINARY
@@ -158,6 +157,7 @@ ESCAPES.default_proc = proc do |hash, char|
     $ENCODING_FAILED = true
     $invalid_visual ? vis_c(char, start: BEGIN_ERR, stop: END_ERR) : vis_c(char)
   elsif $escape_unicode || ($escape_print && char =~ /\p{Graph}/)
+  # elsif $escape_unicode || ($escape_print && char =~ /\p{Space}|\p{Cntrl}|\p{Blank}|\p{Mark}|\p{Format}/)
     vis('\u{%04X}' % char.codepoints.sum)
   else
     char
@@ -183,56 +183,57 @@ if !$files
   $*.each_with_index do |arg, idx|
     $number_lines and printf "%5d: ", idx += 1
     arg = (+arg)
-
     if $escape_surronding_spaces
       arg.force_encoding Encoding::BINARY
       x = arg.slice!(/\A */) and OUTPUT.concat vis(x)
       rest = arg.slice!(/ *\z/)
     end
-
     handle arg.force_encoding $encoding
     rest and OUTPUT.concat vis rest
     OUTPUT.display
     OUTPUT.clear
-    puts
+    puts; $nl = true
   end
 else
   $<.binmode
-  INPUT = String.new(capacity: 4096, encoding: $encoding)
-  loop do # TODO: handle directories
-    p $<.file.__id__
-    begin
-      $<.file.sysread(4096, INPUT)
-    rescue EOFError
-      p :done
-      break
+  if $old
+    while gets # TODO: handle directories
+      handle $_.force_encoding($encoding)
+      OUTPUT.display
+      OUTPUT.clear
     end
-
-    (INPUT.prepend $tmp; $tmp = nil) if $tmp
-    if !(q=INPUT.byteslice(-1..)).valid_encoding?
-      if !(q=INPUT.byteslice(-2..)).valid_encoding?
-        if !(q=INPUT.byteslice(-3..)).valid_encoding?
-          # Need to support versions without `.bytesplice`
-          $tmp = q; INPUT.force_encoding('binary').slice!(-3..); INPUT.force_encoding $encoding
-        else
-          $tmp = q; INPUT.force_encoding('binary').slice!(-2..); INPUT.force_encoding $encoding
-        end
-      else
-        $tmp = q; INPUT.force_encoding('binary').slice!(-1..); INPUT.force_encoding $encoding
+  else
+    INPUT = String.new(capacity: 4096, encoding: $encoding)
+    loop do # TODO: handle directories
+      begin
+        $<.file.sysread(4096, INPUT)
+      rescue EOFError
+        break
       end
+
+      (INPUT.prepend $tmp; $tmp = nil) if $tmp
+      if !(q=INPUT.byteslice(-1..)).valid_encoding?
+        if !(q=INPUT.byteslice(-2..)).valid_encoding?
+          if !(q=INPUT.byteslice(-3..)).valid_encoding?
+            # Need to support versions without `.bytesplice`
+            $tmp = q; INPUT.force_encoding('binary').slice!(-3..); INPUT.force_encoding $encoding
+          else
+            $tmp = q; INPUT.force_encoding('binary').slice!(-2..); INPUT.force_encoding $encoding
+          end
+        else
+          $tmp = q; INPUT.force_encoding('binary').slice!(-1..); INPUT.force_encoding $encoding
+        end
+      end
+
+      handle INPUT
+      OUTPUT.display
+      OUTPUT.clear
+      print ""
     end
-
-    handle INPUT
-    $stdout.syswrite OUTPUT
-    OUTPUT.clear
+    (handle $tmp; OUTPUT.display) if $tmp
   end
 
-  if $tmp
-    handle $tmp
-    $stdout.syswrite OUTPUT
-  end
-
-  $no_newline and $stdout.syswrite "\n"
+  puts unless $no_newline
 end
 
-$encoding_failure_error and exit $ENCODING_FAILED
+exit 1 if $ENCODING_FAILED && $encoding_failure_error
