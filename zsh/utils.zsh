@@ -13,6 +13,10 @@
 
 [[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
 
+# TODO: Figure out howto get `s` and `ss` to also accept things like CDPATH and `CDABLE_VARS` opts.
+s2 ()  (cd -q -- $@ >/dev/null && subl -- "$PWD")
+ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
+
 function ducks {
 	du -chs -- $@ | sort -h
 }

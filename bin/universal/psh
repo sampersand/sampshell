@@ -7,6 +7,12 @@
 set -uf +xve
 unset -v IFS
 
+files=
+if [ "${1-}" = '-f' ]; then
+	files=1
+	shift
+fi
+
 # Print out a character and escape
 if [ -n "${TERM-}" ]; then
 	smso=$(command -p tput -T "$TERM" smso) || :
@@ -15,7 +21,13 @@ fi
 
 argno=0
 for arg do
-	printf '%5d (len=%d): ' $(( argno += 1 )) "${#arg}"
+	if [ -n "$files" ]; then
+		printf '%s: ' "$arg"
+		arg=$(cat "$arg" && echo x)
+		arg=${arg%x}
+	else
+		printf '%5d (len=%d): ' $(( argno += 1 )) "${#arg}"
+	fi
 
 	# Check for length in case `arg` has `NUL` in it; we cant use `-z`.
 	while command -p test ${#arg} -ne 0
