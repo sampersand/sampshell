@@ -225,8 +225,6 @@ bindkey '^[#'    pound-insert
 bindkey '^[='    SampShell-delete-to-char
 bindkey '^[/'    SampShell-delete-path-segment
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
-bindkey '^[%'    SampShell-make-prompt-simple
-bindkey '^[$'    SampShell-make-prompt-simple
 bindkey '^[^[[A' SampShell-up-directory
 bindkey '^[c'    SampShell-add-pbcopy
 bindkey '^X^R'   redo
@@ -235,6 +233,8 @@ bindkey '^Xr'    redo
 alias which-command=which # for `^[?`
 
 # "command-space" commands
+bindkey '^[ %' SampShell-make-prompt-simple
+bindkey '^[ $' SampShell-make-prompt-simple
 bindkey '^[ z' SampShell-put-back-zle
 bindkey '^[ p' SampShell-add-pbcopy
 bindkey -s '^[ l' '^Qls^M'

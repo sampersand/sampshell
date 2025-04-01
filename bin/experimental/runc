@@ -17,7 +17,7 @@ gcc -xc -o $outputfile - ${@[2,-1]} <<EOS
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
-$(if [[ -n $main ]]; then
+$(if [[ -z $main ]]; then
 	printf 'int main(int argc, char **argv){\n%s\n;\n}' ${src%;}
 else
 	echo $src
