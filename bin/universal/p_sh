@@ -1,0 +1,39 @@
+#!/bin/dash
+# Like `p`, but it uses `/bin/sh`, so it should always work.
+
+# Safety first, in the situation where we're `.`d.
+\unalias -a
+set -uf +xve
+unset -v IFS
+PATH=$(getconf PATH && echo .)
+PATH=${PATH%.}
+
+# Get the standout characters, if they're not already assigned.
+if [ -n "${TERM-}" ]; then
+   : "${P_SH_SMSO=$(tput -T "$TERM" smso)}"
+   : "${P_SH_RMSO=$(tput -T "$TERM" rmso)}"
+fi
+
+argno=0
+for arg do
+   printf '%5d: ' $(( argno += 1 ))
+
+   # Check for length in case `arg` has `NUL` in it; we cant use `-z`.
+   while [ ${#arg} -ne 0 ]
+   do
+      tail=${arg#?}
+      head=${arg%"$tail"}
+      arg=$tail
+
+      case $head in
+         [[:print:]])
+            printf %s "$head"
+            ;;
+         *)
+            printf '%s\\x%02X%s' "${P_SH_SMSO=}" "'$head" "${P_SH_RMSO=}"
+            ;;
+      esac
+   done
+
+   echo
+done
