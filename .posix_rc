@@ -39,7 +39,7 @@ SampShell_interactive_loaded=1
 # printed out (for usage with `grep`).
 h () {
 	if [ "$#" -eq 0 ] && [ ! -t 1 ]
-	then set -- -n 0
+	then set -- -n 1
 	fi
 
 	fc -l "$@"
