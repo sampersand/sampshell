@@ -37,7 +37,7 @@
 { set -o posix || emulate sh || true; } 2>/dev/null 1>&2
 set +xve
 unset -v IFS
-PATH=$(getconf PATH && printf .)
+PATH=$(command -p env -i /bin/sh -c 'printf %s. "$PATH"')
 export PATH="${PATH%.}"
 export LC_ALL=C
 export POSIXLY_CORRECT=1
