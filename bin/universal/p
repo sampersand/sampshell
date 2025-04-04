@@ -13,17 +13,15 @@ require 'optparse'
 OptParse.new do |op|
   $op = op # for `$op.abort` and `$op.warn`
 
-  op.version = '0.65'
+  op.version = '0.7'
   op.banner = <<~BANNER
     usage: #{op.program_name} [options] [string ...]
            #{op.program_name} -f/--files [options] [file ...]
     When no arguments, and stdin isn't a tty, the second form is assumed.
   BANNER
-  op.require_exact = true if defined? op.require_exact = true
+  # TODO: why youno work sometimes, eg `p --escape-ties`
+  # op.require_exact = true if defined? op.require_exact = true
 
-  op.accept :chars do |c|
-    %|"#{c.gsub('"', '\"')}"|.undump
-  end
 
   ##################################################################################################
   #                                        Generic Options                                         #
@@ -47,7 +45,7 @@ OptParse.new do |op|
   end
 
   # This maybe removed in a future release, as it doesn't control a whole lot.
-  op.on '-t', '--[no-]assume-tty', 'Assume stdout is tty for defaults' do |tty|
+  op.on '--[no-]assume-tty', 'Assume stdout is tty for defaults' do |tty|
     $stdout_tty = tty
   end
 
@@ -56,41 +54,62 @@ OptParse.new do |op|
   ##################################################################################################
   op.separator "\nSeparating Outputs"
 
-  op.on '-H', '--headers', 'Add headers, i.e. arg number/file name. (default if tty)' do
-    $headers = true
+  op.on '-P', '--prefixes', 'Add prefixes, i.e. arg number/file name. (default if tty)' do
+    $prefixes = true
   end
 
-  op.on '-N', '--no-headers', 'Do not add headers to the output' do
-    $headers = false
+  op.on '-N', '--no-prefixes', 'Do not add prefixes to the output' do
+    $prefixes = false
   end
 
   op.on '--[no-]trailing-newline', 'Print trailing newlines after each argument. (default)',
-                                   'Only useful if --no-headers is given.' do |tnl|
+                                   'Only useful if --no-prefixes is given.' do |tnl|
     $trailing_newline = tnl
   end
 
-  op.on '-n', '--no-headers-or-newline', 'Disables both headers and trailing newlines' do
-    $headers = $trailing_newline = false
+  op.on '-n', '--no-prefixes-or-newline', 'Disables both prefixes and trailing newlines' do
+    $prefixes = $trailing_newline = false
   end
 
   ##################################################################################################
   #                                         What To Escape                                         #
   ##################################################################################################
-  op.separator "\nWhat to Escape"
-  $unescape_chars = +""; $escape_chars = +""
-  op.on '-u', '--unescape=CHARS', :chars, 'Do not escape CHARS' do |c| $unescape_chars.concat c end
-  op.on '--unescape-all', 'Do not escape any characters' do $unescape_all = true end
-  op.on '-e', '--escape=CHARS', :chars, 'Explicitly escape CHARS' do |c| $escape_chars.concat c end
-  op.on '--escape-all', 'Explicitly escape all (non-ASCII, non-visible) characters' do op.abort 'todo: not working'; $escape_all = true end
+  op.separator "\nWhat to Escape. (You can specify multiple options; they are additive.)"
+  $unescape_regex = []
+  $escape_regex = []
 
-  op.on '-l', "Same as --unescape='\\n'. (\"Line-oriented mode\")" do
-    # $unescape_chars.concat "\n";
-    $escape_newline=false
+  op.on '-t', '--[no-]escape-ties', 'If set, then chars which match both -e and -u will be escaped.',
+                                    'If unset (default), then they will not be escaped' do |es|
+    $escape_ties = es
   end
-  op.on '-w', "Same as --unescape='\\n\\t ' (newline, tab, space)" do $unescape_chars.concat "\n\t " end
+
+  op.on '-e', '--escape=REGEX', Regexp, 'Also escape characters which match REGEX' do |rxp|
+    $escape_regex.push rxp
+  end
+
+  op.on '--escape-chars=CHARS', 'Also escape any characters in CHARS' do |chars|
+    $escape_regex.concat chars.split('')
+  end
+
+  op.on '-u', '--unescape=REGEX', Regexp, 'Do not escape characters which match REGEX' do |rxp|
+    $unescape_regex.push rxp
+  end
+
+  op.on '--unescape-chars=CHARS', 'Do not escape any characters in CHARS' do |chars|
+    $unescape_regex.concat chars.split('')
+  end
+
+  op.on '-l', "Same as --unescape='\\n'. (newlines). (\"Line-oriented mode\")" do
+    $unescape_regex.push "\n"
+  end
+
+  op.on '-w', "Same as --unescape='\\n\\t ' (newline, tab, space)" do
+    $unescape_regex.push "\n", "\t", " "
+  end
+
   op.on '-B', '--[no-]escape-backslash', "Same as --escape='\\\\' (backslash) (default if not in visual mode)" do |eb|
     $escape_backslash = eb end # Need this because it has adefault 
-  op.on '-s', "Same as --escape=' ' (space)" do $escape_chars.concat "\s" end
+  op.on '-s', "Same as --escape=' ' (space)" do $escape_regex.push   "\s"; $escape_spaces = true end
   op.on '-U', '--[no-]escape-unicode', 'Escape non-ASCII Unicode characters with "\u{...}"' do |eu| $escape_unicode = eu end
     # TODO: if this name is updated, update comments
   op.on       '--[no-]escape-outer-space', 'Visualize leading and trailing spaces. (default)', 'Only useful in visual mode; does not work with --files' do |ess| $escape_surronding_spaces = ess end
@@ -120,7 +139,7 @@ OptParse.new do |op|
     $escape_how = :bytes
   end
 
-  op.on '-C', '--codepoints', 'Escape characters by printing their \u{...} escape. Sets -8,',
+  op.on '-C', '--codepoints', 'Escape characters by printing the \u{...} escape. Sets --utf-8',
                               'implicitly and cannot be used with other encodings. See also -U' do
     $escape_how = :codepoints
     $encoding = Encoding::UTF_8
@@ -130,8 +149,13 @@ OptParse.new do |op|
     $c_escapes = ce
   end
 
-  op.on '-P', '--[no-]control-pictures', 'Use "control pictures" (U+240x..U+242x) for some escapes' do |cp|
+  op.on '-p', '--[no-]control-pictures', 'Use "control pictures" (U+240x..U+242x) for some escapes' do |cp|
     $pictures = cp
+    $c_escapes = false unless defined? $c_escapes
+  end
+
+  op.on '-s', '--[no-]space-picture', 'Enable control pictures for space specifically' do |sp|
+    $space_picture = $escape_spaces = sp
   end
 
   ##################################################################################################
@@ -210,6 +234,8 @@ END_VISUAL   = ENV.fetch('P_END_VISUAL',   "\e[27m")
 BEGIN_ERR    = ENV.fetch('P_BEGIN_ERR',    "\e[37m\e[41m")
 END_ERR      = ENV.fetch('P_END_ERR',      "\e[49m\e[39m")
 
+return if $files && $*.empty? # Don't print out anything if `-f` was specified, and no args were given.
+
 # Specify defaults
 defined? $stdout_tty               or $stdout_tty = $stdout.tty?
 defined? $files                    or $files = !$stdin.tty? && $*.empty?
@@ -218,17 +244,22 @@ defined? $invalid_bytes_failure    or $invalid_bytes_failure = true
 defined? $escape_spaces            or $escape_spaces = !$files
 defined? $escape_tab               or $escape_tab = true
 defined? $escape_newline           or $escape_newline = true
-defined? $headers                  or $headers = $stdout_tty && !$*.empty?
+defined? $prefixes                 or $prefixes = $stdout_tty && !$*.empty?
 defined? $escape_backslash         or $escape_backslash = !$visual
 defined? $escape_surronding_spaces or $escape_surronding_spaces = true
 defined? $c_escapes                or $c_escapes = !defined?($escape_how) # Make sure to put this before `escape_how`'s default'
 defined? $escape_how               or $escape_how = :bytes
 defined? $trailing_newline         or $trailing_newline = true
+defined? $escape_ties              or $escape_ties = true
 defined? $encoding                 or $encoding = ENV.key?('POSIXLY_CORRECT') ? Encoding.find('locale') : Encoding::UTF_8
 
-## Force `$trailing_newline` to be set if `$headers` are set, as otherwise there wouldn't be a
+## Union all the regexes we've been given
+$unescape_regex = Regexp.union($unescape_regex)
+$escape_regex   = Regexp.union($escape_regex)
+
+## Force `$trailing_newline` to be set if `$prefixes` are set, as otherwise there wouldn't be a
 # newline between each header, which is weird.
-$trailing_newline ||= $headers
+$trailing_newline ||= $prefixes
 
 ## Validate options
 if $escape_how == :codepoints && $encoding != Encoding::UTF_8
@@ -246,6 +277,10 @@ end
 #                                       Visualizing Escapes                                        #
 #                                                                                                  #
 ####################################################################################################
+
+def should_escape?(character)
+  $escape_regex.match?(char) and ($escape_ties ? true : !$unescape_regex.match?(char))
+end
 
 # Converts a string's bytes to their `\xHH` escaped version, and joins them
 def hex_bytes(string)
@@ -319,7 +354,7 @@ if $pictures
   end
 
   CHARACTERS["\x7F"] = visualize "\u{2421}"
-  CHARACTERS[" "] = visualize "\u{2420}"
+  CHARACTERS[" "] = visualize "\u{2423}"
 end
 
 ## If C-Style escapes were specified, then change a subset of the control characters to use the
@@ -337,10 +372,17 @@ if $c_escapes
 end
 
 ## Individual character escapes
-CHARACTERS["\n"] = "\n" unless $escape_newline
+# CHARACTERS["\n"] = "\n" unless $escape_newline
 CHARACTERS["\t"] = "\t" unless $escape_tab
 CHARACTERS['\\'] = visualize('\\\\') if $escape_backslash
-CHARACTERS[' ']  = visualize(' ') if $escape_space
+CHARACTERS[' ']  = visualize($space_picture ? '␣' : ' ') if $escape_spaces
+
+################################################################################
+#                               Escapes and unescapes            #
+################################################################################
+CHARACTERS.reject! do |key, value|
+  key.match?(if key == value then $escape_regex else $unescape_regex end)
+end
 
 ################################################################################
 #                             Any Other Characters                             #
@@ -359,32 +401,17 @@ CHARACTERS[' ']  = visualize(' ') if $escape_space
 # Note that the escapes are cached for further re-use. While theoretically over time memory
 # consumption may grow, in reality there's not enough unique characters for this to be a problem.
 CHARACTERS.default_proc = proc do |hash, char|
-  # p hash.key? char
-  # p hash.keys.last.encoding
-  # p char.encoding
   hash[char] =
     if !char.valid_encoding?
       $ENCODING_FAILED = true # for the exit status with `$invalid_bytes_failure`.
       visualize hex_bytes(char), BEGIN_ERR, END_ERR
+    elsif $escape_regex.match?(char) && ($escape_ties ? true : !$unescape_regex.match?(char))
+      visualize escape_bytes(char)
     elsif $escape_unicode
       visualize '\u{%04X}' % char.codepoints.sum
     else
       char
     end
-end
-# p CHARACTERS["\xA3"]
-
-################################################################################
-#                               Other Characters                               #
-################################################################################
-$unescape_all and CHARACTERS.replace(Hash.new{|x,y| x[y] = y})
-
-$escape_chars.each_char do |char|
-  CHARACTERS[char] = visualize escape_bytes char
-end
-
-$unescape_chars.each_char do |char|
-  CHARACTERS[char.encode($encoding)] = char
 end
 
 ################################################################################
@@ -424,27 +451,25 @@ def print_escapes(has_each_char, suffix = nil)
 
   ## If a suffix is given (eg trailing spaces with `--escape-outer-space)`, then print it out before
   # printing a (possible) trailing newline.
-  suffix and print suffix
+  suffix and print visualize suffix
 
   ## Print a newline if the following are satisfied:
   # 1. It was requested. (This is the default, but can be suppressed by `--no-trailing-newline`, or
-  #    `-n`. Note that if headers are enabled, trailing newlines are always enabled regardless.)
-  # 2. At least one character was printed, or headers were enabled; If no characters are printed,
-  #    we normally don't want to add a newline, when headers are being output we want each filename
+  #    `-n`. Note that if prefixes are enabled, trailing newlines are always enabled regardless.)
+  # 2. At least one character was printed, or prefixes were enabled; If no characters are printed,
+  #    we normally don't want to add a newline, when prefixes are being output we want each filename
   #    to be on their own lines.
   # 3. The last character to be printed was not a newline; This is normally the case, but if the
   #    newline was unescaped (eg `-l`), then the last character may be a newline. This condition is
   #    to prevent a blank line in the output. (Kinda like how `puts "a\n"` only prints one newline.)
-  puts if $trailing_newline && last != "\n" && (last != nil || $headers)
+  puts if $trailing_newline && last != "\n" && (last != nil || $prefixes)
 end
 
 ## Interpret arguments as strings
 unless $files
   ARGV.each_with_index do |string, idx|
     # Print out the prefix if a header was requested
-    if $headers
-      printf '%5d: ', idx + 1
-    end
+    printf '%5d: ', idx + 1 if $prefixes
 
     # Unfortunately, `ARGV` strings are frozen, and we need to forcibly change the string's encoding
     # within `handle` so can iterate over the contents of the string in the new encoding. As such,
@@ -458,8 +483,8 @@ unless $files
       # beforehand), this should be changed to use `byteslice`.The method used here is more convenient,
       # but is destructive. ALSO. It doesn't work wtih non-utf8 characters
       string.force_encoding Encoding::BINARY
-      leading_spaces  = string.slice!(/\A +/) and $stdout.write visualize leading_spaces
-      trailing_spaces = string.slice!(/ +\z/)
+      leading_spaces  = string.slice!(/\A +/) and $stdout.write visualize leading_spaces.gsub(' ', $space_picture ? '␣' : ' ')
+      trailing_spaces = string.slice!(/ +\z/)&.gsub(' ', $space_picture ? '␣' : ' ')
     end
 
     # handle the input string
@@ -471,10 +496,10 @@ end
 
 # Sadly, we can't use `ARGF` for numerous reasons:
 # 1. `ARGF#each_char` will completely skip empty files, and won't call its block. So there's no easy
-#    way for us to print out headers for empty files. (We _could_ keep our own `ARGV` list, but that
+#    way for us to print prefixes for empty files. (We _could_ keep our own `ARGV` list, but that
 #    would be incredibly hacky.) And, we have to check file names _each time_ we get a new char.
 # 2. `ARGF#readpartial` gives empty strings when a new file is read, which lets us more easily print
-#    out headers. However, it doesn't give us an empty string for the first line (which is solvable,
+#    out prefixes. However, it doesn't give an empty string for the first line (which is solvable,
 #    but annoying). However, the main problem is that you might read the first half of a multibyte
 #    sequence, which then wouldn't be escaped. Since we support utf-8, utf-16, and utf-32, it's not
 #    terribly easy (from my experiments with) to make a generalized way to detect half-finished seq-
@@ -509,8 +534,8 @@ ARGV.each do |filename|
       File.open(filename, 'rb', encoding: $encoding)
     end
 
-  ## Print out the filename, a colon, and a space if headers were requested.
-  print filename, ': ' if $headers
+  ## Print out the filename, a colon, and a space if prefixes were requested.
+  print filename, ': ' if $prefixes
 
   ## Print the escapes for the file
   print_escapes file
