@@ -1,17 +1,57 @@
-#!/bin/dash
-# Like `p`, but it uses `/bin/sh`, so it should always work.
+#!/bin/sh
 
-# Safety first, in the situation where we're `.`d.
+## `p_sh`: Prints out its arguments, escaping non-print characters as `\xHH`.
+# This script does not respect encodings at all, and assumes every character is
+# a single byte.
+#
+# However, note that `p_sh "$(cat binary_file)"` probably won't work, as binary
+# files usually contain NUL (`\x00`). These `NUL`s are assumed by the OS to be
+# the end of shell arguments, so the remainder of the string'll be truncated.
+#
+# Additionally, the POSIX specifications dictate that `/bin/sh` needn't be able
+# to handle binary data, and most POSIX-Compliant shells (eg dash, bash, yash)
+# won't (and instead interpret `\0` as a string terminator). What that means in
+# practice is that calling `p_sh` with arbitrary data will probably end up
+# truncating it.
+#
+# A workaround for this is, when calling it from a shell, to instead `.` this
+# file in a subshell (which won't then pass `$@` to a separate process) i.e.
+#      p_sh () ( . p_sh ) # Search `$PATH` for `p_sh`
+# However, this still requires your current shell to handle NUL correctly; the
+# only shell I know of which does is ZSH.
+#
+# As such, this script's only useful when the `p` command (which is written in
+# Ruby, and has many more features) isn't available. (Side note: I considered
+# writing this in other POSIX-required languages like AWK, but they _also_ can't
+# handle binary data...)
+#
+# ENVIRONMENT VARIABLES:
+#     TERM      - If set, used to determine the default values for `P_SH_[RM]SO`
+#     P_SH_SMSO - Printed before hex escapes; If defined, but empty, nothing is
+#                 printed.
+#     P_SH_RMSO - Ditto, but for after hex escapes.
+##
+
+## Reset shell features, in the case where we are `.`d:
 \unalias -a
-set -uf +xve
+{ set -o posix || emulate sh || true; } 2>/dev/null 1>&2
+set +xve
 unset -v IFS
-PATH=$(getconf PATH && echo .)
-PATH=${PATH%.}
+PATH=$(getconf PATH && printf .)
+export PATH="${PATH%.}"
+export LC_ALL=C
+export POSIXLY_CORRECT=1
 
-# Get the standout characters, if they're not already assigned.
+## Set some safety guards
+set -uf
+
+## If the `TERM` variable is defined, then determine the default escape seqs.
 if [ -n "${TERM-}" ]; then
    : "${P_SH_SMSO=$(tput -T "$TERM" smso)}"
    : "${P_SH_RMSO=$(tput -T "$TERM" rmso)}"
+else
+   : "${P_SH_SMSO=}"
+   : "${P_SH_RMSO=}"
 fi
 
 argno=0
@@ -19,19 +59,14 @@ for arg do
    printf '%5d: ' $(( argno += 1 ))
 
    # Check for length in case `arg` has `NUL` in it; we cant use `-z`.
-   while [ ${#arg} -ne 0 ]
-   do
+   while [ ${#arg} -ne 0 ]; do
       tail=${arg#?}
       head=${arg%"$tail"}
       arg=$tail
 
       case $head in
-         [[:print:]])
-            printf %s "$head"
-            ;;
-         *)
-            printf '%s\\x%02X%s' "${P_SH_SMSO=}" "'$head" "${P_SH_RMSO=}"
-            ;;
+         [[:print:]]) printf %s "$head" ;;
+         *) printf '%s\\x%02X%s' "$P_SH_SMSO" "'$head" "$P_SH_RMSO" ;;
       esac
    done
 
