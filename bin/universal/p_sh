@@ -32,18 +32,13 @@
 #     P_SH_RMSO - Ditto, but for after hex escapes.
 ##
 
-## Reset shell features, in the case where we are `.`d:
+## Reset shell features, in the case where we are `.`d, as well as set `-uf`.
 \unalias -a
 { set -o posix || emulate sh || true; } 2>/dev/null 1>&2
-set +xve
+set +xve -uf
 unset -v IFS
 PATH=$(command -p env -i /bin/sh -c 'printf %s. "$PATH"')
-export PATH="${PATH%.}"
-export LC_ALL=C
-export POSIXLY_CORRECT=1
-
-## Set some safety guards
-set -uf
+export PATH="${PATH%.}" LC_ALL=C POSIXLY_CORRECT=1
 
 ## If the `TERM` variable is defined, then determine the default escape seqs.
 if [ -n "${TERM-}" ]; then
