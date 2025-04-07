@@ -49,15 +49,14 @@ unset -v __clenv_user_vars \
 __clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
-usage: $scriptname [-DVansp_] [-m pattern ...] [-v name[=value] ...]
-       $(printf "%${#scriptname}s") [-u name ...] [utility [argument ...]]
+usage: $scriptname [options] [--] [utility [argument ...]]
 options:
     -D              Enables "dry mode"--don't actually run the program; Sets -V.
     -V              Enables "verbose mode," so it prints out the invocation
     -a              Pass _all_ environment variables in by default.
     -n              Don't set any_arguments by default, including essential ones
     -p              Shorthand for -vPATH
-    -m pattern      Pass in any variables matching awk pattern.
+    -m pattern      Pass in any variables matching the awk pattern.
     -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
                     omitted, it defaults to the current value of 'name' (which,
                     if unset, is an error.)
