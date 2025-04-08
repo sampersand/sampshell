@@ -1,24 +1,13 @@
-#!/bin/sh
-exec env ruby -S -Ebinary --disable=all "$0" "$@"
-#!ruby
-# -*- encoding: binary; frozen-string-literal: true -*-
-defined?(RubyVM::YJIT.enable) and RubyVM::YJIT.enable
+#!/usr/bin/env ruby
+# -*- encoding: utf-8; frozen-string-literal: true -*-
+# ^ Force all strings in this file to be utf-8, regardless of what the environment says
 
-# Note on the "header" above:
-# 1. We want this script to be portable across systems, so we cannot use a shebang to some absolute
-#    path for Ruby (e.g. `#!/usr/bin/ruby` is a no-go). The standard fix to this is to use `env`,
-#    i.e. `#!/usr/bin/env ruby`. However, shebangs only let you pass in _one_ argument, and we need
-#    more. `#!/usr/bin/env -S ruby` would work, but isn't portable. Instead, we resort to a hack to
-#    actually invoke this file as a `/bin/sh` script, which then immediately `env ruby`, passing in
-#    the `-Ebinary --disable=all` flags, along with the script name and its arguments.
-# 2. We pass `--disable=all` so we can disable the unnecessary features like `gems`, `did_you_mean`,
-#    etc. which slow down startup speed.
-# 3. We pass `-Ebinary` to force the external encoding to binary. This is necessary, as `ARGV` may
-#    contain invalid UTF-8 bytes, which could cause ruby to not even start up. (This previously
-#    failed, but I cant seem to get it to fail anymore, so maybe I've solved the problem?)
-# 4. We force the the internal encoding to be binary as well. (I also don't know if this's necessary
-#    anymore... Maybe it's not?)
-# 5. We enable YJIT if it's defined, to improve speed.
+# Enable YJIT, but if there's any problems just ignore them
+begin
+  RubyVM::YJIT.enable
+rescue Exception
+  # Ignore
+end
 
 ####################################################################################################
 #                                                                                                  #
@@ -27,14 +16,15 @@ defined?(RubyVM::YJIT.enable) and RubyVM::YJIT.enable
 ####################################################################################################
 require 'optparse'
 
-OptParse.new nil, 28 do |op|
+OptParse.new do |op|
   $op = op # for `$op.abort` and `$op.warn`
 
-  op.version = '0.7.5'
+  op.version = '0.7.6'
   op.banner = <<~BANNER
-    usage: #{op.program_name} [options] [string ...]
-           #{op.program_name} -f [options] [file ...]
-    The second form is assumed when no arguments are given, and stdin is not a tty.
+    usage: #{op.program_name} [options]                # Read from stdin
+           #{op.program_name} [options] [string ...]   # Print strings
+           #{op.program_name} -f [options] [file ...]  # Read from files
+    When no args are given, first form is assumed if stdin is not a tty.
   BANNER
 
   op.on_head 'A program to escape "weird" characters'
@@ -46,9 +36,31 @@ OptParse.new nil, 28 do |op|
   ##################################################################################################
   op.separator "\nGeneric Options"
 
-  op.on '-h', '--help', 'Print this message and exit' do
+  op.on '--help', 'Print this message and exit' do
     puts op.help # Newer versions of OptParse have `op.help_exit`, but we are targeting older ones.
     exit
+  end
+
+  op.on '-h', 'Shorter help usage' do
+    puts <<~EOS
+    Usage: #{op.program_name} [options] [string-or-file ...]
+      --help          Print more verbose usage
+      -f              interpret args as files, not strings
+      -p, -N          Do/don't add prefixes to output
+      -n              Don't add prefixes or newlines to output
+      -e CHARSET      Escape chars matching /[CHARSET]/
+      -u CHARSET      Don't escape chars matching /[CHARSET]/
+      -E              Don't use default escapes
+      -A              Escape all characters
+      -l, -w          Unescape newlines/whitespace (space, tab, newline)
+      -s, -B, -U      Escape spaces/backslashes/all non-ASCII characters
+      -v, -V          Enable/disable visual mode
+      -d, -., -x      Escape by deleting, with `.`, hex bytes
+      -C              Escape with codepoints (implies -8)
+      -c              Escape with C-style escapes
+      -P, -S          Have "pictures" for some characters/only spaces
+      -b, -a, -8, -L  Interpret input data as binary/ASCII/UTF-8/locale data
+    EOS
   end
 
   op.on '--version', 'Print the version and exit' do
@@ -66,9 +78,12 @@ OptParse.new nil, 28 do |op|
     $files = true
   end
 
-  # This maybe removed in a future release, as it doesn't control a whole lot.
-  op.on '--[no-]assume-tty', 'Assume stdout is tty for defaults' do |tty|
-    $stdout_tty = tty
+  op.on '--[no-]malformed-error', 'Invalid chars for --encoding a cause nonzero exit. (default)' do |me|
+    $malformed_error = me
+  end
+
+  op.on '-H ', '--[no-]escape-error', 'Any escapes cause an error status' do |ee|
+    $escape_error = ee
   end
 
   ##################################################################################################
@@ -76,7 +91,7 @@ OptParse.new nil, 28 do |op|
   ##################################################################################################
   op.separator "\nSeparating Outputs"
 
-  op.on '-p', '--prefixes', 'Add prefixes to outputs. (default if tty)' do
+  op.on '-p', '--prefixes', 'Add prefixes to the output. (default if any args are given)' do
     $prefixes = true
   end
 
@@ -96,53 +111,55 @@ OptParse.new nil, 28 do |op|
   op.separator "\nWhat to Escape. (You can specify multiple options; they are additive.)"
   $unescape_regex = []
   $escape_regex = []
-  $default_escape_regex = true
+  $default_escapes = true
 
-  op.on '--default-escape-regex', 'Implicitly include the default escape regex (\0-\x1f, \x7F); default',
-                                  'if -b is given, this also enables 0x80-0xff.' do
-                                    $default_escape_regex = true end
-
-  op.on '-E', '--no-default-escape-regex', 'Disable the default escape regex' do
-    $default_escape_regex = false
+  op.on '-e', '--escape=CHARSET', 'Escape characters that match the regex /[CHARSET]/' do |rxp|
+    $escape_regex.push "[#{rxp}]"
   end
 
-  op.on '-e', '--escape=CHAR_CLASS', 'Also escape characters which match the Regex Character Class CHAR_CLASS' do |rxp|
-    $escape_regex.push /[#{rxp}]/
+  op.on '-u', '--unescape=CHARSET', 'Do not escape characters if they match /[CHARSET]/. If a char',
+                                    'matches both an --escape and --unescape, it is unescaped.' do |rxp|
+    $unescape_regex.push "[#{rxp}]"
   end
 
-  op.on '--escape-all', 'Escape every character' do # ; Same as -e\'\x00-\x{10FFFF}\'' do ??
-    $escape_regex.push /./m
+  op.on '--default-escapes', 'Implicitly include --escape=\'\0-\x1F\x7F\'; If not visual mode,',
+                             'also --escape=\'\\\\\'. If --binary, also -e\'\x80-\xFF\' (default)' do
+    $default_escapes = true
   end
 
-  op.on '-u', '--unescape=CHAR_CLASS', 'Do not escape characters which match the Regex Character Class CHAR_CLASS',
-  'if a char is both unescaped and escaped, then it will be unescaped.' do |rxp|
-    $unescape_regex.push /[#{rxp}]/
+  op.on '-E', '--no-default-escapes', 'Dont include --default-escapes' do
+    $default_escapes = false
   end
 
-  # The `-l` is because of "lien-oriented mode" as found in things like perl and ruby.
-  op.on '-l', "Same as: --unescape='\\n'" do
+  op.on '-A', '--escape-all', 'Escape all characters. Useful when combined with --unescape.' do
+                              # 'Same as --escape=\'\0-\u{10FFFF}\'', in utf-8
+    $escape_regex.push '.'
+  end
+
+  # The `-l` is because of "line-oriented mode" as found in things like perl and ruby.
+  op.on '-l', '--unescape-newline', 'Same as --unescape=\'\n\'. ("Line-Oriented mode")' do
     $unescape_regex.push "\n"
   end
 
-  op.on '-w', "Same as: --unescape='\\n\\t '" do
+  op.on '-w', '--unescape-whitespace', "Same as --unescape='\\n\\t '" do
     $unescape_regex.push "\n", "\t", " "
   end
 
-  op.on '-s', "Same as: --escape=' '" do
+  op.on '-s', '--escape-space', "Same as --escape=' '" do
     $escape_regex.push ' '
   end
 
-  op.on '-S', 'Same as: -s --space-picture' do
+  op.on '-S', 'Same as --escape-space --space-picture' do
     $space_picture = true
     $escape_regex.push ' '
   end
 
-  op.on '-B', "Same: as --escape='\\\\' (default if not visual)" do |eb|
+  op.on '-B', '--escape-backslash', "Same as --escape='\\\\' (default if not visual mode)" do |eb|
     $escape_regex.push '\\'
   end
 
-  op.on '-U', 'Escapes all non-ascii codepoints. Same',
-              "as: --upper-codepoints -e'\\u{80}-\\u{10FFFF}'" do
+  op.on '-U', '--escape-non-ascii', 'Same as --upper-codepoints --escape=\'\u{80}-\u{10FFFF}\'.',
+                                    '(Escapes all non-ascii codepoints.)' do
     $upper_codepoints = true
     $escape_regex.push /[\u{80}-\u{10FFFF}]/
   end
@@ -157,7 +174,7 @@ OptParse.new nil, 28 do |op|
   ##################################################################################################
   op.separator "\nHow to Escape (-d, -., -x, and -C are mutually exclusive)"
 
-  op.on '-v', '--visual', 'Enable visual effects. (default if tty)' do
+  op.on '-v', '--visual', 'Enable visual effects. (default only if stdout is tty)' do
     $visual = true
   end
 
@@ -165,11 +182,11 @@ OptParse.new nil, 28 do |op|
     $visual = false
   end
 
-  op.on '-d', '--delete', 'Delete escaped characters' do
+  op.on '-d', '--delete', 'Delete escaped characters instead of printing their escape' do
     $escape_how = :delete
   end
 
-  op.on '-.', '--dot', "Use a '.' instead of escapes" do
+  op.on '-.', '--dot', "Use a '.' when escaping characters" do
     $escape_how = :dot
   end
 
@@ -177,19 +194,19 @@ OptParse.new nil, 28 do |op|
     $escape_how = :bytes
   end
 
-  op.on '-C', '--codepoints', 'Escape with codepoints, \u{...}. Sets --utf-8,',
-                              "and can't be used with other encodings." do
+  op.on '-C', '--codepoints', 'Escape with codepoints, \u{...}. Sets --utf-8, and can\'t be',
+                              'used with other encodings.' do
     $escape_how = :codepoints
     $encoding = Encoding::UTF_8
   end
 
-  op.on '--[no-]upper-codepoints', 'Like -C, but only for values above 0x7F.'  do |uc|
+  op.on '--[no-]upper-codepoints', 'Like --codepoints, but only for values above 0x7F.'  do |uc|
     $upper_codepoints = uc
     $encoding = Encoding::UTF_8
   end
 
-  op.on '-c', '--[no-]c-escapes', 'Use C-style escapes (\n, \t, etc) for some',
-                                  'escapes. (default only if none of -d.xCP given)' do |ce|
+  op.on '-c', '--[no-]c-escapes', 'Use C-style escapes (\n, \t, etc) for some escapes. (default',
+                                  'only if none of -d, -., -x, -C, -P given)' do |ce|
     $c_escapes = ce
   end
 
@@ -197,7 +214,7 @@ OptParse.new nil, 28 do |op|
     $pictures = $space_picture = cp
   end
 
-  op.on '--[no-]space-picture', 'Like -P, but just for spaces; Does not imply -s' do |sp|
+  op.on '--[no-]space-picture', 'Like --pictures, but only for spaces; Doesn\'t imply -s.' do |sp|
     $space_picture = sp
   end
 
@@ -210,44 +227,41 @@ OptParse.new nil, 28 do |op|
   # encodings are
   op.separator "\nEncodings (default based on POSIXLY_CORRECT; --utf-8 if unset, --locale if set)"
 
-  op.on '--encoding=ENCODING', "Specify the input's encoding. Case insensitive" do |enc|
+  op.on '--encoding=ENCODING', "Specify the input's encoding. Case-insensitive.",
+                               "Non-ascii-compatible encodings (eg UTF-16) will not work" do |enc|
     $encoding = Encoding.find enc rescue op.abort
+    op.abort "Encoding #$encoding is not ASCII-compatible!"
   end
 
-  op.on '--list-encodings', 'List all possible encodings and exit' do
+  op.on '--list-encodings', 'List all possible encodings, and exit.' do
     # Don't list external/internal encodings, as they're not really relevant.
-    puts "available encodings: #{(Encoding.name_list - %w[external internal]).join(', ')}"
+    possible_encodings = (Encoding.name_list - %w[external internal])
+      .select { |name| Encoding.find(name).ascii_compatible? }
+      .join(', ')
+
+    puts "available encodings: #{possible_encodings}"
+    puts "NOTE: non-ascii-compatible encodings, like UTF-16/UTF-32, will not work."
     exit
   end
 
-  op.on '-b', '--binary', '--bytes', 'Same as: --encoding=binary' do
+  op.on '-b', '--binary', '--bytes', 'Same as --encoding=binary' do
     $encoding = Encoding::BINARY
   end
 
-  op.on '-a', '--ascii', 'Same as: --encoding=ascii' do
+  op.on '-a', '--ascii', 'Same as --encoding=ascii. Like -b, but 0x80-0xFF are "invalid".' do
     $encoding = Encoding::ASCII
   end
 
-  op.on '-8', '--utf-8', 'Same as: --encoding=UTF-8 (See the -U flag)' do
+  op.on '-8', '--utf-8', 'Same as --encoding=UTF-8. (See also the -U flag)' do
     $encoding = Encoding::UTF_8
   end
 
-  op.on '-L', '--locale', 'Same: as --encoding=locale' do
+  op.on '-L', '--locale', 'Same as --encoding=locale. (Uses LANG/LC_ALL/LC_CTYPE Env vars)' do
     $encoding = Encoding.find('locale')
   end
 
-  op.on '--[no-]malformed-error', 'Invalid chars cause nonzero exit. (default)' do |ibf|
-    $invalid_bytes_failure = ibf
-  end
-  op.on <<~EOS
-  The only difference between --ascii and --binary is the former considers 0x80
-  and above to be invalid (and thus highlights them differently). The "locale"
-  encoding (--locale) uses whatever the environment specifies. Other encodings
-  are possible, but haven't been tested extensively.
-  EOS
-
-  op.on_tail "\nnote: IF any invalid bytes for the output encoding are read, the exit status is"
-  op.on_tail "based on `--encoding-failure-err`"
+  # op.on_tail "\nnote: IF any invalid bytes for the output encoding are read, the exit status is"
+  # op.on_tail "based on `--encoding-failure-err`"
 
   ##################################################################################################
   #                                        Environment Vars                                        #
@@ -258,10 +272,9 @@ OptParse.new nil, 28 do |op|
     P_END_VISUAL       Ending escape sequence for --visual
     P_BEGIN_ERR        Beginning escape sequence for invalid bytes with --visual
     P_END_ERR          Ending escape sequence for invalid bytes with --visual
-    POSIXLY_CORRECT    If present, changes default encoding to the locale's (cf
-                       locale(1).), and also disables parsing switches after ar-
-                       guments (e.g. `p foo -x` will print out `foo` and `-x`,
-                       and won't interpret `-x` as a switch.)
+    POSIXLY_CORRECT    If present, changes default encoding to the locale's (cf locale(1).), and
+                       also disables parsing switches after arguments (e.g. `p foo -x` will print
+                       out `foo` and `-x`, and won't interpret `-x` as a switch.)
   EOS
 
   ##################################################################################################
@@ -286,32 +299,38 @@ BEGIN_ERR    = ENV.fetch('P_BEGIN_ERR',    "\e[37m\e[41m")
 END_ERR      = ENV.fetch('P_END_ERR',      "\e[49m\e[39m")
 
 # Specify defaults
-defined? $stdout_tty               or $stdout_tty = $stdout.tty?
-defined? $prefixes                 or $prefixes = $stdout_tty && (!$*.empty? || $files)
-defined? $trailing_newline         or $trailing_newline = true
+defined? $visual                   or $visual = $stdout.tty?
+defined? $prefixes                 or $prefixes = (!$*.empty? || $files)
 defined? $files                    or $files = !$stdin.tty? && $*.empty?
-defined? $visual                   or $visual = $stdout_tty
-defined? $invalid_bytes_failure    or $invalid_bytes_failure = true
+defined? $trailing_newline         or $trailing_newline = true
+defined? $malformed_error          or $malformed_error = true
 defined? $escape_surronding_spaces or $escape_surronding_spaces = true
+was_escape_how_defined = defined?($escape_how)
 defined? $c_escapes                or $c_escapes = !defined?($escape_how) && !defined?($pictures) # Make sure to put this before `escape_how`'s default'
 defined? $escape_how               or $escape_how = :bytes
 defined? $encoding                 or $encoding = ENV.key?('POSIXLY_CORRECT') ? Encoding.find('locale') : Encoding::UTF_8
-
-if !Regexp.union($escape_regex).match?('\\') && !Regexp.union($unescape_regex).match?('\\') && !$visual
-  $escape_regex.push '\\'
-end
+defined? $upper_codepoints         or $upper_codepoints = $encoding == Encoding::UTF_8 && !was_escape_how_defined
 
 ## Union all the regexes we've been given
-if $default_escape_regex
-  $escape_regex.prepend /[\x00-\x1F\x7F]/
-  $escape_regex.prepend /[\x80-\xFF]/ if $encoding == Encoding::BINARY
+if $default_escapes
+  $escape_regex.push '[\x00-\x1F\x7F]'
+  $escape_regex.push '[\x80-\xFF]' if $encoding == Encoding::BINARY
 end
 
+def make_regexp(regex_array, flag)
+  Regexp.union regex_array.map{|re| Regexp.new (+re).force_encoding($encoding), Regexp::FIXEDENCODING }
+rescue RegexpError => err
+  $op.abort "issue with --#{flag} (encoding: #$encoding): #{err}"
+end
 
-# $unescape_regex = Regexp.union($unescape_regex.map { |x| x.encode $encoding })
-# $escape_regex   = Regexp.union($escape_regex.map { |x| x.encode $encoding })
-$unescape_regex = Regexp.union($unescape_regex)
-$escape_regex   = Regexp.union($escape_regex)
+$escape_regex   = make_regexp($escape_regex, 'escape')
+$unescape_regex = make_regexp($unescape_regex, 'unescape')
+
+# Default for backslashes: If visual is disabled, and was given to neither `-e` or `-u`, then
+# escape backslashes too.
+if $default_escapes && !$visual && !$unescape_regex.match?('\\') && !$escape_regex.match?('\\')
+  $escape_regex = Regexp.union '\\'.encode($encoding), $escape_regex
+end
 
 ## Force `$trailing_newline` to be set if `$prefixes` are set, as otherwise there wouldn't be a
 # newline between each header, which is weird.
@@ -326,11 +345,21 @@ unless $encoding == Encoding::UTF_8
   end
 end
 
-## Add the functionality in for `--malformed-error`: If the program is normally exiting (i.e.
-# it's not exiting due to an exception), then exit based on whether an encoding failed.
-$invalid_bytes_failure and at_exit do
-  exit !$ENCODING_FAILED unless $!
+at_exit do
+  next if $! # If there's an exception, then just yield that
+
+  if $malformed_error && $ENCODING_FAILED
+    exit 1
+  elsif $escape_error && $SOMETHING_ESCAPED
+    exit 1
+  end
 end
+
+# ## Add the functionality in for `--malformed-error`: If the program is normally exiting (i.e.
+# # it's not exiting due to an exception), then exit based on whether an encoding failed.
+# $malformed_error and at_exit do
+#   exit !$ENCODING_FAILED unless $!
+# end
 
 ####################################################################################################
 #                                                                                                  #
@@ -379,36 +408,48 @@ C_ESCAPES = {
   "\e" => '\e',
 }
 
+# Returns the escape sequence for a character, depending on the flags given to the program. It does
+# not actually add any visualizations, however; that's `escape`'s job
+def escape_sequence(character)
+  $SOMETHING_ESCAPED = true
+  if $c_escapes && (esc = C_ESCAPES[character])
+    esc
+  elsif $pictures && character.match?(/[\x00-\x1F]/)
+    ((0x2400 + character.ord).chr(Encoding::UTF_8))
+  elsif $pictures && character.match?(/[\7F]/)
+    "\u{2421}"
+  elsif character == '\\'
+    '\\\\'
+  elsif character == ' '
+    $space_picture ? "\u{2423}" : ' '
+  elsif $escape_how == :codepoints || ($upper_codepoints && character.codepoints.sum >= 0x80)
+    codepoints character
+  else
+    hex_bytes character
+  end
+end
+
+# Return the escape sequence associated with `character`, and visual effects (if there are any). It
+# does not actually verify if a character _should_ be escaped; `should_escape?` is used for that.
+def escape(character)
+  case $escape_how
+  when :dot    then visualize '.'
+  when :delete then ''
+  else              visualize escape_sequence character
+  end
+end
+
 ## Construct the `CHARACTERS` hash, whose keys are characters, and values are the corresponding
 # sequences to be printed.
 CHARACTERS = Hash.new do |hash, key|
   hash[key] =
     if !key.valid_encoding?
-      $ENCODING_FAILED = true # for the exit status with `$invalid_bytes_failure`.
+      $ENCODING_FAILED = true # for the exit status with `$malformed_error`.
       visualize hex_bytes(key), BEGIN_ERR, END_ERR
-    elsif !should_escape?(key)
-      key
     else
-      visualize (
-        if $c_escapes && (esc = C_ESCAPES[key])
-          esc
-        elsif $pictures && key.match?(/[\x00-\x1F]/)
-          ((0x2400 + key.ord).chr(Encoding::UTF_8))
-        elsif $pictures && key.match?(/[\7F]/)
-          "\u{2421}"
-        elsif key == '\\'
-          '\\\\'
-        elsif key == ' '
-          $space_picture ? "\u{2423}" : ' '
-        elsif $escape_how == :codepoints || ($upper_codepoints && key.codepoints.sum >= 0x80)
-          codepoints key
-        else
-          hex_bytes key
-        end
-      )
-  end
+      should_escape?(key) ? escape(key) : key
+    end
 end
-
 
 ####################################################################################################
 #                                                                                                  #
@@ -419,7 +460,14 @@ end
 # CAPACITY = ENV['P_CAP'].to_i.nonzero? || 4096 * 3
 # OUTPUT = String.new(capacity: CAPACITY * 8, encoding: Encoding::BINARY)
 
+## Put both stdin and stdout in bin(ary)mode: Disable newline conversion (which is used by Windows),
+# no encoding conversion done, and defaults the encoding to Encoding::BINARY (ie ascii-8bit). We
+# need this to ensure that we're handling exactly what we're given, and ruby's not trying to be
+# smart. Note that we set the encoding of `$stdin` (which doesn't undo the other binmode things),
+# as we might be iterating over `$encoding`'s characters from `$stdin` (if `-` was given).
 $stdout.binmode
+$stdin.binmode.set_encoding $encoding
+
 # TODO: optimize this later
 def print_escapes(has_each_char, suffix = nil)
   ## Print out each character in the file, or their escapes. We capture the last printed character,
@@ -432,7 +480,7 @@ def print_escapes(has_each_char, suffix = nil)
 
   ## If a suffix is given (eg trailing spaces with `--escape-surrounding-space)`, then print it out
   # before printing a (possible) trailing newline.
-  suffix and print visualize suffix
+  print suffix if suffix
 
   ## Print a newline if the following are satisfied:
   # 1. It was requested. (This is the default, but can be suppressed by `--no-trailing-newline`, or
@@ -464,15 +512,17 @@ unless $files
       # beforehand), this should be changed to use `byteslice`.The method used here is more convenient,
       # but is destructive. ALSO. It doesn't work wtih non-utf8 characters
       string.force_encoding Encoding::BINARY
-      leading_spaces  = string.slice!(/\A +/) and $stdout.write visualize leading_spaces.gsub(' ', $space_picture ? '␣' : ' ')
-      trailing_spaces = string.slice!(/ +\z/)&.gsub(' ', $space_picture ? '␣' : ' ')
+      leading_spaces  = string.slice!(/\A +/) and print visualize escape_sequence(' ') * $&.length
+      trailing_spaces = string.slice!(/ +\z/) && visualize(escape_sequence(' ') * $&.length)
     end
 
     # handle the input string
     print_escapes string.force_encoding($encoding), trailing_spaces
   end
 
-  exit
+  # Exit early so we don't deal with the chunk below. note however, the `at_exit` above for the
+  # `--malformed-error` flag.
+  return
 end
 
 # Sadly, we can't use `ARGF` for numerous reasons:
@@ -510,7 +560,7 @@ ARGV.each do |filename|
   # `$stdin` directly.)
   file =
     if filename == '-'
-      $stdin.binmode.set_encoding $encoding
+      $stdin
     else
       File.open(filename, 'rb', encoding: $encoding)
     end
@@ -524,11 +574,11 @@ rescue => err
   ## Whenever an error occurs, we want to handle it, but not bail out: We want to print every file
   # we're given (like `cat`), reporting errors along the way, and then exiting with a non-zero exit
   # status if there's a problem.
-  $op.warn err  # Warn of the problem
-  @file_error = true # For use when we're exiting
+  $op.warn err       # Warn of the problem
+  $FILE_ERROR = true # For use when we're exiting
 ensure
   ## Regardless of whether an exception occurred, attempt to close the file after each execution.
-  # However,# do not close `$stdin` (which occurs when `-` is passed in as a filename), as we might
+  # However, do not close `$stdin` (which occurs when `-` is passed in as a filename), as we might
   # be reading from it later on. Additionally any problems closing the file are silently swallowed,
   # as we only care about problems opening/reading files, not closing them.
   unless file.nil? || file.equal?($stdin) # file can be `nil` if opening it failed
@@ -537,6 +587,6 @@ ensure
 end
 
 ## If there was a problem reading a file, exit with a non-zero exit status. Note that we do this
-# instead of `exit !@file_error`, as the `--invalid-bytes-failure` flag sets an `at_exit` earlier in
+# instead of `exit !$FILE_ERROR`, as the `--invalid-bytes-failure` flag sets an `at_exit` earlier in
 # this file which checks for the exiting exception, which `exit false` would still raise.
-exit 1 if @file_error
+exit 1 if $FILE_ERROR
