@@ -1,0 +1,9 @@
+#!zsh
+
+## Deletes a path segment. Similar, but not identical to, using delete-backto-char with `/`,
+# as this one deletes words
+WORDCHARS=' ' && zle transpose-words
+
+
+# NOTE: DOEsn't work with this
+# cat allbytes.dat | i --c-escapes='\0\a\b\t\n\v\f\r\e' <TRANSPOSE HERE> --delete='\0-\xFF'

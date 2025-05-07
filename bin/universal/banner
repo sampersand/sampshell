@@ -33,7 +33,7 @@ OPTIONS[:copy]      and $stdout = IO.popen('pbcopy', 'w')
 
 OPTIONS[:width] == 0 and OPTIONS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
 
-if (OPTIONS[:width] -= OPTIONS[:pre]).negative?
+if (OPTIONS[:width] - OPTIONS[:pre]).negative?
   abort "#{File.basename($0)}: -p > -w; no space remaining for text"
 end
 
