@@ -1,135 +1,154 @@
-#!/bin/sh
+#!/usr/bin/env ruby
+require 'optparse'
 
-## Converts an input into c-style escapes
-# This program interprets all command-line arguments as filenames (or if none
-# are provided, will use stdin), and will print each line, with c-style escapes
-# replacing non-"normal" (ie anything that's not a space thru a `~`; However,
-# `\` _is_ abnormal) characters.
-#
-# Three flags are understood:
-# *   -h, --help   Prints out help
-# *   -n           Suppress printing a trailing newline at the end
-# *   -l           Don't escape newlines, and ensures there's a trailing one.
-##
+OptParse.accept Encoding do |encoding|
+  if encoding == '?'
+    puts "Valid encodings: #{Encoding.name_list.join(', ')}"
+    exit
+  end
 
-## This file, even though it's a Ruby file, will be started up as a shell script,
-# via the `/bin/sh` shebang. This is because we want to pass some flags to Ruby
-# (which you normally can do via `#!ruby -sp` at the top), but you're only able
-# to pass a single argument. The problem is some shells, like `dash`, can't find
-# `ruby`. The normal solution is to `#!/usr/bin/env ruby`, but _that_ won't work
-# because then we can't pass the flags we want to `ruby`.
-#
-# So, Ruby provides a `-x` flag that will cause Ruby to 100% ignore _all_ lines
-# until it finds one that starts with `#!` and contains the word `ruby` in it.
-# The upswing of this is that we can use shell code to pass flags into Ruby,
-# and then Ruby will 100 %ignore the shell code.
-#
-# Note that in macOS, and some newer versions of Linux, you can replace this
-# entire construct via `#!/usr/bin/env -S ruby -sp` to pass flags to `ruby`.
-##
+  begin
+    Encoding.find encoding
+  rescue ArgumentError
+    raise "invalid encoding '#{encoding}'. (Use '?' to list all encodings)"
+  end
+end
 
-exec ruby -x -- "$0" "$@"
+$standout = true
+$escape_whitespace = true
+$escape_newlines = nil
+$suppress_trailing_newline = false
 
-#!ruby -sp
+OptParse.new do |op|
+  op.on '-w', '--[no-]dont-escape-whitespace', "Don't escape non-space whitespace." do |ews|
+    $escape_whitespace = !ews
+  end
 
-## Once ruby finds a line that starts with `#!ruby`, the remaining flags are
-# interpreted as if they were passed directly on the command line. We use
-# the following flags:
-#
-# * -s    All command-line arguments to this script that start with `-` (until a
-#         non-`-`-leading argument or `--`) will be set as global variables. We
-#         use `$l` and `$n` in the script to see if the `-l` or `-n` flags were
-#         passed. (and `$h` / `$_help` for the usage)
-# * -p    Acts as if the script was `while $_ = gets; ...; print $_; end`. This
-#         means the main body of our script will be run once per line we read.
-#
-# When reading input via `gets` (which `-p` does), Ruby will interpret any
-# remaining command-line arguments as filenames, open them, and then iterate
-# over their lines. (If a filename is `-` or no files are given, stdin is used.)
-# Thus, we get the behaviour of `... | dump` and `dump file1 file2` acting the 
-# same for free :-)
-#
-# (A note on Ruby's `-l` flag: It changes the `gets` to `gets(chomp: true)`.
-# This is exactly what we want when the user would pass in `-l`, but it wouldn't
-# work for the normal case. We could set `$/=nil` in the non-`-l` case to solve
-# this, but then we'd read the _entire_ stdin all at once, which isn't great. We
-# also could do some preprocessing of the args before we call `exec ruby`, but I
-# don't really like that either. Instead, we just use `($l ? chomp : $_)`.)
-##
+  op.on '-l', '--[no-]dont-escape-lines', "Don't escape newlines." do |enl|
+    $escape_newlines = !enl
+  end
 
-## Since our code is wrapped in `while gets`, we use the `BEGIN` block to only
-# run our code once, at the very start of the program. Otherwise, this check for
-# usage and assigning `$\` would happen each time.
-BEGIN {
-  # If either `-h` or `--help` are passed on the command line, print the usage
-  # and exit.
-  $h || $_help and (puts <<~USAGE; exit)
-    usage: #{File.basename($0)} [-l |-n] [--] [file ...]
+  op.on '-i', '--input-encoding=ENCODING', Encoding, 'Set input encoding (default: UTF-8)' do |enc|
+    $input_encoding = enc
+  end
 
-    options:
-      -h,--help     print this message, then exit
-      -n            suppress printing the final newline
-      -l            don't escape newlines. disables '-n'
+  op.on '-o', '--output-encoding=ENCODING', Encoding, 'Set output encoding (default: the input encoding)' do |enc|
+    $output_encoding = enc
+  end
 
-    This prints each line from 'file' (use '-' for stdin; no files
-    defaults to '-'), replacing non-printing characters (as well
-    as '\\') with their c-style escape sequence.
-  USAGE
+  op.on '-\\', '--[no-]escape-backslash', 'Also escape backslashes. Defaults to on when standout is enabled' do |bs|
+    $escape_backslash = bs
+  end
 
-  # If `-l` was passed, then set the output record separator to the input record
-  # separator. `$\` is written after every `print` command, including the one
-  # that `-p` implicitly adds. Thus, we'll always write out `$/` (which defaults
-  # to a newline) after each argument.
-  $l and $\ = $/
-}
+  op.on '-n', '--suppress-trailing-newline', 'Do not print out a trailing newline' do
+    $suppress_trailing_newline = true
+  end
 
-## Once we're done processing all of the input, print a trailing new line if and
-# only if the user supplied neither `-n` (which explicitly disables this), nor
-# `-l` (which adds its own newlines at the end of each line)
-END { $l || $n or puts }
+  op.on '-x', '--always-hex', 'Do not display C-style `\r`' do
+    $cstyle = false
+  end
 
-## Now this is the meat of the program. Everything here and below will be run
-# once per input line, which is set to the variable `$_`. When we run a program
-# with either `-n` or `-p` (which enables `-n`), four global methods are added:
-#
-# * `sub(...)`       equivalent to `$_ = $_.sub(...)`
-# * `gsub(...)`      equivalent to `$_ = $_.gsub(...)`
-# * `chop()`         equivalent to `$_.chop`
-# * `chomp(...)`     equivalent to `$_ = $_.chomp(...)`
-#
-# (Kinda wonky that only `chop` doesn't modify `$_`, isn't it?)
-# The idea behind them is that it makes it easier to write one-liners or small
-# scripts like this, so let's go ahead and use them!
-##
+  op.on '-c', '--cstyle', 'Display escpaes with C-style `\r` etc' do
+    $cstyle = true
+  end
 
-## Ensure that the previous `print` has been fully written to stdout. We need
-# this for when we're not in line-oriented mode, as we won't be printing `\n`s
-# (which flushes on most systems) at all until we reach the very end of the
-# program. (If `-n` is specified, stdout will be flushed upon program exit.)
-$stdout.flush
+  op.on '-s', '--[no-]standout', 'Disables standout mode' do |s|
+    $standout = s
+  end
 
-## Perform the escaping upon `$_`.
-#
-# First, delete the trailing `\n` if we're in line-oriented mode, so that it
-# won't be escaped. (The `$\ = $/` we did in the begin will ensure that a `\n`
-# will be appended when we print due to `-p`)
-#
-# Next `dump` does most of the escaping work for us. `String#dump` actually
-# converts its the string to a form where `eval`ing it won't cause any problems.
-# As such, there's a few extra things we have to do:
-#
-# (1) `String#dump`'s output is _always_ surrounded by `"`s. We need to remove
-#     them as they weren't a part of the original string. We use `slice!` here
-#     so that we modify the string `.dump` returned. There's no worry about it
-#     returning `nil` since, again, we know the output is surrounded by `"`s.
-# (2) Unescape `#`, `'`, and `"`. Since this is meant to be usable in `eval`,
-#     the dump function _also_ escapes characters special to Ruby. Most of these
-#     (such as `\` itself) we want escaped, but `#`, `'`, and `"` in particular
-#     we don't. As such, we use the special global-method `gsub(...)` to delete
-#     the `\`s.
-##
-$_ = ($l ? chomp : $_).dump.slice! 1..-2
-gsub /\\([#'"])/, '\1'
+  op.on '-U', '--escape-larger', 'Escape things larger than 0xff' do
+    $escape_larger = true
+  end
 
-## Now that we've reached the end of the script, since we supplied a `-p`, Ruby
-# will print out `$_` for us, and then start again!
+  op.on '-a', '--ascii-only', 'Escape upper bits too' do
+    $input_encoding = $output_encoding = 'ASCII'
+  end
+
+  op.on '-u', '--utf-8', 'Assume input is in UTF-8 format' do
+    $input_encoding = $output_encoding = 'UTF-8'
+    $escape_larger = false
+  end
+
+  op.on '-b', '--binary' do
+    $input_encoding = $output_encoding = 'binary'
+    $escape_whitespace = true
+  end
+
+  $files = true
+  op.on '--no-files', 'Interpret arguments not as files, but as messages to print' do
+    $files = false
+  end
+
+  op.on '-N', '--number-files', 'Number the input lines' do
+    $number_lines = true
+  end
+
+  op.parse! rescue abort "#{op.program_name}: #$!"
+end
+
+$input_encoding ||= Encoding::UTF_8
+$output_encoding ||= $input_encoding
+$escape_newlines = $*.empty? if $escape_newlines.nil?
+$number_lines = true if !defined?($number_lines) && !$files
+
+$cstyle = true unless defined? $cstyle
+$escape_backslash = !$standout if $escape_backslash.nil?
+
+BEGIN_STANDOUT = "\e[7m"
+END_STANDOUT = "\e[27m"
+
+C_CODEPOINTS = {
+  0=>'\x00', 7=>'\a', 8=>'\b', 9=>'\t', 10=>'\n', 11=>'\v',
+  12=>'\f', 13=>'\r', 27=>'\e'
+}.freeze
+
+WHITESPACE = [9, 10]
+
+$files and ARGF.set_encoding $input_encoding
+
+OUTPUT = String.new(capacity: 4096 * 8, encoding: $output_encoding)
+INPUT_LINE = String.new(capacity: 4096, encoding: $input_encoding)
+
+def escape(...)
+  $standout and OUTPUT.concat BEGIN_STANDOUT
+  OUTPUT.concat(...)
+  $standout and OUTPUT.concat END_STANDOUT
+end
+
+def handle
+  INPUT_LINE.each_codepoint do |char|
+    if char == 10 and !$escape_newlines
+      OUTPUT.concat char
+    elsif (WHITESPACE.include?(char) ? $escape_whitespace : char < 0x20)
+      escape ($cstyle && C_CODEPOINTS[char]) || ('\x%02X' % char)
+    elsif char == '\\'.ord and $escape_backslash
+      escape '\\\\'
+    elsif (0x7F..0xFF).include? char
+      escape '\x%02X' % char
+    elsif 0xff < char && $escape_larger
+      escape '\u{%X}' % char
+    else
+      OUTPUT.concat char
+    end
+  end
+
+  print OUTPUT
+  $ended_with_newline = OUTPUT.end_with? "\n"
+  OUTPUT.clear
+end
+
+if $files
+  while (ARGF.readpartial(4096, INPUT_LINE) rescue nil)
+    handle
+  end
+  puts unless $suppress_trailing_newline || $ended_with_newline
+else
+  $*.each_with_index do |arg, idx|
+    printf "%5d: ", idx+1 if $number_lines
+    INPUT_LINE.replace arg
+    handle
+    puts
+  end
+end
+
+
