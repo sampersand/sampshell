@@ -1,4 +1,4 @@
-#
+#!csh
 alias warn	'echo >/dev/stderr'
 
 if ( $?prompt ) then
@@ -33,8 +33,11 @@ if ( $?prompt ) then
 	alias h      history
 	alias edc    'ed \!:*:x ~/.cshrc'
 	alias +x     chmod +x
-	alias md     'mkdir \!:* && chdir \!:*'
-	alias rd     rmdir
+	alias md     '\mkdir \!*:q && \cd \!*:q'
+	alias m      'mkdir \!*:q && cd \!*:q'
+	# alias rd     'rmdir \!:q'
 	alias ls     'ls -AFq --color=auto'
 	alias ..     cd ..
+
+	alias cdd       'cd `dirname \!*`'
 endif

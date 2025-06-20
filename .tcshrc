@@ -1,11 +1,13 @@
 #!tcsh
 alias warn 'echo >/dev/stderr'
-if ( $?prompt ) then # only do load up this file if a prompt is defined
+
+source "$SampShell_ROOTDIR"/.cshrc
+
+if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is defined
 	alias cd        'pushd'
 	alias cdd       'cd `dirname \!*`'
+
 	alias reload    'source ~/.tcshrc'
-	alias h         'history'
-	alias +x        'chmod +x \!*'
 	alias md        'mkdir -p \!*:q && \cd -- \!*q'
 	alias ls        'ls -AFqhGb'
 	alias s         'subl'
