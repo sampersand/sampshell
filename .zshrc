@@ -156,6 +156,9 @@ function jobs {
 #                                                                                                  #
 ####################################################################################################
 
+# Default zstyle for prompt
+zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
+
 ## Options for prompt expansion
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
