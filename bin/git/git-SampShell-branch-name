@@ -9,13 +9,15 @@ usage: $program_name [-d DATE] [-p PREFIX] branch name here"
 options:
     -d DATE   Set the date (format: YYYY-MM-DD); Defaults to the current date.
     -p PREFIX Set the branch prefix; Defaults to 'id -nu', ie 'whoami'.
+    -s SEP    Set the separator, which defaults to '/'
 
 If multiple non-flag args are given, they're separated by a '-'
 EOS
 
 date=
 prefix=${SampShell_git_branch_prefix-} # If this is empty, it's set below.
-while getopts 'hp:d:' opt; do
+separator=${SampShell_git_separator:-/}
+while getopts 'hp:d:s:' opt; do
 	case $opt in
 	p)
 		prefix=$OPTARG ;;
@@ -30,6 +32,8 @@ while getopts 'hp:d:' opt; do
 				"$program_name" "$OPTARG"
 			exit 2
 		esac ;;
+	s)
+		separator=$OPTARG ;;
 
 	h)
 		usage
@@ -48,7 +52,9 @@ then
 	exit 80
 fi
 
-printf %s/%s/%s \
+printf %s%s%s%s%s \
 	"${prefix:-$(id -un)}" \
+	"$separator" \
 	"${date:-$(date +%F)}" \
+	"$separator" \
 	"$(IFS=-; echo "$*")"
