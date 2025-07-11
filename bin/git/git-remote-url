@@ -1,0 +1,32 @@
+#!/bin/zsh
+
+##
+# Open up a repo in a web browser
+##
+
+set -eu
+
+if [[ ${1:-} = -h ]] then
+	set -- 1 2 3 # ie invalid
+fi
+
+case $# in
+	0) ;;
+	1|2) cd -- $1:h ;;
+	*) echo "usage: $(basename -- "$0" | sed 's/-/ /1') [file] [start[-end]]" >&2
+		exit 80
+esac
+
+repo=$(gh repo view --json=url --jq=.url)
+branch=$(git rev-parse --abbrev-ref HEAD)
+file=''
+
+if (( $# >= 1 )) then
+	file=${${1#$(git rev-parse --show-toplevel)}#/}
+fi
+
+if (( $# == 2 )) then
+	file+="#L${2/-/-L}"
+fi
+
+print -r -- $repo/blob/$branch/$file
