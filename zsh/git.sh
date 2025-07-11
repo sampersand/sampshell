@@ -14,7 +14,11 @@ alias g=git
 alias gdirs='git prev-branches'
 alias gnit='git nit'
 alias goops='git oops'
-gopen () { open $(git remote-url $@) }
+gopen () {
+	local remote
+	remote=$(git remote-url $@) || return
+	open $remote
+}
 alias gsquash='git squash'
 
 ## Spellcheck
