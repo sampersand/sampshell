@@ -226,6 +226,7 @@ bindkey -A sampshell main
 ## Bind key strokes to do functions
 bindkey '^[#'    pound-insert
 bindkey '^[='    SampShell-delete-to-char
+bindkey '^[+'    SampShell-zap-to-char
 bindkey '^[/'    SampShell-delete-path-segment
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 bindkey '^[^[[A' SampShell-up-directory

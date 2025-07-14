@@ -1,0 +1,9 @@
+#!zsh
+
+# This is the same as the builtin `zap-to-char` function, except it deletes backwards by default
+# (as I find that much more useful). Note that this file isn't named `zap-to-char` in case the
+# builtin already has been loaded.
+emulate -L zsh
+
+zmodload zsh/deltochar
+zle delete-to-char -n $(( - ${NUMERIC:-1} ))
