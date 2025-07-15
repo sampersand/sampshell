@@ -1,0 +1,12 @@
+#!/bin/csh -f
+
+set nonomatch
+
+foreach p ( $path:q )
+	if ( ! -d "$p" ) continue
+	foreach x ( "$p"/* )
+		if ( -x "$x" ) then
+			echo $x:t
+		endif
+	end
+end
