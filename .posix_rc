@@ -92,6 +92,7 @@ alias l=ls
 alias ll='l -l'
 alias lt='l -tl'
 alias j=jobs
+alias p=mviz # shorthand for the `mviz` command
 
 ## Sublime Text editor shorthand aliases
 alias s=subl
