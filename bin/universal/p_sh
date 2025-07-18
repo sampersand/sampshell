@@ -34,7 +34,8 @@
 
 ## Reset shell features, in the case where we are `.`d, as well as set `-uf`.
 \unalias -a
-{ set -o posix || emulate sh || true; } 2>/dev/null 1>&2
+
+# { set -o posix || emulate sh || true; } 2>/dev/null 1>&2
 set +xve -uf
 unset -v IFS
 PATH=$(command -p env -i /bin/sh -c 'printf %s. "$PATH"')
@@ -49,21 +50,36 @@ else
    : "${P_SH_RMSO=}"
 fi
 
-argno=0
-for arg do
-   printf '%5d: ' $(( argno += 1 ))
+## Function for escaping strings
+escape () {
+   escape_argument=$1 # `arg` isn't used anywhere else
 
    # Check for length in case `arg` has `NUL` in it; we cant use `-z`.
-   while [ ${#arg} -ne 0 ]; do
-      tail=${arg#?}
-      head=${arg%"$tail"}
-      arg=$tail
+   while [ ${#escape_argument} -ne 0 ]; do
+      escape_tail=${escape_argument#?}
+      escape_head=${escape_argument%"$escape_tail"}
+      escape_argument=$escape_tail
 
-      case $head in
-         [[:print:]]) printf %s "$head" ;;
-         *) printf '%s\\x%02X%s' "$P_SH_SMSO" "'$head" "$P_SH_RMSO" ;;
+      case $escape_head in
+         [[:print:]]) printf %s "$escape_head" ;;
+         *) printf '%s\\x%02X%s' "$P_SH_SMSO" "'$escape_head" "$P_SH_RMSO" ;;
       esac
    done
+}
 
-   echo
-done
+if [ "$#" -gt 0 ]; then
+   argno=0
+   for arg do
+      printf '%5d: ' $(( argno += 1 ))
+      escape "$arg"
+      echo
+   done
+else
+   # `-d ''` is posixly-correct for `read`, but only for POSIX-2024. not all systems are on that.
+   while read -r -d '' REPLY ; do
+      escape "$REPLY"
+      printf '%s\\x00%s' "$P_SH_SMSO" "$P_SH_RMSO"
+   done
+
+   [ -n "$REPLY" ] && escape "$REPLY"
+fi
