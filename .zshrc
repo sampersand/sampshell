@@ -237,11 +237,6 @@ bindkey '^Xr'    redo
 alias which-command=which # for `^[?`
 
 # "command-space" commands
-bindkey '^[ %' SampShell-make-prompt-simple
-bindkey '^[ $' SampShell-make-prompt-simple
-bindkey '^[ z' SampShell-put-back-zle
-bindkey '^[ p' SampShell-add-pbcopy
-bindkey '^[ t' SampShell-transpose-words
 bindkey -s '^[ l' '^Qls^M'
 
 ## up and down history, but without going line-by-line

@@ -10,8 +10,6 @@ bindkey '^Z' undo
 bindkey 'Ω' undo # MACOS: OPTION+Z
 bindkey '¸' redo # MACOS: OPTION+SHIFT+Z
 bindkey '^W' kill-region # delete a higlighted part of a line
-bindkey '^[^[[D' vi-find-prev-char
-bindkey '^[^[[C' vi-find-next-char
 bindkey '^q' push-line-or-edit
 
 source ${0:P:h}/movements.zsh
@@ -40,8 +38,6 @@ source ${0:P:h}/movements.zsh
 
 # pr () print -zr -- $ZLE_LINE_ABORTED
 # bindkey '^[ z' put-back-zle
-bindkey '^[ c' SampShell-copy-command
-bindkey '^[ p' SampShell-add-pbcopy
 bindkey -s '^[ l' '^Qls^M'
 
 # bindkey -N SampShell-git
