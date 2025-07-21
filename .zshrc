@@ -106,7 +106,7 @@ fi
 	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
 	# commands are stored in the history.
 	##
-history-ignore-command history-{enable,disable,toggle}
+history-ignore-command {enable,disable,toggle}-history
 
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
