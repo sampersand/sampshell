@@ -14,6 +14,9 @@ bindkey '^[^[[D' vi-find-prev-char
 bindkey '^[^[[C' vi-find-next-char
 bindkey '^q' push-line-or-edit
 
+source ${0:P:h}/movements.zsh
+# ----
+
 ## Subsumed by me just learning `^W`
 # backwards-delete-char-or-region () {
 # 	if (( MARK != 0 )) {

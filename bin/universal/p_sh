@@ -80,6 +80,6 @@ else
       escape "$REPLY"
       printf '%s\\x00%s' "$P_SH_SMSO" "$P_SH_RMSO"
    done
-
+/
    [ -n "$REPLY" ] && escape "$REPLY"
 fi
