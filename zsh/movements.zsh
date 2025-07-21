@@ -3,16 +3,13 @@ autoload -Uz select-word-style
 
 zstyle ':zle:SampShell-*-argument' word-style shell
 
-autoload -Uz backward-word-match
-autoload -Uz forward-word-match
-autoload -Uz backward-kill-word-match
-autoload -Uz kill-word-match
+# `forward-kill` is actually just `kill`
+autoload -Uz backward-word-match forward-word-match backward-kill-word-match kill-word-match
 zle -N SampShell-backward-argument backward-word-match
 zle -N SampShell-forward-argument forward-word-match
 zle -N SampShell-backward-kill-argument backward-kill-word-match
 zle -N SampShell-forward-kill-argument kill-word-match
 
-# zle -N SampShell-forward-argument forward-word-match
 bindkey '^[[1;2D' SampShell-backward-argument
 bindkey '^[[1;2C' SampShell-forward-argument
 bindkey '^[[3;2~' SampShell-forward-kill-argument
