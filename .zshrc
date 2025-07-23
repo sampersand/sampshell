@@ -237,6 +237,7 @@ bindkey '^Xr'    redo
 alias which-command=which # for `^[?`
 
 # "command-space" commands
+bindkey '^[ t' SampShell-transpose-words
 bindkey -s '^[ l' '^Qls^M'
 
 ## up and down history, but without going line-by-line

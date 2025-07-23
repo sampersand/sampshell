@@ -5,7 +5,6 @@
 ################################################################################
 
 bindkey '^[ c' SampShell-copy-command
-bindkey '^[ p' SampShell-add-pbcopy
 bindkey '^[ %' SampShell-make-prompt-simple
 bindkey '^[ $' SampShell-make-prompt-simple
 bindkey '^[ z' SampShell-put-back-zle
@@ -39,6 +38,16 @@ bindkey '^[[1;2C' SampShell-forward-argument
 bindkey '^[[3;2~' SampShell-forward-kill-argument
 bindkey '^[[79;2~' SampShell-backward-kill-argument # `79` is arbitrary code i picked that seems unused
 bindkey '^[T' SampShell-transpose-argument
+
+# bindkey 'å'=
+# bindkey 'å^[[D' SampShell-backward-argument
+# bindkey 'å^[b'  SampShell-backward-argument
+# bindkey 'å^[[C' SampShell-forward-argument
+# bindkey 'å^[f' SampShell-forward-argument
+# bindkey 'å^?' SampShell-backward-kill-argument
+# bindkey 'å^[[3~' SampShell-forward-kill-argument
+# bindkey 'å^[^?' SampShell-forward-kill-argument
+
 
 # ESC + <left/right-arrow> + char = goes to the prev/next instance of `char`
 bindkey '^[^[[D' vi-find-prev-char
