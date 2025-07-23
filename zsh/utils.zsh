@@ -23,7 +23,7 @@ function ducks {
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
-pwdc () ( ARGC_AT_MOST_1 cd -- "$PWD${1+/$1}" && pbc "$PWD" )
+pwdc () ( ARGC_AT_MOST_1 cd -q -- "$PWD${1+/$1}" && pbc "$PWD" )
 
 function _SampShell-hg { h | grep $* }
 alias hg='noglob _SampShell-hg'
@@ -36,9 +36,35 @@ grep () command grep --color=auto $@
 
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
+function +xp {
+	emulate -L zsh
+	local REPLY arg exit=0
+	for arg; do
+		local paths=( ${^path}/$arg(UN^-*) )
+
+		case $#paths in
+			0) print -r "$0: cannot find in path: ${(q+)arg}" >/dev/stderr; exit=1 ;;
+			[^1])
+				print -r "found $#paths options for ${(q+)arg}. pick one:"
+				select REPLY in $paths; do break; done # select the option
+				[[ -z $REPLY ]] && continue # if it's not a valid one, dont use this
+				paths=( $REPLY ) # set the paths to just the reply
+				;& # fall thru
+			1)
+				read -q "?make executable [y/N]? ${(q+)paths} "
+				REPLY=$status
+				echo
+				(( REPLY )) && chmod +x $paths
+				;;
+		esac
+	done
+	return $exit
+}
+
 alias ps='ps -ax'
 alias hd='hexdump -C'
 alias psg='noglob ps -ax | grep '
+alias pinge='ping www.example.com -c10'
 
 hr () xx ${@:--}
 hrc () { ARGC_EXACTLY_0 hr | pbcopy }

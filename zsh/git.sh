@@ -35,6 +35,9 @@ SampShell_master_branch () {
 	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
 }
 
+alias current-branch=SampShell_current_branch
+SampShell_current_branch () { git branch --show-current; }
+
 if false; then
 	git log limit
 fi
@@ -64,6 +67,7 @@ gsw () {
 	git switch "$@"
 }
 alias gbr='git branch'
+alias grbc='current-branch | pbc'
 
 gdb () {
 	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
@@ -104,8 +108,9 @@ alias gcma='git commit --amend'
 alias gammend='git commit --amend'
 
 alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
+alias gss='git status --shortr'
 alias grb='git rebase'
-alias grbm='git rebase "$(master-branch)"'
+alias grbm='git rebase "$(SampShell_master_branch)"'
 alias grba='git rebase --abort'
 alias ga='git add'
 
@@ -113,6 +118,7 @@ alias grs='git reset'
 alias greset=grs
 alias grm='git rm'
 alias gco='git checkout'
+alias gcom='git checkout "$(SampShell_master_branch)" --'
 
 alias gcp='git cherry-pick'
 alias gg='git grep'
