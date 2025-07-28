@@ -27,6 +27,7 @@ if [ "$#" -ne 0 ]; then
 fi
 
 git reflog show --grep-reflog=checkout: | # show all the `checkout` commands
+	sed 1d                | # Delete the first one, as it's the current branch
 	cut -d' ' -f8         | # Keep the 8th column, separated by spaces
 	nl -n ln              | # Number each branch, putting numbers on the left
 	sort -k2db $unique -s | # Keep unique branch names, in stable order

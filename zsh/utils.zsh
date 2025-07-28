@@ -17,9 +17,8 @@
 s2 ()  (cd -q -- $@ >/dev/null && subl -- "$PWD")
 ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
 
-function ducks {
-	du -chs -- $@ | sort -h
-}
+function ducks { du -chs -- $@ | sort -h }
+
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
@@ -33,6 +32,12 @@ alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
 grep () command grep --color=auto $@
+
+# delete password files on Sampinox usb _forcibly_, so you cant recover them
+rmfp () {
+	local arg;
+	for arg; do rm -rfP $arg & done
+}
 
 alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
@@ -60,6 +65,8 @@ function +xp {
 	done
 	return $exit
 }
+
+diffs () ARGC_EXACTLY_2	diff <(print -r "$1") <(print -r "$2")
 
 alias ps='ps -ax'
 alias hd='hexdump -C'

@@ -1,0 +1,17 @@
+expansions and stuff that are a part of escape sequences:
+
+$foo:q -- Quote the substituted words, escaping further substitutions
+$foo:Q -- Remove one level of quotes from the substituted words.
+${(%)foo} -- Expand all % escapes in the resulting words in the same way as in prompts (see Prompt Expansion). If this flag is given twice, full prompt expansion is done on the resulting words, depending on the setting of the PROMPT_PERCENT, PROMPT_SUBST and PROMPT_BANG options.
+${(b)foo} -- Quote with backslashes only characters that are special to pattern matching.
+${(g:opts:)foo} -- Process escape sequences like the echo builtin when no options are given (g::). With the o option, octal escapes don’t take a leading zero. With the c option, sequences like ‘^X’ are also processed. With the e option, processes ‘\M-t’ and similar sequences like the print builtin. With both of the o and e options, behaves like the print builtin except that in none of these modes is ‘\c’ interpreted.
+${(q)foo}, ${(qq)foo}, ${(qqq)foo}, ${(qqqq)foo}, ${(q-)foo}, ${(q+)foo} --     Quote characters that are special to the shell in the resulting words with backslashes; unprintable or invalid characters are quoted using the $’\NNN’ form, with separate quotes for each octet.
+
+    If this flag is given twice, the resulting words are quoted in single quotes and if it is given three times, the words are quoted in double quotes; in these forms no special handling of unprintable or invalid characters is attempted. If the flag is given four times, the words are quoted in single quotes preceded by a $. Note that in all three of these forms quoting is done unconditionally, even if this does not change the way the resulting string would be interpreted by the shell.
+
+    If a q- is given (only a single q may appear), a minimal form of single quoting is used that only quotes the string if needed to protect special characters. Typically this form gives the most readable output.
+
+    If a q+ is given, an extended form of minimal quoting is used that causes unprintable characters to be rendered using $’...’. This quoting is similar to that used by the output of values by the typeset family of commands.
+${(Q)foo} -- Remove one level of quotes from the resulting words.
+${(V)foo} -- Make any special characters in the resulting words visible.
+${(p<flag>)foo} -- Recognize the same escape sequences as the print builtin in string arguments to any of the flags described below that follow this argument.

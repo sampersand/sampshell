@@ -2,5 +2,5 @@
 
 ## Deletes a path segment. Similar, but not identical to, using delete-backto-char with `/`,
 # as this one deletes words
-local WORDCHARS
-WORDCHARS=${WORDCHARS/\/} && zle backward-kill-word && zle -f kill
+local WORDCHARS=${WORDCHARS/\/}
+zle backward-kill-word && zle -f kill
