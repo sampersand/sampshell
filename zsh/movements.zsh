@@ -52,3 +52,34 @@ bindkey '^[T' SampShell-transpose-argument
 # ESC + <left/right-arrow> + char = goes to the prev/next instance of `char`
 bindkey '^[^[[D' vi-find-prev-char
 bindkey '^[^[[C' vi-find-next-char
+
+
+## ---
+alias ez='exec zsh'
+SampShell-bracketed-paste () {
+	local content
+	local wantraw=${NUMERIC:-0}
+	local start=$#LBUFFER
+
+	zle .$WIDGET -N content
+
+	if (( $wantraw == 0 )) then
+		content=${content%%[[:space:]]##}
+
+		# Taken from `bracketed-paste-url-magic`
+		local -a schema
+		zstyle -a :bracketed-paste-url-magic schema schema || schema=(http:// https:// ftp:// ftps:// file:// ssh:// sftp:// magnet:)
+
+		if [[ $content = (${(~j:|:)schema})* ]] then
+			content=${(q-)content}
+		fi
+	fi
+
+	LBUFFER+=$content
+	YANK_START=$start
+	YANK_END=$#LBUFFER
+	zle -f yank
+}
+
+zle -N bracketed-paste SampShell-bracketed-paste
+
