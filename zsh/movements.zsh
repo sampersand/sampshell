@@ -64,7 +64,7 @@ SampShell-bracketed-paste () {
 	zle .$WIDGET -N content
 
 	if (( $wantraw == 0 )) then
-		content=${content%%[[:space:]]##}
+		content=${content%%$'\n'##}
 
 		# Taken from `bracketed-paste-url-magic`
 		local -a schema

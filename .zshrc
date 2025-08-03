@@ -1,5 +1,5 @@
 #### Basic SampShell definitions for interactive ZSH shell instances.
-# This file shouldn't be sourced directly; instead, the top-level `.posix_rc` file sources it.
+# This file shouldn't be sourced directly; instead, the top-level `.shrc` file sources it.
 #
 # The definitions in this file aren't really meant to be changed, as they codify how I use ZSH. Any
 # options I'm not certain about go into `experimental.zsh`, which is `source`d unless the variable
@@ -13,14 +13,14 @@
 # (`setopt no_...` is the same as `unsetopt ...`), I find it easier to reason about this way.
 #
 # Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
-# a user's `.zshrc`. (Instead, `source` the top-level `.posix_rc` file if needed.)
+# a user's `.zshrc`. (Instead, `source` the top-level `.shrc` file if needed.)
 #####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
 [[ -n $SampShell_DISABLED ]] && return
 
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
-emulate sh -c '. "${SampShell_ROOTDIR:?}/.posix_rc"'
+emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
 
 ####################################################################################################
 #                                           Setup $PATH                                            #
@@ -111,7 +111,7 @@ history-ignore-command {enable,disable,toggle}-history
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
 SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
-# HISTFILE=...     # HISTFILE is already setup within `posix/.posix_rc`.
+# HISTFILE=...     # HISTFILE is already setup within `posix/.shrc`.
 
 ## Setup history options
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.

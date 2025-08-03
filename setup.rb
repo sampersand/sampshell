@@ -33,7 +33,7 @@ RUBY
 
 HOME.join('.zshrc').append_unless_exists <<~SHELL
 	export SampShell_TMPDIR=$HOME/tmp
-	. #{SAMPSHELL_ROOTDIR.shellescape}/.posix_rc
+	. #{SAMPSHELL_ROOTDIR.shellescape}/.shrc
 SHELL
 
 HOME.join('.zshenv').append_unless_exists <<~SHELL

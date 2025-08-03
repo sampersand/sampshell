@@ -1,3 +1,3 @@
-. "$SampShell_ROOTDIR/.posix_rc"
+. "$SampShell_ROOTDIR/.shrc"
 
 PS1='[?$? !\! L$SHLVL] ${PWD#"${HOME%/}"/} ${0##*/}$ '
