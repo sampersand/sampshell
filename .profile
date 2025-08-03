@@ -101,7 +101,9 @@ fi
 # in `.profile` and not `.shrc` in case any config scripts decide to
 # use homebrew themselves. (We _could_ check to see if homebrew is installed,
 # but that significantly complicates things, and there's no harm in setting it.)
-export HOMEBREW_NO_ANALYTICS=1
+if [ "$(uname)" = Darwin ]; then
+   export HOMEBREW_NO_ANALYTICS=1
+fi
 
 ## Use `vim` for editing history commands. (This is only really needed for
 # shells without better history mechanisms, which are quite rare---even dash has
@@ -123,7 +125,7 @@ export LANG="${LANG-en_US}"
 # specifies that the variable is subject to parameter expansion, and if we used
 # double quotes, `$SampShell_ROOTDIR`'s expansion might contain _another_ path.
 if [ -z "${ENV+1}" ]; then
-   export ENV='$SampShell_ROOTDIR/.shrc'
+   export ENV='${SampShell_ROOTDIR:-$HOME}/.shrc'
 fi
 
 ################################################################################
@@ -133,27 +135,32 @@ fi
 ################################################################################
 
 ## Prepend things to `PATH` unless they're already there.
-SampShell_add_bin_to_PATH () {
-   set -- "$SampShell_ROOTDIR/bin/${1:?}"
+SampShell_add_PATH () {
+   # If the directory doesn't exist, then just return early early.
+   [ -e "$1" ] || return
 
+   # Only add it if it's not there
    case :${PATH-}: in
    *:"$1":*) :                      ;; # It's already there!
    *)        PATH=$1${PATH:+:}$PATH ;; # Not present; prepend it.
    esac
 }
 
+## Home directory bins
+SampShell_add_PATH "$HOME/bin"
+
 ## Universal scripts I always want available
-SampShell_add_bin_to_PATH universal
-SampShell_add_bin_to_PATH git
+SampShell_add_PATH "$SampShell_ROOTDIR/bin/universal"
+SampShell_add_PATH "$SampShell_ROOTDIR/bin/git"
 
 ## MacOS-specific scripts
-[ "$(uname)" = Darwin ] && SampShell_add_bin_to_PATH macOS
+[ "$(uname)" = Darwin ] && SampShell_add_PATH "$SampShell_ROOTDIR/bin/macOS"
 
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
-[ -n "${SampShell_EXPERIMENTAL-}" ] && SampShell_add_bin_to_PATH experimental
+[ -n "${SampShell_EXPERIMENTAL-}" ] && SampShell_add_PATH "$SampShell_ROOTDIR/bin/experimental"
 
-# Make sure `SampShell_add_bin_to_PATH` doesn't escape this startup file.
-unset -f SampShell_add_bin_to_PATH
+# Make sure `SampShell_add_PATH`"$SampShell_ROOTDIR/bin/ doesn't escape this startup file."
+unset -f SampShell_add_PATH
 
 ## Ensure `PATH` is exported so programs can get sampshell executables.
 export PATH

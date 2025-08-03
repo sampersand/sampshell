@@ -75,10 +75,48 @@ cdd () {
 	CDPATH= \cd -- "$1"
 }
 
-## Add in a `p_sh` program which prints out a debugging form of its arguments.
-# This program `.`s the `p_sh` program, instead of executing it, as that way
-# `NUL` can be passed by shells which support it.
-p_sh () ( . p_sh )
+## Add in a `mz` program which prints out a debugging form of its arguments.
+# This program is like `mviz`, except it's sh-only, only works with command-line
+# arguments, and has no flags. It's a subshell because of local variables.
+mz () (
+	# Undo any shell options which might've been inherited
+	set +xve -uf
+
+	# Find the "standout" escape sequences based on the `$TERM` env var.
+	if [ -n "${TERM-}" ] && command -v tput >/dev/null 2>&1; then
+		: "${MZ_SMSO=$(tput smso)}"
+		: "${MZ_RMSO=$(tput rmso)}"
+	else
+		# Use xterm defaults, which 99.9% of things use anyways.
+		: "${MZ_SMSO=$(printf '\033[7m')}"
+		: "${MZ_RMSO=$(printf '\033[27m')}"
+	fi
+
+	argno=0
+	for arg do
+		# Print out arguments, unless no args was explicily requested.
+		[ -z "${MZ_NO_ARGS:+x}" ] && printf '%5d: ' "$(( argno += 1 ))"
+
+		while [ "${#arg}" -ne 0 ]; do
+			tail=${arg#?}
+			head=${arg%"$tail"}
+			arg=$tail
+
+			case $head in
+			[[:print:]]) printf %s "$head" ;;
+			*) printf '%s\\x%02X%s' "$MZ_SMSO" "'$head" "$MZ_RMSO" ;;
+			esac
+		done
+
+		echo
+	done
+)
+
+# Like `mz` except it reads from stdin.
+mzf () (
+	stdin=$(cat "$@")
+	MZ_NO_ARGS=1 mz "$stdin"
+)
 
 ## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
 md () {
@@ -86,9 +124,19 @@ md () {
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
+# Clears the screen.
+cls () {
+	# If `tput`
+	if command -v tput >/dev/null 2>&1; then
+		tput reset
+	else
+		printf '\033c\033[3J'
+	fi
+}
+
 ## Common aliases
-alias ls='ls -AFq'
 alias l=ls
+alias ls='ls -AFq'
 alias ll='l -l'
 alias lt='l -tl'
 alias j=jobs
