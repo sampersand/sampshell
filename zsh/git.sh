@@ -68,7 +68,7 @@ gsw () {
 	git switch "$@"
 }
 alias gbr='git branch'
-alias grbc='current-branch | pbc'
+alias gbrc='git branch --show-current'
 
 gdb () {
 	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
