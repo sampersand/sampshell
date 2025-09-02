@@ -18,7 +18,7 @@ fi
 (( $# >= 1 )) && cd -- $1:h
 
 repo=$(gh repo view --json=url --jq=.url)
-branch=${opts[-b]:-$(git rev-parse --abbrev-ref HEAD)}
+branch=${opts[-b]:-$(git master-branch)}
 file=''
 
 if (( $# >= 1 )) then

@@ -69,6 +69,4 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 
 	alias gs        'git status'
 	alias g         'git'
-
-
 endif
