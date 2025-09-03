@@ -1,35 +1,62 @@
-#!/bin/zsh
+#!/usr/bin/env ruby
 
 ##
 # Print the url for a repo, or a file in the repo
 ##
 
-set -eu
-
-zparseopts -D -F -Aopts \
-	b: \
-	h
-
-if (( $+opts[-h] || $# > 3 )) then
-	echo "usage: ${0:t:s/-/ /} [-bbranch] [file] [start[-end]]" >&2
-	exit 80
-fi
-
-(( $# >= 1 )) && cd -- $1:h
-
-repo=$(gh repo view --json=url --jq=.url)
-branch=${opts[-b]:-$(git master-branch)}
-file=''
-
-if (( $# >= 1 )) then
-	# Strip the repo's directory, if it's present
-	file=${${1#$(git rev-parse --show-toplevel)}#/}
-
-	# Add line number, if it's specified
-	if (( $# == 2 )) then
-		file+="#L${2/-/-L}"
-	fi
-fi
+require 'optparse'
 
 
-print -r -- $repo/blob/$branch${file:+/}$file
+def abort(msg) super("#$0: #{msg}") end
+def `(*)
+  ret = super.chomp
+  $?.success? or abort "shell command return non-zero exit status"
+  ret
+end
+
+$branch = :current
+OptParse.new do |op|
+  op.banner = "usage: #{op.program_name} [-c | -m | -bBRANCH] [file] [start[-end]]"
+
+  op.on_tail 'print the url for a repo, or a file in the repo'
+
+  op.on '-b', '--branch=NAME', 'Explicitly use branch NAME' do |branch|
+    $branch = branch
+  end
+
+  op.on '-c', '--current-branch', 'Use the current branch' do
+    $branch = :current
+  end
+
+  op.on '-m', '--master-branch', 'Use the master branch' do
+    $branch = :master
+  end
+
+  op.on '-p', '--permalink', 'Use a permalink' do
+    $branch = :permalink
+  end
+
+  op.parse! rescue op.abort $!
+  op.abort op.help unless $*.length <= 2
+end
+
+REPO = `gh repo view --json=url --jq=.url`
+BRANCH = case $branch
+         when :current   then `git branch --show-current`
+         when :master    then `git master-branch`
+         when :permalink then `git rev-parse HEAD`
+         else                 $branch
+         end
+
+file, range = $*
+# if
+if file
+  file = file.delete_prefix(`git rev-parse --show-toplevel` + '/')
+  if range
+    file.concat "#L#{range.sub('-', '-L')}"
+  end
+end
+
+puts "#{REPO}/blob/#{BRANCH}#{file && '/'}#{file}"
+
+__END__
