@@ -6,12 +6,11 @@
 
 require 'optparse'
 
-
 def abort(msg) super("#$0: #{msg}") end
-def `(*)
-  ret = super.chomp
-  $?.success? or abort "shell command return non-zero exit status"
-  ret
+def `(cmd)
+  super.chomp.tap do
+    $?.success? or abort "shell command return non-zero exit status: #{cmd.inspect}"
+  end
 end
 
 $branch = :current
@@ -24,7 +23,7 @@ OptParse.new do |op|
     $branch = branch
   end
 
-  op.on '-c', '--current-branch', 'Use the current branch' do
+  op.on '-c', '--current-branch', 'Use the current branch [default]' do
     $branch = :current
   end
 
@@ -40,6 +39,9 @@ OptParse.new do |op|
   op.abort op.help unless $*.length <= 2
 end
 
+file, range = $*
+file and Dir.chdir(File.dirname(file))
+
 REPO = `gh repo view --json=url --jq=.url`
 BRANCH = case $branch
          when :current   then `git branch --show-current`
@@ -48,15 +50,9 @@ BRANCH = case $branch
          else                 $branch
          end
 
-file, range = $*
-# if
 if file
-  file = file.delete_prefix(`git rev-parse --show-toplevel` + '/')
-  if range
-    file.concat "#L#{range.sub('-', '-L')}"
-  end
+  file = file.delete_prefix(`git rev-parse --show-toplevel` + '/') # maybe also --show-prefix eventually?
+  file.concat "#L#{range.sub('-', '-L')}" if range
 end
 
 puts "#{REPO}/blob/#{BRANCH}#{file && '/'}#{file}"
-
-__END__

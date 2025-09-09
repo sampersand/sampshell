@@ -1,0 +1,61 @@
+#!/bin/zsh
+
+usage () cat <<EOS
+usage: ${ZSH_SCRIPT:t:s/-/ /} [-c | -m | -p | -bBRANCH] [file] [start[-end]]
+
+options:
+  -c        use the current branch
+  -m        use the master branch [default]
+  -p        get a permalink
+  -bBRANCH  use BRANCH
+
+Prints out a link to the repo, optoinally to 'file' (or a range of lines in it)
+EOS
+
+set -- -c -bfoo -p -bbar
+zparseopts -D -K -- \
+  {{c,m,p}+,b+:}=opts \
+  h=help
+print -- $opts #=> -c -b bar -p
+
+exit
+set -eu
+set -- -c -bfoo -p -bbar
+zparseopts -D -M -- \
+  {c,m,p,b:}=branch_opts \
+  h=help
+
+(( $#help )) && { usage; exit }
+
+# repo=$(gh repo view --json=url --jq=.url)
+branch=nil
+
+# while (( $#branch_opts ))
+foreach branch_opt ( $branch_opts )
+  p --no-stdin -- $branch_opt
+  case $branch_opt in
+    -c)
+  esac
+end
+
+# BRANCH = case $branch
+#          when :current   then `git branch --show-current`
+#          when :master    then `git master-branch`
+#          when :permalink then `git rev-parse HEAD`
+#          else                 $branch
+#          end
+
+# file, range = $*
+# # if
+# if file
+#   file = file.delete_prefix(`git rev-parse --show-toplevel` + '/')
+#   if range
+#     file.concat "#L#{range.sub('-', '-L')}"
+#   end
+# end
+
+# puts "#{REPO}/blob/#{BRANCH}#{file && '/'}#{file}"
+
+# __END__
+
+# p --no-stdin -- $opts

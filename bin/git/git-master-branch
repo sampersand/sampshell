@@ -1,13 +1,12 @@
 #!/bin/sh
 
 usage () { cat <<USAGE; }
-usage: $(basename -- "$0" | sed 's/-/ /1') [-d default=SAMPSHELL_GIT_DEFAULT_MASTER_BRANCH]
+usage: $(basename -- "$0" | sed 's/-/ /1') [-d default=SampShell_GIT_DEFAULT_MASTER_BRANCH]
 
 Shows the current 'master' branch.
 USAGE
 
-# No arguments are allowed
-default=${SAMPSHELL_GIT_DEFAULT_MASTER_BRANCH-master}
+default=${SampShell_GIT_DEFAULT_MASTER_BRANCH-master}
 while getopts 'd:' opt; do
 	case $opt in
 		d) default=$OPTARG ;;
@@ -19,10 +18,9 @@ done
 shift $(( OPTIND - 1 ))
 
 if [ "$#" -ne 0 ]; then
-	usage >&1
+	usage >&2
 	exit 2
 fi
 
 git rev-parse --is-inside-work-tree >/dev/null || exit
-
-basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "$default")"
+basename -- "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "$default")"
