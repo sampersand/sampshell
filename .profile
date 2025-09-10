@@ -114,6 +114,15 @@ export FCEDIT=vim
 # don't see much of a need for, but eh whatever, why not add it in.)
 export LANG="${LANG-en_US}"
 
+# Add `$SampShell_ROOTDIR/ruby/include` to the list of imports for `RUBYLIB` if
+# it's not already there
+case ":${RUBYLIB-}:" in
+   *:"$SampShell_ROOTDIR/ruby/include:"*) : ;; # already there
+   *) RUBYLIB=$SampShell_ROOTDIR/ruby/include${RUBYLIB:+:}$RUBYLIB ;; # added
+esac
+export RUBYLIB # export it
+
+
 ################################################################################
 #                                                                              #
 #                                  Export ENV                                  #

@@ -32,6 +32,9 @@ alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
 grep () command grep --color=auto $@
+pg () { pgrep -afl $@ | command grep --color=always $@ }
+pk () { pkill -afl $@ }
+pk9 () { pkill -KILL -afl $@ }
 
 # delete password files on Sampinox usb _forcibly_, so you cant recover them
 rmfp () {
@@ -105,3 +108,28 @@ function old {
 	done
 	return $exitstatus
 }
+
+# SampShell_git_repos_link=$HOME/local/repos
+# zsh_directory_name_functions+=( SampShell_named_dir_git_repo )
+# function SampShell_named_dir_git_repo {
+# 	emulate -L zsh
+# 	setopt EXTENDEDGLOB
+
+# 	local repo=${2#gh:}
+# 	[[ $repo == $2 ]] && return 1 # not a `gh:` prefix
+
+# 	# prepend `github` to it
+# 	if [[ $repo != https://github.com/* ]] repo=https://github.com/$repo
+
+# 	if [[ $1 == n ]] then
+
+# 		p $repo
+# 		exit
+# 	else
+# 		# others arent' currently supported
+# 		return 1
+# 	fi
+# }
+
+# cd ~[gh:sampersand/squire]
+
