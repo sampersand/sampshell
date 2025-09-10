@@ -4,14 +4,14 @@ require 'benchmark'
 def toplevel(string) string end
 class String def withself; self end end
 
-benchmark 5_000_000 do
+sbench 5_000_000 do
   bench 'toplevel' do toplevel "A" end
   bench 'withself' do "A".withself end
 end
 
 =end
 
-def benchmark(iterations = 10_000, &block)
+def sbench(iterations = 10_000, &block)
   raise ArgumentError, 'called without a block', caller(1) unless block_given?
 
   Benchmark.bmbm do |results|
