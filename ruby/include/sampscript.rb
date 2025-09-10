@@ -1,5 +1,9 @@
 # Ruby file containing modifications to builtins that I find useful when writing scripts
 
+return if defined?($SAMPSCRIPT_DISABLED)
+
+PROGRAM_BASE_NAME = File.basename($0, '.*')
+
 ## Always import shell words, and make it easy to use.
 require 'shellwords'
 class String
@@ -8,12 +12,12 @@ class String
 end
 
 # Prefix program name to `abort` and `warn`; support `warn()` too
-def abort(message=$!) = super("#$0: #{message}")
-def warn(message=$!) = super("#$0: #{message}")
+def abort(message=$!) = super("#{PROGRAM_BASE_NAME}: #{message}")
+def warn(message=$!) = super("#{PROGRAM_BASE_NAME}: #{message}")
 
 # Add a `debug()` method for logging
 def debug(message=nil)
-  puts("#$0: #{message || yield}") if $VERBOSE
+  puts("#{PROGRAM_BASE_NAME}: #{message || yield}") if $VERBOSE
 end
 
 # Define `failure?` as not success.
