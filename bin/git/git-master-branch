@@ -1,16 +1,18 @@
 #!/bin/sh
 
 usage () { cat <<USAGE; }
-usage: $(basename -- "$0" | sed 's/-/ /1') [-d default=SampShell_GIT_DEFAULT_MASTER_BRANCH]
+usage: $(basename -- "$0" | sed 's/-/ /1') [-f] [-d default=SampShell_GIT_DEFAULT_MASTER_BRANCH]
 
-Shows the current 'master' branch.
+Shows the current 'master' branch. IF -f is supplied, no master is fatal.
 USAGE
 
 default=${SampShell_GIT_DEFAULT_MASTER_BRANCH-master}
-while getopts 'd:' opt; do
+fatal=
+while getopts 'd:f' opt; do
 	case $opt in
 		d) default=$OPTARG ;;
 		h) usage; exit ;;
+		f) fatal=1 ;;
 		*) exit 2 ;; # I.e. usage error
 	esac
 done
@@ -23,4 +25,12 @@ if [ "$#" -ne 0 ]; then
 fi
 
 git rev-parse --is-inside-work-tree >/dev/null || exit
-basename -- "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "$default")"
+base=$(git symbolic-ref refs/remotes/origin/HEAD -q) || \
+	if [ -n "$fatal" ]; then
+		echo >&2 cant find master
+		exit 1
+	else
+		base="$default"
+	fi
+
+basename -- "$base"
