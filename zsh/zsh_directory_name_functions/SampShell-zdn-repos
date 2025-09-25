@@ -3,7 +3,7 @@
 # Also supports `~[rf:...]` to forcibly download it. Im not sure if I want to support this though
 
 : "${SampShell_repos_root:=$HOME/code/repos}"
-hash -d repos=$SampShell_repos_root
+# hash -d repos=$SampShell_repos_root <-- why u no work
 
 typeset -g +x -a -U SampShell_zdn_repo_urls
 SampShell_zdn_repo_urls+=( https://github.com/ )
