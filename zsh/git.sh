@@ -162,3 +162,6 @@ gpristine () {
 		read -q '?really clear changes it?' &&
 		git reset --hard "$(SampShell_master_branch)" && git clean -xdf
 }
+
+alias gpr='git create-pr'
+alias gprv='gh pr view --web'

@@ -1,6 +1,6 @@
 #!zsh
 # Support `~[r:repo-name]` and `~[r:<repo-url>]`, which expands to repo base.
-# Also supports `~[rf:...]` to forcibly download it
+# Also supports `~[rf:...]` to forcibly download it. Im not sure if I want to support this though
 
 : "${SampShell_repos_root:=$HOME/code/repos}"
 hash -d repos=$SampShell_repos_root
@@ -11,7 +11,6 @@ SampShell_zdn_repo_urls+=( https://github.com/ )
 SampShell-zdn-repos () {
 	emulate -L zsh
 	setopt ERR_RETURN
-	set -x
 
 	# make reply a global array (if its not already)
 	typeset -ga reply
@@ -60,13 +59,13 @@ SampShell-zdn-repos () {
 		# Didn't exist in any of the default roots, fail.
 		return 1 ;;
 
-	d) # TODO: if we want to support expansions, then uncomment the following & remove return
-
-		# local top
-		# top=$(git -C $2 rev-parse --show-toplevel 2>/dev/null) || return 1
-		# reply=( rr\($top:t\) $#top )
-		return 1 ;;
-
+	d) # TODO: Symlinks vs absolute?
+		#Do we want this?
+		r=${SampShell_repos_root%%/}
+		local f=${2#$r/}
+		if [[ $f == $2 ]] return 1
+		local rest=${f:h1}
+		reply=( r:$rest $(( $#r + 1 + $#rest )) ) ;;
 	c)
 		# # complete names; adapted from documentation
 		# local expl
