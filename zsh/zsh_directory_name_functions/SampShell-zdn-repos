@@ -1,0 +1,79 @@
+#!zsh
+# Support `~[r:repo-name]` and `~[r:<repo-url>]`, which expands to repo base.
+# Also supports `~[rf:...]` to forcibly download it
+
+: "${SampShell_repos_root:=$HOME/code/repos}"
+hash -d repos=$SampShell_repos_root
+
+typeset -g +x -a -U SampShell_zdn_repo_urls
+SampShell_zdn_repo_urls+=( https://github.com/ )
+
+SampShell-zdn-repos () {
+	emulate -L zsh
+	setopt ERR_RETURN
+	set -x
+
+	# make reply a global array (if its not already)
+	typeset -ga reply
+
+	case $1 in
+	n)
+		local arg download=0 force=0
+		case $2 in
+		r:?*) arg=${2#r:} ;; # require at least 1
+		rd:?*) arg=${2#rd:} download=1 ;;
+		rdf:?*) arg=${2#rf:} download=1 force=1 ;;
+		*) return 1 ;;
+		esac
+
+		local dir=$SampShell_repos_root/$arg:t
+
+		# Remove the directory if requested.
+		if (( $force )) rm -rf $dir
+
+		# If it starts with `http`, then its a URL, and try to download it
+		if [[ $arg = http:// || $arg = https:// ]] then
+			(( $download )) || return 1 # don't download if not requested
+			gh repo clone $arg $dir >/dev/null 2>&1
+			reply=( $dir )
+			return
+		fi
+
+		# If it already exists, then just use that
+		if [[ -d $dir ]] then
+			reply=( $dir )
+			return
+		fi
+
+		(( $download )) || return 1 # don't download if not requested
+
+		# Look thru the list of repo roots, and try to download it.
+		local url
+		foreach url ( $SampShell_zdn_repo_urls )
+			# If we successfully download it, then we're good!
+			if gh repo clone $arg $dir >/dev/null 2>&1; then
+				reply=( $dir )
+				return
+			fi
+		end
+
+		# Didn't exist in any of the default roots, fail.
+		return 1 ;;
+
+	d) # TODO: if we want to support expansions, then uncomment the following & remove return
+
+		# local top
+		# top=$(git -C $2 rev-parse --show-toplevel 2>/dev/null) || return 1
+		# reply=( rr\($top:t\) $#top )
+		return 1 ;;
+
+	c)
+		# # complete names; adapted from documentation
+		# local expl
+		# _wanted dynamic-dirs expl 'dynamic directory' compadd -S\] 'rr' ;;
+		;&
+
+	*)
+		return 1
+	esac
+}

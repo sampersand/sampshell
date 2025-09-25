@@ -80,33 +80,10 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 
 ## Setup `~[dir]` expansions
 typeset -Ua zsh_directory_name_functions
-
-zsh_directory_name_functions+=(SampShell-zdn-repo-root)
-function SampShell-zdn-repo-root {
-	emulate -L zsh
-	typeset -ga reply
-
-	case $1 in
-	n)
-		if [[ $2 != rr ]] return 1 # We only accept `~[rr]`
-		reply=( $(git rev-parse --show-toplevel 2>/dev/null) ) ;;
-
-	d) # TODO: if we want to support expansions, then uncomment the following & remove return
-
-		# local top
-		# top=$(git -C $2 rev-parse --show-toplevel 2>/dev/null) || return 1
-		# reply=( rr\($top:t\) $#top )
-		return 1 ;;
-
-	c)
-		# complete names; adapted from documentation
-		local expl
-		_wanted dynamic-dirs expl 'dynamic directory' compadd -S\] 'rr' ;;
-
-	*)
-		return 1
-	esac
-}
+() {
+	autoload -Uz $@
+	zsh_directory_name_functions+=( $@:t )
+} $SampShell_ROOTDIR/zsh/zsh_directory_name_functions/*
 
 ####################################################################################################
 #                                                                                                  #

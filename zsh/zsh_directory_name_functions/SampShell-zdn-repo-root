@@ -1,0 +1,26 @@
+#!zsh
+# Support `~[rr]`, which simply expands to the root of the repo
+
+# make reply a global array (if its not already)
+typeset -ga reply
+
+case $1 in
+n)
+	if [[ $2 != rr ]] return 1 # We only accept `~[rr]`
+	reply=( $(git rev-parse --show-toplevel 2>/dev/null) ) ;;
+
+d) # TODO: if we want to support expansions, then uncomment the following & remove return
+
+	# local top
+	# top=$(git -C $2 rev-parse --show-toplevel 2>/dev/null) || return 1
+	# reply=( rr\($top:t\) $#top )
+	return 1 ;;
+
+c)
+	# complete names; adapted from documentation
+	local expl
+	_wanted dynamic-dirs expl 'dynamic directory' compadd -S\] 'rr' ;;
+
+*)
+	return 1
+esac
