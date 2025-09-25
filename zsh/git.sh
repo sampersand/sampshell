@@ -155,3 +155,10 @@ gdd () {
 	git diff --name-status "$@"
 }
 alias gdol=gdd
+
+# --
+gpristine () {
+	git status &&
+		read -q '?really clear changes it?' &&
+		git reset --hard "$(SampShell_master_branch)" && git clean -xdf
+}

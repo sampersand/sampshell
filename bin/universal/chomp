@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+OptParse.new do |op|
+  op.on '-a', '--all', 'Strip all trailing newlines' do $all = true end
+  op.parse!
+end
+
+if $all
+  print $stdin.read.tap { |x| x.sub!(/\n*\z/, '') }
+else
+  while l = gets
+    @l.display
+    @l = l
+  end
+
+  print @l&.chomp
+end

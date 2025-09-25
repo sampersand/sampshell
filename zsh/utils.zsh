@@ -60,9 +60,7 @@ function +xp {
 				;& # fall thru
 			1)
 				read -q "?make executable [y/N]? ${(q+)paths} "
-				REPLY=$status
-				echo
-				(( REPLY )) && chmod +x $paths
+				(( !$status )) && chmod +x $paths
 				;;
 		esac
 	done
