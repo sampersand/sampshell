@@ -84,6 +84,9 @@ typeset -Ua zsh_directory_name_functions
 	autoload -Uz $@
 	zsh_directory_name_functions+=( $@:t )
 } $SampShell_ROOTDIR/zsh/zsh_directory_name_functions/*
+: "${SampShell_repos_root:=$HOME/code/repos}"
+hash -d repos=$SampShell_repos_root #<-- why u no work
+
 
 ####################################################################################################
 #                                                                                                  #
@@ -104,16 +107,16 @@ fi
 	# the history.
 	#
 	# ZSH provides a nice little builtin pair to "push" (`fc -p`) and "pop" (`fc -P`) these two
-	# variables onto a stack. So, `history-disable` "pushes" the current $HISTFILE and $SAVEHIST vars
+	# variables onto a stack. So, `disable-history` "pushes" the current $HISTFILE and $SAVEHIST vars
 	# onto the stack (via `fc -p`), but doesn't set new ones. This means ZSH has nowhere to save the
-	# history. When `history-enable` is later executed, assuming they haven't been manually set after
-	# the `history-disable`, the `fc -P` will attempt to write the current history to an empty file, and
+	# history. When `enable-history` is later executed, assuming they haven't been manually set after
+	# the `disable-history`, the `fc -P` will attempt to write the current history to an empty file, and
 	# thus just discards it.
 	#
 	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
 	# commands are stored in the history.
 	##
-history-ignore-command {enable,disable,toggle}-history
+history-ignore-command history-{enable,disable,toggle}
 
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands

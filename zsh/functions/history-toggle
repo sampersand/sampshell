@@ -14,7 +14,7 @@ fi
 
 # Enable or disable based on the variable
 if (( _SampShell_history_disabled )) then
-	enable-history
+	history-enable
 else
-	disable-history
+	history-disable
 fi
