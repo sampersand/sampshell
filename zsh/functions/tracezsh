@@ -10,7 +10,8 @@ clean-shell \
 	-v SampShell_ROOTDIR \
 	${SampShell_DISABLED+-vSampShell_DISABLED=1} \
 	-v SampShell_CACHEDIR \
-	-v SampShell_just_for_testing_should_disable_rvm=1 \
+	-v SampShell_disable_highlight=$SampShell_disable_highlight \
+	-v SHLVL \
 	-v PS4='+$(typeset -Fg SECONDS; echo "$SECONDS"):%x:%I> ' \
 	-- \
 	=zsh \

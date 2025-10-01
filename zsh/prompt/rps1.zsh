@@ -47,9 +47,9 @@ function _SampShell-prompt-current-battery {
 	else                       print -n '%F{green}'
 	fi
 
-	if [[ $how = charging ]] then print -n 🔌
-	elif (( perc <= 20 ))    then print -n 🪫
-	else                          print -n 🔋
+	if [[ $how = charging ]] then print -n '%{🔌%2G%}'
+	elif (( perc <= 20 ))    then print -n '%{🪫%2G%}'
+	else                          print -n '%{🔋%2G%}'
 	fi
 
 	print -n "$perc%%%k%s" #$remain
