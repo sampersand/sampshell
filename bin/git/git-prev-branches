@@ -29,6 +29,7 @@ fi
 git reflog show --grep-reflog=checkout: | # show all the `checkout` commands
 	sed 1d                | # Delete the first one, as it's the current branch
 	cut -d' ' -f8         | # Keep the 8th column, separated by spaces
+	sed 1d                | # Delete first column cause it no work
 	nl -n ln              | # Number each branch, putting numbers on the left
 	sort -k2db $unique -s | # Keep unique branch names, in stable order
 	sort -n               | # Sort by the column

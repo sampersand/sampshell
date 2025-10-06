@@ -40,7 +40,7 @@ OptParse.new do |op|
 end
 
 file, range = $*
-file and Dir.chdir(File.dirname(file))
+file and Dir.chdir(File.file?(file) : File.dirname(file) : file)
 
 REPO = `gh repo view --json=url --jq=.url`
 BRANCH = case $branch

@@ -15,7 +15,7 @@ set_global = proc do |key, value|
           when 'false'        then false
           when 'nil'          then nil
           when /\A\d+\z/      then Integer value
-          when %r{\A/(.*)/\z} then Regexp $1
+          # when %r{\A/(.*)/\z} then Regexp $1
           else                     value
           end
   $Globals |= [key]

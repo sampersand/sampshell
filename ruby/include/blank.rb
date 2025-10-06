@@ -7,6 +7,10 @@ class BlankSlate < BasicObject
   end
 end
 
+def blank(&block)
+  Class.new(BlankSlate, &block).new
+end
+
 %i[
   to_i to_int
   to_a to_ary
@@ -20,7 +24,7 @@ end
   to_path
 ].each do |method|
   define_method(method) do |val|
-    Class.new(BlankSlate){ define_method(method){ val } }.new
+    Class.new(BlankSlate) { define_method(method){ val } }.new
   end
 end
 
