@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+require 'g'
+g! <<EOS
+-h show help and exit
+-f, --files instead of interpret args as stirngs, do as files
+
+__END__
+
+\unalias -a
+set -eu
+nl='
+'
+
+readonly scriptname="${0##*/}"
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] [message [...]]
+       $(printf "%${#scriptname}s") [options] -f [--] [files [...]]
+
+   -h         show help and exit
+   -f         instead of interpreting args as strings, interpet as files
+   -c         put single backticks (\`) around the copied text
+   -b         put copied text into a code block (surround with \`\`\`)
+   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -b
+   -n         put newline after the message. Only really useful without -f
+   -p FUNC    specify clipbord func; defaults to 'pbcopy'.
+
+Copies 'message' to the clipboard; if more than one argument is given, they are
+concatenated with spaces. If no arguments are given, stdin is copied. The '-f'
+argument instead interprets all the args as files.
+USAGE
+
+start='' end='' newline='' clipboard=pbcopy files=''
+while getopts 'hfcbs:np:' opt; do
+	case $opt in
+	c) start='`' end='`' ;;
+	[bs]) start='```'"${OPTARG-}$nl" end="$nl"'```' ;;
+	n) newline=$nl ;;
+	p) clipboard=$OPTARG ;;
+	f) files=1 ;;
+	h) usage; exit; ;;
+	*) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+{
+	# Print prefix
+	printf %s "$start"
+
+	# If no args are given, or if `-f` was specified, use `cat`.
+	if [ $# -eq 0 ] || [ -n "$files" ]; then
+		cat "$@"
+	else
+		printf %s "$*"
+	fi
+
+	# Print suffix, and optional trailing newline
+	printf %s "$end$newline"
+} | "$clipboard"
