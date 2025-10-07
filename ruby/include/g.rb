@@ -1,25 +1,37 @@
 #!ruby
 
-## `G.rb`: An option parser that's more sophisticated than `-s`
+## `g.rb`: An option parser that's more sophisticated than `-s`
 #
 # Inspired by my feature request (https://bugs.ruby-lang.org/issues/21015),
-# this implements what I wish the `-g`/`-G` flag in ruby would have
+# this implements what I wish the `-g` flag in Ruby would be: A fast-and-dirty
+# way to specify command-line-arguments that just populate a corresponding
+# global variable.
+##
 
-# Emulate other `$-x` globals, so you can check for `G.rb`'s existance via `$-G`
-$-G = true
+## Emulate other `$-x` globals, so you can check for `g`'s inclusion with `$-g`.
+$-g = true
 
-# The list of all global variables thatGG parsed out
-$Globals = []
-g_vars = ENV['G_VARS']&.split(',')
+## Users can supply the `G_VARS` environment variable to `g` to specify the list
+# of allowed global variables; if a variable is not in this list, it'll cause a
+# program abort.
+g_vars = ENV['G_VARS']&.split(',') # Not a constant so it doesn't leak
 
-# Local variable so as to not leak
-set_global = proc do |key, value|
-  key.tr!('-', '_')
+## Set a global variable to a value. Not a method, like `g_vars`, so it doens't
+# leak out of this file.
+set_global = proc do |flag, value, orig_flag|
+  flag.tr!('-', '_')
 
-  if g_vars && !g_vars.include?(key)
-    abort "invalid option: #{key}"
+  # Only allow alphanumerics as flags
+  unless flag.match? /\A\w+\z/
+    abort "flag #{orig_flag} is not a valid flag name"
   end
 
+  # If `G_VARS` was supplied as an env var, then ensure the flag is allowed
+  if g_vars && !g_vars.include?(flag)
+    abort "flag #{orig_flag} is not a recognized flag"
+  end
+
+  # Special case booleans, nil, and integers:
   value = case value
           when 'true'         then true
           when 'false'        then false
@@ -28,18 +40,19 @@ set_global = proc do |key, value|
           # when %r{\A/(.*)/\z} then Regexp $1
           else                     value
           end
-  $Globals |= [key]
-  eval "\$#{key} = value"
+
+  # Sadly, there's no `global_variable_set`, so we must use `eval`
+  eval "\$#{flag} = value"
 end
 
-# Check for each argument
+# Handle each argument, extracting the flag, or putting it back and `break`ing if we're done
 while (arg = ARGV.shift)
   case arg
-  when /\A--no-([-\w]+)\z/
+  when /\A--no-([\w-]+)\z/
     # Negated flags: `--no-foo` is the same as `--foo=false`
     set_global.($1, false)
 
-  when /\A--([-\w]+)(?:=(.*))?/
+  when /\A--([\w-]+)(?:=(.*))?\z/
     # long-form flags, both with and without arguments
     set_global.($1, $2 || true)
 
