@@ -1,12 +1,22 @@
-$-G = true # emulate other `$-x` globals
+#!ruby
+
+## `G.rb`: An option parser that's more sophisticated than `-s`
+#
+# Inspired by my feature request (https://bugs.ruby-lang.org/issues/21015),
+# this implements what I wish the `-g`/`-G` flag in ruby would have
+
+# Emulate other `$-x` globals, so you can check for `G.rb`'s existance via `$-G`
+$-G = true
+
+# The list of all global variables thatGG parsed out
 $Globals = []
-G_VARS = ENV['G_VARS']&.split(',')
+g_vars = ENV['G_VARS']&.split(',')
 
 # Local variable so as to not leak
 set_global = proc do |key, value|
   key.tr!('-', '_')
 
-  if G_VARS && !G_VARS.include?(key)
+  if g_vars && !g_vars.include?(key)
     abort "invalid option: #{key}"
   end
 
