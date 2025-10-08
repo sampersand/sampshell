@@ -17,7 +17,7 @@ $-g = true
 $GLOBALS = []
 def ($GLOBALS).expect!(*allowed)
   allowed = Array(*allowed)
-  (allowed - self).first&.tap do |invalid|
+  (self - allowed).first&.tap do |invalid|
     abort "flag #{invalid} is not a recognized flag"
   end
 end
@@ -50,7 +50,7 @@ set_global = proc do |flag, value, orig_flag|
           else                     value
           end
 
-  $GLOBALS |= [orig_flag]
+  ($GLOBALS << orig_flag).uniq!
 
   # Sadly, there's no `global_variable_set`, so we must use `eval`
   eval "\$#{flag} = value"
