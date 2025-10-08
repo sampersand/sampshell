@@ -1,5 +1,4 @@
-#!ruby -rg
-
+#!/usr/bin/env -S ruby -rg
 $GLOBALS.expect! %w[h help w width]
 $h || $_help and (puts <<EOS; exit)
 usage: #{$0} [-w WIDTH] [cmd ...]

@@ -2,7 +2,9 @@
 
 set nonomatch
 foreach dir ( $path:q )
-	if ( -d $dir:q ) foreach file ( $dir:q/* )
-		if ( -x $file:q ) echo "$file"
+	if ( -d $dir:q ) then
+		foreach file ( $dir:q/* )
+			if ( -x $file:q ) echo "$file"
+		end
 	endif
 end
