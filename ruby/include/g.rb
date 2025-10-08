@@ -57,35 +57,45 @@ end
 # Handle each argument, extracting the flag, or putting it back and `break`ing if we're done
 while (arg = ARGV.shift)
   case arg
+  # Negated flags: `--no-foo` is the same as `--foo=false`
   when /\A--no-([^=]+)\z/
-    # Negated flags: `--no-foo` is the same as `--foo=false`
     GLOBALS.assign($1, false, arg)
 
+  # Special case: `--` on its own is an early break
+  when '--'
+    break
+
+  # long-form flags, both with and without arguments
   when /\A--([^=]+)\K(=)?/
-    # long-form flags, both with and without arguments
     GLOBALS.assign($1, $2 ? $' : true, $`)
 
+  # Shorthand flags
   when /\A-[^-]/
-    # Shorthand flags
     arg = arg.delete_prefix '-'
 
     while (short = arg.slice! 0)
-      case
-      when arg.delete_prefix!('=')
-        # Shorthand flag is given an argument with `=`
+      # Shorthand flag is given an argument with `=`
+      if arg.delete_prefix!('=')
         GLOBALS.assign(short, arg, "-#{short}")
         break
-      when arg.match?(/\A\d/)
-        # Shorthand flag is given an integer argument; `=` can be omitted
-        arg = Integer(arg, exception: false) or abort("integer argument for -#{short} has trailing chars: #{arg}")
-        GLOBALS.assign(short, arg, "-#{short}")
-        break
-      else
-        GLOBALS.assign(short, true, "-#{short}")
       end
+
+      # Shorthand flag is given an integer argument; `=` can be omitted
+      if arg.start_with?(/\d/)
+        unless (arg = Integer(arg, exception: false))
+          abort("integer argument for -#{short} has trailing chars: #{arg}")
+        end
+
+        GLOBALS.assign(short, arg, "-#{short}")
+        break
+      end
+
+      # Everything else is a single-character short string
+      GLOBALS.assign(short, true, "-#{short}")
     end
+
+  # Everything else is a normal argument, and we stop parsing
   else
-    # Everything else is a normal argument, and we stop parsing
     ARGV.unshift arg
     break
   end
