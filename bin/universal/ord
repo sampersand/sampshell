@@ -1,18 +1,26 @@
 #!/bin/sh
-exec ruby -x -- "$0" "$@"
-#!ruby -s
+exec ruby -Sx -nlaF'\K' -rg -- "$0" "$@"
+#!ruby
 
-$h || $_help and (puts <<EOS; exit)
-usage: #{File.basename $0} [-h] [-d | -b=num] [args...]
+BEGIN{
+  $h || $_help and (puts <<-EOS; exit)
+usage: #{File.basename $0} [-h] [-d | -b=num] [-f] [args...]
 options:
   -d same as `-b=10`
   -b interpret args in base num, instead of the default 16
+  -f interpret args as files
 Prints the base-n ascii representation of its arguments, one line per arg.
 If no args are given, defaults to stdin.
-EOS
+  EOS
 
-BASE = ($b&.to_i) || ($d && 10) || 16
+  BASE = $b || ($d ? 10 : 16)
 
-($*.empty? ? $stdin.map(&:chomp) : $*).each do |word|
-  puts word.bytes.map{|byte| byte.to_s BASE}.join(' ')
-end
+  unless $*.empty? or $f then
+    $temp = %x<mktemp>.chop
+    trap 0, 'File::delete $temp'
+    open($temp, 'w') { _1.puts $* }
+    $*.replace [$temp]
+  end
+}
+
+puts $F.map{sprintf "%02s", _1.ord.to_s(BASE)} * ' '
