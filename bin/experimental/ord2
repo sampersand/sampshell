@@ -1,5 +1,5 @@
 #!/bin/sh
-exec ruby -x -aF'\K' -Snlrg -- "$0" "$@"
+exec ruby -Sx -nlaF'\K' -rg -- "$0" "$@"
 #!ruby
 
 BEGIN{
@@ -15,11 +15,11 @@ EOS
 
 BASE = $b || ($d && 10) || 16
 
-if !$*.empty? and !$f
-  $file = `mktemp`.chop
-  File.write $file, $*.join("\n")
-  trap 'EXIT', 'File.unlink $file'
-  $*.replace [$file]
+unless $*.empty? or $f
+  $temp = %x<mktemp>.chop
+  trap 0, 'File::delete $temp'
+  open($temp, 'w') { _1.puts $* }
+  $*.replace [$temp]
 end
 }
 
