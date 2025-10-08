@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+##
+# Print the url for a repo, or a file in the repo
+##
+
+require 'optparse'
+
+def abort(msg) = super("#$0: #{msg}") end
+def `(cmd)
+  super.chomp.tap do
+    $?.success? or abort "shell command return non-zero exit status: #{cmd.inspect}"
+  end
+end
+
+$branch = :current
+OptParse.new do |op|
+  op.banner = "usage: #{op.program_name} [-c | -m | -bBRANCH] [file] [start[-end]]"
+
+  op.on_tail 'print the url for a repo, or a file in the repo'
+
+  op.on '-b', '--branch=NAME', 'Explicitly use branch NAME' do |branch|
+    $branch = branch
+  end
+
+  op.on '-c', '--current-branch', 'Use the current branch [default]' do
+    $branch = :current
+  end
+
+  op.on '-m', '--master-branch', 'Use the master branch' do
+    $branch = :master
+  end
+
+  op.on '-p', '--permalink', 'Use a permalink' do
+    $branch = :permalink
+  end
+
+  op.parse! rescue op.abort $!
+  op.abort op.help unless $*.length <= 2
+end
+
+file, range = $*
+file and Dir.chdir(File.file?(file) ? File.dirname(file) : file)
+
+REPO = `gh repo view --json=url --jq=.url`
+BRANCH = case $branch
+         when :current   then `git branch --show-current`
+         when :master    then `git master-branch`
+         when :permalink then `git rev-parse HEAD`
+         else                 $branch
+         end
+
+if file
+  file = file.delete_prefix(`git rev-parse --show-toplevel` + '/') # maybe also --show-prefix eventually?
+  file.concat "#L#{range.sub('-', '-L')}" if range
+end
+
+puts "#{REPO}/blob/#{BRANCH}#{file && '/'}#{file}"

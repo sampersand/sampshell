@@ -1,8 +1,4 @@
 # Defines a bunch of nice conversions methods top-level for basic-objects
-module ToI
-  def to_i = @value
-end
-
 class BlankSlate < BasicObject
   # Undo everything but `__send__` and `__id__`
   instance_methods.each do |im|
@@ -38,10 +34,14 @@ class BlankSlate < BasicObject
   module To
     module_function
 
-    private def to_helper(to_method, value, *kernel_methods, &block)
+    private def to_helper(to_method, value, methods: [], hash: false, &block)
       BlankSlate.blank {
         define_method(to_method) { value }
-        __with_Kernel_method__(*kernel_methods)
+        __with_Kernel_method__(*methods)
+        if hash
+          define_method(:hash) { value.__send__(:hash) }
+          define_method(:eql?) { |x| value.__send__(:eql?, x) }
+        end
         class_exec(&block) if block
       }
     end
@@ -50,10 +50,41 @@ class BlankSlate < BasicObject
     def int(...)  = to_helper(:to_int, ...)
     def s(...)    = to_helper(:to_s, ...)
     def str(...)  = to_helper(:to_str, ...)
-    def a(...)    = to_helper(:to_a, ...)
-    def ary(...)  = to_helper(:to_ary, ...)
-    def h(...)    = to_helper(:to_h, ...)
-    def hash(...) = to_helper(:to_hash, ...)
+
+    # Supports `a(1, 2, 3)` as a convenient shorthand for `a([1, 2, 3])`. However,
+    # to
+    def a(*ary, **kw, &b)
+      if ary.length == 1
+        to_helper(:to_a, Array(ary[0]), **kw, &b)
+      else
+        to_helper(:to_a, ary, **kw, &b)
+      end
+    end
+    def ary(*ary, **kw, &b)
+      if ary.length == 1
+        to_helper(:to_ary, Array(ary[0]), **kw, &b)
+      else
+        to_helper(:to_ary, ary, **kw, &b)
+      end
+    end
+
+    # Supports `h('a' => 'b')` as a convenient shorthand for `h({'a' => 'b'})`,
+    # but the shorthand version doesn't allow you to set methods.
+    def h(hash = nil, **kw, &b)
+      if hash
+        to_helper(:to_h, hash, **kw, &b)
+      else
+        to_helper(:to_h, kw, &b)
+      end
+    end
+
+    def hash(hash = nil, **kw, &b)
+      if hash
+        to_helper(:to_hash, hash, **kw, &b)
+      else
+        to_helper(:to_hash, kw, &b)
+      end
+    end
 
     def sym(...)  = to_helper(:to_sym, ...)
     def r(...)    = to_helper(:to_r, ...)

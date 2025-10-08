@@ -14,12 +14,21 @@ $-g = true
 ## Users can supply the `G_VARS` environment variable to `g` to specify the list
 # of allowed global variables; if a variable is not in this list, it'll cause a
 # program abort.
+$GLOBALS = []
+def ($GLOBALS).expect!(*allowed)
+  allowed = Array(*allowed)
+  (allowed - self).first&.tap do |invalid|
+    abort "flag #{invalid} is not a recognized flag"
+  end
+end
+
 g_vars = ENV['G_VARS']&.split(',') # Not a constant so it doesn't leak
 
 ## Set a global variable to a value. Not a method, like `g_vars`, so it doens't
 # leak out of this file.
 set_global = proc do |flag, value, orig_flag|
   flag.tr!('-', '_')
+  orig_flag ||= flag # TODO
 
   # Only allow alphanumerics as flags
   unless flag.match? /\A\w+\z/
@@ -40,6 +49,8 @@ set_global = proc do |flag, value, orig_flag|
           # when %r{\A/(.*)/\z} then Regexp $1
           else                     value
           end
+
+  $GLOBALS |= [orig_flag]
 
   # Sadly, there's no `global_variable_set`, so we must use `eval`
   eval "\$#{flag} = value"
@@ -77,7 +88,7 @@ while (arg = ARGV.shift)
     end
   else
     # Everything else is a normal argument, and we stop parsing
-    ARGV.unshfit arg
+    ARGV.unshift arg
     break
   end
 end
