@@ -1,6 +1,6 @@
 #!/usr/bin/env -S ruby -rg
 
-$GLOBALS.expect! %w[h help a all]
+GLOBALS.expect! %w[h help a all]
 $h || $_help and (puts <<EOS; exit)
 usage: #{$0} [-a,--all] [files ...]
   -h, --help  Show usage

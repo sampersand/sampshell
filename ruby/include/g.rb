@@ -11,61 +11,59 @@
 ## Emulate other `$-x` globals, so you can check for `g`'s inclusion with `$-g`.
 $-g = true
 
-## Users can supply the `G_VARS` environment variable to `g` to specify the list
-# of allowed global variables; if a variable is not in this list, it'll cause a
-# program abort.
-$GLOBALS = []
-def ($GLOBALS).expect!(*allowed)
-  allowed = Array(*allowed)
-  (self - allowed).first&.tap do |invalid|
-    abort "flag #{invalid} is not a recognized flag"
-  end
+## The list of all global variables that `g` parsed out
+GLOBALS = []
+
+## A singleton method on `GLOBALS` used to validate that all variables that
+# were parsed were expected. Note that because of how `g` works, there's no way
+# to differentiate between `-x` and `--x`, but I've never had that be a problem.
+def GLOBALS.expect!(*allowed)
+  # Delete all leading `-`s that were possibly provided
+  allowed = Array(*allowed).map { _1.sub!(/\A-*/, '') }
+
+  # Find the first disallowed flag, and fail if it exists
+  bad = (self - allowed).first and abort "flag #{bad} is not a recognized flag"
+
+  # Hunky dory!
 end
 
-g_vars = ENV['G_VARS']&.split(',') # Not a constant so it doesn't leak
-
-## Set a global variable to a value. Not a method, like `g_vars`, so it doens't
-# leak out of this file.
-set_global = proc do |flag, value, orig_flag|
+## Set a global variable to a value. This not only assigns to the actual global
+# variable, but also adds it to the `GLOBALS` array, if it's not already there.
+def GLOBALS.assign(flag, value, orig)
   flag.tr!('-', '_')
-  orig_flag ||= flag # TODO
 
   # Only allow alphanumerics as flags
-  unless flag.match? /\A\w+\z/
-    abort "flag #{orig_flag} is not a valid flag name"
-  end
-
-  # If `G_VARS` was supplied as an env var, then ensure the flag is allowed
-  if g_vars && !g_vars.include?(flag)
-    abort "flag #{orig_flag} is not a recognized flag"
+  unless flag.match? /\A\p{Alnum}+\z/
+    abort "flag #{orig} is not a valid flag name"
   end
 
   # Special case booleans, nil, and integers:
   value = case value
-          when 'true'         then true
-          when 'false'        then false
-          when 'nil'          then nil
-          when /\A\d+\z/      then Integer value
-          # when %r{\A/(.*)/\z} then Regexp $1
-          else                     value
+          when 'true'    then true
+          when 'false'   then false
+          when 'nil'     then nil
+          when /\A\d+\z/ then Integer value
+          else                value
           end
 
-  ($GLOBALS << orig_flag).uniq!
+  # Add the global variable to `self`
+  (self << flag).uniq!
 
-  # Sadly, there's no `global_variable_set`, so we must use `eval`
+  # Assign the global variable. Sadly, there's no `global_variable_set`, so we
+  # must use `eval`
   eval "\$#{flag} = value"
 end
 
 # Handle each argument, extracting the flag, or putting it back and `break`ing if we're done
 while (arg = ARGV.shift)
   case arg
-  when /\A--no-([\w-]+)\z/
+  when /\A--no-([^=]+)\z/
     # Negated flags: `--no-foo` is the same as `--foo=false`
-    set_global.($1, false)
+    GLOBALS.assign($1, false, arg)
 
-  when /\A--([\w-]+)(?:=(.*))?\z/
+  when /\A--([^=]+)\K(=)?/
     # long-form flags, both with and without arguments
-    set_global.($1, $2 || true)
+    GLOBALS.assign($1, $2 ? $' : true, $`)
 
   when /\A-[^-]/
     # Shorthand flags
@@ -75,15 +73,15 @@ while (arg = ARGV.shift)
       case
       when arg.delete_prefix!('=')
         # Shorthand flag is given an argument with `=`
-        set_global.(short, arg)
+        GLOBALS.assign(short, arg, "-#{short}")
         break
       when arg.match?(/\A\d/)
         # Shorthand flag is given an integer argument; `=` can be omitted
-        arg = Integer(arg) rescue abort("integer argument for -#{short} has trailing chars: #{arg}")
-        set_global.(short, arg)
+        arg = Integer(arg, exception: false) or abort("integer argument for -#{short} has trailing chars: #{arg}")
+        GLOBALS.assign(short, arg, "-#{short}")
         break
       else
-        set_global.(short, true)
+        GLOBALS.assign(short, true, "-#{short}")
       end
     end
   else
