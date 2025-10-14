@@ -124,16 +124,6 @@ md () {
 	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
 }
 
-# Clears the screen.
-cls () {
-	# If `tput`
-	if command -v tput >/dev/null 2>&1; then
-		tput reset
-	else
-		printf '\033c\033[3J'
-	fi
-}
-
 ## Common aliases
 alias l=ls
 alias ls='ls -AFq'

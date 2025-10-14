@@ -1,9 +1,19 @@
 #!/bin/sh
 
-## Clears the entire screen, and resets the scroll buffer.
+##
+# Clears the entire screen, and resets the scroll buffer.
+##
+
+# No arguments allowed
+if [ $# -ne 0 ]; then
+	printf 'usage: %s\n' "$(basename -- "$0")" >&2
+	printf 'Clears the screen. No args allowed.' >&2
+	exit 2
+fi
+
 if command -v tput >/dev/null 2>&1; then
-	exec tput reset # use this if it's present
+	exec tput reset # Use this if it's present
 else
 	# otherwise use printf
-	printf '\ec\e[3J'
+	printf '\033c\033[3J'
 fi
