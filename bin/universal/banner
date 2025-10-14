@@ -1,27 +1,50 @@
 #!/usr/bin/env ruby
 
+################################################################################
+# Banner: Surround messages in boxes, to use for separators in source files.   #
+################################################################################
 require 'optparse'
 
 OPTIONS = {
   width: 80,
   pre: 0,
   style: '#',
+  padding: true,
   justify: :center,
 }
+ALLOWED_STYLES = %W[# * /]
 
-OptParse.new nil, 20 do |op|
-  op.banner.concat ' message [...]'
+# Parse options
+OptParse.new  do |op|
+  op.banner.concat ' [message ...]'
 
-  op.on '-w', '--width=N', Integer, 'Total line width; Width of 0 is "auto"'
-  op.on '-p', '--pre=N', Integer, 'Length to add before the line'
-  op.on '-s', '--style=STYLE', 'Use STYLE instead of default `#`'
+  op.on '-w', '--width=(auto,AMNT)', "Total line width. \"auto\" is the smallest possible that still fits. [default: #{OPTIONS[:width]}]" do |arg|
+    if arg == 'auto'
+      :auto
+    else
+      Integer(arg, exception: false) or raise OptParse::InvalidArgument, x
+    end
+  end
+
+  op.on '-p', '--pre=AMNT', Integer, 'Add AMNT spaces before the banner'
+  op.on '-s', '--style=STYLE', ALLOWED_STYLES, "Use STYLE instead. Options: #{ALLOWED_STYLES}. [default: #{OPTIONS[:style]}]"
 
   op.on '-m', '--multiline', 'Interpret each arg as a separate line'
-  op.on '-b', '--blank', 'Add a blank line before and after input'
-  op.on '-c', '--copy', 'Pipe output to pbcopy command'
-  op.on '-S', '--squash', 'When enabled, extra padding isnt added to lines'
+  op.on '-b', '--blank', 'Add a blank link before and after the banner contents'
+  op.on '--copy', 'Pipe output to pbcopy command'
+  op.on '--[no-]padding', 'Add padding to the front and end of lines. [default]'
 
-  op.on '-j', '--justify=HOW', %i[left center right l c r], 'left, center, or right justify'
+  op.on '-c', '--center-justify', 'Justify text in the center [default]' do
+    OPTIONS[:justify] = :center
+  end
+
+  op.on '-l', '--left-justify', 'Justify text on the left' do
+    OPTIONS[:justify] = :left
+  end
+
+  op.on '-r', '--right-justify', 'Justify text on the right' do
+    OPTIONS[:justify] = :right
+  end
 
   op.parse! into: OPTIONS rescue op.abort $!
   ARGV.empty? and abort op.help
@@ -31,7 +54,10 @@ OPTIONS[:multiline] or  ARGV.replace [ARGV.join(' ')]
 OPTIONS[:blank]     and (ARGV.unshift ''; ARGV.push '')
 OPTIONS[:copy]      and $stdout = IO.popen('pbcopy', 'w')
 
-OPTIONS[:width] == 0 and OPTIONS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
+if OPTIONS[:width] == :auto || OPTIONS[:width] == 0
+  OPTIONS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
+  OPTIONS[:width] -= 2 unless OPTIONS[:padding]
+end
 
 if (OPTIONS[:width] - OPTIONS[:pre]).negative?
   abort "#{File.basename($0)}: -p > -w; no space remaining for text"
@@ -47,16 +73,16 @@ def ppre(*a)
 end
 
 def print_lines(prefix, suffix=prefix, lines: ARGV)
-  unless OPTIONS[:squash]
+  if OPTIONS[:padding]
     (suffix = +suffix).prepend ' ' # `+suffix` in case it's the default
     prefix.concat ' '
   end
 
   msg_width = $width - prefix.length - suffix.length
   method = case OPTIONS[:justify]
-           when :l, :left   then :ljust
-           when :r, :right  then :rjust
-           when :c, :center then :center
+           when :left   then :ljust
+           when :right  then :rjust
+           when :center then :center
            else fail "<bug: bad justify given: #$justify>"
            end
 
@@ -65,7 +91,7 @@ def print_lines(prefix, suffix=prefix, lines: ARGV)
   end
 end
 
-print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $-d
+# print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $DEBUG
 
 case OPTIONS[:style]
 when '#'
