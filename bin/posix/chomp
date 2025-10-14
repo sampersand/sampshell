@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -eu
+readonly newline=$'\n'
+
+usage () { cat <<EOS; }
+usage: $(basename -- "$0") [-a]
+
+Deletes final trailing newline from input. If -a
+is supplied, deletes all trailing newlines instead.
+EOS
+
+# Parse options
+all=
+while getopts 'ha' opt; do
+	case $opt in
+	h) usage; exit;;
+	a) all=1 ;;
+	\?) usage >&2; exit 1;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+[ "$#" -ne 0 ] && { usage >&2; exit 1; }
+
+# Read each line from stdin, and print them out, prepended by the last
+# line's terminator.
+sep=
+while IFS= read -r line || [ -n "$line" ]; do
+	if [ -z "$line" ]; then
+		# Accumulate separators if empty
+		sep=$sep$newline
+	else
+		# Print the line, reset `sep` to a blank newline
+		printf %s%s "$sep" "$line"
+		sep=$newline
+	fi
+done
+
+# Print everything but trailing newline if `-a` wasn't supplied
+[ -z "$all" ] && printf %s "${sep%?}"
