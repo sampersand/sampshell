@@ -1,0 +1,73 @@
+#!/bin/dash
+
+set -eu
+
+all=
+while getopts 'ha' opt; do
+	case $opt in
+	h) output=$OPTARG ;;
+	a) all=1 ;;
+	\?) exit 1 ;;
+	esac
+done
+
+newline=$(printf '\nx')
+cr=$(printf '\rx')
+readonly newline="${newline%x}" cr="${cr%x}"
+
+sep=
+while IFS= read -r line || [ -n "$line" ]; do
+	end=${line%"$cr"}
+	printf %s%s "$sep" "$end"
+	sep=${line#"$end"}$newline
+done
+exit
+
+
+
+notfirst=
+while IFS= read -r line; do
+	[ -n "$notfirst" ] && echo
+	printf %s "$line"
+	notfirst=1
+done
+
+# Print out the last line if there is one
+printf %s "$line"
+mviz -- "[$line]"
+
+exit
+	sed -n '
+${
+	x
+	s/^.//
+	p
+}
+H
+' | tail -c -1
+# print -l a b c '' d '' | sed -n '${p;};H'
+
+
+# #!/usr/bin/env -S ruby -rg
+
+# GLOBALS.expect! %w[h help a all]
+# $h || $_help and (puts <<EOS; exit)
+# usage: #{$0} [-a,--all] [files ...]
+#   -h, --help  Show usage
+#   -a, --all   Strip all trailing newlines
+# Strip the last (or all trailing) newlines
+# EOS
+
+# $all ||= $a
+
+# if $all
+#   # Inefficient workaround: Read the entirety of `stdin` it at once
+#   print $stdin.read.tap { |x| x.sub!(/\n*\z/, '') }
+# else
+#   while l = gets
+#     @l.display
+#     @l = l
+#   end
+
+#   print @l&.chomp
+# end

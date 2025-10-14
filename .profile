@@ -159,6 +159,7 @@ SampShell_add_PATH () {
 SampShell_add_PATH "$HOME/bin"
 
 ## Universal scripts I always want available
+SampShell_add_PATH "$SampShell_ROOTDIR/bin/posix"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/universal"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/git"
 
