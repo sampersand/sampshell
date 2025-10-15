@@ -145,8 +145,8 @@ if [ $# -ne 0 ]; then
 		__clenv_cmd="\"_=$__clenv_tmp\""
 	fi
 
-	shift
-	set -- "$__clenv_tmp" "$@"
+	# shift
+	# set -- "$__clenv_tmp" "$@"
 fi
 
 ## Add in default variables

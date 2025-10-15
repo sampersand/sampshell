@@ -150,7 +150,7 @@ fi
 
 ## Add in default variables
 for __clenv_tmp in $__clenv_default_vars; do
-	if eval '[ -n ${'$__clenv_tmp'+1} ]'; then
+	if eval '[ -n "${'$__clenv_tmp'+1}" ]'; then
 		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
 	fi
 done
