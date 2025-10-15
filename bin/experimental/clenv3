@@ -10,12 +10,12 @@
 # Safety First!
 set -efuC
 
-readonly scriptname="${0##*/}"
+readonly __clenv_scriptname="${0##*/}"
 
 die () {
 	fmt="%s: $1\n"
 	shift
-	printf >&2 "$fmt" "$scriptname" "$@"
+	printf >&2 "$fmt" "$__clenv_scriptname" "$@"
 	exit 1
 }
 
@@ -42,7 +42,7 @@ unset -v __clenv_user_vars \
 __clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
-usage: $scriptname [options] [--] [utility [argument ...]]
+usage: $__clenv_scriptname [options] [--] [utility [argument ...]]
 options:
     -D              Don't actually run the program; Sets -V
     -V              Print the invocation, and any changed variables.
@@ -126,9 +126,8 @@ while getopts 'hDV_anipP:m:v:u:U:' opt; do
 
 		# Instead of having to figure out escaping with the different variables, instead we
 		# use `__clenv_var_XXX` variables
-		__clenv_tmp=__clenv_var_${#__clenv_user_vars}
-		eval "$__clenv_tmp=\$__clenv_value"
-		__clenv_user_vars="$__clenv_user_vars \"$__clenv_name=\$$__clenv_tmp\""
+		eval "__clenv_var_$__clenv_name=\$__clenv_value"
+		__clenv_user_vars="$__clenv_user_vars $__clenv_name"
 		;;
 
 	## Unset a variable
@@ -153,6 +152,16 @@ done
 ## Finish argument parsing.
 shift $(( OPTIND - 1 ))
 
+if [ -n "$__clenv_verbose" ]; then
+	log () {
+		printf '#clenv '
+		printf "$@"
+		printf '\n'
+	} >&2
+else
+	log () { :; }
+fi
+
 ################################################################################
 #                          Construct the Command Line                          #
 ################################################################################
@@ -176,30 +185,53 @@ shift $(( OPTIND - 1 ))
 # Initialize the command with `exec /path/to/env`
 __clenv_cmd="exec $(command -pv env)" || die 'unable to locate `env`'
 
-# Setup debug and verbose options
-[ -n "$__clenv_dry"     ]       && __clenv_cmd=": $__clenv_cmd"
-[ -n "$__clenv_verbose" ]       && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
-
 # Unless `-a` was supplied, we clear away all other variables.
 [ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
 
 ## If an alternative $PATH and utility were both supplied, then replace the
 # utility with the version we find.
 if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
-	# Find the path
+	# Find the path for the utility with the alternative path
 	if ! __clenv_utility_path=$(PATH=$__clenv_alt_path command -v -- "$1"); then
 		die 'unable to locate executable program: %s' "$1"
 	fi
 
+	# Replace the utility with the new path
 	shift
 	set -- "$__clenv_utility_path" "$@"
 
-	# TODO: this is a vuln waiting to happen when the utility path has special chars
+	# If `-_` was supplied, add `_` to the list of variables. TODO: doesn't play
+	# well with `-u`
 	[ -n "$__clenv_underscore" ] && __clenv_cmd="$__clenv_cmd \"_=\$__clenv_utility_path\""
 fi
 
-## Unset variables we don't need
-__clenv_tmp=$(awk 'BEGIN {
+is_variable_set () {
+	eval "[ -n \"\${$1+1}\" ]"
+}
+
+## Add in default variables
+for varname in $__clenv_default_vars; do
+	if is_variable_set "$varname" && ! is_variable_set "__clenv_var_$varname"; then
+		eval "__clenv_var_$varname=\$$varname"
+		__clenv_user_vars="$varname $__clenv_user_vars"
+	fi
+done
+
+################################################################################
+#                               Unset Variables                                #
+################################################################################
+
+## Unset variables from the environment that the user specified via `-u`/`-U`.
+# (We cannot just check `__clenv_user_vars`, as one we want `clenv -a -uFOO` to
+# remove `FOO` in the environment.
+#
+# Notably, this may unset things like `$IFS` and `$PATH`, so code after this
+# cannot rely on those being set to proper values.
+##
+
+# Find all exported variables that match the regexes in `__clenv_unset_vars`.
+__clenv_tmp=$(awk '
+BEGIN {
 	for (k in ENVIRON) {
 		for (a in ARGV) {
 			if (k ~ ARGV[a]) {
@@ -207,21 +239,43 @@ __clenv_tmp=$(awk 'BEGIN {
 				break
 			}
 		}
-	}; exit }' $__clenv_unset_vars)
-if [ "$__clenv_verbose" ] && [ "${#__clenv_tmp}" -ne 0 ]; then
-	printf 'unsetting: %s\n' $__clenv_tmp
-fi
-unset -v -- $__clenv_tmp
+	}
+	exit
+}' $__clenv_unset_vars)
 
-## Add in default variables
-for varname in $__clenv_default_vars; do
-	if eval '[ -n "${'$varname'+1}" ]'; then
-		__clenv_cmd="$__clenv_cmd \"$varname=\$$varname\""
-	fi
-done
+# If we're in verbose mode, and at least one thing is being unset, then print
+# out all the variables that are being unset to stderr
+if [ "${#__clenv_tmp}" -ne 0 ]; then
+	[ -n "$__clenv_verbose" ] && printf >&2 '#clenv unsetting: %s\n' $__clenv_tmp
+fi
+
+# Unset all the variables that were matched
+unset -v -- $__clenv_tmp $(printf '__clenv_var_%s ' $__clenv_tmp)
+
+# __clenv_user_vars=$(printf '%s\n' $__clenv_user_vars |
+# 	awk "/"
+# )
 
 ## Add in user variables
-__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
+for varname in $__clenv_user_vars; do
+	if ! is_variable_set "__clenv_var_$varname"; then
+		continue
+	fi
+
+	for var in $__clenv_unset_vars; do
+		if awk 'BEGIN { exit ARGV[2] !~ ARGV[1] }' "$var" "$varname"; then
+			log 'unsetting: %s' "$varname"
+			continue 2
+		fi
+	done
+
+	log 'setting:   %s=%s' "$varname" "$(eval "printf %s \$__clenv_var_$varname")"
+	__clenv_cmd="$__clenv_cmd \"$varname=\$__clenv_var_$varname\""
+done
+
+# Setup debug and verbose options
+[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
+[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 
 ## Execute the command
-eval "$__clenv_cmd -- \"\$@\""
+eval "$__clenv_cmd \"\$@\""
