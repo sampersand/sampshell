@@ -8,7 +8,6 @@
 #
 
 # Safety First!
-\unalias -a # in case we are `.`d
 set -ef
 
 readonly scriptname="${0##*/}"
@@ -50,6 +49,7 @@ options:
     -a              Pass _all_ environment variables in by default.
     -n              Don't set any_arguments by default, including essential ones
     -p              Shorthand for -vPATH
+    -P path         Use 'path' to find 'utility' \$PATH / -v supplied
     -m pattern      Pass in any variables matching the awk pattern.
     -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
                     omitted, it defaults to the current value of 'name' (which,
@@ -69,7 +69,7 @@ validate_variable_name () case $1 in
 		die 'invalid variable name (must match [\w_-]): %s' "$1" ;;
 esac
 
-while getopts 'hDV_anpm:v:u:' opt; do
+while getopts 'hDV_anpP:m:v:u:' opt; do
 	case $opt in
 
 	h) usage; exit;;
@@ -83,6 +83,7 @@ while getopts 'hDV_anpm:v:u:' opt; do
 	a) __clenv_all_variables=1 __clenv_default_vars= ;;
 	n) __clenv_all_variables=  __clenv_default_vars= ;;
 	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
+	P) __clenv_alt_path=$OPTARG ;;
 	m) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
 		for (k in ENVIRON) if(k ~ ARGV[1]) print k; exit }' "$OPTARG")";;
 	v)
@@ -136,7 +137,7 @@ __clenv_cmd='exec env'
 # this command)
 if [ $# -ne 0 ]; then
 	# Ensure we find the program, as passing `PATH=` to env will overwrite it.
-	if ! __clenv_tmp=$(command -v -- "$1"); then
+	if ! __clenv_tmp=$(PATH=${__clenv_alt_path:-$PATH} command -v -- "$1"); then
 		die 'unable to locate executable program: %s' "$1"
 	fi
 

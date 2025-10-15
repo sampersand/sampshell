@@ -1,0 +1,28 @@
+#!/bin/zsh
+
+emulate -L zsh
+
+exit=0
+
+for arg; do
+	local paths=( ${^path}/$arg(UN^-*) )
+
+	case $#paths in
+		0)
+			print -r "$0: cannot find in path: ${(q+)arg}" >/dev/stderr
+			exit=1
+			;;
+		[^1])
+			print -r "found $#paths options for ${(q+)arg}. pick one:"
+			select REPLY in $paths; do break; done # select the option
+			[[ -z $REPLY ]] && continue # if it's not a valid one, dont use this
+			paths=( $REPLY ) # set the paths to just the reply
+			;& # fall thru
+		1)
+			read -q "?make executable [y/N]? ${(q+)paths} "
+			(( !$status )) && chmod +x $paths
+			;;
+	esac
+done
+
+return $exit

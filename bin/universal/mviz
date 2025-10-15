@@ -806,7 +806,7 @@ if $*.empty?
 
   # Exit early if `--no-stdin` was supplied
   exit unless $from_stdin
-  fail if $from_stdin == :auto
+  fail if $from_stdin == :auto && ($stdin.tty? || !$stdout.tty?)
 
   # if $stdin.tty?
   #   abort "no arguments given, and stdin was detected to be a tty\n\nuse -h for short help or --help for long help\n"
