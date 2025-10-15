@@ -69,7 +69,7 @@ validate_variable_name () case $1 in
 		die 'invalid variable name (must match [\w_-]): %s' "$1" ;;
 esac
 
-while getopts 'hDV_anpP:m:v:u:' opt; do
+while getopts 'hDV_anpP:m:v:u:U:' opt; do
 	case $opt in
 
 	h) usage; exit;;
@@ -109,12 +109,17 @@ while getopts 'hDV_anpP:m:v:u:' opt; do
 	## Unset a variable
 	u)
 		validate_variable_name "$OPTARG"
+		__clenv_unset_vars="$__clenv_unset_vars ^$OPTARG$"
 
 		# Unset it from the user vars
 		__clenv_user_vars=$(printf '%s' "$__clenv_user_vars" | \
 			sed "s/\"$OPTARG=\$__clenv_var_[0-9]*\"//1")
-		__clenv_default_vars=$(printf '%s' "$__clenv_default_vars" | \
-			sed "s/$OPTARG//1")
+		# __clenv_default_vars=$(printf '%s' "$__clenv_default_vars" | \
+		# 	sed "s/$OPTARG//1")
+		;;
+
+	U)
+		__clenv_unset_vars="$__clenv_unset_vars $OPTARG"
 		;;
 
 	# Everything else is an error
@@ -126,7 +131,7 @@ done
 shift $(( OPTIND - 1 ))
 
 ## Construct the command line
-__clenv_cmd='exec env'
+__clenv_cmd="exec $(which env)"
 [ -n "$__clenv_dry"     ]       && __clenv_cmd=": $__clenv_cmd"
 [ -n "$__clenv_verbose" ]       && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
 [ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
@@ -144,14 +149,25 @@ if [ $# -ne 0 ]; then
 	if [ -n "$__clenv_underscore" ]; then
 		__clenv_cmd="\"_=$__clenv_tmp\""
 	fi
-
-	# shift
-	# set -- "$__clenv_tmp" "$@"
 fi
+
+__clenv_tmp=$(awk 'BEGIN {
+	for (k in ENVIRON) {
+		for (a in ARGV) {
+			if (k ~ ARGV[a]) {
+				print k
+				break
+			}
+		}
+	}; exit }' $__clenv_unset_vars)
+if [ "$__clenv_verbose" ] && [ "${#__clenv_tmp}" -ne 0 ]; then
+	printf 'unsetting: %s\n' $__clenv_tmp
+fi
+unset -v -- $__clenv_tmp
 
 ## Add in default variables
 for __clenv_tmp in $__clenv_default_vars; do
-	if eval '[ -n ${'$__clenv_tmp'+1} ]'; then
+	if eval '[ -n "${'$__clenv_tmp'+1}" ]'; then
 		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
 	fi
 done
