@@ -8,3 +8,6 @@
 
 # Source the the POSIX-compliant profile, in sh-style emulation mode.
 emulate sh -c '. "$SampShell_ROOTDIR/.profile"'
+
+# Only set `IGNORE_EOF` in the login shell
+setopt IGNORE_EOF
