@@ -1,8 +1,46 @@
 # Ruby file containing modifications to builtins that I find useful when writing scripts
 
-return if defined?($SAMPSCRIPT_DISABLED)
+$PROGRAM_BASE_NAME = File.basename($0, '.*')
 
+# Prefix program name to `abort` and `warn`; support `warn()` too
+def abort(message=$!)
+  super("#$PROGRAM_BASE_NAME: #{message}")
+end
+
+def warn(message=$!, ...)
+  super("#$PROGRAM_BASE_NAME: #{message}", ...)
+end
+
+# # Add a `debug()` method for logging
+# def debug(message=nil)
+#   puts("#{PROGRAM_BASE_NAME}: #{message || yield}") if $VERBOSE
+# end
+
+
+alias $ERR_FAIL $-e
+$ERR_FAIL = true
+def `(command)
+  puts command if $-v
+  result = super.chomp
+  if $ERR_FAIL && !$?.success?
+    raise RuntimeError, "command returned #{$?.exitstatus}: #{command}", caller(1)
+  end
+  result
+end
+
+
+
+
+__END__
+return if defined?($SAMPSCRIPT_DISABLED)
 PROGRAM_BASE_NAME = File.basename($0, '.*')
+
+$__progname = $0
+alias $PROGRAM_NAME $0
+alias $0 $__progname
+trace_var :$0 do
+  Process.setproctitle $0
+end
 
 ## Always import shell words, and make it easy to use.
 require 'shellwords'

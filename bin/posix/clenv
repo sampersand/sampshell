@@ -7,12 +7,6 @@
 # 3. Commonly needed variables for shells exported by default (TERM, HOME, etc.)
 #
 
-# Respect `SampShell_XTRACE`
-if [ -n "${SampShell_XTRACE-}" ]; then
-	set -o xtrace
-	export SampShell_XTRACE
-fi
-
 # Safety First!
 \unalias -a # in case we are `.`d
 set -ef
