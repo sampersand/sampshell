@@ -1,7 +1,7 @@
 #!/usr/bin/env -S ruby -rg
 GLOBALS.expect! %w[h help w width]
 $h || $_help and (puts <<EOS; exit)
-usage: #{$0} [-w WIDTH] [cmd ...]
+usage: #{$0} [-w WIDTH] [file ...]
   -h, --help        Show usage
   -w, --width=WIDTH Change width from default of 80
 adds a `|` and visual noise after `WIDTH` columns. Width defaults to 80. If
@@ -10,11 +10,9 @@ EOS
 
 $width = Integer($width || $w || 80)
 
-if !$*.empty?
-  $stdin = IO.popen $*.join(' '), 'r'
-end
+# $stdin = IO.popen $*.join(' '), 'r' if !$*.empty?
 
-while line = $stdin.gets(chomp: true)
+while line = $<.gets(chomp: true)
   line = line.ljust($width)
   line.insert($width, "\e[7m|")
   print line, "\e[27m\n"
