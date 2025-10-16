@@ -1,29 +1,64 @@
-# Ruby file containing modifications to builtins that I find useful when writing scripts
+## Script Utilities
+#
+# This file contains modifications to Ruby builtins that I find incredibly useful when writing
+# scripts. While it does fundamentally alter some builtin functionality, and thus cannot be included
+# in _all_ external scripts, the ones it does modify are (mostly) minimal, so most other scripts
+# shouldn't have major problems.
+##
 
-$program_name = File.basename $0, '.*'
-trace_var :$0 do $program_name = File.basename($0, '.*') end
-trace_var :$PROGRAM_NAME do $PROGRAM_BASE_NAME = File.basename($0, '.*') end
+####################################################################################################
+#                                      Set the Process Title                                       #
+####################################################################################################
 
-# Prefix program name to `abort` and `warn`
+# Have a global variable that's just the filename, not its path. (This is useful in error messages,
+# usages, and in `ps` outputs as it's much smaller)
+$program_name = File.basename Process.argv0
+
+# Change the process title to be `<program name> <arguments>`. Note that `setproctitle` will never
+# raise an exception, even if it's unable to set it.
+Process.setproctitle "#$program_name #{$*.join ' '}"
+
+####################################################################################################
+#                             Add Process Title to abort() and warn()                              #
+####################################################################################################
+
+## This add the program name to the beginning of `abort` and `warn`, to be more inline with other
+# UNIX utilities.
+
 def abort(message=$!)
-  super("#{$program_name}: #{message}")
+  super("#$program_name: #{message}")
 end
 
+# This is actually slightly different from the builtin `warn`, as we allow `message` to be anything
+# that has a `.to_s` defined on it---including exceptions!
 def warn(message, ...)
-  super("#{$program_name}: #{message}", ...)
+  super("#$program_name: #{message}", ...)
 end
 
-# Have backticks raise exceptions by default, unless `$BACKTICK_NO_FAIL` is set
+####################################################################################################
+#                        Change Kernel.` to conditionally raise exceptions                         #
+####################################################################################################
 
-$backtick_fail = true
-def shell(command, exception: $backtick_fail)
+## It's irritating that ``Kernel.` `` doesn't actually raise exceptions, and you have to constantly
+# check the value of `$?.success?`. This changes `` ` `` to now raise exceptions if the command
+# starts with a `|` character (after deleting the `|`).
+#
+# As a useful utility, it _also_ prints out the command that's being run if `$VERBOSE` is enabled.
+#
+# This _should_ be a non-breaking-change, as `|` is not valid at the start of a line in `sh`.
+def `(command)
+  if command.start_with?('|')
+    command = command[1..]
+    exception = true
+  end
+
   puts "#running: #{command}" if $VERBOSE
-  result = Kernel.`(command) #`
+  result = super(command)
 
   if exception && !$?.success?
+    # Same exception that `Kernel.system` raises
     raise RuntimeError, "command returned #{$?.exitstatus}: #{command}", caller(1)
   end
 
   result
 end
-alias ` shell
