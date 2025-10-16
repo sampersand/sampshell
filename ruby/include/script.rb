@@ -25,7 +25,7 @@ Process.setproctitle "#$program_name #{$*.join ' '}"
 ## This add the program name to the beginning of `abort` and `warn`, to be more inline with other
 # UNIX utilities.
 
-def abort(message=$!)
+def abort(message=$!, status: true)
   super("#$program_name: #{message}")
 end
 
@@ -33,6 +33,27 @@ end
 # that has a `.to_s` defined on it---including exceptions!
 def warn(message, ...)
   super("#$program_name: #{message}", ...)
+end
+
+####################################################################################################
+#                              Add optional String message to exit()                               #
+####################################################################################################
+
+## Modify `Kernel.exit` to also accept a message before quitting. Quite useful!
+#
+# The message can either be supplied as the sole argument (in which case the default exit code is
+# used), or as the second argument, with the exit code as the first.
+#
+def exit(code=true, message=nil)
+  if code.is_a?(String)
+    raise ArgumentError, 'both code and message given' if message
+    message = code
+    code = true
+  end
+
+  puts "#$program_name: #{message}" if message
+
+  super(code)
 end
 
 ####################################################################################################
@@ -48,7 +69,8 @@ end
 # This _should_ be a non-breaking-change, as `|` is not valid at the start of a line in `sh`.
 def `(command)
   if command.start_with?('|')
-    command = command[1..]
+    # Make `command` unfrozen if it wasn't already (backtick literals are frozen)
+    (command = +command).delete_prefix! '|'
     exception = true
   end
 

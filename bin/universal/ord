@@ -4,7 +4,7 @@ exec ruby -Sx -nlaF'\K' -rg -- "$0" "$@"
 
 BEGIN{
   GLOBALS.expect! %w[h help d b f]
-  $h || $_help and (puts <<-EOS; exit)
+  $h || $_help and (abort <<-EOS, false)
 usage: #{File.basename $0} [-h] [-d | -b=num] [-f] [args...]
 options:
   -d same as `-b=10`
