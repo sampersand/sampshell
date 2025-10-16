@@ -26,14 +26,22 @@ Process.setproctitle "#$program_name #{$*.join ' '}"
 ## This add the program name to the beginning of `abort` and `warn`, to be more inline with other
 # UNIX utilities.
 
-def abort(message=$!)
-  super("#$program_name: #{message}")
+def abort(message=$!, prefix: true)
+  if prefix
+    super("#$program_name: #{message}")
+  else
+    super(message)
+  end
 end
 
 # This is actually slightly different from the builtin `warn`, as we allow `message` to be anything
 # that has a `.to_s` defined on it---including exceptions!
-def warn(message, ...)
-  super("#$program_name: #{message}", ...)
+def warn(message, prefix: true, **kw)
+  if prefix
+    super("#$program_name: #{message}", **kw)
+  else
+    super(message.to_s, **kw)
+  end
 end
 
 ####################################################################################################

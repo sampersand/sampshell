@@ -1,11 +1,11 @@
-#!/usr/bin/env -S ruby -rg
+#!/usr/bin/env -S ruby -rg -rscript
 
 # Expect exactly these flags, and error otherwise
 GLOBALS.expect! %w[h help w width]
 
 # Usage
-$h || $_help and (puts <<EOS; exit)
-usage: #{$0} [-w WIDTH] [file ...]
+$h || $_help and exit <<EOS
+usage: #$program_name [-w WIDTH] [file ...]
   -h, --help        Show usage
   -w, --width=WIDTH Change width from default of 80
 adds a `|` and visual noise after `WIDTH` columns. Width defaults to 80. If
