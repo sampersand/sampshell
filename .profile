@@ -122,6 +122,8 @@ case ":${RUBYLIB-}:" in
 esac
 export RUBYLIB # export it
 
+# Have Ruby always include our `script.rb`, which contains non-invasive changes.
+export RUBYOPT="${RUBYOPT-}${RUBYOPT+ }-rscript"
 
 ################################################################################
 #                                                                              #

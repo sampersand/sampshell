@@ -1,9 +1,10 @@
 ## Script Utilities
 #
 # This file contains modifications to Ruby builtins that I find incredibly useful when writing
-# scripts. While it does fundamentally alter some builtin functionality, and thus cannot be included
-# in _all_ external scripts, the ones it does modify are (mostly) minimal, so most other scripts
-# shouldn't have major problems.
+# scripts.
+#
+# While this file does alter builtins, it's purely backwards-compatible (barring the process title
+# setting we do), and as such it can be used even in external scripts.
 ##
 
 ####################################################################################################
@@ -25,7 +26,7 @@ Process.setproctitle "#$program_name #{$*.join ' '}"
 ## This add the program name to the beginning of `abort` and `warn`, to be more inline with other
 # UNIX utilities.
 
-def abort(message=$!, status: true)
+def abort(message=$!)
   super("#$program_name: #{message}")
 end
 
