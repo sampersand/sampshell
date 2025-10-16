@@ -23,6 +23,7 @@ cc -x c -o $outputfile:q - $argv:q <<EOS
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+#define P(...) (printf(__VA_ARGS__)&&putchar('\n'))
 $body
 EOS
 
