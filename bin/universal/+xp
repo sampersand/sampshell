@@ -1,7 +1,5 @@
 #!/bin/zsh
 
-emulate -L zsh
-
 exit=0
 
 for arg; do
@@ -9,7 +7,7 @@ for arg; do
 
 	case $#paths in
 		0)
-			print -r "$0: cannot find in path: ${(q+)arg}" >/dev/stderr
+			print -r "$0:t: cannot find in path: ${(q+)arg}" >/dev/stderr
 			exit=1
 			;;
 		[^1])
