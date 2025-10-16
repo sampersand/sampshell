@@ -87,6 +87,14 @@ typeset -Ua zsh_directory_name_functions
 : "${SampShell_repos_root:=$HOME/code/repos}"
 hash -d repos=$SampShell_repos_root #<-- why u no work
 
+# Change the `cd` function to let you cd to a file if it is the only argument
+# to `cd`.
+function cd {
+	emulate -L zsh
+	[[ $# == 1 && -f $1 ]] && set -- $1:h
+	builtin cd $@
+}
+
 
 ####################################################################################################
 #                                                                                                  #

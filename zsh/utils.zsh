@@ -56,6 +56,14 @@ hr () xx ${@:--}
 hrc () { ARGC_EXACTLY_0 hr | pbcopy }
 
 ################################################################################
+alias -g @N='>/dev/null'
+alias -g @2N='2>/dev/null'
+
+## For highlighting
+typeset -A ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
+
+################################################################################
 
 szfiles () ARGC_EXACTLY_0 subl ~/.z(shenv|shrc|profile|login|logout)
 szrc () ARGC_EXACTLY_0 subl ~/.zshrc
@@ -109,3 +117,31 @@ function old {
 
 # cd ~[gh:sampersand/squire]
 
+
+################################################################################
+# Random misc utils from work laptop. not sure how useful they are, or how tested.
+################################################################################
+sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
+ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
+alias show-cursor='tput cnorm'
+alias gw='gh pr view --web'
+alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
+alias gisancestor='git merge-base --is-ancestor'
+
+# Check if in git repo
+is-in-a-git-repo () (
+	(( $+1 )) && cd -q $1
+	git rev-parse --is-inside-work-tree >&/dev/null
+)
+
+# overwrite the `pbc` command to chomp arguments
+pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
+
+alias gcmn='noglob _SampShell-gcmn'
+_SampShell-gcmn () {
+	[ "$#" -ne 0 ] && set -- --message "$*"
+	git commit --no-verify "$@"
+}
+
+alias gdno='git diff --name-only'
+alias gds='git diff --name-only'
