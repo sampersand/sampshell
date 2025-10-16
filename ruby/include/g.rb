@@ -50,20 +50,21 @@ def GLOBALS.assign(flag, value, orig)
   (self << flag).uniq!
 
   # Assign the global variable. Sadly, there's no `global_variable_set`, so we
-  # must use `eval`
+  # must use `eval`. We checked earlier to make sure that `flag` only contained
+  # alphanumerics, so we know this `eval` is safe.
   eval "\$#{flag} = value"
 end
 
 # Handle each argument, extracting the flag, or putting it back and `break`ing if we're done
 while (arg = ARGV.shift)
   case arg
-  # Negated flags: `--no-foo` is the same as `--foo=false`
-  when /\A--no-([^=]+)\z/
-    GLOBALS.assign($1, false, arg)
-
   # Special case: `--` on its own is an early break
   when '--'
     break
+
+  # Negated flags: `--no-foo` is the same as `--foo=false`
+  when /\A--no-([^=]+)\z/
+    GLOBALS.assign($1, false, arg)
 
   # long-form flags, both with and without arguments
   when /\A--([^=]+)\K(=)?/

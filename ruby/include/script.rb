@@ -51,7 +51,7 @@ def exit(code=true, message=nil)
     code = true
   end
 
-  puts "#$program_name: #{message}" if message
+  puts message if message
 
   super(code)
 end
@@ -69,12 +69,11 @@ end
 # This _should_ be a non-breaking-change, as `|` is not valid at the start of a line in `sh`.
 def `(command)
   if command.start_with?('|')
-    # Make `command` unfrozen if it wasn't already (backtick literals are frozen)
-    (command = +command).delete_prefix! '|'
+    command = command.delete_prefix '|'
     exception = true
   end
 
-  puts "#running: #{command}" if $VERBOSE
+  $stderr.puts "##$program_name: running: #{command}" if $VERBOSE
   result = super(command)
 
   if exception && !$?.success?

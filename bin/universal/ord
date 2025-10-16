@@ -1,11 +1,11 @@
 #!/bin/sh
-exec ruby -Sx -nlaF'\K' -rg -- "$0" "$@"
+exec ruby -Sx -nlaF'\K' -rg -rscript -- "$0" "$@"
 #!ruby
 
 BEGIN{
   GLOBALS.expect! %w[h help d b f]
-  $h || $_help and (abort <<-EOS, false)
-usage: #{File.basename $0} [-h] [-d | -b=num] [-f] [args...]
+  $h || $_help and exit <<-EOS
+usage: #$program_name [-h] [-d | -b=num] [-f] [args...]
 options:
   -d same as `-b=10`
   -b interpret args in base num, instead of the default 16
