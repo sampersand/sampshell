@@ -174,9 +174,9 @@ shift $(( OPTIND - 1 ))
 
 if [ -n "$__clenv_verbose" ]; then
 	log () {
-		printf '#clenv '
-		printf "$@"
-		printf '\n'
+		__clenv_fmt="#clenv $1\n"
+		shift
+		printf "$__clenv_fmt" "$@"
 	} >&2
 else
 	log () { :; }
@@ -205,6 +205,10 @@ fi
 # Initialize the command with `exec /path/to/env`
 __clenv_cmd="exec $(command -pv env)" || die 'unable to locate `env`'
 
+# Setup debug and verbose options
+[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
+[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+
 # Unless `-a` was supplied, we clear away all other variables.
 [ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
 
@@ -229,48 +233,6 @@ for varname in $__clenv_default_vars; do
 	is_variable_set "$varname" && __prepend=1 add_user_variable "$varname"
 done
 
-################################################################################
-#                               Unset Variables                                #
-################################################################################
-
-## Unset variables from the environment that the user specified via `-u`/`-U`.
-# (We cannot just check `__clenv_user_vars`, as one we want `clenv -a -uFOO` to
-# remove `FOO` in the environment.
-#
-# Notably, this may unset things like `$IFS` and `$PATH`, so code after this
-# cannot rely on those being set to proper values.
-##
-
-# Find all exported variables that match the regexes in `__clenv_unset_vars`.
-__clenv_tmp=$(awk '
-BEGIN {
-	for (k in ENVIRON) {
-		for (a in ARGV) {
-			if (k ~ ARGV[a]) {
-				print k
-				break
-			}
-		}
-	}
-	exit
-}' $__clenv_unset_vars)
-
-# If we're in verbose mode, and at least one thing is being unset, then print
-# out all the variables that are being unset to stderr
-if [ "${#__clenv_tmp}" -ne 0 ]; then
-	[ -n "$__clenv_verbose" ] && printf >&2 '#clenv unsetting: %s\n' $__clenv_tmp
-fi
-
-# Unset all the variables that were matched. In particular, this unsets any
-# environment variables that (useful for the `-a` flag)
-unset -v -- $__clenv_tmp
-
-# # TODO: `^_oops$` is not good
-# __clenv_user_vars=$(printf '%s\n' $__clenv_user_vars |
-# 	awk -vORS=' ' -vpat="$(printf '%s\|' $__clenv_unset_vars)^_oops$" '
-# 	$0 !~ pat { print }'
-# )
-
 ## Add in user variables
 for varname in $__clenv_user_vars; do
 	# If this is a variable we want to unset, then don't add it to the list.
@@ -285,9 +247,47 @@ for varname in $__clenv_user_vars; do
 	__clenv_cmd="$__clenv_cmd \"$varname=\$__clenv_var_$varname\""
 done
 
-# Setup debug and verbose options
-[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
-[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+################################################################################
+#                        Unset Inherited ENV Variables                         #
+################################################################################
 
-## Execute the command
+## Unset variables inherited from the calling environment that the user has
+# requested removal via the `-u` / `-U` flags when the `-a` flag is supplied.
+# (This isn't needed when `-a` isn't supplied, as the calling environment is
+# removed anyways.)
+#
+# Notably, this may unset things like `$IFS` and `$PATH`, so code after this
+# cannot rely on those being set to proper values.
+##
+if [ -n "$__clenv_all_variables" ] && [ -n "$__clenv_unset_vars" ]; then
+	# Find all exported variables that match the regexes in `__clenv_unset_vars`
+	__clenv_tmp=$(awk '
+	BEGIN {
+		for (varname in ENVIRON) {
+			for (idx in ARGV) {
+				if (varname ~ ARGV[idx]) {
+					print varname
+					break
+				}
+			}
+		}
+		exit
+	}' $__clenv_unset_vars)
+
+	# Log which variables are being unset (if we're in verbose mode)
+	if [ ${#__clenv_tmp} -ne 0 ]; then
+		log 'unsetting: %s' $__clenv_tmp
+	fi
+
+	# Unset all the variables that were matched. Notably, this will not ever
+	# unset any of our `__clenv_...` variables because (1) we unset them all
+	# at the beginning of the program (so they're no longer global) and thus (2)
+	# any regex that `__clenv_unset_vars` may contain will not match them.
+	unset -v -- $__clenv_tmp
+fi
+
+################################################################################
+#                             Execute the command                              #
+################################################################################
+
 eval "$__clenv_cmd \"\$@\""
