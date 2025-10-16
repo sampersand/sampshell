@@ -12,7 +12,7 @@ OPTIONS = {
   padding: true,
   justify: :center,
 }
-ALLOWED_STYLES = %W[# * /]
+ALLOWED_STYLES = %w[# * /]
 
 # Parse options
 OptParse.new  do |op|
@@ -31,7 +31,7 @@ OptParse.new  do |op|
 
   op.on '-m', '--multiline', 'Interpret each arg as a separate line'
   op.on '-b', '--blank', 'Add a blank link before and after the banner contents'
-  op.on '--copy', 'Pipe output to pbcopy command'
+  op.on '-C', '--copy', 'Pipe output to pbcopy command'
   op.on '--[no-]padding', 'Add padding to the front and end of lines. [default]'
 
   op.on '-c', '--center-justify', 'Justify text in the center [default]' do
