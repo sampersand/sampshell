@@ -88,7 +88,7 @@ is_variable_set () {
 add_user_variable () {
 	validate_variable_name "$1"
 
-	if [ -z "${2-}" ]; then
+	if [ -z "${2+1}" ]; then
 		if ! is_variable_set "$1"; then
 			die "variable $1 is unset."
 		else
@@ -141,9 +141,8 @@ while getopts 'hDV_anipP:m:v:u:U:' opt; do
 		;;
 
 	m)
-		tokens=$(awk \
-			'BEGIN { for (k in ENVIRON) if (k ~ ARGV[1]) print k; exit }' \
-			"$OPTARG"
+		tokens=$(awk -v pattern="$OPTARG" \
+				'BEGIN { for (k in ENVIRON) if (k ~ pattern) print k; exit }'
 		) || die "bad awk expression for $OPTARG"
 
 		for __clenv_name in $tokens; do
@@ -221,9 +220,8 @@ if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
 	shift
 	set -- "$__clenv_utility_path" "$@"
 
-	# If `-_` was supplied, add `_` to the list of variables. TODO: doesn't play
-	# well with `-u`
-	[ -n "$__clenv_underscore" ] && __clenv_cmd="$__clenv_cmd \"_=\$__clenv_utility_path\""
+	# If `-_` was supplied, add `_` to the list of variables.
+	[ -n "$__clenv_underscore" ] && add_user_variable _ "$__clenv_utility_path"
 fi
 
 ## Add in default variables
@@ -263,10 +261,9 @@ if [ "${#__clenv_tmp}" -ne 0 ]; then
 	[ -n "$__clenv_verbose" ] && printf >&2 '#clenv unsetting: %s\n' $__clenv_tmp
 fi
 
-# Unset all the variables that were matched
-unset -v -- $__clenv_tmp $(printf '__clenv_var_%s ' $__clenv_tmp)
-
-p "$__clenv_user_vars"
+# Unset all the variables that were matched. In particular, this unsets any
+# environment variables that (useful for the `-a` flag)
+unset -v -- $__clenv_tmp
 
 # # TODO: `^_oops$` is not good
 # __clenv_user_vars=$(printf '%s\n' $__clenv_user_vars |
@@ -276,13 +273,9 @@ p "$__clenv_user_vars"
 
 ## Add in user variables
 for varname in $__clenv_user_vars; do
-	# if ! is_variable_set "__clenv_var_$varname"; then
-	# 	log 'unsetting[1]: %s' "$varname"
-	# 	# continue
-	# fi
-
-	for var in $__clenv_unset_vars; do
-		if awk 'BEGIN { exit ARGV[2] !~ ARGV[1] }' "$var" "$varname"; then
+	# If this is a variable we want to unset, then don't add it to the list.
+	for unset_pattern in $__clenv_unset_vars; do
+		if awk 'BEGIN { exit ARGV[2] !~ ARGV[1] }' "$unset_pattern" "$varname"; then
 			log 'unsetting[2]: %s' "$varname"
 			continue 2
 		fi
