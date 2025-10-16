@@ -80,6 +80,30 @@ __clenv_verbose=
 __clenv_all_variables=
 __clenv_user_vars=
 
+is_variable_set () {
+	eval "[ -n \"\${$1+1}\" ]"
+}
+
+# arg1 is name, arg2 is optional value, arg3 is whether to put on front or back
+add_user_variable () {
+	validate_variable_name "$1"
+
+	if [ -z "${2-}" ]; then
+		if ! is_variable_set "$1"; then
+			die "variable $1 is unset."
+		else
+			eval "set -- $1 \"\$$1\""
+		fi
+	fi
+
+	eval "__clenv_var_$1=\$2"
+	if [ -z "${__prepend-}" ]; then
+		__clenv_user_vars="$__clenv_user_vars $1"
+	else
+		__clenv_user_vars="$1 $__clenv_user_vars"
+	fi
+}
+
 while getopts 'hDV_anipP:m:v:u:U:' opt; do
 	case $opt in
 
@@ -104,30 +128,27 @@ while getopts 'hDV_anipP:m:v:u:U:' opt; do
 	a) __clenv_all_variables=1 __clenv_default_vars= ;;
 	[ni]) __clenv_all_variables=  __clenv_default_vars= ;;
 
-	m) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
-		for (k in ENVIRON) if(k ~ ARGV[1]) print k; exit }' "$OPTARG")";;
-
 	v)
 		# Fetch the name and optional value from the argument
 		__clenv_name=${OPTARG%=*}
 		__clenv_value=${OPTARG#"$__clenv_name"}
 
-		# Make sure the name is a valid name
-		validate_variable_name "$__clenv_name"
-
-		# If a value was given, use that.
 		if [ -n "$__clenv_value" ]; then
-			__clenv_value=${__clenv_value#=}
+			add_user_variable "$__clenv_name" "${__clenv_value#=}"
 		else
-			# Use the value in the environment; abort if not present.
-			eval '[ -z "${'$__clenv_name'+1}" ]' && die "variable $__clenv_name is unset."
-			eval "__clenv_value=\$$__clenv_name"
+			add_user_variable "$__clenv_name"
 		fi
+		;;
 
-		# Instead of having to figure out escaping with the different variables, instead we
-		# use `__clenv_var_XXX` variables
-		eval "__clenv_var_$__clenv_name=\$__clenv_value"
-		__clenv_user_vars="$__clenv_user_vars $__clenv_name"
+	m)
+		tokens=$(awk \
+			'BEGIN { for (k in ENVIRON) if (k ~ ARGV[1]) print k; exit }' \
+			"$OPTARG"
+		) || die "bad awk expression for $OPTARG"
+
+		for __clenv_name in $tokens; do
+			add_user_variable "$__clenv_name"
+		done
 		;;
 
 	## Unset a variable
@@ -205,16 +226,9 @@ if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
 	[ -n "$__clenv_underscore" ] && __clenv_cmd="$__clenv_cmd \"_=\$__clenv_utility_path\""
 fi
 
-is_variable_set () {
-	eval "[ -n \"\${$1+1}\" ]"
-}
-
 ## Add in default variables
 for varname in $__clenv_default_vars; do
-	if is_variable_set "$varname" && ! is_variable_set "__clenv_var_$varname"; then
-		eval "__clenv_var_$varname=\$$varname"
-		__clenv_user_vars="$varname $__clenv_user_vars"
-	fi
+	is_variable_set "$varname" && __prepend=1 add_user_variable "$varname"
 done
 
 ################################################################################
@@ -252,19 +266,24 @@ fi
 # Unset all the variables that were matched
 unset -v -- $__clenv_tmp $(printf '__clenv_var_%s ' $__clenv_tmp)
 
+p "$__clenv_user_vars"
+
+# # TODO: `^_oops$` is not good
 # __clenv_user_vars=$(printf '%s\n' $__clenv_user_vars |
-# 	awk "/"
+# 	awk -vORS=' ' -vpat="$(printf '%s\|' $__clenv_unset_vars)^_oops$" '
+# 	$0 !~ pat { print }'
 # )
 
 ## Add in user variables
 for varname in $__clenv_user_vars; do
-	if ! is_variable_set "__clenv_var_$varname"; then
-		continue
-	fi
+	# if ! is_variable_set "__clenv_var_$varname"; then
+	# 	log 'unsetting[1]: %s' "$varname"
+	# 	# continue
+	# fi
 
 	for var in $__clenv_unset_vars; do
 		if awk 'BEGIN { exit ARGV[2] !~ ARGV[1] }' "$var" "$varname"; then
-			log 'unsetting: %s' "$varname"
+			log 'unsetting[2]: %s' "$varname"
 			continue 2
 		fi
 	done
