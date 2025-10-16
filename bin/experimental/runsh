@@ -1,0 +1,79 @@
+#!/bin/sh
+
+set -e
+
+outputfile=`mktemp`
+trap 'rm -f "$outputfile"' EXIT
+
+if [ "$1" = - ]; then
+	main=$2
+	shift 2
+else
+	main=`printf 'int main(int argc, char **argv){\\n%s\\n;\\n}' "${1%;}"`
+	shift
+fi
+
+gcc -xc -o "$outputfile" - "$@" <<EOS
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+$main
+EOS
+
+$outputfile
+
+# exit
+
+# set outputfile = `mktemp`
+# onintr rmout
+
+# if ( $1 == - ) then
+# 	set main = $2
+# 	shift 2
+# else
+# 	set main =
+# 	shift
+# fi
+
+# rmout:
+# 	rm -f "$outputfile"
+
+# # echo hi
+# # onintr foo
+# # 	echo lol
+# # 	exit 0
+# # foo:
+# # 	echo done
+# #
+# # #
+# # # echo "$outputfile"
+# # #
+# # # rmout:
+# # # 	rm -f "$outfile"
+# # # 	echo done
+# # # # trap 'rm $outputfile' EXIT
+# # #
+# # # # if [[ $1 = - ]]; then
+# # # # 	main=1
+# # # # 	shift
+# # # # fi
+# # #
+# # # # src=${1?"need source file"}
+# # #
+# # # # # -Wall -Wextra -Wpedantic -Wnoerror
+# # # # gcc -xc -o $outputfile - ${@[2,-1]} <<EOS
+# # # # #include <stdio.h>
+# # # # #include <stdlib.h>
+# # # # #include <ctype.h>
+# # # # #include <string.h>
+# # # # #include <limits.h>
+# # # # $(if [[ -z $main ]]; then
+# # # # 	printf 'int main(int argc, char **argv){\n%s\n;\n}' ${src%;}
+# # # # else
+# # # # 	echo $src
+# # # # fi)
+# # # # EOS
+# # #
+# # # # $outputfile
