@@ -1,42 +1,53 @@
-#!/bin/zsh
+#!/bin/bash
 
-setopt EXTENDED_GLOB
-# args=()
-# args2=()
+set -euo pipefail
 
-# set --shell=zsh a b c
-# zparseopts -D -aargs h D V a n p m: v: u: -shell:=args2
+usage () { cat <<EOS; }
+usage: $(basename -- "$0") SHELL [options] [-- [shell options]]
 
-# p ${(k)args} : $@
+Starts a "clean shell" up, without any noise from the environment/startup files
 
-# exit
+The 'options' are anything found in 'clenv', with also '-s' as shorthand for
+-m'^SampShell_' and '-h' as this usage.
+EOS
 
-for (( i=1; i <= $#; i++ )) do
-	if [[ ${opt::=$argv[i]} = -* ]] {
-		opt=
-		continue
-	}
+# Fetch the shell name (making sure it's supplied)
+if (( $# == 0 )); then usage >&2; exit 1; fi
+shellname=$1
+shift
 
-	if [[ $argv[i+1] = -s ]] {
-		argv[i,2]=( '-m^SampShell[_-][a-zA-Z_0-9-]+$' $opt )
-		(( i++ ))
-	}
+# Setup variable lists
+clenv_args=()
+shell_args=()
 
-	case ${opt:t} in
-		zsh)  argv[i+1,0]=( -fd )                ;;
-		bash) argv[i+1,0]=( --noprofile --norc ) ;;
+# Default shell variables for each shell to limit startup files
+case $shellname in
+zsh)
+	shell_args+=( --no-globalrcs --no-rcs )
+	;;
+bash)
+	# Ignore macOS's deprecation of bash
+	if [[ "$(uname)" = Darwin ]]; then
+		clenv_args+=( -vBASH_SILENCE_DEPRECATION_WARNING=1 )
+	fi
+
+	shell_args+=( --noprofile --norc )
+	;;
+esac
+
+# Parse clenv arguments, if present
+while (( $# > 0 )); do
+	arg=$1
+	shift
+
+	case $arg in
+	--) break ;;
+	-h) usage; exit ;;
+	-s) clenv_args+=( -m'^SampShell_' ) ;;
+	*)  clenv_args+=( "$arg" ) ;;
 	esac
-
-	# We've found a opt, we're done
-	break
 done
 
-# If no opt was supplied, then default it to `sh`
-(( ! $#opt )) && argv+=( sh )
+shell_args+=( "$@" )
 
-if [[ $argv[i] == -s ]] {
-	argv[1,0]='-m^SampShell[_-][a-zA-Z_0-9-]+$'
-}
-
-# Actually execute the opt
-exec clenv $@
+exec clenv "${clenv_args[@]+"${clenv_args[@]}"}" -- "$shellname" "${shell_args[@]+"${shell_args[@]}"}"
