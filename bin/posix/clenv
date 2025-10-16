@@ -8,15 +8,14 @@
 #
 
 # Safety First!
-\unalias -a # in case we are `.`d
-set -ef
+set -efuC
 
-readonly scriptname="${0##*/}"
+readonly __clenv_scriptname="${0##*/}"
 
 die () {
 	fmt="%s: $1\n"
 	shift
-	printf >&2 "$fmt" "$scriptname" "$@"
+	printf >&2 "$fmt" "$__clenv_scriptname" "$@"
 	exit 1
 }
 
@@ -43,77 +42,127 @@ unset -v __clenv_user_vars \
 __clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
-usage: $scriptname [options] [--] [utility [argument ...]]
+usage: $__clenv_scriptname [options] [--] [utility [argument ...]]
 options:
-    -D              Enables "dry mode"--don't actually run the program; Sets -V.
-    -V              Enables "verbose mode," so it prints out the invocation
-    -a              Pass _all_ environment variables in by default.
-    -n              Don't set any_arguments by default, including essential ones
-    -p              Shorthand for -vPATH
-    -m pattern      Pass in any variables matching the awk pattern.
-    -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
-                    omitted, it defaults to the current value of 'name' (which,
-                    if unset, is an error.)
+    -D              Don't actually run the program; Sets -V
+    -V              Print the invocation, and any changed variables.
+    -a              Pass all environment variables in by default.
+    -n, -i          Don't set any arguments by default, including essential ones
+    -P altpath      Use 'altpath' to find 'utility'
+    -v name[=value] Puts 'name' in the env of 'utility'. If 'value' is omitted,
+                    it uses the current value (or errors if unset).
     -u name         Unset 'name'. If both -v and -u are given, -u wins.
+    -m pattern      Pass in any variables matching the awk pattern.
+    -U pattern      Unsets any variables which match the awk apttern.
     -_              Set the '_' variable in the env to the path to the executable
+    -p              Shorthand for -vPATH -P\$PATH
 
 "clean-env": A wrapper around 'env' which (by default) forwards a few essential
-arguments. Without arguments, prints out the variables
+arguments (like HOME), and makes passing new arguments easier.
+
+Without arguments, prints out the variables
 USAGE
 
-validate_variable_name () case $1 in
-	__clenv_var_*)
-		die 'invalid variable name (cannot start with __clenv_var_): %s' "$1" ;;
+validate_variable_name () {
+	case $1 in
+		__clenv_var_*)
+			die 'invalid variable name (cannot start with __clenv_var_): %s' "$1" ;;
 
-	*[!a-zA-Z0-9_-]*)
-		die 'invalid variable name (must match [\w_-]): %s' "$1" ;;
-esac
+		*[!a-zA-Z0-9_]*)
+			die 'invalid variable name (must match [\w_]): %s' "$1" ;;
+	esac
+}
 
-while getopts 'hDV_anpm:v:u:' opt; do
+# Default the path to find the exe to `$PATH`
+__clenv_alt_path=
+__clenv_unset_vars=
+__clenv_dry=
+__clenv_verbose=
+__clenv_all_variables=
+__clenv_user_vars=
+
+is_variable_set () {
+	eval "[ -n \"\${$1+1}\" ]"
+}
+
+# arg1 is name, arg2 is optional value, arg3 is whether to put on front or back
+add_user_variable () {
+	validate_variable_name "$1"
+
+	if [ -z "${2+1}" ]; then
+		if ! is_variable_set "$1"; then
+			die "variable $1 is unset."
+		else
+			eval "set -- $1 \"\$$1\""
+		fi
+	fi
+
+	eval "__clenv_var_$1=\$2"
+	if [ -z "${__prepend-}" ]; then
+		__clenv_user_vars="$__clenv_user_vars $1"
+	else
+		__clenv_user_vars="$1 $__clenv_user_vars"
+	fi
+}
+
+while getopts 'hDV_anipP:m:v:u:U:' opt; do
 	case $opt in
 
 	h) usage; exit;;
 
 	# Dry mode and verbose mode. Enabling dry mode also enables verbose.
-	D) __clenv_dry=1 __clenv_verbose=1 ;;
-	V) __clenv_verbose=1 ;;
-	_) __clenv_underscore=1 ;;
+	D)
+		__clenv_dry=1 __clenv_verbose=1 ;;
+	V)
+		__clenv_verbose=1 ;;
+	_)
+		__clenv_underscore=1 ;;
+
+
+	p)
+		__clenv_default_vars="$__clenv_default_vars PATH"
+		__clenv_alt_path=$PATH ;;
+	P)
+		__clenv_alt_path=$OPTARG ;;
 
 	# Flags for specifying groups of variables to pass onwards.
 	a) __clenv_all_variables=1 __clenv_default_vars= ;;
-	n) __clenv_all_variables=  __clenv_default_vars= ;;
-	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
-	m) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
-		for (k in ENVIRON) if(k ~ ARGV[1]) print k; exit }' "$OPTARG")";;
+	[ni]) __clenv_all_variables=  __clenv_default_vars= ;;
+
 	v)
+		# Fetch the name and optional value from the argument
 		__clenv_name=${OPTARG%=*}
 		__clenv_value=${OPTARG#"$__clenv_name"}
 
-		validate_variable_name "$__clenv_name"
-
 		if [ -n "$__clenv_value" ]; then
-			__clenv_value=${__clenv_value#=}
+			add_user_variable "$__clenv_name" "${__clenv_value#=}"
 		else
-			# TODO: ERR ON UNSET?
-			eval "__clenv_value=\$$__clenv_name"
+			add_user_variable "$__clenv_name"
 		fi
+		;;
 
-		# Instead of having to figure out escaping with the different variables, instead we
-		# use `__clenv_var_XXX` variables
-		__clenv_tmp=__clenv_var_${#__clenv_user_vars}
-		eval "$__clenv_tmp=\$__clenv_value"
-		__clenv_user_vars="$__clenv_user_vars \"$__clenv_name=\$$__clenv_tmp\""
+	m)
+		tokens=$(awk -v pattern="$OPTARG" \
+				'BEGIN { for (k in ENVIRON) if (k ~ pattern) print k; exit }'
+		) || die "bad awk expression for $OPTARG"
+
+		for __clenv_name in $tokens; do
+			add_user_variable "$__clenv_name"
+		done
 		;;
 
 	## Unset a variable
 	u)
 		validate_variable_name "$OPTARG"
+		__clenv_unset_vars="$__clenv_unset_vars ^$OPTARG$"
 
 		# Unset it from the user vars
 		__clenv_user_vars=$(printf '%s' "$__clenv_user_vars" | \
 			sed "s/\"$OPTARG=\$__clenv_var_[0-9]*\"//1")
-		__clenv_default_vars=$(printf '%s' "$__clenv_default_vars" | \
-			sed "s/$OPTARG//1")
+		;;
+
+	U)
+		__clenv_unset_vars="$__clenv_unset_vars $OPTARG"
 		;;
 
 	# Everything else is an error
@@ -124,39 +173,129 @@ done
 ## Finish argument parsing.
 shift $(( OPTIND - 1 ))
 
-## Construct the command line
-__clenv_cmd='exec env'
-[ -n "$__clenv_dry"     ]       && __clenv_cmd=": $__clenv_cmd"
-[ -n "$__clenv_verbose" ]       && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
-[ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
+if [ -n "$__clenv_verbose" ]; then
+	log () {
+		__clenv_fmt="#clenv $1\n"
+		shift
+		printf "$__clenv_fmt" "$@"
+	} >&2
+else
+	log () { :; }
+fi
 
-## If any arguments are passed, then figure out the path to the executable. (We
-# need to do this, as `env` dictates if any of its args are `PATH=`, it'll use
-# _that_ as the path to search, which is not generally what I want when using
-# this command)
-if [ $# -ne 0 ]; then
-	# Ensure we find the program, as passing `PATH=` to env will overwrite it.
-	if ! __clenv_tmp=$(command -v -- "$1"); then
+################################################################################
+#                          Construct the Command Line                          #
+################################################################################
+
+## The way `clenv` works is that we end up constructing a command line, then
+# execute it via `eval` later. The final command line looks like:
+# 	[PS4=; set -x;]      Print out invocation, for `-V``
+# 	[:]                  Don't actually run the `env` command, for `-D`
+#   exec                 Replace process with `exec`
+#   $(command -pv env)   Path that's guaranteed to have a POSIX-compliant `env`
+#   [-i]                 Set unless `-a` is passed, to remove all other vars
+#   [TERM=$TERM ...]     Default variables, if they're present, and `-n` not set
+#   [foo=bar ...]        user-defined variables to pass in
+#   --                   separator
+#   [/path/to/utility]   Looked up via `$PATH` / whatever `-P` sets
+#   [...]                arguments to utility
+##
+
+## We do a lot of checking for paths early on because we `unset` later
+
+# Initialize the command with `exec /path/to/env`
+__clenv_cmd="exec $(command -pv env)" || die 'unable to locate `env`'
+
+# Setup debug and verbose options
+[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
+[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+
+# Unless `-a` was supplied, we clear away all other variables.
+if [ -z "$__clenv_all_variables" ]; then
+	log 'clearing environ'
+	__clenv_cmd="$__clenv_cmd -i"
+fi
+
+## If an alternative $PATH and utility were both supplied, then replace the
+# utility with the version we find.
+if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
+	# Find the path for the utility with the alternative path
+	log "searching for %s in %s" "$1" "$__clenv_alt_path"
+
+	if ! __clenv_utility_path=$(PATH=$__clenv_alt_path command -v -- "$1"); then
 		die 'unable to locate executable program: %s' "$1"
 	fi
 
-	if [ -n "$__clenv_underscore" ]; then
-		__clenv_cmd="\"_=$__clenv_tmp\""
-	fi
+	log "found %s: %s" "$1" "$__clenv_utility_path"
 
+	# Replace the utility with the new path
 	shift
-	set -- "$__clenv_tmp" "$@"
+	set -- "$__clenv_utility_path" "$@"
+
+	# If `-_` was supplied, add `_` to the list of variables.
+	[ -n "$__clenv_underscore" ] && add_user_variable _ "$__clenv_utility_path"
 fi
 
 ## Add in default variables
-for __clenv_tmp in $__clenv_default_vars; do
-	if eval '[ -n "${'$__clenv_tmp'+1}" ]'; then
-		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
-	fi
+for varname in $__clenv_default_vars; do
+	is_variable_set "$varname" && __prepend=1 add_user_variable "$varname"
 done
 
 ## Add in user variables
-__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
+for varname in $__clenv_user_vars; do
+	# If this is a variable we want to unset, then don't add it to the list.
+	for unset_pattern in $__clenv_unset_vars; do
+		if awk 'BEGIN { exit ARGV[2] !~ ARGV[1] }' "$unset_pattern" "$varname"; then
+			log 'unsetting[2]: %s' "$varname"
+			continue 2
+		fi
+	done
 
-## Execute the command
+	log 'setting:   %s=%s' "$varname" "$(eval "printf %s \$__clenv_var_$varname")"
+	__clenv_cmd="$__clenv_cmd \"$varname=\$__clenv_var_$varname\""
+done
+
+################################################################################
+#                        Unset Inherited ENV Variables                         #
+################################################################################
+
+## Unset variables inherited from the calling environment that the user has
+# requested removal via the `-u` / `-U` flags when the `-a` flag is supplied.
+# (This isn't needed when `-a` isn't supplied, as the calling environment is
+# removed anyways.)
+#
+# Notably, this may unset things like `$IFS` and `$PATH`, so code after this
+# cannot rely on those being set to proper values.
+##
+if [ -n "$__clenv_all_variables" ] && [ -n "$__clenv_unset_vars" ]; then
+	# Find all exported variables that match the regexes in `__clenv_unset_vars`
+	__clenv_tmp=$(awk '
+	BEGIN {
+		for (varname in ENVIRON) {
+			for (idx in ARGV) {
+				if (varname ~ ARGV[idx]) {
+					print varname
+					break
+				}
+			}
+		}
+		exit
+	}' $__clenv_unset_vars)
+
+	# Log which variables are being unset (if we're in verbose mode)
+	if [ ${#__clenv_tmp} -ne 0 ]; then
+		log 'unsetting: %s' $__clenv_tmp
+	fi
+
+	# Unset all the variables that were matched. Notably, this will not ever
+	# unset any of our `__clenv_...` variables because (1) we unset them all
+	# at the beginning of the program (so they're no longer global) and thus (2)
+	# any regex that `__clenv_unset_vars` may contain will not match them.
+	unset -v -- $__clenv_tmp
+fi
+
+################################################################################
+#                             Execute the command                              #
+################################################################################
+
 eval "$__clenv_cmd \"\$@\""

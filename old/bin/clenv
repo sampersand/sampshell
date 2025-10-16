@@ -1,0 +1,162 @@
+#!/bin/sh
+
+## clenv -- like 'env', except with a few more QoL features
+# Features that env doesn't have:
+# 1. Only pass in variables that match a patter (`-m "SampShell_*"`)
+# 2. Just have to specify variable names if they already exist (`-vPATH`)
+# 3. Commonly needed variables for shells exported by default (TERM, HOME, etc.)
+#
+
+# Safety First!
+\unalias -a # in case we are `.`d
+set -ef
+
+readonly scriptname="${0##*/}"
+
+die () {
+	fmt="%s: $1\n"
+	shift
+	printf >&2 "$fmt" "$scriptname" "$@"
+	exit 1
+}
+
+# Unset all the variables that're used within the program. We have to be careful
+# with the naming of these variables so they don't conflict with any environment
+# variables we may have inherited. (We `unset` these variables to remove their
+# "export"-edness, as just assigning to a blank string leaves them exported.)
+#
+# Note that setting the `-a` flag, which is used to to pass through inherited
+# variables, does not affect these variables; they're never passed onwards.
+unset -v __clenv_user_vars \
+         __clenv_all_variables \
+         __clenv_verbose \
+         __clenv_dry \
+         __clenv_underscore \
+         __clenv_default_vars \
+         __clenv_cmd \
+         __clenv_tmp \
+         __clenv_name \
+         __clenv_value
+
+# The list of variables that are added by default to all invocations unless -a
+# or -n are specified.
+__clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
+
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] [utility [argument ...]]
+options:
+    -D              Enables "dry mode"--don't actually run the program; Sets -V.
+    -V              Enables "verbose mode," so it prints out the invocation
+    -a              Pass _all_ environment variables in by default.
+    -n              Don't set any_arguments by default, including essential ones
+    -p              Shorthand for -vPATH
+    -m pattern      Pass in any variables matching the awk pattern.
+    -v name[=value] Puts 'name' in the env of the called utility. If 'value' is
+                    omitted, it defaults to the current value of 'name' (which,
+                    if unset, is an error.)
+    -u name         Unset 'name'. If both -v and -u are given, -u wins.
+    -_              Set the '_' variable in the env to the path to the executable
+
+"clean-env": A wrapper around 'env' which (by default) forwards a few essential
+arguments. Without arguments, prints out the variables
+USAGE
+
+validate_variable_name () case $1 in
+	__clenv_var_*)
+		die 'invalid variable name (cannot start with __clenv_var_): %s' "$1" ;;
+
+	*[!a-zA-Z0-9_-]*)
+		die 'invalid variable name (must match [\w_-]): %s' "$1" ;;
+esac
+
+while getopts 'hDV_anpm:v:u:' opt; do
+	case $opt in
+
+	h) usage; exit;;
+
+	# Dry mode and verbose mode. Enabling dry mode also enables verbose.
+	D) __clenv_dry=1 __clenv_verbose=1 ;;
+	V) __clenv_verbose=1 ;;
+	_) __clenv_underscore=1 ;;
+
+	# Flags for specifying groups of variables to pass onwards.
+	a) __clenv_all_variables=1 __clenv_default_vars= ;;
+	n) __clenv_all_variables=  __clenv_default_vars= ;;
+	p) __clenv_default_vars="$__clenv_default_vars PATH" ;;
+	m) __clenv_default_vars="$__clenv_default_vars $(awk 'BEGIN {
+		for (k in ENVIRON) if(k ~ ARGV[1]) print k; exit }' "$OPTARG")";;
+	v)
+		__clenv_name=${OPTARG%=*}
+		__clenv_value=${OPTARG#"$__clenv_name"}
+
+		validate_variable_name "$__clenv_name"
+
+		if [ -n "$__clenv_value" ]; then
+			__clenv_value=${__clenv_value#=}
+		else
+			# TODO: ERR ON UNSET?
+			eval "__clenv_value=\$$__clenv_name"
+		fi
+
+		# Instead of having to figure out escaping with the different variables, instead we
+		# use `__clenv_var_XXX` variables
+		__clenv_tmp=__clenv_var_${#__clenv_user_vars}
+		eval "$__clenv_tmp=\$__clenv_value"
+		__clenv_user_vars="$__clenv_user_vars \"$__clenv_name=\$$__clenv_tmp\""
+		;;
+
+	## Unset a variable
+	u)
+		validate_variable_name "$OPTARG"
+
+		# Unset it from the user vars
+		__clenv_user_vars=$(printf '%s' "$__clenv_user_vars" | \
+			sed "s/\"$OPTARG=\$__clenv_var_[0-9]*\"//1")
+		__clenv_default_vars=$(printf '%s' "$__clenv_default_vars" | \
+			sed "s/$OPTARG//1")
+		;;
+
+	# Everything else is an error
+	?) exit 2 ;;
+	esac
+done
+
+## Finish argument parsing.
+shift $(( OPTIND - 1 ))
+
+## Construct the command line
+__clenv_cmd='exec env'
+[ -n "$__clenv_dry"     ]       && __clenv_cmd=": $__clenv_cmd"
+[ -n "$__clenv_verbose" ]       && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+[ -z "$__clenv_all_variables" ] && __clenv_cmd="$__clenv_cmd -i"
+
+## If any arguments are passed, then figure out the path to the executable. (We
+# need to do this, as `env` dictates if any of its args are `PATH=`, it'll use
+# _that_ as the path to search, which is not generally what I want when using
+# this command)
+if [ $# -ne 0 ]; then
+	# Ensure we find the program, as passing `PATH=` to env will overwrite it.
+	if ! __clenv_tmp=$(command -v -- "$1"); then
+		die 'unable to locate executable program: %s' "$1"
+	fi
+
+	if [ -n "$__clenv_underscore" ]; then
+		__clenv_cmd="\"_=$__clenv_tmp\""
+	fi
+
+	shift
+	set -- "$__clenv_tmp" "$@"
+fi
+
+## Add in default variables
+for __clenv_tmp in $__clenv_default_vars; do
+	if eval '[ -n "${'$__clenv_tmp'+1}" ]'; then
+		__clenv_cmd="$__clenv_cmd \"$__clenv_tmp=\$$__clenv_tmp\""
+	fi
+done
+
+## Add in user variables
+__clenv_cmd="$__clenv_cmd $__clenv_user_vars"
+
+## Execute the command
+eval "$__clenv_cmd \"\$@\""

@@ -4,6 +4,7 @@ $PROGRAM_BASE_NAME = File.basename($0, '.*')
 trace_var :$0 do
   $PROGRAM_BASE_NAME = File.basename($0, '.*')
 end
+
 trace_var :$PROGRAM_NAME do
   $PROGRAM_BASE_NAME = File.basename($0, '.*')
 end
