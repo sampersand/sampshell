@@ -38,8 +38,8 @@ SampShell_interactive_loaded=1
 # arguments). Without arguments, if not connected to a tty, all commands are
 # printed out (for usage with `grep`).
 h () {
-	if [ "$#" -eq 0 ] && [ ! -t 1 ]
-	then set -- -n 1
+	if [ "$#" -eq 0 ] && [ ! -t 1 ]; then
+		set -- -n 1
 	fi
 
 	fc -l "$@"
@@ -78,6 +78,7 @@ cdd () {
 ## Add in a `mz` program which prints out a debugging form of its arguments.
 # This program is like `mviz`, except it's sh-only, only works with command-line
 # arguments, and has no flags. It's a subshell because of local variables.
+p_sh () { . p_sh; }
 mz () (
 	# Undo any shell options which might've been inherited
 	set +xve -uf
