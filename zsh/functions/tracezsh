@@ -3,8 +3,8 @@
 (( ! $# )) && set -- -ilc :
 # SampShell_DISABLED=1 tracezsh
 
-clean-shell \
-	-n \
+clenv \
+	-i \
 	-v SampShell_PROFILE= \
 	-v SampShell_XTRACE= \
 	-v SampShell_ROOTDIR \

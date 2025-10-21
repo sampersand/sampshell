@@ -15,9 +15,9 @@
 ####################################################################################################
 
 ## Enable XTRACE if the `SampShell_XTRACE` option was set.
-if [[ -n "${SampShell_XTRACE-}" ]] then
+if [[ -n ${SampShell_XTRACE-} ]] then
 	export SampShell_XTRACE # Export it in case it's not already exported.
-	set -o xtrace
+	setopt XTRACE
 fi
 
 ####################################################################################################
@@ -35,5 +35,7 @@ zmodload zsh/zprof'
 #                                         Set Debug Prompt                                         #
 ####################################################################################################
 
-# Set the debug prompt to something a bit more informative.
-PS4='+%x:%N:%I> '
+# Set the debug prompt to something a bit more informative than the default
+if [[ $PS4 == '+%N:%I> ' ]] then
+	PS4='+%x:%N:%I> '
+fi

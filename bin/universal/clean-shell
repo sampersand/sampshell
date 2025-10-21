@@ -22,10 +22,10 @@ shell_args=()
 
 # Default shell variables for each shell to limit startup files
 case $shellname in
-zsh)
+zsh|*/zsh)
 	shell_args+=( --no-globalrcs --no-rcs )
 	;;
-bash)
+bash|*/bash)
 	# Ignore macOS's deprecation of bash
 	if [[ "$(uname)" = Darwin ]]; then
 		clenv_args+=( -vBASH_SILENCE_DEPRECATION_WARNING=1 )
