@@ -30,25 +30,7 @@
 # which is used in numerous SampShell commands. If it's not set, the default
 # location is ascertained in a handful of shells (see the code below), with a
 # fallback of `~/.sampshell/shell`. If the file doesn't exist, it's warned.
-if [ -n "${SampShell_ROOTDIR-}" ]; then
-   # Already setup, nothing to do.
-   :
-elif [ -n "${ZSH_VERSION-}" ]; then
-   # ZSH: Use the builtin `${${(%):-%N}:P:h}`. (This abuses the fact prompt-
-   # expansion (via `${(%):-}`) to get the current file's path; We could also
-   # use `${0:P:h}` instead, but that might get tripped up with the different
-   # options zsh has to set `$0`, and this one's guarantee dto work.) We also
-   # use `eval` because this syntax isn't valid POSIX syntax.
-   eval 'SampShell_ROOTDIR=${${(%):-%N}:P:h}'
-elif [ -n "${BASH_SOURCE-}" ]; then
-   # BASH: Use `BASH_SOURCE` and the `&& printf x` trick to get the dir (as
-   # there's no nicer way to do it.) Even though the syntax is valid posix, we
-   # `eval` it so it's not parsed & compiled by shells if not needed.
-   eval '
-   SampShell_ROOTDIR=$(dirname -- "$BASH_SOURCE" && printf x) || return
-   SampShell_ROOTDIR=$(realpath -- "${SampShell_ROOTDIR%?x}" && printf x) || return
-   SampShell_ROOTDIR=${SampShell_ROOTDIR%?x}'
-else
+if [ -z "${SampShell_ROOTDIR-}" ]; then
    # Guess a default home directory (hope it works) and warn.
    SampShell_ROOTDIR=$HOME/.sampshell/shell
    printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"

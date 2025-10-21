@@ -53,8 +53,10 @@ OptParse.new do |op|
   ARGV.empty? and abort op.help
 end
 
-# Join arguments by a space, unless `--multline` was passed
-ARGV.replace [ARGV.join(' ')] unless OPTS[:multiline]
+# Join arguments by a space, unless the user passed `--multline`
+unless OPTS[:multiline]
+  ARGV.replace [ARGV.join(' ')]
+end
 
 # If the user requested blank padding, add an empty line before and after the args.
 if OPTS[:blank]
@@ -67,6 +69,7 @@ if OPTS[:copy]
   $stdout = IO.popen('pbcopy', 'w')
 end
 
+# Calculate the width if an auto width was requested
 if OPTS[:width].zero?
   OPTS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
   OPTS[:width] -= 2 unless OPTS[:padding]

@@ -1,5 +1,7 @@
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
-[[ -n $SampShell_DISABLED ]] && return
+if [[ -n $SampShell_DISABLED ]] then
+	return
+fi
 
 # Set `SampShell_ROOTDIR` to the directory containing this file if it's not already set.
 # (Note this `${}` uses prompt substitution to find the path to folder containing this directory;
