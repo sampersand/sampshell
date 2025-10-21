@@ -11,16 +11,6 @@
 [[ -n ${SampShell_DISABLED-} ]] && return
 
 ####################################################################################################
-#                                          Enable xtrace                                           #
-####################################################################################################
-
-## Enable XTRACE if the `SampShell_XTRACE` option was set.
-if [[ -n ${SampShell_XTRACE-} ]] then
-	export SampShell_XTRACE # Export it in case it's not already exported.
-	setopt XTRACE
-fi
-
-####################################################################################################
 #                                  Enable Profiling if Requested                                   #
 ####################################################################################################
 
@@ -38,4 +28,14 @@ zmodload zsh/zprof'
 # Set the debug prompt to something a bit more informative than the default
 if [[ $PS4 == '+%N:%I> ' ]] then
 	PS4='+%x:%N:%I> '
+fi
+
+####################################################################################################
+#                                          Enable xtrace                                           #
+####################################################################################################
+
+## Enable XTRACE if the `SampShell_XTRACE` option was set.
+if [[ -n ${SampShell_XTRACE-} ]] then
+	export SampShell_XTRACE # Export it in case it's not already exported.
+	setopt XTRACE
 fi
