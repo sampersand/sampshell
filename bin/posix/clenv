@@ -233,7 +233,7 @@ if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
 	set -- "$__clenv_utility_path" "$@"
 
 	# If `-_` was supplied, add `_` to the list of variables.
-	[ -n "$__clenv_underscore" ] && add_user_variable _ "$__clenv_utility_path"
+	[ -n "${__clenv_underscore-}" ] && add_user_variable _ "$__clenv_utility_path"
 fi
 
 ## Add in default variables

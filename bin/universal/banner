@@ -5,66 +5,79 @@
 ################################################################################
 require 'optparse'
 
-OPTIONS = {
+# The styles that are recognized
+REGONIZED_STYLES = %w[# * /]
+
+OPTS = {
   width: 80,
   pre: 0,
   style: '#',
   padding: true,
   justify: :center,
 }
-ALLOWED_STYLES = %w[# * /]
 
 # Parse options
-OptParse.new  do |op|
+OptParse.new do |op|
   op.banner.concat ' [message ...]'
 
-  op.on '-w', '--width=(auto,AMNT)', "Total line width. \"auto\" is the smallest possible that still fits. [default: #{OPTIONS[:width]}]" do |arg|
+  op.accept :width do |arg|
     if arg == 'auto'
-      :auto
+      0
     else
-      Integer(arg, exception: false) or raise OptParse::InvalidArgument, x
+      Integer arg rescue raise OptParse::InvalidArgument
     end
   end
 
+  op.accept :justify do |arg|
+    case arg
+    when 'l', 'left' then :left
+    when 'r', 'right' then :right
+    when 'c', 'center' then :center
+    else raise OptParse::InvalidArgument
+    end
+  end
+
+  op.on '-w', '--width=(AMNT/auto)', :width, 'Set the total line width. A width of "auto" (or 0) is the',
+                                             "smallest possible that fits everything [default: #{OPTS[:width]}]"
+
   op.on '-p', '--pre=AMNT', Integer, 'Add AMNT spaces before the banner'
-  op.on '-s', '--style=STYLE', ALLOWED_STYLES, "Use STYLE instead. Options: #{ALLOWED_STYLES}. [default: #{OPTIONS[:style]}]"
+  op.on '-s', '--style=STYLE', REGONIZED_STYLES, "Use STYLE for the banner. Valid: #{REGONIZED_STYLES}. [default: #{OPTS[:style]}]"
+  op.on '-j', '--justify=HOW', :justify, "Justify text either left, right, center. [default: #{OPTS[:justify]}]"
 
   op.on '-m', '--multiline', 'Interpret each arg as a separate line'
-  op.on '-b', '--blank', 'Add a blank link before and after the banner contents'
-  op.on '-C', '--copy', 'Pipe output to pbcopy command'
+  op.on '-b', '--blank', 'Add a blank line before and after the banner contents'
   op.on '--[no-]padding', 'Add padding to the front and end of lines. [default]'
+  op.on '-c', '--copy', 'Pipe output to pbcopy command'
 
-  op.on '-c', '--center-justify', 'Justify text in the center [default]' do
-    OPTIONS[:justify] = :center
-  end
-
-  op.on '-l', '--left-justify', 'Justify text on the left' do
-    OPTIONS[:justify] = :left
-  end
-
-  op.on '-r', '--right-justify', 'Justify text on the right' do
-    OPTIONS[:justify] = :right
-  end
-
-  op.parse! into: OPTIONS rescue op.abort $!
+  op.parse! into: OPTS rescue op.abort $!
   ARGV.empty? and abort op.help
 end
 
-OPTIONS[:multiline] or  ARGV.replace [ARGV.join(' ')]
-OPTIONS[:blank]     and (ARGV.unshift ''; ARGV.push '')
-OPTIONS[:copy]      and $stdout = IO.popen('pbcopy', 'w')
+# Join arguments by a space, unless `--multline` was passed
+ARGV.replace [ARGV.join(' ')] unless OPTS[:multiline]
 
-if OPTIONS[:width] == :auto || OPTIONS[:width] == 0
-  OPTIONS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
-  OPTIONS[:width] -= 2 unless OPTIONS[:padding]
+# If the user requested blank padding, add an empty line before and after the args.
+if OPTS[:blank]
+  ARGV.unshift ''
+  ARGV.push ''
 end
 
-if (OPTIONS[:width] - OPTIONS[:pre]).negative?
+# If the user requested `--copy`, then pipe the output to `pbcopy` (macOS's copy command)
+if OPTS[:copy]
+  $stdout = IO.popen('pbcopy', 'w')
+end
+
+if OPTS[:width].zero?
+  OPTS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
+  OPTS[:width] -= 2 unless OPTS[:padding]
+end
+
+if (OPTS[:width] - OPTS[:pre]).negative?
   abort "#{File.basename($0)}: -p > -w; no space remaining for text"
 end
 
-$width = OPTIONS.fetch(:width, 80)
-$pre   = OPTIONS.fetch(:pre, 0)
+$width = OPTS.fetch(:width, 80)
+$pre   = OPTS.fetch(:pre, 0)
 
 $width -= $pre
 
@@ -73,13 +86,13 @@ def ppre(*a)
 end
 
 def print_lines(prefix, suffix=prefix, lines: ARGV)
-  if OPTIONS[:padding]
+  if OPTS[:padding]
     (suffix = +suffix).prepend ' ' # `+suffix` in case it's the default
-    prefix.concat ' '
+    (prefix = +prefix).concat ' '
   end
 
   msg_width = $width - prefix.length - suffix.length
-  method = case OPTIONS[:justify]
+  method = case OPTS[:justify]
            when :left   then :ljust
            when :right  then :rjust
            when :center then :center
@@ -91,9 +104,9 @@ def print_lines(prefix, suffix=prefix, lines: ARGV)
   end
 end
 
-# print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $DEBUG
+print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $DEBUG
 
-case OPTIONS[:style]
+case OPTS[:style]
 when '#'
   ppre '#' * $width
   print_lines('#')
@@ -107,5 +120,5 @@ when '*'
   print_lines(' *', '* ')
   ppre ' ', '*' * ($width - 2), '/'
 else
-  abort 'unknown style %s' % OPTIONS[:style]
+  abort 'unknown style %s' % OPTS[:style]
 end
