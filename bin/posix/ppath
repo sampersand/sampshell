@@ -1,0 +1,15 @@
+#!/bin/sh
+
+IFS=:
+for dir in $PATH
+do
+	if [ ! -d "$dir" ] || [ ! -x "$dir" ]
+	then
+		continue
+	fi
+
+	for file in "$dir"/*
+	do
+		[ -x "$file" ] && echo "$file"
+	done
+done

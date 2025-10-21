@@ -10,3 +10,4 @@ for path in ENV.fetch('PATH').split(':') do
 		end
 	end
 end
+
