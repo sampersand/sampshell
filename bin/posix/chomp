@@ -1,9 +1,9 @@
 #!/bin/sh
 
 set -eu
-readonly newline=$'\n'
+newline=$(printf '\nx'); readonly newline="${newline%x}"
 
-usage () { cat <<EOS; }
+usage () { cat; } <<EOS
 usage: $(basename -- "$0") [-a]
 
 Deletes final trailing newline from input. If -a

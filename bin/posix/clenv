@@ -15,9 +15,9 @@ readonly __clenv_scriptname="${0##*/}"
 die () {
 	fmt="%s: $1\n"
 	shift
-	printf >&2 "$fmt" "$__clenv_scriptname" "$@"
+	printf "$fmt" "$__clenv_scriptname" "$@"
 	exit 1
-}
+} >&2
 
 # Unset all the variables that're used within the program. We have to be careful
 # with the naming of these variables so they don't conflict with any environment
@@ -204,7 +204,7 @@ fi
 ## We do a lot of checking for paths early on because we `unset` later
 
 # Initialize the command with `exec /path/to/env`
-__clenv_cmd="exec $(command -pv env)" || die 'unable to locate `env`'
+__clenv_cmd="exec $(command -pv env)" || die 'unable to locate: env'
 
 # Setup debug and verbose options
 [ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
