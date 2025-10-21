@@ -97,7 +97,7 @@ class BlankSlate < BasicObject
       BlankSlate.blank {
         define_method(:begin){ begin_ }
         define_method(:end){ end_ }
-        define_method(:exclude_end?){ exclude_end? }
+        define_method(:exclude_end?){ exclude_end }
       }
     end
   end

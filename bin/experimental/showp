@@ -1,12 +1,12 @@
-#!/bin/csh -f
+#!/usr/bin/env ruby
 
-set nonomatch
+for path in ENV.fetch('PATH').split(':') do
+	next unless test 'd', path and test 'x', path
 
-foreach p ( $path:q )
-	if ( ! -d "$p" ) continue
-	foreach x ( "$p"/* )
-		if ( -x "$x" ) then
-			echo $x:t
-		endif
+	for path2 in Dir.foreach path do
+		path2 = path + '/' + path2
+		if test 's', path2 and test 'x', path2 then
+			puts path2
+		end
 	end
 end

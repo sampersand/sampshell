@@ -159,7 +159,7 @@ fi
 set -o noclobber
 
 ## Make `rm`, `mv`, and `cp` safe by default; repeat the second arg for unsafe
-alias rm='rm -i' rmm='command rm'
+# alias rm='rm -i' rmm='command rm' <-- undo this, as i got too used to `rm -f`
 alias mv='mv -i' mvv='command mv'
 alias cp='cp -i' cpp='command cp'
 

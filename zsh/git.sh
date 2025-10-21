@@ -97,15 +97,15 @@ gaa () {
 # Commits untracked files; all arguments are joined with a space.
 function _SampShell-gcm {
 	if [ "$#" -eq 0 ]; then
-		git commit
+		git commit ${_SampShell_gcm_flags-}
 	else
-		git commit --message "$*"
+		git commit ${_SampShell_gcm_flags-} --message "$*"
 	fi
 }
 alias gcm='noglob _SampShell-gcm'
+alias gcma='_SampShell_gcm_flags=--no-amend noglob _SampShell-gcm'
 
 alias gam='git commit --amend'
-alias gcma='git commit --amend'
 alias gammend='git commit --amend'
 
 alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?

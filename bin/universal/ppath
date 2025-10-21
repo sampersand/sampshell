@@ -1,10 +1,11 @@
 #!/bin/csh -f
 
 set nonomatch
+
 foreach dir ( $path:q )
-	if ( -d $dir:q ) then
-		foreach file ( $dir:q/* )
-			if ( -x $file:q ) echo "$file"
-		end
-	endif
+	if ( ! -d $dir:q ) continue
+
+	foreach file ( $dir:q/* )
+		if ( -x $file:q ) echo "$file"
+	end
 end
