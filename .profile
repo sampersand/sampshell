@@ -32,7 +32,7 @@
 # fallback of `~/.sampshell/shell`. If the file doesn't exist, it's warned.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
    # Guess a default home directory (hope it works) and warn.
-   SampShell_ROOTDIR=$HOME/.sampshell/shell
+   SampShell_ROOTDIR=$HOME/.sampshell
    printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
@@ -55,12 +55,12 @@ export SampShell_ROOTDIR
 # as it's not exported, and is used exclusively for defaults for the other
 # exported values.
 
-: "${SampShell_gendir:=${SampShell_ROOTDIR:-${HOME:-/tmp}}}"
+: "${SampShell_gendir:=${HOME}/.sampshell_gendir}"
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/.trash}"
-export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/.history}"
+export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/trash}"
+export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/history}"
+export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$SampShell_gendir/cache}"
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
-export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$SampShell_gendir/.cache}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 
 ## TODO: Remove `SampShell_no_experimental`.
