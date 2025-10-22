@@ -1,0 +1,29 @@
+#!/bin/zsh
+
+setopt ERR_RETURN
+
+readonly sampinox=/Volumes/Sampinox
+: ${SampShell_ROOTDIR:=${${(%):-%N}:P:h}}
+cd $SampShell_ROOTDIR || exit
+
+rm -f ./**/.DS_Store(N) # remove all .ds_stores
+
+if [[ ! -e $sampinox ]] then
+	print >&2 sampinox does not exist: $sampinox
+	exit 1
+fi
+
+readonly sampshell=$sampinox/sampshell
+rm -rf $sampshell
+mkdir $sampshell
+
+# Files not to copy
+for x in *(D); do
+	if [[ $x = .zsh_sessions ]] continue
+	if [[ $x = .cache ]] continue
+	if [[ $x = .git ]] continue
+	if [[ $x = *.ignore ]] continue
+	if [[ $x = old ]] continue
+
+	cp -r $x $sampshell
+done

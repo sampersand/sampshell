@@ -169,15 +169,20 @@ alias r=trash
 
 ################################################################################
 #                                                                              #
-#                                 MacOS Config                                 #
+#                              OS-Specific Config                              #
 #                                                                              #
 ################################################################################
 
-if [ "$(uname)" = Darwin ]; then
+case $(uname) in
+Darwin)
 	## Add options to `ls` which macOS supports. (We only add the alias if
 	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	alias ls='ls -AFqhGb'
-fi
+	;;
+Linux)
+	alias ls='ls -AFq --color=auto'
+	;;
+esac
 
 ################################################################################
 #                                                                              #
