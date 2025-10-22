@@ -11,3 +11,7 @@ if [[ -z ${SampShell_ROOTDIR-} ]] then
 fi
 
 . "$SampShell_ROOTDIR/.profile"
+
+if [[ "$(uname)" = Darwin ]] then
+	BASH_SILENCE_DEPRECATION_WARNING=1
+fi
