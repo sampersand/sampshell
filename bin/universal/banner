@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 ################################################################################
 # Banner: Surround messages in boxes, to use for separators in source files.   #
@@ -37,6 +38,7 @@ OptParse.new do |op|
     end
   end
 
+  op.on '--debug' do $DEBUG = 1 end
   op.on '-w', '--width=(AMNT/auto)', :width, 'Set the total line width. A width of "auto" (or 0) is the',
                                              "smallest possible that fits everything [default: #{OPTS[:width]}]"
 
@@ -90,7 +92,7 @@ end
 
 def print_lines(prefix, suffix=prefix, lines: ARGV)
   if OPTS[:padding]
-    (suffix = +suffix).prepend ' ' # `+suffix` in case it's the default
+    (suffix = +suffix).prepend ' '
     (prefix = +prefix).concat ' '
   end
 
@@ -103,11 +105,14 @@ def print_lines(prefix, suffix=prefix, lines: ARGV)
            end
 
   lines.each do |line|
-    ppre prefix, line.public_send(method, msg_width), suffix
+    ppre prefix,line.public_send(method, msg_width), suffix
   end
 end
 
-print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n" if $DEBUG
+if $DEBUG
+  print '0', (1..($width + $pre) / 10).map { (_1-1).to_s * 10 }.join[2..], "\n"
+print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n"
+end
 
 case OPTS[:style]
 when '#'
