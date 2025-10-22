@@ -44,7 +44,7 @@ die () {
 shortusage () {
 	printf 'usage: %s [-h/--help] [options] [--] [file ...]\n' "$scriptname"
 }
-longusage () { shortusage; cat <<USAGE; }
+longusage () { shortusage; cat; } <<USAGE
 options:
 	-h, --help            print help, and then exit
 	-c, --create          creates non-existing files/dirs
@@ -130,4 +130,9 @@ if [ -n "${SampShell_EXPERIMENTAL-}" ] && [ "$editor" = "sublime4" ]; then
 fi
 
 ## Now that all the files are created, go ahead and open them.
-exec open -a "$editor" -- "$@"
+# TODO: better way to specify editor
+if [ "$(uname)" = Darwin ]; then
+	exec open -a "$editor" -- "$@"
+else
+	"$editor" -- "$@"
+fi
