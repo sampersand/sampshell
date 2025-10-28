@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+def MakeOutputFile()
+  $executableFile = %x<mktemp>.chop
+  $?.success? or fail('cannot make temp file')
+  trap 'EXIT', 'File.delete $executableFile'
+end
+
+def usage(success = false)
+  $stdout = $stderr unless success
+  puts <<USAGE; exit(success)
+usage: #$0 [-c compiler] [compiler opts ...] [prelude ...] main [-- main-arguments]
+compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
+interspersed within arguments.
+- prelude is done before 'main'
+- stdio, stdlib, ctype, string, and limits all imported by default
+- P is a macro shorthand for printf(...), putchar('\\n')
+USAGE
+end
+
+compiler = 'cc'
+compilerOpts = []
+prelude = []
+
+while (arg = $*.shift()) do
+  case arg
+  when '-h'   then usage true
+  when /^-c/  then compiler = ($' || $*.shift) or usage
+  when '--'   then break
+  when /^-.*/ then compilerOpts << arg
+  else prelude << arg
+  end
+end
+
+unless (main = prelude.pop()) then
+  usage
+end
+
+read, write = IO.pipe()
+write << <<'C'
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+#define P(...) (printf(__VA_ARGS__),putchar('\n'))
+C
+
+for line in prelude do
+  write.puts(line)
+end
+
+printf write, <<C, main
+int main(int argc, const char **argv) {
+  %s;
+}
+C
+
+write.close
+MakeOutputFile()
+
+tmp = system(
+  compiler, '-xc', '-o', $executableFile,
+  '/dev/fd/10', *compilerOpts,
+  10 => read,
+)
+
+if (tmp) then
+  exec([$executableFile] * 2, *$*)
+elsif (tmp == false) then
+  abort
+else
+  abort "Cannot find compiler: #{compiler}"
+end
