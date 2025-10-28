@@ -10,6 +10,9 @@
 [branch]
 	# sort = ??
 
+[push]
+	autoSetupRemote = true
+
 [grep]
 	lineNumber = true
 	patternType = perl

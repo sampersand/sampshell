@@ -19,7 +19,10 @@ gopen () {
 	remote=$(git remote-url $@) || return
 	open $remote
 }
+
 gopenc () { git remote-url $@ | pbc; }
+alias gru='git remote-url'
+alias gruc='gopenc'
 alias gsquash='git squash'
 
 ## Spellcheck
