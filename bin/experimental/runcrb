@@ -2,10 +2,11 @@
 
 # This file is incredibly overengineered haha.
 
-def usage(success = false)
+def usage! success = false
   $stdout = $stderr unless success
+
   puts <<~USAGE; exit(success)
-    usage: #$0 [-c compiler] [compiler opts ...] [prelude ...] main [-- main-arguments]
+    usage: #$0 [-c compiler] [-o output] [compiler opts ...] [prelude ...] main [-- main-arguments]
     compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
     interspersed within arguments.
     - prelude is done before 'main'
@@ -22,7 +23,14 @@ class Program
     $EXECUTABLE_FILE
   end
 
-  attr('compiler', 'compilerOpts')
+  attr('compiler')
+  attr('compilerOpts')
+
+  public def executable
+    @executable ||= Program::MakeOutputFile()
+  end
+
+private
 
   def initialize argv=ARGV
     @compiler = 'cc'
@@ -32,21 +40,24 @@ class Program
     self.parseOptions(argv)
   end
 
-  private def parseOptions argv
+  def parseOptions argv
     while (arg = argv.shift()) do
-      case arg
-      when '-h'   then usage true
-      when /^-c/  then @compiler = ($' || argv.shift) or usage
+      case (arg)
+      when '-h'   then usage! true
+      when /^-c/  then @compiler = $' || argv.shift() or usage!()
+      when /^-o/  then @output   = $' || argv.shift() or usage!()
       when '--'   then break()
       when /^-.*/ then @compilerOpts << arg
       else @prelude << arg
       end
     end
 
-    usage unless (@main = @prelude.pop())
+    usage! unless (@main = @prelude.pop())
   end
 
-  public def writeProgram()
+public
+
+  def writeProgram
     read, write = IO.pipe()
 
     write << <<~'C'
@@ -59,9 +70,7 @@ class Program
       #define P(...) (printf(__VA_ARGS__),putchar('\n'))
     C
 
-    for line in @prelude do
-      write.puts(line)
-    end
+    write.puts @prelude
 
     printf write, <<~C, @main
       int main(int argc, const char **argv) {
@@ -74,28 +83,27 @@ class Program
   end
 end
 
-def executeProgram program, outputFile = Program::MakeOutputFile()
-  read = program.writeProgram()
-
+def executeProgram program
   system(
-    { 'RUNC_ARGV0' => outputFile },
+    { 'RUNC_ARGV0' => program.executable },
     program.compiler,
     '-xc',
     '-o',
-    outputFile,
+    program.executable,
     '/dev/fd/10',
     *program.compilerOpts,
-    10 => read,
+    10 => program.writeProgram(),
     exception: true
   )
 rescue Errno::ENOENT
-  abort "cannot find compiler: #{compiler}"
+  abort "cannot find compiler: #{program.compiler}"
 rescue RuntimeError
-  exit false
+  $@ = [] # No backtrace in exit
+  raise
 else
   # Don't use `exec` so we can run our `trap` to remove it
-  system [$EXECUTABLE_FILE] * 2, *$*
-  $?
+  system( [program.executable] * 2, *$* )
 end
 
-exit executeProgram(Program.new).exitstatus
+executeProgram Program.new(ARGV)
+exit Process::last_status.exitstatus
