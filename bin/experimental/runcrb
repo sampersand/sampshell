@@ -10,7 +10,7 @@ def usage! success = false
     compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
     interspersed within arguments.
     - prelude is done before 'main'
-    - stdio, stdlib, ctype, string, and limits all imported by default
+    - lots of defaults are imported by default
     - P is a macro shorthand for printf(...), putchar('\\n')
   USAGE
 end
@@ -60,25 +60,9 @@ public
   def writeProgram
     read, write = IO.pipe()
 
-    write << <<~'C'
-      #include <stdio.h>
-      #include <stdlib.h>
-      #include <ctype.h>
-      #include <string.h>
-      #include <limits.h>
-      #include <unistd.h>
-      #define P(...) (printf(__VA_ARGS__),putchar('\n'))
-    C
-
-    write.puts @prelude
-
-    printf write, <<~C, @main
-      int main(int argc, const char **argv) {
-        %s;
-      }
-    C
-
+    printf write, DATA.read, prelude: @prelude.join("\n"), main: @main
     write.close()
+
     return( read )
   end
 end
@@ -107,3 +91,18 @@ end
 
 executeProgram Program.new(ARGV)
 exit Process::last_status.exitstatus
+
+__END__
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+#include <unistd.h>
+#define P(...) (printf(__VA_ARGS__),putchar('\n'))
+
+%<prelude>s
+
+int main(int argc, const char **argv) {
+  %<main>s;
+}
