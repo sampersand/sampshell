@@ -29,7 +29,7 @@ case b:                            \\
 case "\"\"":                       \\
 case *[^0-9]*:                     \\
    die argument \#\!:1 is not a   \\\
-      number or xodb >/dev/stderr  \\
+      number or xodb               \\
 default:                           \\
    set \!:2base = $\!:1            \\
 endsw"'
