@@ -1,5 +1,8 @@
 ## My "IRB" config I always want loaded.
 
+return if defined? SAMPSHELL_IRB_DEFINED
+SAMPSHELL_IRB_DEFINED = true
+
 if RUBY_VERSION < '3.3'
   # TODO: is this necessary? it was originally for cause `;` wasnt recognized at end of line
   IRB.conf[:ECHO_ON_ASSIGNMENT] = false
@@ -21,10 +24,16 @@ IRB.load_modules.concat %w[csv json set]
 begin
   require 'bitint'
 rescue LoadError
-  warn "Can't load bitint for Ruby #{RUBY_VERSION}"
+  warn "Can't load bitint for Ruby #{RUBY_VERSION}: #$!"
 else
   # Since `using` is file-specific, we need to `eval` it to get it to work in the top-level.
   IRB::TOPLEVEL_BINDING.eval 'using BitInt::Refinements'
+end
+
+begin
+  require 'blankity'
+rescue LoadError
+  warn "Can't load blankity for Ruby #{RUBY_VERSION}: #$!"
 end
 
 ####################################################################################################
