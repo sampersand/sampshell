@@ -75,6 +75,16 @@ end
 #                                                                                                  #
 ####################################################################################################
 
+module ObjectSpace
+  def self.each_method(type = Class, method )
+    return to_enum(__method__, type, method).to_a unless block_given?
+    ObjectSpace.each_object type do |thing|
+      yield thing if eval "defined? thing.#{method}"
+    end
+  end
+end
+
+
 class Object
   def ms = methods(false)
   def ims = instance_methods(false)
@@ -102,3 +112,22 @@ PRCHARS = (' '..'~')
 
 # }
 alias echo puts
+
+def dump(x)
+  {
+    ancestors: (x.ancestors.take_while{_1 != Object} rescue nil),
+    constants: (x.constants rescue nil),
+    methods: x.methods(false).select { x.method(_1).owner.equal? x },
+    public_methods: x.public_methods(false).select { x.method(_1).owner.equal? x },
+    private_methods: x.private_methods(false),#.select { x.method(_1).owner.equal? x },
+    protected_methods: x.protected_methods(false),
+    included_modules: (x.included_modules rescue []).-(Object.included_modules).then { _1==[]?nil:_1},
+    # instance_methods: (x.instance_methods(false) rescue nil),
+    private_instance_methods: (x.private_instance_methods(false) rescue nil),
+    protected_instance_methods: (x.protected_instance_methods(false) rescue nil),
+    public_instance_methods: (x.public_instance_methods(false) rescue nil),
+    singleton_methods: (x.singleton_methods(false) rescue nil),
+    instance_variables: x.instance_variables.to_h { [it, x.instance_variable_get(it)] },
+    frozen: x.frozen?
+  }.compact.select { _1 == :frozen ? _2 == true : !_2&.empty? }.to_h
+end
