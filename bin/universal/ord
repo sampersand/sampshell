@@ -3,20 +3,20 @@ exec ruby -Sx -nlaF'\K' -rg -rscript -- "$0" "$@"
 #!ruby
 
 BEGIN{
-  GLOBALS.expect! %w[h help d b f]
+  GLOBALS.expect! %w[h help d decimal b base f files]
   $h || $_help and exit <<-EOS
-usage: #$program_name [-h] [-d | -b=num] [-f] [args...]
+usage: #$program_name [-d | -b num] [-f] [args...]
 options:
-  -d same as `-b=10`
-  -b interpret args in base num, instead of the default 16
-  -f interpret args as files
-Prints the base-n ascii representation of its arguments, one line per arg.
+  -d, --decimal same as `-b=10`
+  -b, --base    interpret args in base num, instead of the default 16
+  -f, --files   interpret args as files
+Prints the base-n unicode representation of its arguments, one line per arg.
 If no args are given, defaults to stdin.
   EOS
 
-  BASE = $b || ($d ? 10 : 16)
+  BASE = ($b || $base) || ($d || $decimal ? 10 : 16)
 
-  unless $*.empty? or $f then
+  unless $*.empty? or $f || $files then
     $temp = %x<mktemp>.chop
     END { File::delete $temp }
     open($temp, 'w') { _1.puts $* }
