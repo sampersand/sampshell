@@ -1,5 +1,40 @@
-#!/bin/dash
+#!/usr/bin/env ruby
 
+require 'optparse'
+
+OptParse.new do |op|
+  op.banner = <<~EOS
+  	usage: #{op.program_name} [options] [--] [message [...]]
+  				 #{op.program_name} [options] -f [--] files [...]
+  EOS
+
+  op.on '-f', '--files', 'instead of interpreting args as strings, interpret as files' do
+  	$files = true
+  end
+
+  op.on '-c', '-`', '--code', 'put single backticks (`) around copied text' do
+  	$start = $end = '`'
+  end
+
+  op.on '-b', '--code-block', 'put copied text into code block (surround with ```)' do
+  	$start = $end = '```'
+  end
+
+  op.on '-s', '--syntax=STRING', 'put SYNTAX after starting triple backticks. Implies -b' do |syn|
+  	$start = "```#{syn}"
+  	$end = '```'
+  end
+
+  op.on '-n', 'put newline after the message. Only really useful without -f' do
+  	$newline = true
+  end
+  
+  op.parse! into: OPTS={}
+end
+
+BEGIN { $*.replace %w[--block] }
+p $start
+__END__
 \unalias -a
 set -eu
 nl='
@@ -16,7 +51,7 @@ usage: $scriptname [options] [--] [message [...]]
    -b         put copied text into a code block (surround with \`\`\`)
    -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -b
    -n         put newline after the message. Only really useful without -f
-   -p SCRIPT  specify clipbord func; defaults to 'pbcopy'.
+   -p FUNC    specify clipbord func; defaults to 'pbcopy'.
 
 Copies 'message' to the clipboard; if more than one argument is given, they are
 concatenated with spaces. If no arguments are given, stdin is copied. The '-f'
@@ -44,7 +79,7 @@ shift $(( OPTIND - 1 ))
 
 	# If no args are given, or if `-f` was specified, use `cat`.
 	if [ $# -eq 0 ] || [ -n "$files" ]; then
-		cat "$@" | chomp -a
+		cat "$@"
 	else
 		printf %s "$*"
 	fi
