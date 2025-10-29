@@ -18,7 +18,7 @@ If no args are given, defaults to stdin.
 
   unless $*.empty? or $f then
     $temp = %x<mktemp>.chop
-    trap 0, 'File::delete $temp'
+    END { File::delete $temp }
     open($temp, 'w') { _1.puts $* }
     $*.replace [$temp]
   end

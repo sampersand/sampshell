@@ -1,18 +1,84 @@
-#!/bin/sh
-exec ruby -x -- "$0" "$@"
-#!ruby -s
+#!/usr/bin/env ruby
 
-$h || $_help and (puts <<EOS; exit)
-usage: #{File.basename $0} [-h] [-d | -b=num] [args...]
-options:
-  -d same as `-b=10`
-  -b interpret args in base num, instead of the default 16
-Interprets its arguments as space-separated base-n representations of ascii chars,
-and prints out their equivs. If no args are given, defaults to stdin.
-EOS
+require 'optparse'
 
-BASE = ($b&.to_i) || ($d && 10) || 16
+# Initial arguments
+OPTS = {
+  base: 16,
+  files: false,
+  encoding: Encoding::UTF_8
+}
 
-($*.empty? ? $stdin.each(chomp: true).map(&:split) : [$*]).each do |word|
-  puts word.map { _1.to_i BASE }.pack('C*')
+# Replacement character that's used for invalid inputs
+REPLACEMENT_CHARACTER = "\uFFFD"
+
+OptParse.new do |op|
+  # Modify the banner to include all the flags we support
+  op.banner = "usage: #{op.program_name} [-d | -b num] [-f] [--] [args ...]"
+
+  # Description of the program at the end
+  op.on_tail <<~EOS
+    Converts codepoints to the output encoding. Arguments should be whitespace-
+    separated, and in base-BASE. If no arguments are given, defaults to stdin.
+  EOS
+
+  # Accept encodings (used with `--encoding`)
+  op.accept Encoding do |e|
+    Encoding.find e
+  rescue ArgumentError
+    raise OptionParser::InvalidArgument, e
+  end
+
+  # Flags that we accept
+  op.on '-f', '--files', 'Reinterpret args as filenames to read from'
+  op.on '-b', '--base=BASE', Integer, "Parse inputs as BASE ints. [default: #{OPTS[:base]}]"
+  op.on '-d', '--decimal', 'Shorthand for --base=10' do
+    OPTS[:base] = 10
+  end
+  op.on '--encoding=ENCODING', Encoding, "Change codepoints encoding. [default: #{OPTS[:encoding]}]"
+
+  # Parse the options. Only gracefully exit with parsing errors
+  begin
+    op.parse! into: OPTS
+  rescue OptionParser::ParseError => err
+    op.abort err
+  end
+end
+
+## Converts `codepoint_str` to a character in the encoding. Any problems are
+# warned, and the replacement character is returned.
+def convert_codepoint_str_to_encoding(codepoint_str)
+  codepoint = Integer(codepoint_str, OPTS[:base], exception: false)
+
+  if codepoint.nil?
+    warn "integer #{codepoint_str} is not valid in base #{OPTS[:base]}"
+    return REPLACEMENT_CHARACTER
+  end
+
+  begin
+    codepoint.chr OPTS[:encoding]
+  rescue RangeError
+    warn "integer #{codepoint_str} is not valid for #{OPTS[:encoding]}"
+    REPLACEMENT_CHARACTER
+  end
+end
+
+## Figure out what to iterate over: If `-f` was supplied, or there are
+# arguments, then iterate over `ARGF` (making sure to chomp lines). Otherwise,
+# we interpret the arguments we were supplied as lines
+stream =
+  if OPTS[:files] || ARGV.empty?
+    ARGF.each(chomp: true)
+  else
+    ARGV
+  end
+
+## Iterate over the lines in the input stream, and convert their contents.
+stream.each do |line|
+  # Print the characters for each line sequentially
+  line.split.each do |codepoint_str|
+    print convert_codepoint_str_to_encoding(codepoint_str)
+  end
+
+  puts # Print a trailing newline
 end
