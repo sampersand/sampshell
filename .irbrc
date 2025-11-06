@@ -36,6 +36,20 @@ rescue LoadError
   warn "Can't load blankity for Ruby #{RUBY_VERSION}: #$!"
 end
 
+def heql(key, *, **, &b) = Blankity.blank(*, **) {
+  ::Object.instance_method(:define_singleton_method).bind_call(self,
+    :eql?, &key.method(:eql?)
+  )
+  ::Object.instance_method(:define_singleton_method).bind_call(self,
+    :hash, &key.method(:hash)
+  )
+  ::Object.instance_method(:instance_exec).bind_call(self, b) if b
+}
+
+# Undo the annoyance of `proc` being overwritten
+extend Blankity::To
+def self.proc(...) = Kernel.proc(...)
+
 ####################################################################################################
 #                                                                                                  #
 #                                           Sublime Text                                           #

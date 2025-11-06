@@ -2,10 +2,10 @@
 
 \unalias -a
 set -eu
-nl='
-'
 
+nl=$(printf '\n.'); readonly nl="${nl%.}"
 readonly scriptname="${0##*/}"
+
 usage () { cat; } <<USAGE
 usage: $scriptname [options] [--] [message [...]]
        $(printf "%${#scriptname}s") [options] -f [--] [files [...]]
