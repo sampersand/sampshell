@@ -139,4 +139,4 @@ pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
 
 
 alias gdno='git diff --name-only'
-alias gds='git diff --name-only'
+alias gds='git diff        --name-status'

@@ -1,28 +1,29 @@
 #!/bin/sh
 
+# TODO: get rid of
+: "${SampShell_git_branch_prefix:="$(whoami)"}"
+
 . ${0:P:h}/deprecated.zsh
 
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
-if [ -n "${ZSH_VERSION-}" ]; then
-	eval '() while (( $# )) do
-			alias -g "@-$1=@{-$1}"
-			shift
-		done $(seq 0 10)
-	'
-fi
+() while (( $# )) do
+	alias -g "@-$1=@{-$1}"
+	shift
+done $(seq 1 10)
 
 alias g=git
 alias gdirs='git prev-branches'
 alias gnit='git nit'
 alias goops='git oops'
-gopen () {
+function gopen () {
+	if [[ $1 == -h ]] { git remote-url -h >&2; return }
 	local remote
 	remote=$(git remote-url $@) || return
 	open $remote
 }
 
-gopenc () { git remote-url $@ | pbc; }
+function gopenc () { git remote-url $@ | pbc; }
 alias gru='git remote-url'
 alias gruc='gopenc'
 alias gsquash='git squash'
@@ -30,25 +31,7 @@ alias gsquash='git squash'
 ## Spellcheck
 alias gti=git
 alias ig='__deprecated git ignore'
-alias gignore='git ignore'
-
-: "${SampShell_git_default_master_branch:=master}"
-: "${SampShell_git_branch_prefix:="$(whoami)"}"
-# : "${SampShell_git_branch_prefix_pattern:='$SampShell_git_branch_prefix/??-??-??'}"
-
-alias master-branch=SampShell_master_branch
-SampShell_master_branch () {
-	basename "$(git symbolic-ref refs/remotes/origin/HEAD -q || echo "${SampShell_git_default_master_branch?}")"
-}
-
-alias current-branch=SampShell_current_branch
-SampShell_current_branch () { git branch --show-current; }
-
-if false; then
-	git log limit
-fi
-##
-#
+alias gi='git ignore'
 
 ################################
 # Interacting with remote code #
@@ -67,37 +50,24 @@ alias gstp='git stash pop'
 
 alias gnb='git new-branch'
 
-alias gswm='gsw "$(SampShell_master_branch)"'
-gsw () {
-	[ "$#" = 0 ] && set -- '@{-1}'
-	git switch "$@"
-}
-alias gbr='git branch'
-alias gbrc='git branch --show-current'
+function gsw () git switch "${@:-'@{-1}'}"
+alias    gswm='git switch "$(git-master-branch)"'
+alias    gbr='git branch'
+alias    gbrc='__deprecated git branch --show-current'
 
-gdb () {
-	[ "$#" = 1 ] && [ "$1" = '-' ] && set -- 'HEAD~1'
-	git branch --delete "$@"
-}
-alias grename='git branch --move'
-alias gbmv=grename
-alias gbrmv=grename
+alias gdb='__deprecated git branch --delete'
+alias gbrd='git branch --delete'
+alias grename='git branch --move' # TODO: clean this up
+alias gbmv='__deprecated git branch --move'
+alias gbrmv='__deprecated git branch --move'
 
 
 ##########################
 # Custom git "functions" #
 ##########################
 
-gclear () {
-	# git add --all && git stash push && git status
-	echo 'todo'
-	return 1
-}
-
-# Adds everything and prints out the status
-gaa () {
-	git add --all && git status
-}
+alias ga='git add'
+function gaa () { git add --all && git status }
 
 # Commits untracked files; all arguments are joined with a space.
 function _SampShell-gcm {
@@ -123,21 +93,20 @@ alias gcma='gcm --amend'
 alias gcmn='gcm --no-verify'
 alias gcman='gcm --amend --no-verify' gcmna=gcman
 
-alias gam='git commit --amend'
-alias gammend='git commit --amend'
+alias gam='__deprecated git commit --amend'
+alias gammend='__deprecated git commit --amend'
 
 alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
-alias gss='git status --shortr'
+alias gss='git status --short'
 alias grb='git rebase'
-alias grbm='git rebase "$(SampShell_master_branch)"'
+alias grbm='git rebase "$(git-master-branch)"'
 alias grba='git rebase --abort'
-alias ga='git add'
 
 alias grs='git reset'
 alias greset=grs
 alias grm='git rm'
 alias gco='git checkout'
-alias gcom='git checkout "$(SampShell_master_branch)" --'
+alias gcom='git checkout "$(git-master-branch)" --'
 
 alias gcp='git cherry-pick'
 alias gg='git grep'
@@ -153,21 +122,21 @@ gcl () {
 
 alias gl='git log'
 
-alias gmm='gm "$(SampShell_master_branch)"'
+alias gmm='gm "$(git-master-branch)"'
 gm () {
 	[ "$#" = 0 ] && set -- '@{-1}'
 	git merge "$@"
 }
 alias gma='git merge --abort'
 
-alias gdm='gd "$(SampShell_master_branch)"'
+alias gdm='gd "$(git-master-branch)"'
 alias gd='git diff'
 gdh () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	gdh "$@"
 }
 
-alias gddm='gdd "$(SampShell_master_branch)"'
+alias gddm='gdd "$(git-master-branch)"'
 gdd () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	git diff --name-status "$@"
@@ -178,7 +147,7 @@ alias gdol=gdd
 gpristine () {
 	git status &&
 		read -q '?really clear changes it?' &&
-		git reset --hard "$(SampShell_master_branch)" && git clean -xdf
+		git reset --hard "$(git-master-branch)" && git clean -xdf
 }
 
 alias gpr='git create-pr'
