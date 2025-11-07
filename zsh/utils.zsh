@@ -122,11 +122,8 @@ function old {
 # Random misc utils from work laptop. not sure how useful they are, or how tested.
 ################################################################################
 sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
-ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
 alias show-cursor='tput cnorm'
-alias gw='gh pr view --web'
 alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
-alias gisancestor='git merge-base --is-ancestor'
 
 # Check if in git repo
 is-in-a-git-repo () (
@@ -137,6 +134,3 @@ is-in-a-git-repo () (
 # overwrite the `pbc` command to chomp arguments
 pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
 
-
-alias gdno='git diff --name-only'
-alias gds='git diff        --name-status'

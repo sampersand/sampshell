@@ -131,6 +131,9 @@ alias gma='git merge --abort'
 
 alias gdm='gd "$(git-master-branch)"'
 alias gd='git diff'
+alias gdno='git diff --name-only'
+alias gds='git diff --name-status'
+
 gdh () {
 	[ "$#" = 0 ] && set -- 'HEAD~1'
 	gdh "$@"
@@ -152,3 +155,7 @@ gpristine () {
 
 alias gpr='git create-pr'
 alias gprv='gh pr view --web'
+
+alias gw='gh pr view --web'
+ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
+alias gisancestor='git merge-base --is-ancestor'
