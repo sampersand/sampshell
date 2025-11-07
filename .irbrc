@@ -3,6 +3,8 @@
 return if defined? SAMPSHELL_IRB_DEFINED
 SAMPSHELL_IRB_DEFINED = true
 
+ENV['EDITOR'] ||= ENV['SampShell_EDITOR']
+
 if RUBY_VERSION < '3.3'
   # TODO: is this necessary? it was originally for cause `;` wasnt recognized at end of line
   IRB.conf[:ECHO_ON_ASSIGNMENT] = false

@@ -6,9 +6,12 @@
 
 require 'optparse'
 
+PROGRAM_NAME = File.basename($0, '.*').sub(/\Agit-/, 'git ')
+
 def abort(msg)
-  super("#$0: #{msg}")
+  super("#{PROGRAM_NAME}: #{msg}")
 end
+
 def `(cmd)
   super.chomp.tap do
     $?.success? or abort "shell command return non-zero exit status: #{cmd.inspect}"
@@ -16,12 +19,12 @@ def `(cmd)
 end
 
 $branch = :master
-$repo = nil
 
-OptParse.new do |op|
-  op.banner = "usage: #{op.program_name} [-c | -m | -bBRANCH] [-r repo] [file] [start[-end]]"
+OptParse.new nil, 20 do |op|
+  op.program_name = PROGRAM_NAME
+  op.banner = "usage: #{op.program_name} [options] [file] [start[-end]]"
 
-  op.on_tail 'print the url for a repo, or a file in the repo'
+  op.on_head 'Print the link to a repository, a file in the repo, or a range within it.'
 
   op.on '-r', '--repo=REPO', 'Use REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.' do |repo|
     $repo = repo
@@ -40,15 +43,28 @@ OptParse.new do |op|
   end
 
   op.on '-p', '--permalink', 'Use a permalink' do
-    $branch = :permalink
+    $branch = :permalink.q
   end
 
-  op.parse! rescue op.abort $!
-  op.abort op.help unless $*.length <= 2
+  begin
+    op.parse!
+  rescue OptionParser::InvalidOption => err
+    abort err
+  end
+
+  unless $*.length <= 2
+    abort op.help
+  end
 end
 
 file, range = $*
-file and Dir.chdir(File.file?(file) ? File.dirname(file) : file)
+
+if $repo
+  Dir.chdir $repo rescue abort "cannot cd to repo #$repo"
+elsif file
+  dir = File.directory?(file) ? file : File.dirname(file)
+  Dir.chdir(dir) rescue abort "cannot cd to dir: #{dir}"
+end
 
 REPO = `gh repo view --json=url --jq=.url`
 BRANCH = case $branch
