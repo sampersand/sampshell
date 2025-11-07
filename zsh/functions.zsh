@@ -24,8 +24,8 @@ alias cldash='clean-shell dash'
 
 ## Banner utility
 alias banner='noglob ~ss/bin/universal/banner'
-alias b80='banner -c -w80'
-alias b100='banner -c -w100'
+alias b80='banner --copy --width=80'
+alias b100='banner --copy --width=100'
 
 ## Debugging utilities
 function pa {
