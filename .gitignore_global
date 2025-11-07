@@ -1,5 +1,9 @@
 # TODO: IDK if this is actually sourced by git
+
+# Ignore macOS files
 .DS_Store
+
+# Ignore files that I rename explicitly for ignoring
 *.ignore
 *.ignore.*
 *.old

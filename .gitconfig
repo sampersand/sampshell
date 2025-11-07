@@ -4,8 +4,8 @@
 
 # TODO: aliases?
 [core]
-	excludesfile = ~/.gitignore_global
-	# editor = subl
+	excludesFile = ~/.gitignore_global
+	editor = vim
 
 [branch]
 	# sort = ??
@@ -22,16 +22,16 @@
 
 [alias]
 	current-branch = branch --show-current
-	
-	alias = config --get-regexp ^alias\\.
-	nit  = commit --amend --no-edit
+	aliases = config --get-regexp ^alias\\.
+	nit     = commit --amend --no-edit
+
 	# oops = !git add --all && git commit --amend --no-edit && git push --force
 # TODO: Only `git push --force` if a remote is available
 
+	# Stuff from work:
 	unstage = reset HEAD --
 	a = add
 	aa = add --all
 	l = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short
  	# list branches sorted by last modified
  	b = "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
-
