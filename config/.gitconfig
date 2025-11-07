@@ -21,6 +21,8 @@
 	defaultBranch = master
 
 [alias]
+	current-branch = branch --show-current
+	
 	alias = config --get-regexp ^alias\\.
 	nit  = commit --amend --no-edit
 	# oops = !git add --all && git commit --amend --no-edit && git push --force

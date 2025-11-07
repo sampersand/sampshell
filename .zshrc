@@ -314,7 +314,7 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 #                                          Git Shorthands                                          #
 #                                                                                                  #
 ####################################################################################################
-source $SampShell_ROOTDIR/zsh/git.sh
+source $SampShell_ROOTDIR/zsh/git.zsh
 
 ####################################################################################################
 #                                                                                                  #
