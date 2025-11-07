@@ -5,7 +5,7 @@
 # TODO: aliases?
 [core]
 	excludesfile = ~/.gitignore_global
-	editor = subl
+	# editor = subl
 
 [branch]
 	# sort = ??

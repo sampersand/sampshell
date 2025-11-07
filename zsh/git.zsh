@@ -13,19 +13,53 @@
 done $(seq 1 10)
 
 alias g=git
-alias gdirs='git prev-branches'
-alias gnit='git nit'
-alias goops='git oops'
-function gopen () {
+
+################################################################################
+#                              Everyday Commands                               #
+################################################################################
+
+################################################################################
+#                               Fixing Problems                                #
+################################################################################
+
+################################################################################
+#                                Collaboration                                 #
+################################################################################
+alias gru='git remote-url'
+function gruo () {
 	if [[ $1 == -h ]] { git remote-url -h >&2; return }
 	local remote
 	remote=$(git remote-url $@) || return
 	open $remote
 }
+function gruc () {
+	if [[ $1 == -h ]] { git remote-url -h >&2; return }
+	git remote-url $@ | pbc
+}
 
-function gopenc () { git remote-url $@ | pbc; }
-alias gru='git remote-url'
-alias gruc='gopenc'
+alias gopen=gruo gopenc=gruc
+alias gf='git fetch'
+alias gpl='git pull'
+alias gph='git push'
+alias gphf='git push --force'
+
+alias gpr='git create-pr'
+alias gprv='gh pr view --web'
+
+function ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
+function gcl () {
+	git clone "${1?'must supply a repo'}" || return "$?"
+	set -- "$(basename "$1")"
+	cd -- "${1%%.*}"
+}
+
+################################################################################
+#                                     TODO                                     #
+################################################################################
+
+alias gdirs='git prev-branches'
+alias gnit='git nit'
+alias goops='git oops'
 alias gsquash='git squash'
 
 ## Spellcheck
@@ -36,10 +70,6 @@ alias gi='git ignore'
 ################################
 # Interacting with remote code #
 ################################
-alias gf='git fetch'
-alias gpl='git pull'
-alias gph='git push'
-alias gphf='git push --force'
 alias gst='git stash'
 alias gstash=gst
 alias gstp='git stash pop'
@@ -61,32 +91,12 @@ alias grename='git branch --move' # TODO: clean this up
 alias gbmv='__deprecated git branch --move'
 alias gbrmv='__deprecated git branch --move'
 
-
 ##########################
 # Custom git "functions" #
 ##########################
 
 alias ga='git add'
 function gaa () { git add --all && git status }
-
-# Commits untracked files; all arguments are joined with a space.
-function _SampShell-gcm {
-	emulate -L zsh
-
-	# Any flags that are passed just keep them
-	local msg=() args=()
-
-	while (( $# )) {
-		case $1 in
-		--) shift; msg+=( $@ ); break ;;
-		-*) args+=( $1 ) ;;
-		*)  msg+=( $1 ) ;;
-		esac
-		shift
-	}
-
-	git commit ${args} ${msg:+--message="$msg"}
-}
 
 alias gcm='noglob git commit-msg'
 alias gcma='gcm --amend'
@@ -125,13 +135,7 @@ gpristine () {
 		git reset --hard "$(git-master-branch)" && git clean -xdf
 }
 
-alias gpr='git create-pr'
-alias gprv='gh pr view --web'
-
-alias gw='gh pr view --web'
-ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
 alias gisancestor='git merge-base --is-ancestor'
-
 
 alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
 alias gss='git status --short'
@@ -150,11 +154,5 @@ alias gg='git grep'
 alias ginit='git init'
 
 gnita () { gaa && gnit; }
-
-gcl () {
-	git clone "${1?'must supply a repo'}" || return "$?"
-	set -- "$(basename "$1")"
-	cd -- "${1%%.*}"
-}
 
 alias gl='git log'
