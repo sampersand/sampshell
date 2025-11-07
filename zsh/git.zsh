@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. ${0:P:h}/deprecated.zsh
+
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
 if [ -n "${ZSH_VERSION-}" ]; then
@@ -27,7 +29,7 @@ alias gsquash='git squash'
 
 ## Spellcheck
 alias gti=git
-alias ig='git ignore'
+alias ig='__deprecated git ignore'
 alias gignore='git ignore'
 
 : "${SampShell_git_default_master_branch:=master}"
