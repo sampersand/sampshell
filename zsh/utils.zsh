@@ -137,11 +137,6 @@ is-in-a-git-repo () (
 # overwrite the `pbc` command to chomp arguments
 pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
 
-alias gcmn='noglob _SampShell-gcmn'
-_SampShell-gcmn () {
-	[ "$#" -ne 0 ] && set -- --message "$*"
-	git commit --no-verify "$@"
-}
 
 alias gdno='git diff --name-only'
 alias gds='git diff --name-only'

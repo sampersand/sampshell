@@ -99,14 +99,27 @@ gaa () {
 
 # Commits untracked files; all arguments are joined with a space.
 function _SampShell-gcm {
-	if [ "$#" -eq 0 ]; then
-		git commit ${_SampShell_gcm_flags-}
-	else
-		git commit ${_SampShell_gcm_flags-} --message "$*"
-	fi
+	emulate -L zsh
+
+	# Any flags that are passed just keep them
+	local msg=() args=()
+
+	while (( $# )) {
+		case $1 in
+		--) shift; msg+=( $@ ); break ;;
+		-*) args+=( $1 ) ;;
+		*)  msg+=( $1 ) ;;
+		esac
+		shift
+	}
+
+	git commit ${args} ${msg:+--message="$msg"}
 }
+
 alias gcm='noglob _SampShell-gcm'
-alias gcma='_SampShell_gcm_flags=--no-amend noglob _SampShell-gcm'
+alias gcma='gcm --amend'
+alias gcmn='gcm --no-verify'
+alias gcman='gcm --amend --no-verify' gcmna=gcman
 
 alias gam='git commit --amend'
 alias gammend='git commit --amend'
