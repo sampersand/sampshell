@@ -13,3 +13,17 @@ gclear () {
 	echo 'todo'
 	return 1
 }
+
+alias gdno='__deprecated git diff --name-only'
+gdh () {
+	__deprecated
+	[ "$#" = 0 ] && set -- 'HEAD~1'
+	git diff "$@"
+}
+gdd () {
+	__deprecated
+	[ "$#" = 0 ] && set -- 'HEAD~1'
+	git diff --name-status "$@"
+}
+alias gdol='__deprecated gdd'
+# alias gddm='gdd "$(git-master-branch)"'
