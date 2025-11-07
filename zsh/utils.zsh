@@ -134,3 +134,10 @@ is-in-a-git-repo () (
 # overwrite the `pbc` command to chomp arguments
 pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
 
+function 2mp4 () {
+	local arg
+	set -x
+	for arg; do
+		ffmpeg -nostdin -i $arg $arg:r.mp4 && rm -f $arg
+	done
+}

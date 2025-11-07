@@ -78,7 +78,7 @@ end
 # This _should_ be a non-breaking-change, as `|` is not valid at the start of a line in `sh`.
 def `(command)
   if command.start_with?('|')
-    command = command.delete_prefix '|'
+    command = command.delete_prefix '|' # backtick literals are frozen
     exception = true
   end
 

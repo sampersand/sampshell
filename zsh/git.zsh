@@ -50,7 +50,7 @@ alias gstp='git stash pop'
 
 alias gnb='git new-branch'
 
-function gsw () git switch "${@:-'@{-1}'}"
+function gsw () git switch "${@:-@{-1\}}"
 alias    gswm='git switch "$(git-master-branch)"'
 alias    gbr='git branch'
 alias    gbrc='__deprecated git branch --show-current'
@@ -88,13 +88,50 @@ function _SampShell-gcm {
 	git commit ${args} ${msg:+--message="$msg"}
 }
 
-alias gcm='noglob _SampShell-gcm'
+alias gcm='noglob git commit-msg'
 alias gcma='gcm --amend'
 alias gcmn='gcm --no-verify'
 alias gcman='gcm --amend --no-verify' gcmna=gcman
 
 alias gam='__deprecated git commit --amend'
 alias gammend='__deprecated git commit --amend'
+
+
+################################################################################
+#                                   Merging                                    #
+################################################################################
+
+function gm () git merge "${@:-@{-1\}}"
+alias gmm='git merge "$(git master-branch)"'
+alias gma='git merge --abort'
+
+################################################################################
+#                                    Diffs                                     #
+################################################################################
+
+alias gd='git diff'
+alias gdm='git diff "$(git master-branch)"'
+alias gds='git diff --stat'
+alias gdms='git diff --stat "$(git master-branch)"'
+
+################################################################################
+#                                     Misc                                     #
+################################################################################
+
+# --
+gpristine () {
+	git status &&
+		read -q '?really clear changes it?' &&
+		git reset --hard "$(git-master-branch)" && git clean -xdf
+}
+
+alias gpr='git create-pr'
+alias gprv='gh pr view --web'
+
+alias gw='gh pr view --web'
+ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
+alias gisancestor='git merge-base --is-ancestor'
+
 
 alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
 alias gss='git status --short'
@@ -121,41 +158,3 @@ gcl () {
 }
 
 alias gl='git log'
-
-alias gmm='gm "$(git-master-branch)"'
-gm () {
-	[ "$#" = 0 ] && set -- '@{-1}'
-	git merge "$@"
-}
-alias gma='git merge --abort'
-
-alias gdm='gd "$(git-master-branch)"'
-alias gd='git diff'
-alias gdno='git diff --name-only'
-alias gds='git diff --name-status'
-
-gdh () {
-	[ "$#" = 0 ] && set -- 'HEAD~1'
-	gdh "$@"
-}
-
-alias gddm='gdd "$(git-master-branch)"'
-gdd () {
-	[ "$#" = 0 ] && set -- 'HEAD~1'
-	git diff --name-status "$@"
-}
-alias gdol=gdd
-
-# --
-gpristine () {
-	git status &&
-		read -q '?really clear changes it?' &&
-		git reset --hard "$(git-master-branch)" && git clean -xdf
-}
-
-alias gpr='git create-pr'
-alias gprv='gh pr view --web'
-
-alias gw='gh pr view --web'
-ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
-alias gisancestor='git merge-base --is-ancestor'

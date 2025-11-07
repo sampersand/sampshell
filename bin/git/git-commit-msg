@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+# A wrapper around `git commit` which joins all supplied arguments together
+# with a space as the commit message. Any flags that are given are forwarded
+# to `git commit`. You can use `git commit-msg -- ...` to ensure remaining
+# values aren't taken as flags.
+#
+# This is not a direct replacement for `git commit`, as flags which take
+# arguments that are separated by spaces aren't properly handled.
+
+# Any flags that are passed just keep them
+typeset message=()
+typeset flags=()
+
+while (( $# )) do
+	case $1 in
+	--) shift; message+=( $@ ); break ;;
+	-*) flags+=( $1 ) ;;
+	*)  message+=( $1 ) ;;
+	esac
+
+	shift
+done
+
+git commit ${flags} ${message:+--message="$message"}
