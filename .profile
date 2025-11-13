@@ -11,10 +11,10 @@
 # totally POSIX-compliant, as it's meant to be loaded by any login shell.
 #
 # Login files shouldn't set up anything that's shell-specific, such as prompts
-# or history expansions, as they're only run on "login"---see `.shrc`
-# for code that's expected to be run by every interactive shell. However, this
-# program is intentionally idempotent, so that it can be loaded from interactive
-# shells too without causing issues.
+# or history expansions, as they're only run on "login"---see `.shrc` for code
+# that's expected to be run by every interactive shell. However, this program is
+# intentionally idempotent, so that it can be loaded from interactive shells too
+# without causing issues.
 #
 # Since the purpose of this is to setup common config across _all_ shells, there
 # are not shell-specific 
@@ -26,17 +26,15 @@
 #                                                                              #
 ################################################################################
 
-## Find and export `SampShell_ROOTDIR`, the directory containing this file,
-# which is used in numerous SampShell commands. If it's not set, the default
-# location is ascertained in a handful of shells (see the code below), with a
-# fallback of `~/.sampshell/shell`. If the file doesn't exist, it's warned.
+## Makes sure that `$SampShell_ROOTDIR` is set, which is used frequently within
+# config files. If it's not set, it defaults to `~/sampshell`, and warns.
 if [ -z "${SampShell_ROOTDIR-}" ]; then
    # Guess a default home directory (hope it works) and warn.
-   SampShell_ROOTDIR=$HOME/.sampshell
+   SampShell_ROOTDIR=$HOME/sampshell
    printf >&2 '[WARN] Defaulting $SampShell_ROOTDIR to %s\n' "$SampShell_ROOTDIR"
 fi
 
-## Warn if `SampShell_ROOTDIR` isn't a directory, and we're in interactive mode.
+## Warn if `SampShell_ROOTDIR` isn't a directory
 if [ ! -d "$SampShell_ROOTDIR" ]; then
    printf >&2 '[WARN] $SampShell_ROOTDIR does not exist/isnt a dir: %s\n' "$SampShell_ROOTDIR"
 fi
@@ -51,15 +49,26 @@ export SampShell_ROOTDIR
 ################################################################################
 
 ## These variables are used in various SampShell utilities, and are expected to
-# always be present. The `SampShell_gendir` variable in particular is special,
-# as it's not exported, and is used exclusively for defaults for the other
-# exported values.
+# always be present. It follows XDG Base Directory specifications, and stores
+# all files in the relevant folders.
 
-: "${SampShell_gendir:=${HOME}/.sampshell_gendir}"
+if [ "${XDG_STATE_HOME#/}" != "${XDG_STATE_HOME-}" ]; then
+   export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$XDG_STATE_HOME/sampshell/trash}"
+   export SampShell_HISTDIR="${SampShell_HISTDIR-$XDG_STATE_HOME/sampshell/history}"
+else
+   export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$HOME/.local/state/sampshell/trash}"
+   export SampShell_HISTDIR="${SampShell_HISTDIR-$HOME/.local/state/sampshell/history}"
+fi
+
+if [ "${XDG_STATE_CACHE#/}" != "${XDG_STATE_CACHE-}" ]; then
+   export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$XDG_STATE_HOME/sampshell}"
+else
+   export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$HOME/.cache/sampshell}"
+fi
+mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$SampShell_CACHEDIR" || echo "oops failed: $?" # TODO
+
+## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$SampShell_gendir/trash}"
-export SampShell_HISTDIR="${SampShell_HISTDIR-$SampShell_gendir/history}"
-export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$SampShell_gendir/cache}"
 export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 
