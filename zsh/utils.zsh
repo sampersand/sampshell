@@ -33,7 +33,6 @@ alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own i
 alias mk=mkdir
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
 
-grep () command grep --color=auto $@
 pg () { pgrep -afl $@ | command grep --color=always $@ }
 pk () { pkill -afl $@ }
 pk9 () { pkill -KILL -afl $@ }

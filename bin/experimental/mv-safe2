@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+require 'optparse'
+
+OptParse.new do |op|
+  op.banner = <<~BANNER
+    usage: #{op.program_name} [options] source target
+           #{op.program_name} [options] source ... directory
+  BANNER
+
+  op.on '-i', '--interactive', 'Ask to overwrite files that exist (disables -n)' do
+    $what = :interactive
+  end
+
+  op.on '-n', '--no-overwrite', 'dont overwrite existing files (disables -i; default)' do
+    $what = :no_overwrite
+  end
+
+  op.on '-r', '--rename', 'Rename files to prevent conflicts' do
+    $what = :rename
+  end
+
+  op.on '-q', '--quiet', 'Dont output anything' do
+    $verbosity = 0
+  end
+
+  op.on '-v', '--verbose', 'Set verbosity to high' do
+    $verbosity = 2
+  end
+
+  begin
+    op.parse!
+  rescue OptParse::ParseError
+    op.abort $!
+  end
+
+  if $*.length <= 1
+    op.abort "at least two arguments needed, #{$*.length} given"
+  end
+end
+

@@ -39,7 +39,9 @@ function pa {
 	fi
 }
 ## Adding default arguments to builtin commands
-function grep () grep --color=auto $@
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
 alias ps='ps -ax'
 
 ################################################################################

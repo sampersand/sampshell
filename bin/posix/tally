@@ -1,5 +1,12 @@
 #!/usr/bin/awk -f
 
+###
+# Tallies the amount of times line sin the input appear.
+#
+# You can supply `-vwidth=<NUM>` to explicitly set the width; without this, the
+# width is automatically ascertained from the max length of all fields
+##
+
 # Accumulate the counts, and also set the maximum length
 max < ++counts[$0] {
   max = counts[$0]
