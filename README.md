@@ -1,8 +1,18 @@
-# Dotfiles
-My shell startup files.
+# SampShell, my dot files
+All my configuration files, shell and not.
 
-This repo contains all the standard definitions and configuration I use for my shells; It's 100% usable from any POSIX-compliant shell!
+This repo contains all the standard definitions and configuration I use for my shells and other apps.
 
+## Quick Start
+Every file in the root corresponds to a top-level file, and should be somehow sourced from the top. For example:
+
+- Shell configs, like `~/.zshrc` , should source their respective files (eg `. ~/.sampshell/.zshrc`)
+- `~/.irbrc` should `load` this one (eg `ENV['SampShell_ROOTDIR']&.then { load it + '/.irbrc' }'`)
+- `~/.gitconfig` should add `[include]\npath = ~/.sampshell/.gitconfig`, as well as a `[core]\nexcludesFile = ~/.sampshell/.gitignore_global`, as unfortunately there's no easy way to use env vars from git config
+
+Notably, `.shrc` and `.profile` as 100% POSIX compliant, and can be sourced from any POSIX shell (and are in the ZSH and Bash configurations!)
+
+> [!IMPORTANT] The remainder of this readme ahsn't been updated, and is no longer correct
 
 # Quick Start
 Add the following to the shell's startup files (`~/.zshrc`, `~/.bash_profile`, etc.):
