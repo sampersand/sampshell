@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/.ghcup/bin/runghc", "$file"],
+	"selector": "*.hs"
+}

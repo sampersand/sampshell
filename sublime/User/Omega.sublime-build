@@ -1,0 +1,4 @@
+{
+  "shell_cmd": "python3 -O /Users/sampersand/code/omega/Main.py $file",
+  "selector": "*.om"
+}

@@ -1,0 +1,109 @@
+%YAML 1.2
+---
+name: Squire
+file_extensions: [sq]
+scope: source.squire
+variables:
+  ident: '(?:\b[a-zA-Z_](\w[ -]?)*(?<=\w)\b)'
+  fraktur: '[𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷]'
+
+contexts:
+  prototype:
+    - match: (\#|N\.B\.).*\n
+      scope: comment.line.squire
+    - match: /\*
+      push:
+        - meta_scope: comment.block.squire
+        - match: \*/
+          pop: true
+  main:
+    - match: '@__END__\b'
+      set: __end__
+    - match: (\\)\s*(\()
+      captures:
+        1: keyword.declaration.struct.type.squire
+      push:
+        - match: '{{ident}}'
+          scope: variable.parameter.squire
+        - match: \)
+          pop: true
+
+    - match: '@\w+'
+      scope: keyword.macro.squire
+    - match: \b(recall|change|journey)\s+({{ident}}|<=>|[<>!=]=|[-+*/%<>^])[\s\n]*\((?<!\))
+      captures:
+        1: keyword.declaration.struct.type.squire
+        2: entity.name.function.squire
+      push:
+        - match: \(
+          push:
+          - match: \)
+            pop: true
+          - match: '({{ident}})\s*:'
+            captures:
+              1: variable.parameter.squire  
+            push:
+              - match: (?=,|\))
+                pop: true
+              - include: main
+          - match: '{{ident}}'
+            scope: variable.parameter.squire
+        - match: ';'
+          pop: true
+    - match: \b(matter|essence)\s+({{ident}})\b
+      captures:
+        1: keyword.declaration.struct.type.squire
+    - match: \b(imitate)\b
+      scope: entity.name.function.squire
+    - match: '(?x)\b(
+        form|matter|essence|change|essence|recall|imitate|journey|
+        reward|if|alas|fork|path|catapult|attempt|whilst|nigh|renowned|whence|thence|rejoin
+      )\b'
+      scope: keyword.squire
+    - match: '=>|<<|>>'
+    - match: '<=>|[=<!>]=?|[-+*/%^]|\&\&|\|\||\~\~'
+      scope: keyword.squire
+    - match: \b(yea|nay|ni)\b
+      scope: constant.language.squire
+    - match: \b(soul|ARGV)\b
+      scope: variable.language.squire  
+    - match: \b(\d+|[IVXNCLDM]+)\b
+      scope: constant.numeric.value.squire
+    - match: \b(Text|Numeral|Journey|Form|Veracity|Ni|Book|Codex|[A-Z]\w+)\b
+      scope: storage.type.squire
+    - match: \b(\w+(?=[\s\n]*\())\b
+      scope: support.function.builtin.squire
+    - match: '{{ident}}'
+    - include: strings
+
+  __end__:
+    - match: .
+
+  strings:
+    - match: '{{fraktur}}(\\.|{{fraktur}})*'
+      scope: string.other.squire
+
+    - match: \"
+      scope: punctuation.definition.string.begin.squire
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.squire
+        - meta_scope: string.quoted.double.squire
+        - match: \\([ntrf\\'"]|x[a-fA-F0-9]{2})
+          scope: constant.character.escape.squire
+        - match: \\.
+          scope: invalid.character.escape.squire
+        - match: \"
+          scope: punctuation.definition.string.end.squire
+          pop: true
+    - match: \'
+      scope: punctuation.definition.string.begin.squire
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.squire
+        - meta_scope: string.quoted.double.squire
+        - match: \\[\\"']
+          scope: constant.character.escape.squire
+        - match: \'
+          scope: punctuation.definition.string.end.squire
+          pop: true

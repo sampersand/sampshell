@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+impl std::ops::Index<$1> for $2 {
+	type Output = $3;
+
+	fn index(&self, idx: $1) -> &Self::Output {
+		${0:&self.0[idx]}
+	}
+}
+]]></content>
+	<tabTrigger>implindex</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

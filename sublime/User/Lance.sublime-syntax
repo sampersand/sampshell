@@ -1,0 +1,229 @@
+%YAML 1.2
+---
+name: Lance
+file_extensions: [lc, lch]
+scope: source.lance
+variables:
+  ident: '(?:\b[A-Za-z_][\w_]*(?:(::|\.)[A-Za-z_][\w_]*)?\b)'
+
+contexts:
+  prototype:
+    - match: //.*\n
+      scope: comment.line.lance
+    - match: /\*
+      push:
+        - meta_scope: comment.block.lance
+        - match: \*/
+          pop: true
+  main:
+    # - match: \b(global|fn|import|if|else|while|return|let|set|do)\b
+      # scope: keyword.control.lance
+    # - match: \b(str|num|bool)\b
+      # scope: support.class.lance
+    # - include: literals
+    - include: declaration
+
+  declaration:
+    - include: global-or-extern-declaration
+    - include: import-declaration
+    - include: struct-declaration
+    - include: enum-declaration
+    - include: function-declaration
+
+  global-or-extern-declaration:
+    - match: \b(global|externf?)\b\s+\b(priv\s+)?\b({{ident}})\s*(:)
+      captures:
+        1: storage.type.lance
+        2: keyword.lance
+        3: entity.name.constant.lance
+        4: punctuation.separator.lance
+      push:
+        - include: type
+        - include: ends-with-semicolon
+
+  import-declaration:
+    - match: \b(import)\b
+      scope: keyword.other.lance
+      set:
+        - include: strings
+        - include: ends-with-semicolon
+
+  struct-declaration:
+    - match: \b(struct)\b\s+({{ident}})\s*(\{)
+      captures:
+        1: storage.type.lance
+        2: entity.name.struct.lance
+        3: punctuation.section.begin.lance
+      set:
+        - meta_scope: meta.struct.lance
+        - include: struct-inner
+    - match: \b(struct)\b\s+({{ident}})
+      captures:
+        1: storage.type.lance
+        2: entity.name.struct.lance
+
+  struct-inner:
+    - match: ({{ident}})\s*(:)
+      captures:
+        1: variable.other.member.lance
+        2: punctuation.separator.lance
+      push:
+        - include: type
+        - match: (,)
+          scope: punctuation.separator.lance
+          pop: true
+        - match: \{
+          push:
+            - include: type
+            - match: \}
+              pop: true
+        - match: (?=\})
+          pop: true
+    - match: \}
+      scope: punctuation.section.end.lance
+      pop: true
+
+  enum-declaration:
+    - match: \b(enum)\b\s+({{ident}})\s*(\{)
+      captures:
+        1: storage.type.lance
+        2: entity.name.enum.lance
+        3: punctuation.section.begin.lance
+      push:
+        - meta_scope: meta.enum.lance
+        - include: type
+        - match: ({{ident}})\s*(\{)
+          captures:
+            1: support.type.storage.lance
+            2: punctuation.section.begin.lance
+          push:
+            - include: struct-inner
+        - match: \}
+          scope: punctuation.section.end.lance
+          pop: true
+    - match: \b(enum)\b\s+({{ident}})
+      captures:
+        1: storage.type.lance
+        2: entity.name.enum.lance
+
+  function-declaration:
+    - match: \b(fn)\b\s+\b(priv\s+)?\b({{ident}})\s*(\()
+      captures:
+        1: storage.type.lance
+        2: keyword.lance
+        3: entity.name.function.lance
+        4: punctuation.section.parameters.begin.lance
+      push:
+        - meta_scope: meta.struct.lance
+        - match: ({{ident}})\s*(:)
+          captures:
+            1: variable.parameter.lance
+            2: punctuation.separator.lance
+          push:
+            - include: type
+            - match: (,)
+              scope: punctuation.separator.lance
+              pop: true
+            - match: (?=\))
+              pop: true
+        - match: (\))\s*(:?)
+          captures:
+            1: punctuation.section.parameters.end.lance
+            2: punctuation.separator.lance
+          set:
+            - include: type
+            - match: \{
+              scope: punctuation.section.block.begin.lance
+              set:
+                - meta_scope: meta.block.lance
+                - include: statements
+                - match: \}
+                  scope: punctuation.section.block.end.lance
+                  pop: true
+
+
+  ends-with-semicolon:
+    - match: (;|\s*\n)
+      scope: punctuation.terminator.lance
+      pop: true
+
+  type:
+    - match: \b(fn|str|num|bool|void|io)\b
+      scope: support.class.lance
+
+  brace-statements:
+    - match: \{
+      scope: punctuation.section.block.begin.lance
+      push:
+        - meta_scope: meta.block.lance
+        - include: statements
+        - match: \}
+          scope: punctuation.section.block.end.lance
+          pop: true
+
+  statements:
+    - include: brace-statements
+    - match: \b(if|else|while|loop|do|return|switch|case|continue|break|label|goto)\b
+      scope: keyword.control.lance
+    - match: \b(do)\b
+      scope: keyword.other.lance
+    - include: expression
+    - match: \b(let)\b\s+({{ident}})\s*(:)
+      captures:
+        1: storage.type.lance
+        3: punctuation.separator.lance
+      push:
+        - include: type
+        - include: expression
+        - include: ends-with-semicolon
+
+    - match: \b(set|let)\b\s+(?:(self)\.)?({{ident}})
+      captures:
+        1: storage.type.lance
+        2: variable.language.lance
+      push:
+        - include: expression
+        - include: ends-with-semicolon
+
+  expression:
+    - include: literals
+    - match: \b(itoa|atoi|kindof|length|insert|delete|substr|print|prompt|quit|random|dump|\w+(?=\s*\())\b
+      scope: support.function.builtin.lance
+    - match: '::'
+    - match: '=>|[<>=!]=?|[-+*/%^?]|[&|]{2}|(?<!\w):'
+      scope: keyword.operator.lance
+
+  literals:
+    - match: \b(true|false|null)\b
+      scope: constant.language.lance
+    - match: \b(self)\b
+      scope: variable.language.lance
+    - match: \b(\d+)\b
+      scope: constant.numeric.value.lance
+    - include: strings
+
+  strings:
+    - match: \"
+      scope: punctuation.definition.string.begin.lance
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.lance
+        - meta_scope: string.quoted.double.lance
+        - match: \\([ntrf\'"]|x[a-fA-F0-9]{2})
+          scope: constant.character.escape.lance
+        - match: \\.
+          scope: invalid.character.escape.lance
+        - match: \"
+          scope: punctuation.definition.string.end.lance
+          pop: true
+    - match: \'
+      scope: punctuation.definition.string.begin.lance
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.lance
+        - meta_scope: string.quoted.double.lance
+        - match: \\[\']
+          scope: constant.character.escape.lance
+        - match: \'
+          scope: punctuation.definition.string.end.lance
+          pop: true

@@ -1,0 +1,15 @@
+<snippet>
+	<content><![CDATA[
+require 'benchmark'
+
+TESTS = ${1:1_000_000}
+Benchmark.bmbm do |r|
+	r.report('${2:what}') { TESTS.times { $3 } }
+	$0
+end
+]]></content>
+	<!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+	<tabTrigger>bm</tabTrigger>
+	<!-- Optional: Set a scope to limit where the snippet will trigger -->
+	<scope>source.ruby</scope>
+</snippet>

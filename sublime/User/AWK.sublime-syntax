@@ -1,0 +1,77 @@
+%YAML 1.2
+---
+name: AWK
+file_extensions: [awk]
+scope: source.awk
+
+variables:
+  ident: (?:(\b|\$)[a-zA-Z_][\w_]*\b)
+
+contexts:
+  prototype:
+    - include: comment
+
+  comment:
+    - match: '#.*\n'
+      scope: comment.line.awk
+
+  main:
+    - match: '\$\d+\b|\b(ARG[CV]|CONVFMT|ENVIRON|FILENAME|FNR|O?[FR]S|NF|NR|OFMT|RLENGTH|RSTART|SUBSEP)\b'
+      scope: variable.language.omega
+    - match: '\b(if|else|while|in|do|for|break|return|continue|delete|printf?|next|nextline|getline|exit|BEGIN|END)\b'
+      scope: keyword.langauge.awk
+    - match: \b(function)\s+([a-zA-Z_]\w*)\s*\(
+      captures:
+        1: keyword.declaration.function.type.awk
+        2: entity.name.function.awk
+      push:
+        - match: \)
+          pop: true
+        - match: '{{ident}}'
+          scope: variable.parameter.awk  
+    - match: \b\d+\b
+      scope: constant.numeric.value.awk
+    - match: /(?!\s)
+      push: 
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.single.awk
+        - match: \\.
+          scope: constant.character.escape.awk
+        - match: "/"
+          pop: true
+    - match: '"'
+      push: 
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.double.awk
+        - match: \\.
+          scope: constant.character.escape.awk
+        - match: '"'
+          pop: true
+    - match: \b(atan2|cos|sin|exp|log|sqrt|int|rand|srand)\b
+      scope: support.function.builtin.math.awk
+    - match: \b(g?sub|index|length|match|split|sprintf|substr|to(lower|upper))\b
+      scope: support.function.builtin.string.awk
+    - match: \b(close|fflush|system)\b
+      scope: support.function.builtin.io.awk
+    - match: \b(\w+)(?=\()\b
+      scope: support.function.user.awk
+#   main:
+#     - match: \b(good|evil|chaos_emerald)\b
+#       scope: constant.language.value.awk
+#     - match: \b(hmmm|ormaybe|loopdeloop|jump|carryon|nopeseeya|friend|eachring|start|finish)\b
+#       scope: keyword.awk
+#     - match: \b(dr_eggman|hedgehog)\b
+#       scope: storage.type.awk
+#     - match: \b(to_ring|sotellme|gottago(fast)?|chaos|shoe_size|falloffthetrack|amy|buhbyenow|hereitgoes|species|imwaiting)\b
+#       scope: support.function.builtin.awk
+
+
+    - match: '\+\+|\-\-|=?~|[-+*/%<>=!^]=?|[:?]|&&|\|\|'
+      scope: keyword.operator.awk
+# #   # keyword:
+# #   #   - match: b(<<|>>|&|\^|\|)|\*\*|[+*/%]|[<>!=]?=|\&\&|\|\||<>|<([-+*/%&|^<>?]|\*\*)?-|-([-+*/%&|^<>?]|\*\*)?>|-|<|>
+# #   #     scope: keyword.operator.awk
+# #   #   - match: \$[a-zA-Z_]\w*\b
+# #   #     scope: support.function.builtin.awk
+# #   #   - match: \b(for|if|rm|om|disp|skip|func|class|abort|input|whilst|return|escape)\b
+# #   #     scope: keyword.language.awk

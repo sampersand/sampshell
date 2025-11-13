@@ -1,0 +1,7 @@
+<snippet>
+	<content><![CDATA[
+use std::hash::{Hash, Hasher};
+]]></content>
+	<tabTrigger>usehash</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

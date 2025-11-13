@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl From<$1> for $2 {
+	fn from(${3:inp}: $1) -> Self {
+		${0:Self($3)}
+	}
+}
+]]></content>
+	<tabTrigger>implfrom</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

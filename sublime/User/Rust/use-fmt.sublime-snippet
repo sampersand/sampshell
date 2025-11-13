@@ -1,0 +1,7 @@
+<snippet>
+	<content><![CDATA[
+use std::fmt::{self, ${2:Debug, }${1:Display, }Formatter};
+]]></content>
+	<tabTrigger>usefmt</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

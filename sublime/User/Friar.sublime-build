@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/code/friar/c/main", "-f", "$file"],
+	"selector": "*.friar"
+}

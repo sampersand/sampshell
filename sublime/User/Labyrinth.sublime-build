@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/code/labyrinth/zig-out/bin/labyrinth", "$file"],
+	"selector": "*.labyrinth"
+}

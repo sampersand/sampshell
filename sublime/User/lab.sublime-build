@@ -1,0 +1,3 @@
+{
+	"shell_cmd": "/Users/sampersand/code/labyrinth/zig-out/bin/knight $file"
+}

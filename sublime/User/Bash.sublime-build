@@ -1,0 +1,8 @@
+// {
+// 	"cmd": ["/bin/bash", "$file"],
+// 	"selector": "*.bash"
+// }
+
+{
+	"shell_cmd": "/bin/bash $file"
+}

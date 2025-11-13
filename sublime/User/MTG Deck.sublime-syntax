@@ -1,0 +1,89 @@
+%YAML 1.2
+---
+name: MTG Decks
+file_extensions: [deck]
+scope: source.mtg
+
+# variables:
+#   ident: (?:(\b|\$)[a-zA-Z_][\w_]*\b)
+
+contexts:
+  # prototype:
+  #   - include: comment
+  #   - match: (?<!:|^|\s|\()[({]
+  #     scope: invalid
+  # comment:
+  #   - match: \#.*\n
+  #     scope: comment.line.mtg
+
+  main:
+    - match: ^\d+[xX]?\b
+      scope: constant.numeric.mtg
+    - match: \([^)]*\)
+      scope: support.function.builtin.mtg
+    - match: \*[^*]+\*
+      scope: variable.language.mtg
+    - match: //.*
+      scope: comment.line.mtg
+    - match: ^#.*
+      scope: string.category.mtg
+    - match: (?i)(?<!^)#(maybe|cut|acquire)\b
+      scope: keyword.category.mtg
+    - match: (?<!^)(#)([\w-]+)
+      captures:
+        1: string.category.mtg
+        2: string.category.mtg
+  #   - match: (class)\s*:\s*({{ident}})
+  #     captures:
+  #       1: storage.type.class.mtg
+  #       2: entity.name.class.mtg
+  #   - match: (func)\s*:\s*({{ident}})\s*:\(
+  #     captures:
+  #       1: storage.type.function.mtg
+  #       2: entity.name.function.mtg
+  #     push:
+  #       - match: '{{ident}}'
+  #         scope: variable.parameter.mtg
+  #       - match: \)
+  #         pop: true
+  #   - include: constants
+  #   - include: keyword
+
+  # constants:
+  #   - match: \$this
+  #     scope: variable.language.mtg
+  #   - match: \b([tT]rue|[fF]alse|[nN](ull|il|one))\b
+  #     scope: constant.language.value.mtg
+  #   - match: \b\d+\b
+  #     scope: constant.numeric.value.mtg
+  #   - match: \b(?:0[dD])?((?:0[bBoOxXdD])?\d+)[nN]?\b
+  #     scope: constant.numeric.integer.mtg
+  #   - match: \b(\d*\.?\d+(?:[eE][nNpP]?\d+)?)[fF]?\b
+  #     scope: constant.numeric.float.mtg
+  #   - match: \b(\d*\.?\d+(?:[eE][nNpP]?\d+)?[iIjJ])\b
+  #     scope: constant.numeric.complex.mtg
+  #   - include: strings
+  #   - match: "'"
+  #     push: 
+  #       - meta_include_prototype: false
+  #       - meta_scope: string.quoted.single.mtg
+  #       - match: \\.
+  #         scope: constant.character.escape.mtg
+  #       - match: "'"
+  #         pop: true
+  #   - match: '"'
+  #     push: 
+  #       - meta_include_prototype: false
+  #       - meta_scope: string.quoted.double.mtg
+  #       - match: \\.
+  #         scope: constant.character.escape.mtg
+  #       - match: '"'
+  #         pop: true
+
+  # keyword:
+  #   - match: b(<<|>>|&|\^|\|)|\*\*|[+*/%]|[<>!=]?=|\&\&|\|\||<>|<([-+*/%&|^<>?]|\*\*)?-|-([-+*/%&|^<>?]|\*\*)?>|-|<|>
+  #     scope: keyword.operator.mtg
+  #   - match: \$[a-zA-Z_]\w*\b
+  #     scope: support.function.builtin.mtg
+  #   - match: \b(for|if|rm|om|disp|skip|func|class|abort|input|whilst|return|escape)\b
+  #     scope: keyword.language.mtg

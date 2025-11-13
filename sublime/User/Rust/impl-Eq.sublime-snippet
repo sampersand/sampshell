@@ -1,0 +1,7 @@
+<snippet>
+	<content><![CDATA[
+impl Eq for $1 {}
+]]></content>
+	<tabTrigger>impleq</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

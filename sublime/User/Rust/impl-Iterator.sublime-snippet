@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+impl Iterator for $1 {
+	type Item = $2;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		${0:self.0.next()}
+	}
+}
+]]></content>
+	<tabTrigger>impliter</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

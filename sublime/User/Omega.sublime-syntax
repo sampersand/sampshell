@@ -1,0 +1,73 @@
+%YAML 1.2
+---
+name: Omega
+file_extensions: [om]
+scope: source.omega
+
+variables:
+  ident: (?:(\b|\$)[a-zA-Z_][\w_]*\b)
+
+contexts:
+  prototype:
+    - include: comment
+    - match: (?<!:|^|\s|\()[({]
+      scope: invalid
+  comment:
+    - match: \#.*\n
+      scope: comment.line.omega
+
+  main:
+    - match: (class)\s*:\s*({{ident}})
+      captures:
+        1: storage.type.class.omega
+        2: entity.name.class.omega
+    - match: (func)\s*:\s*({{ident}})\s*:\(
+      captures:
+        1: storage.type.function.omega
+        2: entity.name.function.omega
+      push:
+        - match: '{{ident}}'
+          scope: variable.parameter.omega
+        - match: \)
+          pop: true
+    - include: constants
+    - include: keyword
+
+  constants:
+    - match: \$this
+      scope: variable.language.omega
+    - match: \b([tT]rue|[fF]alse|[nN](ull|il|one))\b
+      scope: constant.language.value.omega
+    - match: \b\d+\b
+      scope: constant.numeric.value.omega
+    - match: \b(?:0[dD])?((?:0[bBoOxXdD])?\d+)[nN]?\b
+      scope: constant.numeric.integer.omega
+    - match: \b(\d*\.?\d+(?:[eE][nNpP]?\d+)?)[fF]?\b
+      scope: constant.numeric.float.omega
+    - match: \b(\d*\.?\d+(?:[eE][nNpP]?\d+)?[iIjJ])\b
+      scope: constant.numeric.complex.omega
+    - include: strings
+    - match: "'"
+      push: 
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.single.omega
+        - match: \\.
+          scope: constant.character.escape.omega
+        - match: "'"
+          pop: true
+    - match: '"'
+      push: 
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.double.omega
+        - match: \\.
+          scope: constant.character.escape.omega
+        - match: '"'
+          pop: true
+
+  keyword:
+    - match: b(<<|>>|&|\^|\|)|\*\*|[+*/%]|[<>!=]?=|\&\&|\|\||<>|<([-+*/%&|^<>?]|\*\*)?-|-([-+*/%&|^<>?]|\*\*)?>|-|<|>
+      scope: keyword.operator.omega
+    - match: \$[a-zA-Z_]\w*\b
+      scope: support.function.builtin.omega
+    - match: \b(for|if|rm|om|disp|skip|func|class|abort|input|whilst|return|escape)\b
+      scope: keyword.language.omega

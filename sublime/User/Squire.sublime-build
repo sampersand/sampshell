@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/code/squire/squire", "-f", "$file"],
+	"selector": "*.sq"
+}

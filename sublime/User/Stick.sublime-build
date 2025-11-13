@@ -1,0 +1,4 @@
+{
+	"shell_cmd": "/Users/sampersand/code/stick/stick -f $file",
+	"selector": "*.sk"
+}

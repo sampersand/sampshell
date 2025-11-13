@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/code/quest/target/debug/quest-bin", "-f", "$file"],
+	"selector": "*.qs"
+}

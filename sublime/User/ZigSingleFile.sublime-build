@@ -1,0 +1,4 @@
+{
+	"cmd": ["/Users/sampersand/code/compiled-langs/zig/zig", "run", "$file"],
+	"selector": "*.zig"
+}

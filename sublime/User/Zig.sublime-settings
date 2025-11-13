@@ -1,0 +1,8 @@
+// Settings in here override those in "Zig Language/Settings/Zig.sublime-settings",
+
+{
+	"zig.executable": "/Users/sampersand/code/compiled-langs/zig/zig",
+	// "zig.quiet": true,
+	"tab_size": 4,
+	"translate_tabs_to_spaces": true
+}

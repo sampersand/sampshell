@@ -1,0 +1,8 @@
+<snippet>
+	<content><![CDATA[
+assert_send_type  '($3) -> $4',
+                  $1, :$2$5
+]]></content>
+	<tabTrigger>ast</tabTrigger>
+	<scope>source.ruby</scope>
+</snippet>

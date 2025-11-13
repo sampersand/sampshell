@@ -1,0 +1,31 @@
+{
+	"bootstrapped": true,
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"ARM Assembly",
+		"Awk",
+		"Brainfuck",
+		"Golang Build",
+		"Kotlin",
+		"LLVM",
+		"LSP",
+		"LSP-clangd",
+		"LSP-file-watcher-chokidar",
+		"LSP-gopls",
+		"LSP-rust-analyzer",
+		"Man Page Support",
+		"Mandoc",
+		"Package Control",
+		"RBS",
+		"Rust Enhanced",
+		"RustFmt",
+		"RustFormat",
+		"TOML",
+		"x86 and x86_64 Assembly",
+		"Zig Language",
+		"ZSH",
+	],
+}

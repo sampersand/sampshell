@@ -1,0 +1,29 @@
+// Documentation at https://www.sublimetext.com/docs/color_schemes.html
+{
+	"variables":
+	{
+	},
+	"globals":
+	{
+	},
+	"rules":
+	[
+		{
+			"name": "Labyrinth Control Flow",
+			"scope": "control-flow.labyrinth",
+			"foreground": "var(yellow3)"
+		},	
+		{
+			"name": "Labyrinth Stack Fn",
+			"scope": "support.function.builtin.stack.labyrinth",
+			"foreground": "orange"
+			// "foreground": "#bfbcac"
+		},	
+		{
+			"name": "Labyrinth Math",
+			"scope": "keyword.math.labyrinth",
+			"foreground": "orange"
+			// "foreground": "#bfbcac"
+		},	
+	]
+}

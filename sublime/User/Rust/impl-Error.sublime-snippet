@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl std::error::Error for $1 {
+	${2:fn cause(&self) -> Option<&(dyn std::error::Error)> {
+		$3
+	}}
+}
+]]></content>
+	<tabTrigger>implerror</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

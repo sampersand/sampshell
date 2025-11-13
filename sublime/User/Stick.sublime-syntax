@@ -1,0 +1,62 @@
+%YAML 1.2
+---
+name: Stick
+file_extensions: [sk]
+scope: source.stick
+
+contexts:
+  prototype:
+    - include: comment
+
+  comment:
+    - match: (?<=\s|^)\((?=\s|$)
+      push: 
+        - meta_scope: comment.line.stick
+        - include: comment
+        - match: (?<=\s|^)\)(?=\s|$)
+          pop: true
+
+  main:
+    - match: \)
+      scope: invalid
+    - match: (?<=\s|^)[-+]?\d+(?=\s|$)
+      scope: constant.numeric.value.stick
+    - match: \b'[a-z_][a-z_0-9]*'\b
+    - match: (?<=\s|^)\"
+      push:
+        - meta_scope: string.quoted.double.stick
+        - match: \\(x..|.)
+          scope: constant.character.escape.stick
+        - match: \"(?=\s|$)
+          pop: true
+    - match: (?<=\s|^)([-+*/%^?<>=&|!`.x≤≥≠~]|cmp|<=>|[lg][te]|ne|eq)(?=\s|$)
+      scope: keyword.stick
+    - match: ^(:\S+)
+      scope: entity.name.other.value.stick
+      push:
+        - match: \$
+          set:
+            - match: :\S+
+              scope: variable.parameter.stick
+            - match: (?=[^\s:])
+              pop: true
+        - match: (?=[^\s$])
+          pop: true
+    - match: (?<=\s|^):\S+(?=\s|^)
+      scope: constant.other.value.stick
+    - match: (?<=\s|^)(true|false)(?=\s|^)
+      scope: constant.language.value.stick
+    - match: (?<=\s|^)(def[bl]?|alias)(?=\s|$)
+      scope: source.ruby keyword.declaration.function.sk
+    - match: (?<=\s|^)((un)?def|def\?|ifl?|import|switchl?|default|bind|kindof|while|quit|ret|throw|a2b|b2a|call|\|\||\&\&)(?=\s|$)
+      scope: keyword.other.stick
+    - match: (?x)(?<=\s|^)(
+        chr|rand|
+        substr|strlen|ord|
+        \[\]|get|set|len|
+        fetch|var|
+        (un)?wrap|call|
+        dup[n234b]?|pop[n234b]?|dbg[ab]|a2b|b2a|stacklen|swap|rot[45n]?\*?|
+        warn|print(ln)?|getline|system|read-file|
+        )(?=\s|$)
+      scope: support.function.builtin.stick

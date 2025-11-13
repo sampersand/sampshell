@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl DerefMut for $1 {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		${0:&mut self.0}
+	}
+}
+]]></content>
+	<tabTrigger>implderefmut</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+class ${1}SingletonTest < Test::Unit::TestCase
+  include TypeAssertions
+
+  testing 'singleton(::$1)'
+
+  $0
+end
+]]></content>
+	<tabTrigger>rbstestsingle</tabTrigger>
+	<scope>source.ruby</scope>
+</snippet>

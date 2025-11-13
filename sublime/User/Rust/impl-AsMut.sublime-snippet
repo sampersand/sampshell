@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl AsMut<$1> for $2 {
+	fn as_mut(&mut self) -> &mut $1 {
+		${0:&mut self.0}
+	}
+}
+]]></content>
+	<tabTrigger>implasmut</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

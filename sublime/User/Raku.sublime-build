@@ -1,0 +1,4 @@
+{
+	"cmd": ["raku", "$file"],
+	"selector": "*.raku(mod)?"
+}

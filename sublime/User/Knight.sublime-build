@@ -1,0 +1,6 @@
+{
+	// "cmd": ["/Users/sampersand/bin/knight", "-f", "$file"],
+	"cmd": ["/Users/sampersand/code/knight/rust/target/debug/knight", "-f", "$file"],
+	// "cmd": ["/Users/sampersand/code/knight/go/go", "-f", "$file"],
+	"selector": "*.kn"
+}

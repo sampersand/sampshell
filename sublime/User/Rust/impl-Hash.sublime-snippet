@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl Hash for $1 {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		${0:self.0.hash(state)}
+	}
+}
+]]></content>
+	<tabTrigger>implhash</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

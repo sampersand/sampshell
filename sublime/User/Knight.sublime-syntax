@@ -1,0 +1,43 @@
+%YAML 1.2
+---
+name: Knight
+file_extensions: [kn]
+scope: source.knight
+
+variables:
+  ident: '(?:[a-z_][a-z_0-9]*)'
+contexts:
+  prototype:
+    - match: \#.*\n
+      scope: comment.line.knight
+
+  main:
+    - match: '(=)\s*({{ident}})\s*(B[A-Z_]*)'
+      captures:
+        1: keyword.operator.assignment.knight
+        2: entity.name.function.knight
+        3: storage.type.function.knight.
+    - match: '(C[A-Z_]*)\s*({{ident}})'
+      captures:
+        1: keyword.operator.fncall.knight
+        2: variable.function.knight
+    - match: \d+
+      scope: constant.numeric.value.knight
+    - match: '[TFN][A-Z_]*|@'
+      scope: constant.language.knight
+    - match: '{{ident}}'
+      scope: variable.user.knight
+    - match: '[A-Z_]+|[-+*/%^?<>=&|!~@\[\],]'
+      scope: keyword.knight
+    - match: \'
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.single.knight
+        - match: \'
+          pop: true
+    - match: \"
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.double.knight
+        - match: \"
+          pop: true

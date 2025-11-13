@@ -1,0 +1,29 @@
+%YAML 1.2
+---
+name: EBNF
+file_extensions: [ebnf]
+scope: source.ebnf
+
+contexts:
+  prototype:
+    - include: comment
+
+  comment:
+    - match: \(\*
+      push: 
+        - meta_scope: comment.line.ebnf
+        - include: comment
+        - match: \*\)
+          pop: true
+
+  main:
+    - match: ^([\w-]+)
+      scope: entity.name.definition.ebnf
+    - match: ';|:=|\||\+\+'
+      scope: keyword.ebnf
+    - match: "'\\S+'"
+      scope: string.quoted.single.ebnf
+    - match: '"\S+"'
+      scope: string.quoted.double.ebnf
+    - match: '\b[A-Z_0-9]+\b'
+      scope: constant.other.stick

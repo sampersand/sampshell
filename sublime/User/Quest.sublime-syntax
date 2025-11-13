@@ -1,0 +1,210 @@
+%YAML 1.2
+---
+name: Quest
+file_extensions: [qs]
+scope: source.quest
+variables:
+  identifier: '(?:(?:@|\b)[A-Za-z_]\w*(?:\?|\b))'
+  classname: '(?:\b[A-Z](?=\w*[a-z])\w+\b)'
+  constant: '(?:\b[A-Z][A-Z0-9_]+\b)'
+  simple_string: (?:'[^']*'|"[^"]*")
+
+contexts:
+  prototype:
+    - match: '##__EOF__##'
+      push:
+        - match: '.'
+    - match: (\#)(.*)
+      captures:
+        1: punctuation.definition.comment.quest comment.line.quest
+        2: comment.line.quest
+    - match: /\*
+      scope: punctuation.definition.comment.quest
+      push:
+        - meta_scope: comment.block.quest
+        - match: \*/
+          pop: true
+
+  main:
+    - include: declarations
+    - include: literals
+    - include: keywords
+    - include: identifier
+
+  declarations:
+    - match: ({{identifier}}|{{simple_string}})\s*(=)\s*({{identifier}})\s*(->)
+      captures:
+        1: entity.name.function.quest
+        2: keyword.operator.assignment.quest
+        3: variable.parameter.quest
+        4: keyword.declaration.function.quest
+
+    - match: ({{identifier}}|{{simple_string}})\s*(=)\s*(\()
+      captures:
+        1: entity.name.function.quest
+        2: keyword.operator.assignment.quest
+        3: punctuation.definition.group.begin.quest
+      push:
+        - match: '{{identifier}}'
+          scope: variable.parameter.quest
+        - match: (\))\s*(->)
+          captures:
+            1: punctuation.definition.group.end.quest
+            2: keyword.declaration.function.quest
+          pop: true
+
+    - match: ({{classname}})\s*(=)\s*(object)
+      captures:
+        1: entity.name.class.quest
+        2: keyword.operator.assignment.quest
+        3: keyword.declaration.class.quest
+
+    - match: ({{identifier}})\s*(->)
+      captures:
+        1: variable.parameter.quest
+        2: keyword.declaration.function.quest
+
+    - match: (\()(?=[\w\s,]*\s*\)\s*->) # todo, branch
+      captures:
+        1: punctuation.definition.group.begin.quest
+      push:
+        - match: '{{identifier}}'
+          scope: variable.parameter.quest
+        - match: (\))\s*(->)
+          captures:
+            1: punctuation.definition.group.end.quest
+            2: keyword.declaration.function.quest
+          pop: true
+
+  keywords:
+    # builtin ops
+    - match: \$+(syntax\b|[!|])
+      scope: keyword.control.quest
+    # builtin ops
+    - match: \${{identifier}}\b
+      scope: variable.language.quest
+    - match: |
+        (?x) :(
+          token|text|int(eger)?|float|num(ber)|ident(ifier)?|stackframe|symbol|
+          literal|tt|group|block|list
+        )\b
+      scope: storage.type.language.quest
+
+    - match: '(?![.,;])(?!::)[-~!@$%^&*=+|\\:,<.>`/?∀∈]+'
+      scope: keyword.quest
+    - match: '[&|~]|<<|>>'
+      scope: keyword.operator.bitwise.quest
+    - match: '<=>|[<>!=]?=|[<>!]|\|\||\&\&'
+      scope: keyword.operator.logical.quest
+    - match: '([-+*/%]|<<|>>|\*\*)?=|\-\>'
+      scope: keyword.operator.assignment.quest
+    - match: '[-+*/%]|\*\*'
+      scope: keyword.operator.arithmetic.quest
+    # punctuation
+    - match: ;
+      scope: punctuation.terminator.statement.quest
+    - match: ','
+      scope: punctuation.terminator.sequence.quest
+    - match: '\.\??'
+      scope: punctuation.accessor.dot.quest
+    - match: '::'
+      scope: punctuation.accessor.coloncolon.quest
+    # user-defined ops
+    - match: '(?!@\w)[-~!@$%^&*=+|\\;:,<.>/?]+'
+      scope: keyword.operator.other.quest
+
+    - match: \b(ifl?|unlessl?|while|until|loop|assert|return)\b
+      scope: keyword.control.quest
+
+  identifier:
+    - match: (?x)\b(
+        Io|Tcp|Basic|Boolean|BoundFunction|Function|RustClosure|
+        Kernel|List|Null|Number|Pristine|RustFn|Scope|Text|Regex|
+        Comparable|Iterable|Iter|StopIteration)\b
+      scope: support.class.quest
+    - match: (?x)\b(
+        object|print(ln)?|quit|abort|system|rand|prompt|sleep|open|
+        each|tap(_into)?|and|then|and_then|or|else|or_else|
+        clone|extend|inherit|becomes|itself|__(keys|id)__
+             )\b
+      scope: support.function.builtin.quest
+    - match: \@(text|num|str|regexp|list)
+      scope: support.function.builtin.quest
+    - match: '{{constant}}'
+      scope: constant.other.quest
+    - match: '{{classname}}'
+      scope: support.class.quest
+    - match: '{{identifier}}'
+      scope: variable.other.quest
+
+  literals:
+    - match: \b(true|false|null)\b
+      scope: constant.language.quest
+    - match: \b(self|__(stack|parents|args)__)\b
+      scope: variable.language.quest
+    - match: (:-?|_)\d+
+      scope: variable.language.quest
+
+    - match: (\b|[-+])\d[\d_]*\.[\d_]+\b
+      scope: constant.numeric.float.quest
+    - match: (\b|[-+])\d[\d_]*(\.[\d_]+)?[eE][-+]?[\d_]+\b
+      scope: constant.numeric.float.quest
+
+    - match: (\b|[-])\d[\d_]*\b
+      scope: constant.numeric.integer.decimal.quest
+    - match: (\b|[-+])0[dD][\d_]+\b
+      scope: constant.numeric.integer.decimal.quest
+    - match: (\b|[-+])0[bB][01_]+\b
+      scope: constant.numeric.integer.binary.quest
+    - match: (\b|[-+])0[oO][0-7_]+\b
+      scope: constant.numeric.integer.octal.quest
+    - match: (\b|[-+])0[xX][\da-fA-F_]+\b
+      scope: constant.numeric.integer.hexadecimal.quest
+    - include: strings
+
+  strings:
+    - match: /(?!\s)
+      scope: punctuation.definition.string.begin.quest string.quoted.single.quest 
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.quest
+        - match: /
+          scope: punctuation.definition.string.end.quest string.quoted.single.quest 
+          pop: true
+        - match: \\[\\'"]
+          scope: constant.character.escape.quest
+        - match: '.'
+          scope: string.quoted.single.quest 
+
+    - match: \'
+      scope: punctuation.definition.string.begin.quest string.quoted.single.quest 
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.quest
+        - match: \'
+          scope: punctuation.definition.string.end.quest string.quoted.single.quest 
+          pop: true
+        - match: \\[\\'"]
+          scope: constant.character.escape.quest
+        - match: '.'
+          scope: string.quoted.single.quest 
+
+    - match: \"
+      scope: punctuation.definition.string.begin.quest string.quoted.double.quest 
+      push:
+        - meta_include_prototype: false
+        - meta_scope: meta.string.quest
+        - match: \"
+          scope: punctuation.definition.string.end.quest string.quoted.double.quest 
+          pop: true
+        - match: \\([nrtf0{}'"\\]|x\h{,2}|u\h{,4})
+          scope: constant.character.escape.quest
+        - match: \{
+          scope: punctuation.section.interpolation.begin.quest
+          embed: scope:source.quest
+          embed_scope: meta.embedded.quest
+          escape: \}
+          escape_captures:
+            0: punctuation.section.interpolation.end.quest
+        - match: '.'
+          scope: string.quoted.double.quest 

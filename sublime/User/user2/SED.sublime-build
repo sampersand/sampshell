@@ -1,0 +1,4 @@
+{
+	"shell_cmd": "/usr/bin/sed -nf $file <<<ls",
+	"selector": "*.sed"
+}

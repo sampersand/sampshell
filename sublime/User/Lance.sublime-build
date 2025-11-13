@@ -1,0 +1,3 @@
+{
+	"shell_cmd": "/Users/sampersand/code/lance/compiler/lance -i $file -c/tmp/lance.out && /tmp/lance.out"
+}

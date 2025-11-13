@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl Drop for $1 {
+	fn drop(&mut self) {
+		$0
+	}
+}
+]]></content>
+	<tabTrigger>impldrop</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

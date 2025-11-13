@@ -1,0 +1,107 @@
+%YAML 1.2
+---
+name: CSH
+file_extensions: [csh, tcsh]
+scope: source.csh
+
+variables:
+  ident: '(?:[a-z_][a-z_0-9]*)'
+  var: '\${{ident}}'
+
+contexts:
+  prototype:
+    - match: \#.*\n
+      scope: comment.line.csh
+
+  main:
+    - match: '(alias)\s*({{ident}})\s*(.*)'
+      captures:
+        1: storage.type.function.csh
+        2: entity.name.function.csh
+        3: string.alias.csh
+    # - match: '(C[A-Z_]*)\s*({{ident}})'
+    #   captures:
+    #     1: keyword.operator.fncall.csh
+    #     2: variable.function.csh
+    - match: \d+
+      scope: constant.numeric.value.csh
+    - include: statements
+    # - match: '[TFN][A-Z_]*|@'
+    #   scope: constant.language.csh
+    - match: '(?x)(^\s*|`\s*)(@|(if|alias|break|breaksw|case|continue|default|echo|else|end|endif|endsw|exit|
+        foreach|goto|if|kill|nohup|onintr|rehash|repeat|set|setenv|shift|source|switch|time|unalias|
+        unset|unsetenv|wait|while|then)\b)'
+      scope: keyword.control.csh
+    - match: '\) then\s*\n'
+      scope: keyword.control.csh
+    - match: '(?x)^\s*(%|(bg|bindkey|cd|chdir|dirs|eval|exec|fg|glob|jobs|limit|login|logout|ls-F|
+        nice|pushd|popd|sched|stop|suspend|umask|unhash|unlimit))'
+      scope: support.function.csh
+    - match: '{{ident}}'
+      scope: variable.user.csh
+    # - match: '(C[A-Z_]*)\s*({{ident}})'
+    #   captures:
+    #     1: keyword.operator.fncall.csh
+    #     2: variable.function.csh
+
+    # - match: '[A-Z_]+|[-+*/%^?<>=&|!~@\[\],]'
+    #   scope: keyword.csh
+    - match: \'
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.single.csh
+        - match: \'
+          pop: true
+    - match: \"
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.double.csh
+        - match: \"
+          pop: true
+
+  statements:
+    - match: ^\s*(if)\s*(\()
+      captures:
+        1: keyword.conditional.control.if.csh
+        2: punctuation.section.parameters.begin.csh
+      push:
+        - include: math
+        - match: (\))\s+(then)
+          captures:
+            1: punctuation.section.parameters.begin.csh
+            2: keyword.conditional.control.then.csh
+          set:
+            - match: endif
+              scope: keyword.conditional.control.endif.csh
+              pop: true
+            - include: statements
+        - match: \)
+          scope: punctuation.section.parameters.begin.csh
+          set:
+            - match: '\n'
+              pop: true
+            - include: simple-command
+    - match: endif
+      scope: invalid.endif.csh
+    - include: simple-command
+  math:
+    - match: \d+
+      scope: constant.numeric.value.csh
+
+  simple-command:
+    - match: AB
+    - match: echo
+      scope: keyword.control.todo
+    - match: '(?x)(^\s*|`\s*)(@|(if|alias|break|breaksw|case|continue|default|echo|else|end|endif|endsw|exit|
+        foreach|goto|if|kill|nohup|onintr|rehash|repeat|set|setenv|shift|source|switch|time|unalias|
+        unset|unsetenv|wait|while|then)\b)'
+      scope: keyword.control.csh
+    - match: '\) then\s*\n'
+      scope: keyword.control.csh
+    - match: '(?x)^\s*(%|(bg|bindkey|cd|chdir|dirs|eval|exec|fg|glob|jobs|limit|login|logout|ls-F|
+        nice|pushd|popd|sched|stop|suspend|umask|unhash|unlimit))'
+      scope: support.function.csh
+    - match: '{{ident}}'
+      scope: variable.user.csh
+
+

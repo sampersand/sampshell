@@ -1,0 +1,257 @@
+%YAML 1.2
+---
+name: Qutie
+file_extensions:
+  - qt
+  - qutie
+first_line_match: ^#!\s*/.*\qutie\b
+scope: source.qutie
+
+variables:
+  digits: '(?:\d[\d_]*)'
+  identifier: '\b[[:alpha:]_][[:alnum:]_]*'
+  path: '({{identifier}}\s*\.\s*)*{{identifier}}'
+  l_paren: '[\[({]'
+  r_paren: '[\])}]'
+  # deliminated_variable: '{{identifier}}[?]?(?:\.{{identifier}})*'
+
+contexts:
+  main:
+    - include: statements
+
+  statements:
+    - include: expressions
+    # - match: \)
+    #   scope: invalid.illegal.stray.brace.round.qutie
+    # - match: \]
+    #   scope: invalid.illegal.stray.brace.square.qutie
+    # - match: \}
+    #   scope: invalid.illegal.stray.brace.curly.qutie
+
+  expressions:
+    - include: pre-commands
+    - include: comments
+    - include: symbols
+    - include: variables
+    - include: functions
+    - include: classes
+    - include: universe
+
+
+  pre-commands:
+    - match: (#)(\[)\s*
+      captures:
+        1: comment.keyword.operator.pre-command-begin
+        2: punctuation.section.pre-command.outer.qutie
+      push:
+        - match: '{{identifier}}'
+          scope: support.function.pre-command.qutie
+        - match: '\('
+          scope: punctuation.section.pre-command.inner.qutie
+          push: 
+            - include: pre-command-args
+        - match: '\]'
+          scope: punctuation.section.pre-command.outer.qutie
+          pop: true
+
+  pre-command-args:
+    - match: '\)'
+      scope: punctuation.section.pre-command.inner.qutie
+      pop: true
+    - match: '(?<=[( ]),(?=[,)])'
+      scope: keyword.seperator.pre-command.qutie
+    - match: '\*(Plugins|Operators|Builtins)'
+      scope: variable.parameter.pre-command.qutie
+    - include: symbols
+    - match: ','
+      scope: punctuation.separator.pre-command.qutie
+
+  comments:
+    - match: '//'
+      scope: punctuation.definition.comment.line.qutie
+      push:
+        - meta_scope: comment.line.qutie
+        - match: \n
+          pop: true
+
+  symbols: 
+    - include: numbers
+    - include: constants
+    - include: operators
+    - include: deliminators
+    - include: text
+
+  numbers:
+    # - match: \b(?i)0x[\h_]+
+    #   scope: constant.numeric.integer.hexadecimal.qutie
+    # - match: \b0[oO][0-7_]+
+    #   scope: constant.numeric.integer.octal.qutie
+    # - match: \b0[bB][01_]+
+    #   scope: constant.numeric.integer.binary.qutie
+    # - match: \b0[dD][\d_]+
+    #   scope: constant.numeric.integer.decimal.qutie
+    # - match: (?<!\.){{digits}}\.{{digits}}
+    #   scope: constant.numeric.float.qutie
+    - match: \b{{digits}}
+      scope: constant.numeric.integer.decimal.qutie
+
+  constants:
+    - match: \b(?:true|false)[?]?
+      scope: constant.language.boolean.qutie
+    - match: \b(?:nil|null|none)[?]?
+      scope: constant.language.null.qutie
+    - include: language-variables
+    - match: \b[A-Z][A-Z_0-9]*(?=\?|\b)
+      scope: constant.other.user.qutie
+    - match: \b_[A-Z_0-9]+(?=\?|\b)
+      scope: constant.other.user.qutie
+
+  builtins: 
+    - match: '\b(?:return|while|until|unless|for|switch|if)[?]?'
+      scope: keyword.control.qutie
+    - include: builtin-functions
+    - include: builtin-types
+  language-variables:
+    - match: __(?:self|args)\??
+      scope: variable.parameter
+    - match: \$(?![a-zA-Z_0-9])\??
+      scope: variable.language
+
+  builtin-functions:
+    - match: '\b(func)'
+      scope: keyword.control.qutie
+    - match: '\b(?<!\.)(?:(new_oper|literal|disp|stop|syscall|import)[?]?)\s*(?=@0?|{{l_paren}})'
+      scope: support.function.builtin.qutie
+    - match: '\b(?<!\.)(?:(new_oper|literal|disp|stop|syscall|import)(?:[?]|\b))'
+      scope: support.function.builtin.qutie
+
+
+  builtin-types:
+    - match: \b(number|text|boolean|universe|operator|object|symbol)
+      scope: support.type.qutie
+
+  assignments:
+    - match: '(?:[-+*/%&|^]|[<>*]{2})='
+      scope: invalid.future.keyword.operator.assignment.augmented.qutie
+    - match: '\.?=(?!=)'
+      scope: keyword.operator.assignment.qutie
+
+  operators:
+    - include: assignments
+    - match: '<<|>>|\*\*|&(?!&)|\|(?!\|)|\^'
+      scope: invalid.future.operator.qutie
+    - match: '[<>!=]=|[<>]|<=>'
+      scope: keyword.operator.comparison.qutie
+    - match: '[-+*/%]'
+      scope: keyword.operator.arithmetic.qutie
+    - match: '&&|\|\|'
+      scope: keyword.operator.logical.qutie
+    - match: \b(?:and|or)\b
+      scope: keyword.operator.user.likely.qutie
+    - match: '[:]'
+      scope: keyword.operator.user.likely.qutie
+    - match: '!|@|@0|\?'
+      scope: keyword.operator.deprecated.qutie
+
+  deliminators: # also a kind of operator
+    - match: ';'
+      scope: punctuation.terminator.qutie
+    - match: ','
+      scope: punctuation.separator.qutie
+    - match: '\.'
+      scope: punctuation.accessor.qutie
+
+  variables:
+    - include: function-calls
+    - include: builtins
+    - match: '({{identifier}}(\s*\.\s*{{identifier}})*)\s*(?=@0?|{{l_paren}})'
+      scope: variable.function.qutie
+    - match: '{{identifier}}'
+      scope: variable.qutie
+
+  text: 
+    - match: "'"
+      scope: punctuation.definition.string.begin.qutie
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.single.qutie
+        - match: "'"
+          scope: punctuation.definition.string.end.qutie
+          pop: true
+        - match: \\'|\\\\
+          scope: constant.character.escape.qutie
+
+    - match: '"'
+      scope: punctuation.definition.string.begin.qutie
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.quoted.double.qutie
+        - match: '"'
+          scope: punctuation.definition.string.end.qutie
+          pop: true
+        - include: escaped-char
+
+    - match: "`"
+      scope: punctuation.definition.string.begin.qutie
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.interpolated.qutie
+        - match: "`"
+          scope: punctuation.definition.string.end.qutie
+          pop: true
+        - include: escaped-char
+
+  escaped-char:
+    - match: '\\(?:[0-7]{1,3}|x[\da-fA-F]{1,2}|.)'
+      scope: constant.character.escape.qutie
+
+  universe:
+    - match: '{{l_paren}}'
+      scope: punctuation.section.unvierse.begin.qutie
+      push:
+        - include: expressions
+        - match: '{{r_paren}}'
+          scope: punctuation.section.unvierse.end.qutie
+          pop: true
+
+  functions:
+    # and here is where you define them
+    - include: function-calls
+
+  function-calls:
+    # - match: '({{identifier}}(?:\.{{identifier}})*)\s*(@0?)?(?={{l_paren}})'
+    - match: '(?<=[a-zA-Z_0-9_])\s*(@0?)?(?={{l_paren}})'
+      captures:
+        1: variable.function.qutie
+        2: keyword.operator.function-call.qutie
+      push:
+        - meta_scope: meta.function-call.qutie
+        - match: '{{l_paren}}'
+          scope: punctuation.section.arguments.begin.qutie
+          push:
+            - meta_content_scope: meta.function-call.arguments.qutie
+            - match: (?={{r_paren}})
+              pop: true
+            - include: function-call-arguments
+        - match: '{{r_paren}}'
+          scope: punctuation.section.arguments.end.qutie
+          pop: true
+  function-call-arguments:
+    - match: '({{identifier}})\s*(=)\s*'
+      captures:
+        1: variable.parameter.pre-command.qutie
+        2: keyword.operator.assignment
+      push:
+        - match: '(?=[,;])'
+          scope: punctuation.separator.arguments.qutie
+          pop: true
+        - include: expressions
+        - match: '(?={{r_paren}})'
+          pop: true
+    - include: expressions
+
+  classes:
+    - include: class-calls
+
+  class-calls:
+    - include: function-calls

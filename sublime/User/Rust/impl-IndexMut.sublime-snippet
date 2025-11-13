@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl std::ops::IndexMut<$1> for $2 {
+	fn index_mut(&mut self, idx: $1) -> &mut Self::Output {
+		${0:&mut self.0[idx]}
+	}
+}
+]]></content>
+	<tabTrigger>implindexmut</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

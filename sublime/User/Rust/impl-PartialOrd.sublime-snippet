@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl<$2> PartialOrd for $1<$2> {
+	fn partial_cmp(&self, rhs: &Self) -> Option<std::cmp::Ordering> {
+		${0:self.0.partial_cmp(&rhs.0)}
+	}
+}
+]]></content>
+	<tabTrigger>implpartialord</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

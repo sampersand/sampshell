@@ -1,0 +1,11 @@
+{
+	"extensions":
+	[
+		".zshprofile",
+		".zshprofile",
+		"rd",
+		"cls",
+	],
+	"rulers": [100,80],
+	"tab_size": 8,
+}

@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl Clone for $1 {
+	fn clone(&self) -> Self {
+		${0:Self(self.0)}
+	}
+}
+]]></content>
+	<tabTrigger>implclone</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

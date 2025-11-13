@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+impl Deref for $1 {
+	type Target = $2;
+
+	fn deref(&self) -> &Self::Target {
+		${0:&self.0}
+	}
+}
+]]></content>
+	<tabTrigger>implderef</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

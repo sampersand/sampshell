@@ -1,0 +1,13 @@
+<snippet>
+	<content><![CDATA[
+class ${1}InstanceTest < Test::Unit::TestCase
+  include TypeAssertions
+
+  testing '::$1'
+
+  $0
+end
+]]></content>
+	<tabTrigger>rbstestinstance</tabTrigger>
+	<scope>source.ruby</scope>
+</snippet>

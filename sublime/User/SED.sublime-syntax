@@ -1,0 +1,150 @@
+%YAML 1.2
+---
+name: sed
+file_extensions: [sed]
+scope: source.sed
+
+# variables:
+#   ident: '(?:[a-z_][a-z_0-9]*)'
+contexts:
+  prototype:
+    - match: \#.*$
+      scope: comment.line.sed
+
+  main:
+    - include: address
+    - include: functions
+
+  address:
+    - match: \d+
+      scope: constant.numeric.address.sed
+    - match: \$
+      scope: constant.other.end-of-program.sed
+    - match: /
+      scope: string.regexp.sed
+      push: [regexp]
+
+    - match: \\(.)(?:(?!\1).)*?\1
+      scope: string.regexp.sed
+
+  functions:
+    - match: ([aci]\\)(.*)(\n)
+      captures:
+        1: keyword.operator.sed
+        2: invalid.trailing.sed
+      push: [string-line]
+    - match: ([aci])
+      scope: keyword.operator.sed
+    - match: '[!dDgGhHlnNpPqx=]'
+      scope: keyword.operator.sed
+    - match: '([bt])\s*(.*)$'
+      captures:
+        1: keyword.operator.sed
+        2: variable.function.sed
+    - match: '(:)\s*(.*)$'
+      captures:
+        1: keyword.operator.sed
+        2: entity.name.branch.sed
+        # [label], if no label, end of script
+    - match: '[rw]' # file
+    - match: (s)(/)
+      captures:
+        1: keyword.operator.sed
+        2: string.regexp.sed
+      push: [regexp-replacement, regexp]
+    - match: (s)(#)
+      captures:
+        1: keyword.operator.sed
+        2: string.regexp.sed
+      push: [regexp-replacement_underscore, regexp_underscore]
+    - match: (y)(/)
+      captures:
+        1: keyword.operator.sed
+        2: string.regexp.sed
+      push: [regexp-replacement, regexp]
+
+  string-line:
+    - meta_include_prototype: false
+    - meta_scope: meta.string.singleline.sed
+    - meta_content_scope: string.unquoted.singleline.sed
+    - match: \n
+      pop: true
+  regexp-replacement:
+    - meta_content_scope: string.unquoted.singleline.sed
+    - meta_include_prototype: false
+    - match: /
+      scope: string.regexp.sed
+      pop: true
+    - match: '&'
+      scope: keyword.other.regexp.sed
+    - include: escapes
+  regexp-replacement_underscore:
+    - meta_content_scope: string.unquoted.singleline.sed
+    - meta_include_prototype: false
+    - match: \#
+      scope: string.regexp.sed
+      pop: true
+    - match: '&'
+      scope: keyword.other.regexp.sed
+    - include: escapes
+  regexp:
+    - meta_include_prototype: false
+    - meta_content_scope: string.unquoted.singleline.sed
+    - match: /
+      scope: string.regexp.sed
+      pop: true
+    - match: '[$^]'
+      scope: keyword.regexp.boundry.sed
+    - match: '[*+|?]'
+      scope: keyword.regexp.repeat.sed
+    - match: '\\[.|+*?()${}\[\]^]|\.'
+      scope: constant.other.anything.sed
+    - match: '\['
+      scope: constant.other.charclass.sed
+      push:
+        - meta_content_scope: constant.other.charclass.sed
+        - match: \[:\w+:\]
+        - match: \]
+          pop: true
+          scope: constant.other.charclass.sed
+        - match: \n
+          scope: invalid
+    - include: escapes
+    - match: \n
+      scope: invalid
+  regexp_underscore:
+    - meta_include_prototype: false
+    - meta_content_scope: string.unquoted.singleline.sed
+    - match: \#
+      scope: string.regexp.sed
+      pop: true
+    - include: escapes
+    - match: '[$^]'
+      scope: keyword.regexp.boundry.sed
+    - match: '[*+?]'
+      scope: keyword.regexp.repeat.sed
+    - match: '\\.'
+      scope: constant.other.anything.sed
+    - match: '\['
+      scope: constant.other.charclass.sed
+      push:
+        - meta_content_scope: constant.other.charclass.sed
+        - match: \[:\w+:\]
+        - match: \]
+          pop: true
+          scope: constant.other.charclass.sed
+        - match: \n
+          scope: invalid
+    - match: \n
+      scope: invalid
+  escapes:
+    - match: '\\[1-9]'
+      scope: keyword.other.regexp.sed
+    - match: \\x\h\h
+      scope: constant.other.escapes.sed
+    - match: \\[n&\\]
+      scope: constant.other.escapes.sed
+    - match: \\.|\.
+      scope: invalid
+    - match: '`(VARS|PS|NL|NXT|CUR|DFR|VSEP|CR|END_OF_INPUT|NYE|TMP|SEED)`'
+      scope: constant.other.mine.sed

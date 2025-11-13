@@ -1,0 +1,4 @@
+{
+	"cmd": ["zsh", "$file"],
+	"selector": "*.zsh"
+}

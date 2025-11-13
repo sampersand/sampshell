@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl<$2> Ord for $1<$2> {
+	fn cmp(&self, rhs: &Self) -> std::cmp::Ordering {
+		${0:self.0.cmp(&rhs.0)}
+	}
+}
+]]></content>
+	<tabTrigger>implord</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>

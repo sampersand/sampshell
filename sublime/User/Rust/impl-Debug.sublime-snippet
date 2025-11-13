@@ -1,0 +1,11 @@
+<snippet>
+	<content><![CDATA[
+impl Debug for $1 {
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+		${0:Debug::fmt(&self.0, f)}
+	}
+}
+]]></content>
+	<tabTrigger>impldebug</tabTrigger>
+	<scope>source.rust</scope>
+</snippet>
