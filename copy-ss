@@ -1,5 +1,19 @@
 #!/bin/zsh
 
+## Program to copy all of sampshell over to my sampinox USB
+
+if [[ $1 == -e ]] {
+	eject=1
+	shift
+} else {
+	eject=0
+}
+
+if [[ $# != 0 ]] {
+	print "usage: $0 [-e, to eject] " >&2
+	return 1
+}
+
 setopt ERR_RETURN
 
 readonly sampinox=/Volumes/Sampinox
@@ -19,11 +33,12 @@ mkdir $sampshell
 
 # Files not to copy
 for x in *(D); do
-	if [[ $x = .zsh_sessions ]] continue
-	if [[ $x = .cache ]] continue
 	if [[ $x = .git ]] continue
 	if [[ $x = *.ignore ]] continue
 	if [[ $x = old ]] continue
-
 	cp -r $x $sampshell
 done
+
+if [[ $eject ]] {
+	eject $sampinox
+}
