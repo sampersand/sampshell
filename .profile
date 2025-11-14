@@ -42,6 +42,34 @@ fi
 # Ensure `SampShell_ROOTDIR` is exported if it wasn't already.
 export SampShell_ROOTDIR
 
+
+################################################################################
+#                                                                              #
+#                   Ensure XDG Environment Variables Are Set                   #
+#                                                                              #
+################################################################################
+
+## Make sure the XDG environment variables are set to valid values, and export
+# them.
+
+SampShell_ensure_xdg_variable () {
+   eval "
+   case \${$1-} in
+   /*) ;; # already set
+   '') $1=\$2 ;;
+   *) printf >&2 '[WARN] \$$1 is a relative path (%s). using default: %s\n' \"\$$1\" \"\$2\"
+      $1=\$2 ;;
+   esac
+   export $1"
+}
+
+SampShell_ensure_xdg_variable XDG_DATA_HOME "$HOME/.local/share"
+SampShell_ensure_xdg_variable XDG_CONFIG_HOME "$HOME/.config"
+SampShell_ensure_xdg_variable XDG_STATE_HOME "$HOME/.local/state"
+SampShell_ensure_xdg_variable XDG_CACHE_HOME "$HOME/.cache"
+SampShell_ensure_xdg_variable XDG_RUNTIME_DIR "/run/user/$UID"
+unset -f SampShell_ensure_xdg_variable
+
 ################################################################################
 #                                                                              #
 #                    Other SampShell Environment Variables                     #
@@ -52,19 +80,9 @@ export SampShell_ROOTDIR
 # always be present. It follows XDG Base Directory specifications, and stores
 # all files in the relevant folders.
 
-if [ "${XDG_STATE_HOME#/}" != "${XDG_STATE_HOME-}" ]; then
-   export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$XDG_STATE_HOME/sampshell/trash}"
-   export SampShell_HISTDIR="${SampShell_HISTDIR-$XDG_STATE_HOME/sampshell/history}"
-else
-   export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$HOME/.local/state/sampshell/trash}"
-   export SampShell_HISTDIR="${SampShell_HISTDIR-$HOME/.local/state/sampshell/history}"
-fi
-
-if [ "${XDG_STATE_CACHE#/}" != "${XDG_STATE_CACHE-}" ]; then
-   export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$XDG_STATE_HOME/sampshell}"
-else
-   export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$HOME/.cache/sampshell}"
-fi
+export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$XDG_STATE_HOME/sampshell/trash}"
+export SampShell_HISTDIR="${SampShell_HISTDIR-$XDG_STATE_HOME/sampshell/history}"
+export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$XDG_STATE_HOME/sampshell}"
 mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$SampShell_CACHEDIR" || echo "oops failed: $?" # TODO
 
 ## Misc variables

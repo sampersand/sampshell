@@ -1,5 +1,12 @@
 ## My "IRB" config I always want loaded.
 
+# IRB.conf[:HISTORY_FILE] ||= (
+#   File.join(ENV.fetch('XDG_DATA_HOME', ENV['HOME']), 'irb', 'history')
+#     .tap { |x|
+#       File.dirname(x)
+#     }
+# )
+
 return if defined? SAMPSHELL_IRB_DEFINED
 SAMPSHELL_IRB_DEFINED = true
 
