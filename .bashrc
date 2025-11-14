@@ -7,3 +7,6 @@ fi
 if [[ "$(uname)" = Darwin ]]; then
 	BASH_SILENCE_DEPRECATION_WARNING=1
 fi
+
+mkdir -p "$XDG_STATE_HOME/bash"
+HISTFILE=$XDG_STATE_HOME/bash/history

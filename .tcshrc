@@ -28,7 +28,8 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	set histdup     = prev
 	set history     = 1000
 	set savehist    = ( 10000 merge lock )
-	set histfile    = ~/.tcsh_history
+	set histfile    = "$XDG_STATE_HOME"/tcsh/history
+	mkdir -p "$XDG_STATE_HOME"/tcsh
 	set ignoreeof   = 2
 	set listflags   = A color
 
