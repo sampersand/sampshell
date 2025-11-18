@@ -131,6 +131,8 @@ case ":${RUBYLIB-}:" in
 esac
 export RUBYLIB # export it
 
+export IRBRC="$SampShell_ROOTDIR/.irbrc" # Set ruby rc dir
+
 ################################################################################
 #                                                                              #
 #                                  Export ENV                                  #

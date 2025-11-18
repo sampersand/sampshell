@@ -1,14 +1,15 @@
 ## My "IRB" config I always want loaded.
 
-# IRB.conf[:HISTORY_FILE] ||= (
-#   File.join(ENV.fetch('XDG_DATA_HOME', ENV['HOME']), 'irb', 'history')
-#     .tap { |x|
-#       File.dirname(x)
-#     }
-# )
-
 return if defined? SAMPSHELL_IRB_DEFINED
 SAMPSHELL_IRB_DEFINED = true
+
+if !IRB.conf.key?(:HISTORY_FILE)
+  irb_base = File.join(ENV['XDG_DATA_HOME'] || Dir.home, 'irb')
+  FileUtils.mkdir_p irb_base
+  IRB.conf[:HISTORY_FILE] = File.join(irb_base, 'history')
+end
+
+IRB.conf[:SAVE_HISTORY] = -1 # Save everything
 
 ENV['EDITOR'] ||= ENV['SampShell_EDITOR']
 
@@ -43,22 +44,19 @@ begin
   require 'blankity'
 rescue LoadError
   warn "Can't load blankity for Ruby #{RUBY_VERSION}: #$!"
+else
+  def heql(key, *, **, &b) = Blankity.blank(*, **) {
+    ::Object.instance_method(:define_singleton_method).bind_call(self,
+      :eql?, &key.method(:eql?)
+    )
+    ::Object.instance_method(:define_singleton_method).bind_call(self,
+      :hash, &key.method(:hash)
+    )
+    ::Object.instance_method(:instance_exec).bind_call(self, b) if b
+  }
+
+  include Blankity::To
 end
-
-def heql(key, *, **, &b) = Blankity.blank(*, **) {
-  ::Object.instance_method(:define_singleton_method).bind_call(self,
-    :eql?, &key.method(:eql?)
-  )
-  ::Object.instance_method(:define_singleton_method).bind_call(self,
-    :hash, &key.method(:hash)
-  )
-  ::Object.instance_method(:instance_exec).bind_call(self, b) if b
-}
-
-# Undo the annoyance of `proc` being overwritten
-extend Blankity::To
-def self.proc(...) = Kernel.proc(...)
-
 ####################################################################################################
 #                                                                                                  #
 #                                           Sublime Text                                           #

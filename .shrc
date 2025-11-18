@@ -170,7 +170,7 @@ alias cp='cp -i' cpp='command cp'
 
 ## Shorthand aliases for "safe alternatives" found in `bin`
 alias m=mv-safe
-alias r=trash
+alias t=trash
 
 ################################################################################
 #                                                                              #
