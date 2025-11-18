@@ -119,10 +119,15 @@ mzf () (
 	MZ_NO_ARGS=1 mz "$stdin"
 )
 
-## Creates a directory, and then changes to it. (`rd` is a `bin-macOS` command.)
+## Creates a directory. (`rd` is a `bin-macOS` command.)
 md () {
+	mkdir -p -- "$@"
+}
+
+## Creates a directory, and then `cd`s to it.
+mdc () {
 	# (use `\cd` so that we don't get alias expansion that might exist)
-	mkdir -p -- "${1:?missing dir}" && CDPATH= \cd -- "$1"
+	md "$@" && CDPATH= \cd -- "$1"
 }
 
 ## Common aliases

@@ -43,7 +43,7 @@ OptParse.new nil, 20 do |op|
   end
 
   op.on '-p', '--permalink', 'Use a permalink' do
-    $branch = :permalink.q
+    $branch = :permalink
   end
 
   begin

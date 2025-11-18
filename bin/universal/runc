@@ -9,9 +9,9 @@ def usage! success = false
     usage: #$0 [-c compiler] [-o output] [compiler opts ...] [prelude ...] main [-- main-arguments]
     compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
     interspersed within arguments.
-    - prelude is done before 'main'
-    - lots of defaults are imported by default
-    - P is a macro shorthand for printf(...), putchar('\\n')
+      - prelude is done before 'main'
+      - lots of defaults are imported by default
+      - P is a macro shorthand for printf(...), putchar('\\n')
   USAGE
 end
 

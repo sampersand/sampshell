@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+# TODO: TEST `--rename` lol
+
+require 'optparse'
+
+OPTS = {
+	extension: 'mp4',
+	delete: false,
+	open: false,
+}
+
+OptParse.new do |op|
+	op.banner.concat '[files to convert]'
+	op.on_tail 'convert files to an mp4, using ffmpeg'
+	op.on '-e', '--extension=[what]', "Set extension [default: #{OPTS[:extension]}]"
+	# op.on '-u', '--unique=pattern', 'Pattern to use; must contain \1, which is base'
+	op.on '-d', '--[no-]delete', 'Deletes original file'
+	op.on '-o', '--[no-]open', 'Opens resulting file'
+	op.parse! into: OPTS rescue op.abort
+end
+
+success = true
+$*.each do |original|
+	converted = File.join File.dirname(original),
+	File.basename(original, '.*')+ ".#{OPTS.fetch(:extension)}"
+
+	puts "#{original} -> #{converted}"
+	unless system(
+		'ffmpeg', '-nostdin', '-hide_banner', '-loglevel', 'error',
+		'-i', original, converted, out: :close)
+	then
+		success = false
+		next
+	end
+
+	if OPTS[:delete]
+		File.delete original
+	end
+
+	if OPTS[:open]
+		system 'open', converted
+	end
+end
+
+exit success
