@@ -48,6 +48,9 @@ bindkey '^[T' SampShell-transpose-argument
 # bindkey 'å^[[3~' SampShell-forward-kill-argument
 # bindkey 'å^[^?' SampShell-forward-kill-argument
 
+# Overwrite builtins here, as theyre just aliases for lower-cases
+bindkey '^[Q' SampShell-store-line
+bindkey '^[G' SampShell-retrieve-line
 
 # ESC + <left/right-arrow> + char = goes to the prev/next instance of `char`
 bindkey '^[^[[D' vi-find-prev-char

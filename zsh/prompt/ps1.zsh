@@ -18,7 +18,7 @@ typeset -g PS1=''
 
 	PS1+='%B%F{blue}[%b'                                        # [
 	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "             #   Current time
-	PS1+='%F{15}${_SampShell_history_disabled:+%F{red\}}%U%!%u ' #   History Number; red if disabled
+	PS1+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)

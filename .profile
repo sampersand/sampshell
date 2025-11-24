@@ -172,6 +172,7 @@ SampShell_add_PATH "$HOME/bin"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/posix"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/universal"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/git"
+SampShell_add_PATH "$HOME/.local/bin"
 
 ## MacOS-specific scripts
 [ "$(uname)" = Darwin ] && SampShell_add_PATH "$SampShell_ROOTDIR/bin/macOS"

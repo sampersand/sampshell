@@ -1,0 +1,13 @@
+#!zsh
+
+emulate -L zsh
+
+# Declare stored lines ahead of time, We make sure to use `-g` so it's globally accessible
+typeset -ag _SampShell_stored_lines
+
+# Append the current buffer the end of the stored lines
+_SampShell_stored_lines+=( "$BUFFER" )
+
+# Empty the buffer, and redisplay
+BUFFER=''
+zle redisplay
