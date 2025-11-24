@@ -1,0 +1,14 @@
+#!/bin/sh
+# "git pull sampshell"
+
+set -eu
+
+cd "${SampShell_ROOTDIR:?SampShell_ROOTDIR is required}"
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" != master ]; then
+	echo >/dev/stderr "$0: not on a master branch, can't pull ss; we're on $branch"
+	return 1
+fi
+
+git pull
