@@ -30,7 +30,6 @@ unset -v __clenv_user_vars \
          __clenv_all_variables \
          __clenv_verbose \
          __clenv_dry \
-         __clenv_underscore \
          __clenv_default_vars \
          __clenv_cmd \
          __clenv_tmp __clenv_tmp2 \
@@ -53,7 +52,6 @@ options:
     -u name         Unset 'name'. If both -v and -u are given, -u wins.
     -m pattern      Pass in any variables matching the awk pattern.
     -U pattern      Unsets any variables which match the awk pattern.
-    -_              Set the '_' in the env to the path to the executable. Requires '-P'
     -p              Shorthand for -vPATH -P\$PATH
     -D              Don't actually run the program; Sets -V
     -V              Print the invocation, and any changed variables.
@@ -125,7 +123,7 @@ __clenv_alt_path=
 __clenv_unset_vars= # Variables to unset; contains an awk pattern.
 __clenv_user_vars=  # User-specified variables
 
-while getopts 'hDV_anipP:m:v:u:U:' __clenv_opt; do
+while getopts 'hDVanipP:m:v:u:U:' __clenv_opt; do
 	case $__clenv_opt in
 
 	# Print usage with `-h`
@@ -140,9 +138,6 @@ while getopts 'hDV_anipP:m:v:u:U:' __clenv_opt; do
 	p)
 		__clenv_default_vars="$__clenv_default_vars PATH"
 		__clenv_alt_path=$PATH ;;
-
-	# Export program name. Requires `-P`
-	_) __clenv_underscore=1 ;;
 
 	# Flags for specifying groups of variables to pass onwards.
 	a)    __clenv_all_variables=1 __clenv_default_vars= ;;
@@ -249,11 +244,6 @@ if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
 	# Replace the utility with the new path
 	shift
 	set -- "$__clenv_utility_path" "$@"
-
-	# If `-_` was supplied, add `_` to the list of variables.
-	[ -n "${__clenv_underscore-}" ] && add_user_variable _ "$__clenv_utility_path"
-elif [ -n "${__clenv_underscore-}" ]; then
-	echo 'warn: -_ was set but is not used without -P' >&2
 fi
 
 ## Add in default variables
