@@ -34,7 +34,13 @@ unset -v __clenv_user_vars \
          __clenv_cmd \
          __clenv_tmp __clenv_tmp2 \
          __clenv_name \
-         __clenv_value
+         __clenv_value \
+		 __clenv_prepend \
+		 __clenv_alt_path \
+		 __clenv_unset_vars \
+		 __clenv_opt \
+		 __clenv_fmt \
+		 __clenv_utility_path
 
 # The list of variables that are added by default to all invocations unless -a
 # or -n are specified.
