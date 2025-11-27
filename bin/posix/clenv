@@ -2,7 +2,7 @@
 
 ## clenv -- like 'env', except with a few more QoL features
 # Features that env doesn't have:
-# 1. Only pass in variables that match a patter (`-m "SampShell_*"`)
+# 1. Only pass in variables that match a pattern (`-m "SampShell_*"`)
 # 2. Just have to specify variable names if they already exist (`-vPATH`)
 # 3. Commonly needed variables for shells exported by default (TERM, HOME, etc.)
 #
@@ -39,20 +39,20 @@ unset -v __clenv_user_vars \
 
 # The list of variables that are added by default to all invocations unless -a
 # or -n are specified.
-__clenv_default_vars=${SampShell_clenv_DEFAULTS_VARS-'TERM HOME SHLVL LANG'}
+__clenv_default_vars=${CLENV_DEFAULT_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
 usage: $__clenv_scriptname [options] [--] [utility [argument ...]]
 options:
     -h              Print this
-    -a              Pass all environment variables in by default.
+    -P altpath      Use 'altpath' to find 'utility', instead of \$PATH
+    -a              Pass all environment variables in by default
     -n, -i          Don't set any arguments by default, including "essential ones"
-    -P altpath      Use 'altpath' to find 'utility'
-    -v name[=value] Puts 'name' in the env of 'utility'. If 'value' is omitted,
-                    it uses the current value (or errors if unset).
+    -v name[=value] Puts 'name' in the environment of 'utility'. If 'value' is
+                    omitted, it uses the current value (or errors if unset).
     -u name         Unset 'name'. If both -v and -u are given, -u wins.
     -m pattern      Pass in any variables matching the awk pattern.
-    -U pattern      Unsets any variables which match the awk apttern.
+    -U pattern      Unsets any variables which match the awk pattern.
     -_              Set the '_' in the env to the path to the executable. Requires '-P'
     -p              Shorthand for -vPATH -P\$PATH
     -D              Don't actually run the program; Sets -V
