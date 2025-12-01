@@ -151,7 +151,7 @@ while getopts 'hDVanipP:m:v:u:U:' __clenv_opt; do
 
 	v)
 		# Fetch the name and optional value from the argument
-		__clenv_name=${OPTARG%=*}
+		__clenv_name=${OPTARG%%=*}
 		__clenv_value=${OPTARG#"$__clenv_name"}
 
 		if [ -n "$__clenv_value" ]; then
@@ -199,6 +199,7 @@ if [ -n "$__clenv_verbose" ]; then
 	} >&2
 else
 	log () { :; }
+	# alias log=': #' # Set logger to comment out the rest of the line if not verbose
 fi
 
 ################################################################################

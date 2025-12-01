@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 require 'optparse'
-
+OptParse.new do |op|
+  x = op.define('-q', '--foo')
+  binding.irb
+end
+__END__
 class OptParse2 < OptParse
 end
 
