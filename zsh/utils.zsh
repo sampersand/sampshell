@@ -16,6 +16,7 @@
 # TODO: Figure out howto get `s` and `ss` to also accept things like CDPATH and `CDABLE_VARS` opts.
 s2 ()  (cd -q -- $@ >/dev/null && subl -- "$PWD")
 ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
+alias reload='exec =zsh -il'
 
 function ducks { du -chs -- $@ | sort -h }
 
