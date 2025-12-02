@@ -21,6 +21,9 @@
 # empty string (so we can construct it down below)
 typeset -g RPS1=''
 
+# only setup rps1 on macos
+if [[ $(uname) != Darwin ]] return
+
 ## Don't indent the right prompt. (Normally set to `1` b/c some terminals don't handle it properly,
 # but Terminal.app on macOS does, so I've set it to 0.)
 # ZLE_RPROMPT_INDENT=0 <-- actually, it does screw up sometimes afaict... lol
@@ -96,6 +99,7 @@ zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile fo
 typeset -gFH _SampShell_last_exec_time=$EPOCHREALTIME
 
 # Add this to the end of preexec so we don't get all the other functions
+typeset -aU preexec_functions
 preexec_functions+=(_SampShell-prompt-set-start-time-hook)
 function _SampShell-prompt-set-start-time-hook {
 	typeset -g _SampShell_last_exec_time=$EPOCHREALTIME
