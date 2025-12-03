@@ -23,8 +23,10 @@
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
 emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
 
+hash -d ss=$SampShell_ROOTDIR
+
 # Undo `setopt`s that might've been done
-source $SampShell_ROOTDIR/zsh/undo.zsh
+source ~ss/zsh/undo.zsh
 
 ####################################################################################################
 #                                           Setup $PATH                                            #
@@ -40,10 +42,9 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 
 ## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
-# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
-# paths, they won't use the normal `$fpath` expansion.)
-fpath+=( $SampShell_ROOTDIR/zsh/functions ) # TODO: standardize my autoload
-autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
+# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH.)
+typeset -Ua fpath=( ~ss/zsh/{functions,widgets,zsh_directory_name_functions} $fpath ) # add to fpath so `freload` works
+autoload -Uz ~ss/zsh/{functions,widgets,zsh_directory_name_functions}/*
 
 ####################################################################################################
 #                                                                                                  #
@@ -66,7 +67,6 @@ function add-named-dir {
 	hash -d -- ${(*)@/#%(#m)^[[:alnum:]_-]#=*/${MATCH:t}=$MATCH}
 }
 
-[[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
 [[ -d ~/tmp               ]] && add-named-dir tmp=~/tmp
 [[ -d ~/Desktop           ]] && add-named-dir d=~/Desktop
@@ -85,10 +85,7 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 
 ## Setup `~[dir]` expansions
 typeset -Ua zsh_directory_name_functions
-() {
-	autoload -Uz $@
-	zsh_directory_name_functions+=( $@:t )
-} $SampShell_ROOTDIR/zsh/zsh_directory_name_functions/*
+zsh_directory_name_functions+=( ~ss/zsh/zsh_directory_name_functions/* )
 
 # Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -104,7 +101,7 @@ function cd {
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
-	source $SampShell_ROOTDIR/zsh/record-every-command.zsh
+	source ~ss/zsh/record-every-command.zsh
 fi
 
 	#### TODO: Update this comment
@@ -168,8 +165,8 @@ zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
-source $SampShell_ROOTDIR/zsh/prompt/ps1.zsh
-source $SampShell_ROOTDIR/zsh/prompt/rps1.zsh
+source ~ss/zsh/prompt/ps1.zsh
+source ~ss/zsh/prompt/rps1.zsh
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -210,12 +207,8 @@ alias bkg='bindkey | noglob fgrep -ie'
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
 () {
-	autoload -Uz $1/*
-	local fn
-	for fn in $1/*(:t); do
-		zle -N $fn
-	done
-} $SampShell_ROOTDIR/zsh/widgets
+	local fn; for fn do zle -N $fn; done
+} ~ss/zsh/widgets/*(:t)
 
 ## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
 bindkey -N sampshell emacs
@@ -257,7 +250,7 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 #                                           Autocomplete                                           #
 #                                                                                                  #
 ####################################################################################################
-source $SampShell_ROOTDIR/zsh/completion.zsh
+source ~ss/zsh/completion.zsh
 
 ####################################################################################################
 #                                                                                                  #
@@ -266,14 +259,14 @@ source $SampShell_ROOTDIR/zsh/completion.zsh
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
-[[ -n $SampShell_EXPERIMENTAL ]] && source $SampShell_ROOTDIR/zsh/experimental.zsh
+[[ -n $SampShell_EXPERIMENTAL ]] && source ~ss/zsh/experimental.zsh
 
 ####################################################################################################
 #                                                                                                  #
 #                                          Git Shorthands                                          #
 #                                                                                                  #
 ####################################################################################################
-source $SampShell_ROOTDIR/zsh/git.zsh
+source ~ss/zsh/git.zsh
 
 ####################################################################################################
 #                                                                                                  #
@@ -282,4 +275,4 @@ source $SampShell_ROOTDIR/zsh/git.zsh
 ####################################################################################################
 
 ## All helper functions and aliases should be defined here.
-source $SampShell_ROOTDIR/zsh/misc.zsh
+source ~ss/zsh/misc.zsh
