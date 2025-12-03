@@ -67,9 +67,9 @@ function add-named-dir {
 
 [[ -n $SampShell_ROOTDIR  ]] && add-named-dir ss=$SampShell_ROOTDIR
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
-[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp   # (Have to use `$HOME` because...
-[[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop # `MAGIC_EQUAL_SUBST` isn't set yet)
-[[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
+[[ -d ~/tmp               ]] && add-named-dir tmp=~/tmp
+[[ -d ~/Desktop           ]] && add-named-dir d=~/Desktop
+[[ -d ~/Downloads         ]] && add-named-dir dl=~/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d {
@@ -88,8 +88,6 @@ typeset -Ua zsh_directory_name_functions
 	autoload -Uz $@
 	zsh_directory_name_functions+=( $@:t )
 } $SampShell_ROOTDIR/zsh/zsh_directory_name_functions/*
-: "${SampShell_repos_root:=$HOME/code/repos}"
-hash -d repos=$SampShell_repos_root #<-- why u no work
 
 # Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -125,7 +123,7 @@ fi
 	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
 	# commands are stored in the history.
 	##
-history-ignore-command history-{enable,disable,toggle}
+history-ignore-command history-{enable,disable}
 
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
