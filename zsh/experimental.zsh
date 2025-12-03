@@ -19,6 +19,7 @@ CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting w
 unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
 
 : command_not_found_handler # <-- thing executed when a command'snot found
+# fignore
 ### Completion
 # setopt MENU_COMPLETE
 
