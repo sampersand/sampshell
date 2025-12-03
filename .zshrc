@@ -8,9 +8,10 @@
 # This file is not the location for functions, but rather configuration; Functions go into the
 # `utils.zsh` or `functions.zsh` files instead.
 #
-# Note that `setopt` is used for setting options to a value other than their default, whereas I use
-# `unsetopt` to set options back to their default in case something changed them. While not required
-# (`setopt no_...` is the same as `unsetopt ...`), I find it easier to reason about this way.
+# Note that `setopt` is used for setting options to a value other than their default; `undo.zsh`
+# is where `unsetopt` is used to set options back to their default in case something changed them.
+# While not required (`setopt no_...` is the same as `unsetopt ...`), I find it easier to reason
+# about this way.
 #
 # Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
 # a user's `.zshrc`. (Instead, `source` the top-level `.shrc` file if needed.)
@@ -21,6 +22,9 @@
 
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
 emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
+
+# Undo `setopt`s that might've been done
+source $SampShell_ROOTDIR/zsh/undo.zsh
 
 ####################################################################################################
 #                                           Setup $PATH                                            #
@@ -136,12 +140,6 @@ setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the on
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 
-## Disable options that might've been set
-unsetopt HIST_IGNORE_ALL_DUPS # Ensure that non-contiguous duplicates are kept around.
-unsetopt HIST_SAVE_NO_DUPS    # (This is just `HIST_IGNORE_ALL_DUPS` but for saving.)
-unsetopt NO_APPEND_HISTORY    # Ensure we append to the history file when saving, not overwrite it.
-unsetopt SHARE_HISTORY        # Don't constantly share history across interactive shells
-
 # Don't record the `h` or `SampShell-history` functions
 alias h='noglob SampShell-history'
 history-ignore-command h SampShell-history
@@ -154,9 +152,6 @@ history-ignore-command h SampShell-history
 	
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
 setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
-unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's suspended jobs
-unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
-unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
 function jobs {
@@ -176,9 +171,6 @@ zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
 
 ## Options for prompt expansion
 setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
-unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
-unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
 source $SampShell_ROOTDIR/zsh/prompt/ps1.zsh
@@ -198,7 +190,6 @@ POSTEDIT=$'\e[m'
 ## Interactive history options
 histchars[2]=,            # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
 setopt HIST_SUBST_PATTERN # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
-unsetopt NO_BANG_HIST     # Lets you do `!!` and friends on the command line.
 
 ## Options that modify valid syntax 
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
@@ -207,13 +198,10 @@ setopt RC_EXPAND_PARAM      # `ary=(x y z); echo a${ary}b` is `axb ayb azb`.
 setopt MAGIC_EQUAL_SUBST    # Supplying `a=b` on the command line does `~`/`=` expansion
 setopt GLOB_STAR_SHORT      # Enable the `**.c` shorthand for `**/*.c`
 setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
-unsetopt NO_EQUALS          # Enables `=foo`, which expands to the full path eg `/bin/foo`
-unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands, eg `for x in *; echo $x`
 
 ## "Safety" options
 setopt NO_CLOBBER       # Don't overwrite files when using `>` (unless `>|` or `>!` is used.)
 setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
-unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask for confirmation
 
 ####################################################################################################
 #                                                                                                  #
