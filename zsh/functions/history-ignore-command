@@ -58,7 +58,7 @@ function _SampShell-history-ignore-commands-hook {
 	#
 	# The return value is negated because a value of `1` indicates we _shouldn't_ record the
 	# command in history, which is what we want.
-	! zstyle -t ":sampshell:history:record:${(j: :)cmd} " ignore-command
+	! zstyle -t ":sampshell:history:record:${(j: :)1} " ignore-command
 }
 
 ## Make sure our hook is the very first hook that's run.

@@ -73,10 +73,7 @@ function add-named-dir {
 [[ -d ~/Downloads         ]] && add-named-dir dl=~/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
-function d {
-	emulate -L zsh
-	builtin dirs ${@:--v}
-}
+function d { builtin dirs ${@:--v} }
 
 ## Setup `cd` options
 setopt CDABLE_VARS  # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
@@ -85,7 +82,7 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 
 ## Setup `~[dir]` expansions
 typeset -Ua zsh_directory_name_functions
-zsh_directory_name_functions+=( ~ss/zsh/zsh_directory_name_functions/* )
+zsh_directory_name_functions+=( ~ss/zsh/zsh_directory_name_functions/*(:t) )
 
 # Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -104,23 +101,6 @@ if zstyle -T ':sampshell:history:record-every-command' enabled; then
 	source ~ss/zsh/record-every-command.zsh
 fi
 
-	#### TODO: Update this comment
-	## Functions for enabling and disabling history recording.
-	# History in ZSH is written periodically, when manually requested (via `fc -W`), or when the shell
-	# exits, to the `$HISTFILE` parameter (with `$SAVEHIST` entries being written). To "disable" ZSH's
-	# history mechanism, one simply has to unset these variables, and ZSH won't have anywhere to store
-	# the history.
-	#
-	# ZSH provides a nice little builtin pair to "push" (`fc -p`) and "pop" (`fc -P`) these two
-	# variables onto a stack. So, `disable-history` "pushes" the current $HISTFILE and $SAVEHIST vars
-	# onto the stack (via `fc -p`), but doesn't set new ones. This means ZSH has nowhere to save the
-	# history. When `enable-history` is later executed, assuming they haven't been manually set after
-	# the `disable-history`, the `fc -P` will attempt to write the current history to an empty file, and
-	# thus just discards it.
-	#
-	# At the bottom of the file, `SampShell-history-ignore-command` is called to make sure none of these
-	# commands are stored in the history.
-	##
 history-ignore-command history-{enable,disable}
 
 ## Setup history parameters
@@ -136,9 +116,9 @@ setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the on
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
 
-# Don't record the `h` or `SampShell-history` functions
-alias h='noglob SampShell-history'
-history-ignore-command h SampShell-history
+# Don't record the `h` function, which is a shorthand I've made
+alias h='noglob h'
+history-ignore-command -g 'h|h *'
 
 ####################################################################################################
 #                                                                                                  #

@@ -1,21 +1,21 @@
 #!zsh
 emulate -L zsh
 
-# If we're not connected to a TTY, the just act like `history`, except all values are
+# If we're not connected to a TTY, the just act like `fc -l`, except all values are
 # printed out by default. This lets us do `h | grep ...`
 if [[ ! -t 1 ]] then
-	history ${@:-0}
+	fc -l ${@:-0}
 	return
 fi
 
 # If any arguments were given that aren't integers, instead interpret them as args to `grep`, and
 # pass everything to grep.
 if [[ $# -ne 0 && $1 != (-|)<-> ]]; then
-	history 0 | egrep -i "$@"
+	fc -l 0 | egrep -i "$@"
 	return
 fi
 
-# history $@ | awk '
+# fc -l $@ | awk '
 # { a[NR] = $0 }
 # END {
 # 	x = $1 + 1
@@ -28,7 +28,9 @@ fi
 
 local sep amount REPLY
 # Number the output lines
-history $@ | while read -r; do
+if [[ $1 = <-> && $1 != -* ]] argv[1]=-$argv[1]
+
+fc -l $@ | while read -r; do
 	amount=-$(( HISTCMD - ${REPLY[(wr)<->]} + 1 ))
 	printf "%${sep:=$#amount}d %s\\n" $amount $REPLY
 done
