@@ -124,6 +124,19 @@ alias gdm='git diff "$(git master-branch)"'
 alias gds='git diff --stat'
 alias gdms='git diff --stat "$(git master-branch)"'
 
+alias gdno='__deprecated git diff --name-only'
+gdh () {
+	__deprecated
+	[ "$#" = 0 ] && set -- 'HEAD~1'
+	git diff "$@"
+}
+gdd () {
+	__deprecated
+	[ "$#" = 0 ] && set -- 'HEAD~1'
+	git diff --name-status "$@"
+}
+alias gdol='__deprecated gdd'
+
 ################################################################################
 #                                     Misc                                     #
 ################################################################################
