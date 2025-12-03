@@ -135,3 +135,5 @@ is-in-a-git-repo () (
 
 # overwrite the `pbc` command to chomp arguments
 pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
+
+freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }

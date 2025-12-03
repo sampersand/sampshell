@@ -42,6 +42,7 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
 # the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH. Since we use absolute
 # paths, they won't use the normal `$fpath` expansion.)
+fpath+=( $SampShell_ROOTDIR/zsh/functions ) # TODO: standardize my autoload
 autoload -Uz $SampShell_ROOTDIR/zsh/functions/*
 
 ####################################################################################################
@@ -149,14 +150,10 @@ history-ignore-command h SampShell-history
 ####################################################################################################
 	
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
-setopt AUTO_CONTINUE           # Always send `SIGCONT` when disowning jobs, so they run again.
+setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-function jobs {
-	emulate -L zsh
-	builtin jobs -d $@ | command -p paste - -
-	# builtin jobs -d $@ | sed 'N;s/\n/ /'
-}
+function j { jobs -ld $@ | paste - - } # Also coulda used 'N;s/\n/ /'
 
 ####################################################################################################
 #                                                                                                  #
