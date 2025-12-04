@@ -44,3 +44,20 @@ ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
 
 # This doesn't even exist anymore
 alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
+
+
+# delete password files on Sampinox usb _forcibly_, so you cant recover them
+rmfp () {
+	local arg;
+	for arg; do rm -rfP $arg & done
+}
++x-exp () +x ~ss/bin/experimental/${^@}
+
+
+function old {
+	local file exitstatus=0
+	for file do
+		\mv -i $file $file.old || exitstatus=$?
+	done
+	return $exitstatus
+}

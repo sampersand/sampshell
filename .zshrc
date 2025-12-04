@@ -18,7 +18,7 @@
 #####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
-if [[ -z $SampShell_DISABLED ]] return
+if [[ -n $SampShell_DISABLED ]] return
 
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
 emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
@@ -215,21 +215,23 @@ source ~ss/zsh/git.zsh
 ## All extra unsorted functions and aliases should be defined here.
 source ~ss/zsh/misc.zsh
 
+## What follows are functions/aliases I use commonly enough
+
 # Shorthands for redirecting to `/dev/null`
 alias -g @N='>/dev/null'
 alias -g @2N='2>/dev/null'
 
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 
-## What follows are functions/aliases I use commonly enough
 alias reload='exec =zsh -il'
+function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
+
 
 # Copies the current directory, or a subdirectory of the current direcotry if given
-function pwdc (
-	if [[ $# > 0 ]] { print "at most 1 argument allowed" @2N; return 1 }
+function pwdc () (
+	if (( $ARGC > 1 )); then print "at most 1 argument allowed" @2N; return 1 ; fi
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
-
 
 # Shorthand for looking for processes
 function pg  { pgrep -afl $@ | command grep --color=always $@ }
