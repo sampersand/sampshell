@@ -118,7 +118,7 @@ setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all mod
 
 # Don't record the `h` function, which is a shorthand I've made
 alias h='noglob h'
-history-ignore-command -g 'h|h *'
+history-ignore-command h
 
 ####################################################################################################
 #                                                                                                  #
@@ -142,7 +142,7 @@ function j { jobs -ld $@ | paste - - } # Also coulda used 'N;s/\n/ /'
 zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
 
 ## Options for prompt expansion
-setopt PROMPT_SUBST        # Lets you use variables and $(...) in prompts.
+setopt PROMPT_SUBST # Lets you use variables and $(...) in prompts.
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
 source ~ss/zsh/prompt/ps1.zsh
@@ -181,49 +181,7 @@ setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
 #                                                                                                  #
 ####################################################################################################
 
-## Useful keybind aliases
-alias bk='noglob bindkey'
-alias bkg='bindkey | noglob fgrep -ie'
-
-## Register functions; We use an anonymous function so `fn` doesn't escape
-() {
-	local fn; for fn do zle -N $fn; done
-} ~ss/zsh/widgets/*(:t)
-
-## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
-bindkey -N sampshell emacs
-bindkey -A sampshell main
-
-## Bind key strokes to do functions
-bindkey '^[#'    pound-insert
-bindkey '^[='    SampShell-delete-to-char
-bindkey '^[+'    SampShell-zap-to-char
-bindkey '^[/'    SampShell-delete-path-segment
-bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
-bindkey '^[^[[A' SampShell-up-directory
-bindkey '^[c'    SampShell-add-pbcopy
-bindkey '^X^R'   redo
-bindkey '^XR'    redo
-bindkey '^Xr'    redo
-alias which-command=which # for `^[?`
-
-# "command-space" commands
-bindkey '^[ t' SampShell-transpose-words
-bindkey -s '^[ l' '^Qls^M'
-
-## up and down history, but without going line-by-line
-bindkey '^P' up-history
-bindkey '^N' down-history
-
-# Arrow keys that can be used in the future
-bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
-bindkey '^[[1;2D' undefined-key # Terminal.app's default sequence for "SHIFT + LEFT ARROW"
-bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARROW")
-bindkey '^[[1;5B' down-history  # (Added as a custom sequence for "CTRL + DOWN ARROW")
-bindkey '^[[1;5C' undefined-key # Terminal.app's default sequence for "CTRL + RIGHT ARROW"
-bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LEFT ARROW"
-bindkey '^[[H'    undefined-key # TODO: Add into terminal.app as a sequence for `HOME`
-bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for `END`
+source ~ss/zsh/keybinds.zsh
 
 ####################################################################################################
 #                                                                                                  #
