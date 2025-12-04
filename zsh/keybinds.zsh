@@ -1,7 +1,4 @@
 ## Useful keybind aliases
-alias bk='noglob bindkey'
-alias bkg='bindkey | noglob fgrep -ie'
-
 source ~ss/zsh/movements.zsh
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
@@ -24,7 +21,6 @@ bindkey '^[c'    SampShell-add-pbcopy
 bindkey '^X^R'   redo
 bindkey '^XR'    redo
 bindkey '^Xr'    redo
-alias which-command=which # for `^[?`
 
 # "command-space" commands
 bindkey '^[ t' SampShell-transpose-words
@@ -54,25 +50,6 @@ bindkey '^W' kill-region # delete a higlighted part of a line
 bindkey '^q' push-line-or-edit
 
 # ----
-
-## Subsumed by me just learning `^W`
-# backwards-delete-char-or-region () {
-# 	if (( MARK != 0 )) {
-# 		if (( CURSOR < MARK )) {
-# 			BUFFER[CURSOR,MARK]=''
-# 		} else  {
-# 			BUFFER[MARK,CURSOR]=''
-# 		}
-# 		MARK=
-# 		zle redisplay
-# 	} else {
-# 		zle backward-delete-char
-# 	}
-# }
-# zle -N backwards-delete-char-or-region
-# bindkey '^H' backwards-delete-char-or-region
-# bindkey '^?' backwards-delete-char-or-region
-
 
 # bindkey -r '^[ '
 

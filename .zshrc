@@ -181,6 +181,10 @@ setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
 #                                                                                                  #
 ####################################################################################################
 
+alias bk='noglob bindkey'
+alias bkg='bindkey | noglob fgrep -ie'
+alias which-command=which # for `^[?`
+
 source ~ss/zsh/keybinds.zsh
 
 ####################################################################################################

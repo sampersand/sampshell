@@ -1,0 +1,19 @@
+
+## Subsumed by me just learning `^W`
+# backwards-delete-char-or-region () {
+# 	if (( MARK != 0 )) {
+# 		if (( CURSOR < MARK )) {
+# 			BUFFER[CURSOR,MARK]=''
+# 		} else  {
+# 			BUFFER[MARK,CURSOR]=''
+# 		}
+# 		MARK=
+# 		zle redisplay
+# 	} else {
+# 		zle backward-delete-char
+# 	}
+# }
+# zle -N backwards-delete-char-or-region
+# bindkey '^H' backwards-delete-char-or-region
+# bindkey '^?' backwards-delete-char-or-region
+
