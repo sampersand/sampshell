@@ -11,12 +11,11 @@
 
 . ${0:P:h}/functions.zsh
 
-[[ $VENDOR == apple ]] && source ${0:P:h}/macos.zsh
-
-# TODO: Figure out howto get `s` and `ss` to also accept things like CDPATH and `CDABLE_VARS` opts.
-s2 ()  (cd -q -- $@ >/dev/null && subl -- "$PWD")
-ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
-alias reload='exec =zsh -il'
+if [[ $VENDOR == apple ]] {
+	function  enable-wifi { networksetup -setairportpower en0 on }
+	function disable-wifi { networksetup -setairportpower en0 off }
+	function  toggle-wifi { disable-wifi; sleep 2; enable-wifi }
+}
 
 function ducks { du -chs -- $@ | sort -h }
 
@@ -25,18 +24,8 @@ function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
 
 function ncol { awk "{ print \$$1 }" }
 
-pwdc () ( ARGC_AT_MOST_1 cd -q -- "$PWD${1+/$1}" && pbc "$PWD" )
-
 function _SampShell-hg { h | grep $* }
 alias hg='noglob _SampShell-hg'
-
-alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
-alias mk=mkdir
-alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
-
-pg () { pgrep -afl $@ | command grep --color=always $@ }
-pk () { pkill -afl $@ }
-pk9 () { pkill -KILL -afl $@ }
 
 # delete password files on Sampinox usb _forcibly_, so you cant recover them
 rmfp () {
@@ -44,7 +33,6 @@ rmfp () {
 	for arg; do rm -rfP $arg & done
 }
 
-alias -- +x='chmod +x'
 alias -- +rwx='chmod +rwx'
 
 diffs () ARGC_EXACTLY_2	diff <(print -r "$1") <(print -r "$2")
@@ -58,8 +46,6 @@ hr () xx ${@:--}
 hrc () { ARGC_EXACTLY_0 hr | pbcopy }
 
 ################################################################################
-alias -g @N='>/dev/null'
-alias -g @2N='2>/dev/null'
 
 ## For highlighting
 typeset -A ZSH_HIGHLIGHT_STYLES
@@ -67,13 +53,9 @@ ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
 
 ################################################################################
 
-szfiles () ARGC_EXACTLY_0 subl ~/.z(shenv|shrc|profile|login|logout)
-szrc () ARGC_EXACTLY_0 subl ~/.zshrc
 
 awkf () ARGC_EXACTLY_1 awk "BEGIN{$1; exit}"
 +x-exp () +x ~ss/bin/experimental/${^@}
-
-zfns () ARGC_EXACTLY_0 typeset -m '*_functions'
 
 function -- -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
 compdef -- _precommand -x

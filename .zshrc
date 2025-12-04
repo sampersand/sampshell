@@ -18,7 +18,7 @@
 #####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
-[[ -n $SampShell_DISABLED ]] && return
+if [[ -z $SampShell_DISABLED ]] return
 
 # Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
 emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
@@ -212,5 +212,35 @@ source ~ss/zsh/git.zsh
 #                                                                                                  #
 ####################################################################################################
 
-## All helper functions and aliases should be defined here.
+## All extra unsorted functions and aliases should be defined here.
 source ~ss/zsh/misc.zsh
+
+# Shorthands for redirecting to `/dev/null`
+alias -g @N='>/dev/null'
+alias -g @2N='2>/dev/null'
+
+alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
+
+## What follows are functions/aliases I use commonly enough
+alias reload='exec =zsh -il'
+
+# Copies the current directory, or a subdirectory of the current direcotry if given
+function pwdc (
+	if [[ $# > 0 ]] { print "at most 1 argument allowed" @2N; return 1 }
+	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
+)
+
+
+# Shorthand for looking for processes
+function pg  { pgrep -afl $@ | command grep --color=always $@ }
+function pk  { pkill -afl $@ } # IDK if these always kill the right processes...
+function pk9 { pkill -KILL -afl $@ }
+
+# Interact with zsh files
+function szfiles {
+	if (( ARGC != 0 )) { print @2N exactly 0 args must be given; return 1 }
+	subl ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
+}
+
+function szrc { subl ~/.zshrc }
+function zfns { typeset -m '*_functions' }

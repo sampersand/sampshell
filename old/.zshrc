@@ -34,3 +34,13 @@ cpcmd () { print -r -- $history[$((HISTCMD-${1:-1}))] | pbc }
 copycmd () { print -r $history[$(($#history - 0))] | pbc; }
 prl () print -zr -- $ZLE_LINE_ABORTED
 cpc () { print -r -- $history[${1:-$#history}] | tee "$(tty)" | pbc }
+
+# `md` now used
+alias mk=mkdir
+
+# TODO: Figure out howto get `s` and `ss` to also accept things like CDPATH and `CDABLE_VARS` opts.
+s2 ()  (cd -q -- $@ >/dev/null && subl -- "$PWD")
+ss2 () (cd -q -- $@ >/dev/null && subl --create -- "$PWD")
+
+# This doesn't even exist anymore
+alias parallelize-it=parallelize_it ## Create the shorthand for `parallelize-it`; TODO: do we stillw ant that
