@@ -68,9 +68,9 @@ function add-named-dir {
 }
 
 [[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
-[[ -d ~/tmp               ]] && add-named-dir tmp=~/tmp
-[[ -d ~/Desktop           ]] && add-named-dir d=~/Desktop
-[[ -d ~/Downloads         ]] && add-named-dir dl=~/Downloads
+[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp
+[[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop
+[[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d { builtin dirs ${@:--v} }
@@ -184,6 +184,8 @@ setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
 alias bk='noglob bindkey'
 alias bkg='bindkey | noglob fgrep -ie'
 alias which-command=which # for `^[?`
+
+function bindkey { print "bindkey: $*"; builtin bindkey $@ }
 
 source ~ss/zsh/keybinds.zsh
 
