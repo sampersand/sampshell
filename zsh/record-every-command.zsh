@@ -58,6 +58,9 @@ _SampShell-record-every-command () {
 
 	## Remove trailing `\n`, and then optionally strip whitespace if `HIST_REDUCE_BLANKS` is set.leading/trailing blanks, and then add tabs after all remaining newlines
 	local line=${1%$'\n'}
+	local started_with_space=0
+	if [[ $opts[histignorespace] = on && $line[1] = ' ' ]] started_with_space=1
+
 	if [[ $opts[histreduceblanks] = on ]]; then
 		line=${line##[[:space:]]#} # Strip leading whitespace
 		line=${line%%[[:space:]]#} # Strip tailing whitespace
@@ -68,13 +71,13 @@ _SampShell-record-every-command () {
 		# Ignore blank lines; Since we've stripped whitespace, this includes just whitespace lines too
 		return 0
 	elif [[ $opts[interactivecomments] = on && -n $histchars[3] && $line[1] = $histchars[3] ]]; then
-		# Ignore a commented line if: (1) The `INTERCATIVE_COMMENTS` option is set (without this, 
+		# Ignore a commented line if: (1) The `INTERCATIVE_COMMENTS` option is set (without this,
 		# there's no comments in interactive shells), (2) a "comment char" is even set (ZSH lets you
 		# change the comment char from `#`), and (3) the line starts with that character (we stripped
 		# whitespace, so we can just check the first character of `$line`.). Note that the history
 		# char has to be ASCII, so no need to worry about multibytes.
 		return 0
-	elif [[ $opts[histignorespace] = on && $1[1] = ' ' ]]; then
+	elif (( $started_with_space )); then
 		# If the `HIST_IGNORE_SPACE` option is set, ZSH won't store lines that start with a space. We
 		# also won't then. Note that we compare against `$1` and not `$line` here, as `$line` will
 		# have had the space stripped.
