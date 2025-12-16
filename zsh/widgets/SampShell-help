@@ -8,3 +8,5 @@ case $cmd in
 	git*)
 	*) man $cmd
 esac
+
+# ${${${(Z<C>)BUFFER}[(R)['|;&']##,1}[2,-1]]}

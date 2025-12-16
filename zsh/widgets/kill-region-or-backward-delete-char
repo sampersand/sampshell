@@ -1,0 +1,11 @@
+#!zsh
+
+# If a region is currently active, then deletes the region. Otherwise, deletes a character
+# backwards. The point is to let delete (ie `^?`) delete regions (which can be set via `^@`, ie
+# ctrl+space) if they are active.
+
+if (( REGION_ACTIVE )) then
+  zle kill-region
+else
+  zle backward-delete-char
+fi

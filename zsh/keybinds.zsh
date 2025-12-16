@@ -2,9 +2,9 @@
 source ~ss/zsh/movements.zsh
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
-() {
-  local fn; for fn do zle -N $fn; done
-} ~ss/zsh/widgets/*(:t)
+() { local fn; for fn do zle -N $fn; done } ~ss/zsh/widgets/*(:t)
+
+bindkey '^?' kill-region-or-backward-delete-char
 
 ## Bind key strokes to do functions
 bindkey '^[#'    pound-insert
@@ -15,6 +15,15 @@ bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to 
 bindkey '^[c'    SampShell-add-pbcopy
 bindkey '^X^R'   redo
 # bindkey '^[h'    SampShell-help
+
+bindkey '^[ c' SampShell-copy-command
+bindkey '^[ %' SampShell-make-prompt-simple
+bindkey '^[%' SampShell-make-prompt-simple
+bindkey '^[$' SampShell-make-prompt-simple
+bindkey '^[ $' SampShell-make-prompt-simple
+bindkey '^[ z' SampShell-put-back-zle
+bindkey '^[ p' SampShell-add-pbcopy
+
 
 ## up and down history, but without going line-by-line
 bindkey '^P' up-history
@@ -33,16 +42,16 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 
 ## TODO: HAVE UP ARROW USE `ZLE_LINE_ABORTED``
 
-bindkey '^W' kill-region # delete a higlighted part of a line
 bindkey '^q' push-line-or-edit
 
-# # Overwrite DELETE to also kill a region if one is present
-# backward-delete-char-or-kill-region () {
-#   if (( REGION_ACTIVE )) {
-#     zle kill-region
+# function zle_line_aborted-or-up-line-or-history {
+#   typeset -g __line_aborted_drawn
+#   if (( $+ZLE_LINE_ABORTED )) {
+#     LBUFFER+=$ZLE_LINE_ABORTED
+#     zle redisplay
 #   } else {
-#     zle backward-delete-char
+#     zle up-line-or-history
 #   }
 # }
-# zle -N backward-delete-char-or-kill-region
-# bindkey '^W' backward-delete-char-or-kill-region
+# zle -N zle_line_aborted-or-up-line-or-history
+# bindkey '^[[A' zle_line_aborted-or-up-line-or-history

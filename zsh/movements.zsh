@@ -1,15 +1,3 @@
-################################################################################
-#                                                                              #
-#                              SampShell Commands                              #
-#                                                                              #
-################################################################################
-
-bindkey '^[ c' SampShell-copy-command
-bindkey '^[ %' SampShell-make-prompt-simple
-bindkey '^[ $' SampShell-make-prompt-simple
-bindkey '^[ z' SampShell-put-back-zle
-bindkey '^[ p' SampShell-add-pbcopy
-# bindkey '^[ t' SampShell-transpose-words
 
 
 ################################################################################
