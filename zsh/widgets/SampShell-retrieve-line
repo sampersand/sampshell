@@ -1,0 +1,19 @@
+#!zsh
+
+## Like `get-line`, except it's to an internal buffer. For use with `store-line`.
+emulate -L zsh
+
+# If nothing's stored, emit an error and return 1 (which will also cause a beep!)
+if (( !$#_SampShell_stored_lines )) {
+  zle -M 'Stored lines empty'
+  return 1
+}
+
+# Push the last stored line onto the builtin buffer stack, so the `zle get-line` works.
+print -zrn -- $_SampShell_stored_lines[-1]
+
+# Remove the last line from our stack
+shift -p _SampShell_stored_lines
+
+# Do the same as `^[g`
+zle get-line

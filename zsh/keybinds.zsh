@@ -63,34 +63,9 @@ bindkey '^[+' backward-delete-to-char
 # the line. This pair of functions here pushes them into an array for later use
 typeset -ag _SampShell_stored_lines
 
-function store-line {
-  # Make sure there's something even in the buffer
-  if (( !$#BUFFER )) return
-  # Add the buffer to the list of lines, clear the buffer, and redisplay
-  _SampShell_stored_lines+=$BUFFER && BUFFER='' && zle redraw
-}
-
-function retrieve-line {
-  # If nothing's stored, emit an error and return 1 (which will also cause a beep!)
-  if (( !$#_SampShell_stored_lines )) {
-    zle -M 'Stored lines empty'
-    return 1
-  }
-
-  # Push the last stored line onto the builtin buffer stack, so the `zle get-line` works.
-  print -zrn -- $_SampShell_stored_lines[-1]
-
-  # Remove the last line from our stack
-  shift -p _SampShell_stored_lines
-
-  # Do the same as `^[g`
-  zle get-line
-}
-
-zle -N store-line
-zle -N retrieve-line
+# (They're autoloaded, as they're not miniscule)
 
 # Assign them; we overwrite the builtins here, as the upper-case variants are just aliases for lower case
-bindkey '^[Q' store-line
-bindkey '^[G' retrieve-line
+bindkey '^[Q' SampShell-store-line
+bindkey '^[G' SampShell-retrieve-line
 

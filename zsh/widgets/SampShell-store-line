@@ -1,0 +1,15 @@
+#!zsh
+
+## Like `push-line`, except it's to an internal buffer. For use with `retrieve-line`.
+emulate -L zsh
+
+# Make sure there's something even to store---we don't want to store blank lines
+if (( !$#BUFFER )) return
+
+# Add the current buffer to the stored lines
+typeset -ag _SampShell_stored_lines
+_SampShell_stored_lines+=$BUFFER
+
+# Empty the buffer and redraw
+BUFFER=''
+zle reset-prompt
