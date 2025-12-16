@@ -60,3 +60,16 @@ bindkey -A sampshell main
 # POSTDISPLAY (scalar)
 # Text to be displayed after the end of the editable text buffer. This does not have to be a complete line; to display a complete line, a newline must be prepended explicitly. The text is reset on each new invocation (but not recursive invocation) of zle.
 
+
+
+# function zle_line_aborted-or-up-line-or-history {
+#   typeset -g __line_aborted_drawn
+#   if (( $+ZLE_LINE_ABORTED )) {
+#     LBUFFER+=$ZLE_LINE_ABORTED
+#     zle redisplay
+#   } else {
+#     zle up-line-or-history
+#   }
+# }
+# zle -N zle_line_aborted-or-up-line-or-history
+# bindkey '^[[A' zle_line_aborted-or-up-line-or-history

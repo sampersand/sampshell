@@ -8,8 +8,6 @@ bindkey '^?' kill-region-or-backward-delete-char
 
 ## Bind key strokes to do functions
 bindkey '^[#'    pound-insert
-bindkey '^[='    SampShell-delete-to-char
-bindkey '^[+'    SampShell-zap-to-char
 bindkey '^[/'    SampShell-delete-path-segment
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 bindkey '^[c'    SampShell-add-pbcopy
@@ -44,14 +42,11 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 
 bindkey '^q' push-line-or-edit
 
-# function zle_line_aborted-or-up-line-or-history {
-#   typeset -g __line_aborted_drawn
-#   if (( $+ZLE_LINE_ABORTED )) {
-#     LBUFFER+=$ZLE_LINE_ABORTED
-#     zle redisplay
-#   } else {
-#     zle up-line-or-history
-#   }
-# }
-# zle -N zle_line_aborted-or-up-line-or-history
-# bindkey '^[[A' zle_line_aborted-or-up-line-or-history
+## delete and zapping chars
+zmodload zsh/deltochar
+function backward-zap-to-char    { zle zap-to-char    -n $(( - ${NUMERIC:-1} )) }
+function backward-delete-to-char { zle delete-to-char -n $(( - ${NUMERIC:-1} )) }
+zle -N backward-zap-to-char
+zle -N backward-delete-to-char
+bindkey '^[=' backward-zap-to-char
+bindkey '^[+' backward-delete-to-char
