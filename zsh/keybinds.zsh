@@ -6,10 +6,6 @@ source ~ss/zsh/movements.zsh
   local fn; for fn do zle -N $fn; done
 } ~ss/zsh/widgets/*(:t)
 
-## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
-bindkey -N sampshell emacs
-bindkey -A sampshell main
-
 ## Bind key strokes to do functions
 bindkey '^[#'    pound-insert
 bindkey '^[='    SampShell-delete-to-char

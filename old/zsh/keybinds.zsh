@@ -39,6 +39,11 @@ bindkey '^[^[[A' SampShell-up-directory
 # "command-space" commands
 bindkey '^[ t' SampShell-transpose-words # never ended up using this
 
+##### No need to do this really, nothing else mucks with keybinds:
+## Create a new keymap called `sampshell` based off emacs, then set it as the main one.
+bindkey -N sampshell emacs
+bindkey -A sampshell main
+
 
 # return
 #   bindkey '\e[[24~' universal-argument
