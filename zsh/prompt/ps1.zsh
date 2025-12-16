@@ -22,6 +22,7 @@ typeset -g PS1=''
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
+	PS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
 	PS1+='%B%F{blue}]%b '                                       # ]
 }
 

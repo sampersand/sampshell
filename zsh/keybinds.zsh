@@ -42,11 +42,55 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 
 bindkey '^q' push-line-or-edit
 
-## delete and zapping chars
+####################################################################################################
+#                                 Read a charcter and delete to it                                 #
+####################################################################################################
+
+# For some reason `backward-{zap,delete}-to-char` don't exist, so we need to make them ourselves
 zmodload zsh/deltochar
 function backward-zap-to-char    { zle zap-to-char    -n $(( - ${NUMERIC:-1} )) }
 function backward-delete-to-char { zle delete-to-char -n $(( - ${NUMERIC:-1} )) }
 zle -N backward-zap-to-char
-zle -N backward-delete-to-char
+zle -N backward-delete-to-charcd
 bindkey '^[=' backward-zap-to-char
 bindkey '^[+' backward-delete-to-char
+
+####################################################################################################
+#                                   Storing and Retrieving Lines                                   #
+####################################################################################################
+
+# The builtin `push-line` and `get-line` combo works great, except it always immediately fetches
+# the line. This pair of functions here pushes them into an array for later use
+typeset -ag _SampShell_stored_lines
+
+function store-line {
+  # Make sure there's something even in the buffer
+  if (( !$#BUFFER )) return
+  # Add the buffer to the list of lines, clear the buffer, and redisplay
+  _SampShell_stored_lines+=$BUFFER && BUFFER='' && zle redraw
+}
+
+function retrieve-line {
+  # If nothing's stored, emit an error and return 1 (which will also cause a beep!)
+  if (( !$#_SampShell_stored_lines )) {
+    zle -M 'Stored lines empty'
+    return 1
+  }
+
+  # Push the last stored line onto the builtin buffer stack, so the `zle get-line` works.
+  print -zrn -- $_SampShell_stored_lines[-1]
+
+  # Remove the last line from our stack
+  shift -p _SampShell_stored_lines
+
+  # Do the same as `^[g`
+  zle get-line
+}
+
+zle -N store-line
+zle -N retrieve-line
+
+# Assign them; we overwrite the builtins here, as the upper-case variants are just aliases for lower case
+bindkey '^[Q' store-line
+bindkey '^[G' retrieve-line
+
