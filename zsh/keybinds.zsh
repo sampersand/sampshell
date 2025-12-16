@@ -18,9 +18,7 @@ bindkey '^[/'    SampShell-delete-path-segment
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 bindkey '^[c'    SampShell-add-pbcopy
 bindkey '^X^R'   redo
-
-# "command-space" commands
-bindkey '^[ t' SampShell-transpose-words
+# bindkey '^[h'    SampShell-help
 
 ## up and down history, but without going line-by-line
 bindkey '^P' up-history

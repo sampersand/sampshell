@@ -5,6 +5,8 @@ emulate -L zsh
 # Declare stored lines ahead of time, We make sure to use `-g` so it's globally accessible
 typeset -ag _SampShell_stored_lines
 
+if (( !$#BUFFER )) return
+
 # Append the current buffer the end of the stored lines
 _SampShell_stored_lines+=( "$BUFFER" )
 

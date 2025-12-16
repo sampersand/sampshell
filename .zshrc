@@ -185,7 +185,7 @@ alias bk='noglob bindkey'
 alias bkg='bindkey | noglob fgrep -ie'
 alias which-command=which # for `^[?`
 
-function bindkey { print "bindkey: $*"; builtin bindkey $@ }
+# function bindkey { print "bindkey: $*"; builtin bindkey $@ }
 
 source ~ss/zsh/keybinds.zsh
 

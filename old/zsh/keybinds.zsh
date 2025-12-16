@@ -36,6 +36,9 @@ bindkey -s '^[gaa' '^Qgit add --all^M'
 bindkey -s '^[gs'  '^Qgit status^M'
 bindkey '^[^[[A' SampShell-up-directory
 
+# "command-space" commands
+bindkey '^[ t' SampShell-transpose-words # never ended up using this
+
 
 # return
 #   bindkey '\e[[24~' universal-argument

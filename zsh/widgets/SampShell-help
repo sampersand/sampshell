@@ -1,0 +1,10 @@
+#!/bin/zsh
+emulate -L zsh
+
+split=${(z)BUFFER}
+cmd=${cmd[1]}
+
+case $cmd in
+	git*)
+	*) man $cmd
+esac
