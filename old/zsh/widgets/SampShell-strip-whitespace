@@ -1,5 +1,7 @@
 #!zsh
 
+## This is no longer needed, as `HIST_REDUCE_BLANKS` does most of it
+
 ## Strips whitespace from a line, depending on the arguments that're given:
 # If the first argument is:
 # * 0 - No stripping done at the start

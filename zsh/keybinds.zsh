@@ -1,3 +1,27 @@
+# This file contains all the keybindings I use
+
+####################################################################################################
+#                                      Overwrite ZLE Builtins                                      #
+####################################################################################################
+
+## Overwrite some builtins to provide custom behaviour
+
+# Print out the history number when searching for lines in history
+function zle-isearch-update { zle -M "Line $HISTNO" }
+zle -N zle-isearch-update
+
+# Clear the result from the updated `zsh-isearch-update` when accepting a line
+function zle-isearch-exit  { zle -M '' }
+zle -N zle-isearch-exit
+
+# Have `clear-screen` instead call our `cls` function
+function clear-screen { cls && zle reset-prompt }
+zle -N clear-screen
+
+####################################################################################################
+#                                               Misc                                               #
+####################################################################################################
+
 ## Useful keybind aliases
 source ~ss/zsh/movements.zsh
 oldw () mv $1 ~ss/old/zsh/widgets
@@ -8,10 +32,10 @@ oldw () mv $1 ~ss/old/zsh/widgets
 bindkey '^?' kill-region-or-backward-delete-char
 
 ## Bind key strokes to do functions
-bindkey '^[#'    pound-insert
+bindkey '^[#'  pound-insert
+bindkey '^X^R' redo # like `^X^U` for undo
+
 bindkey '^[/'    SampShell-delete-path-segment
-bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
-bindkey '^X^R'   redo
 # bindkey '^[h'    SampShell-help
 
 bindkey '^[%' SampShell-make-prompt-simple
@@ -38,7 +62,7 @@ bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for 
 bindkey '^q' push-line-or-edit
 
 ####################################################################################################
-#                                 Read a charcter and delete to it                                 #
+#                                Read a character and delete to it                                 #
 ####################################################################################################
 
 # For some reason `backward-{zap,delete}-to-char` don't exist, so we need to make them ourselves
@@ -65,19 +89,3 @@ bindkey '^[c' SampShell-copy-command
 bindkey '^[Z' execute-last-named-cmd # it's normally bound to `^[z`
 bindkey '^[z' SampShell-put-back-zle
 
-
-####################################################################################################
-#                                      Overwrite ZLE Builtins                                      #
-####################################################################################################
-
-# Print out the history number when searching for lines in history
-function zle-isearch-update { zle -M "Line $HISTNO" }
-zle -N zle-isearch-update
-
-# Clear the result from the updated `zsh-isearch-update` when accepting a line
-function zle-isearch-exit  { zle -M '' }
-zle -N zle-isearch-exit
-
-# Have `clear-screen` instead call our `cls` function
-function clear-screen { cls && zle reset-prompt }
-zle -N clear-screen

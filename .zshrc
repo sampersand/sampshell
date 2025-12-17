@@ -232,7 +232,6 @@ alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own i
 alias reload='exec =zsh -il'
 function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
 
-
 # Copies the current directory, or a subdirectory of the current direcotry if given
 function pwdc () (
 	if (( $ARGC > 1 )); then print "at most 1 argument allowed" @2N; return 1 ; fi

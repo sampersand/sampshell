@@ -44,6 +44,7 @@ bindkey '^[ t' SampShell-transpose-words # never ended up using this
 bindkey -N sampshell emacs
 bindkey -A sampshell main
 
+bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
 
 # return
 #   bindkey '\e[[24~' universal-argument
