@@ -1,6 +1,10 @@
 #!zsh
 
+emulate -L zsh
+
 # Add a space unless there's already a space
-[[ ${BUFFER: -1} = [[:blank:]] ]] || BUFFER+=' '
+if [[ ${BUFFER: -1} != [[:blank:]] ]] BUFFER+=' '
+
+# Always add it to the end
 BUFFER+='| pbcopy'
 zle redisplay

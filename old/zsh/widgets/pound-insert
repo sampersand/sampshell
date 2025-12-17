@@ -1,5 +1,7 @@
 #!zsh
 
+# This is no longer needed, as i never actually use anything other than `#` for the comment character anyways lol
+
 ## Comment out a line by adding the comment character (default: `#`) and a space
 # before the current line, then accepting it.
 BUFFER="$histchars[3] $BUFFER"

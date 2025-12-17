@@ -2,6 +2,11 @@
 
 emulate -L zsh
 
-local buf=${BUFFER:-$history[$#history]}
-print -rn -- $buf | pbcopy
-zle -M "Command copied: $(psvar[1]=$buf print -P '%30>…>%v%>>')"
+# Copy the current command; if the buffer is empty, copy the previous command
+local cmd=${BUFFER:-$history[$#history]}
+
+# Pipe the command to `pbcopy`. If I ever use something other than macos, maybe abstract this out?
+print -rn -- "$cmd" | pbcopy
+
+# Print that the command was copied
+zle -M "Command copied: $(psvar[1]=$cmd print -P '%30>…>%v%>>')"

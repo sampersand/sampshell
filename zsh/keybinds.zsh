@@ -1,5 +1,6 @@
 ## Useful keybind aliases
 source ~ss/zsh/movements.zsh
+oldw () mv $1 ~ss/old/zsh/widgets
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
 () { local fn; for fn do zle -N $fn; done } ~ss/zsh/widgets/*(:t)
@@ -10,17 +11,11 @@ bindkey '^?' kill-region-or-backward-delete-char
 bindkey '^[#'    pound-insert
 bindkey '^[/'    SampShell-delete-path-segment
 bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to use `^S`
-bindkey '^[c'    SampShell-add-pbcopy
 bindkey '^X^R'   redo
 # bindkey '^[h'    SampShell-help
 
-bindkey '^[ c' SampShell-copy-command
-bindkey '^[ %' SampShell-make-prompt-simple
 bindkey '^[%' SampShell-make-prompt-simple
 bindkey '^[$' SampShell-make-prompt-simple
-bindkey '^[ $' SampShell-make-prompt-simple
-bindkey '^[ z' SampShell-put-back-zle
-bindkey '^[ p' SampShell-add-pbcopy
 
 
 ## up and down history, but without going line-by-line
@@ -63,9 +58,26 @@ bindkey '^[+' backward-delete-to-char
 # the line. This pair of functions here pushes them into an array for later use
 typeset -ag _SampShell_stored_lines
 
-# (They're autoloaded, as they're not miniscule)
-
-# Assign them; we overwrite the builtins here, as the upper-case variants are just aliases for lower case
 bindkey '^[Q' SampShell-store-line
 bindkey '^[G' SampShell-retrieve-line
+bindkey '^[p' SampShell-add-pbcopy
+bindkey '^[c' SampShell-copy-command
+bindkey '^[Z' execute-last-named-cmd # it's normally bound to `^[z`
+bindkey '^[z' SampShell-put-back-zle
 
+
+####################################################################################################
+#                                      Overwrite ZLE Builtins                                      #
+####################################################################################################
+
+# Print out the history number when searching for lines in history
+function zle-isearch-update { zle -M "Line $HISTNO" }
+zle -N zle-isearch-update
+
+# Clear the result from the updated `zsh-isearch-update` when accepting a line
+function zle-isearch-exit  { zle -M '' }
+zle -N zle-isearch-exit
+
+# Have `clear-screen` instead call our `cls` function
+function clear-screen { cls && zle reset-prompt }
+zle -N clear-screen
