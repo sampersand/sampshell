@@ -64,7 +64,6 @@ alias gsquash='git squash'
 
 ## Spellcheck
 alias gti=git
-alias ig='__deprecated git ignore'
 alias gi='git ignore'
 
 ################################
@@ -83,13 +82,10 @@ alias gnb='git new-branch'
 function gsw () git switch "${@:-@{-1\}}"
 alias    gswm='git switch "$(git-master-branch)"'
 alias    gbr='git branch'
-alias    gbrc='__deprecated git branch --show-current'
+alias    gbrc='git branch --show-current'
 
-alias gdb='__deprecated git branch --delete'
 alias gbrd='git branch --delete'
 alias grename='git branch --move' # TODO: clean this up
-alias gbmv='__deprecated git branch --move'
-alias gbrmv='__deprecated git branch --move'
 
 ##########################
 # Custom git "functions" #
@@ -102,10 +98,6 @@ alias gcm='noglob git commit-msg'
 alias gcma='gcm --amend'
 alias gcmn='gcm --no-verify'
 alias gcman='gcm --amend --no-verify' gcmna=gcman
-
-alias gam='__deprecated git commit --amend'
-alias gammend='__deprecated git commit --amend'
-
 
 ################################################################################
 #                                   Merging                                    #
@@ -126,16 +118,9 @@ alias gdms='git diff --stat "$(git master-branch)"'
 
 alias gdno='__deprecated git diff --name-only'
 gdh () {
-	__deprecated
-	[ "$#" = 0 ] && set -- 'HEAD~1'
+	if (( $# == 0 )) set -- 'HEAD~1'
 	git diff "$@"
 }
-gdd () {
-	__deprecated
-	[ "$#" = 0 ] && set -- 'HEAD~1'
-	git diff --name-status "$@"
-}
-alias gdol='__deprecated gdd'
 
 ################################################################################
 #                                     Misc                                     #
