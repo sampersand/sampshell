@@ -101,12 +101,6 @@ if zstyle -T ':sampshell:history:record-every-command' enabled; then
 	source ~ss/zsh/record-every-command.zsh
 fi
 
-history-ignore-command # load it in because autoload. probably can solve with `autoload -R`
-
-# Don't record the `h` function, which is a shorthand I've made
-alias h='noglob h'
-history-ignore-command h history-{enable,disable}
-
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
 SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
@@ -119,6 +113,18 @@ setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
+
+# Ignore commands by just prepending a space to them. This probably breaks on some commands, but I
+# haven't figured them out yet.
+function history-ignore-command {
+	local cmd
+	for cmd do
+		alias -- "$cmd= $(whence -- "$cmd")"
+	done
+}
+
+alias h='noglob h'
+history-ignore-command h history-{enable,disable}
 
 ####################################################################################################
 #                                                                                                  #

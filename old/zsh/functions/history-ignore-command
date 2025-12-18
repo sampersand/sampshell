@@ -1,5 +1,9 @@
 #!zsh
 
+## This file is no longer necessary, as you can just prepend a space to commands via `alias`, and
+# use the histignorespace (which i always have enabled)
+
+
 ## Disable history for specific commands.
 # (NOTE: This file's been designed to be used with `autoload`, however it can be `source`d instead,
 # and will work just fine.)
