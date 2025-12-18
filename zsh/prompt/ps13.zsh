@@ -7,27 +7,27 @@
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
 # empty string (so we can construct it down below)
 typeset -g PS1=''
-1 () source ~ss/zsh/prompt/ps1.zsh
-2 () source ~ss/zsh/prompt/ps12.zsh
-3 () source ~ss/zsh/prompt/ps13.zsh
-
+unset PS1 RPS1
+type set-prompt @N @2N && unfunction set-prompt
 ####################################################################################################
 #                                          Bracket Prefix                                          #
 ####################################################################################################
 
-() {
-	local timefmt
-	zstyle -s ':sampshell:prompt:time' format timefmt
+PS1+='%B%F{blue}[%b'                                        # [
+PS1+="%F{cyan}%D{%_I:%M:%S.%. %p} "                         #   Current time
+PS1+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
+PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
+# PS1+='%(2L. %F{red}SHLVL=%L.)'                            #   (SHLVL, if >1)
+PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
+PS1+='%B%F{blue}]%b '                                       # ]
 
-	PS1+='%B%F{blue}[%b'                                        # [
-	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "             #   Current time
-	PS1+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
-	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
-	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
-	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
-	PS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
-	PS1+='%B%F{blue}]%b '                                       # ]
-}
+
+unset RPS1
+RPS1='@'
+RPS1+='%(2L.%F{red} SHLVL=%L.)' # SHLVL
+RPS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
+RPS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
+
 
 ####################################################################################################
 #                                      Username and Hostname                                       #
