@@ -52,6 +52,12 @@ function set-prompt() {
   top_left='┌─[%(?.%F{green}✔.%F{red}✘%B)%?%b%f]-[%F{yellow}%~%f]-[!%!]-[%n@%M]-[%y]-[J%j-L%L]'
   top_right='┐'
   bottom_left='└%F{%(?.green.red)}%#%f '
+  PS1+='%F{11}'                                # The path colour
+  PS1+="%-1$d"                                 # always have the first component
+  PS1+="%$len</…<"                             # start path truncation.
+  PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
+  PS1+='%<< '                                  # stop truncation
+
   bottom_right='┘'
 
   # PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "
@@ -76,6 +82,7 @@ function set-prompt() {
   RPROMPT=$bottom_right
 }
 
+typeset -aU precmd_functions
 precmd_functions+=(set-prompt)
 # unset RPS1
 # PS1=

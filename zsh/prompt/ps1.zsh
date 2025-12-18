@@ -141,7 +141,7 @@ if zstyle -T ':sampshell:prompt:git' display; then
 	# Always run this function before a prompt, instead of adding it as part
 	# of the prompt. (`$()` and `${}` are done before prompt expansions, and
 	# so there's no way to get a length.)
-	precmd_functions+=(_SampShell-prompt-git-hook)
+	add-zsh-hook precmd _SampShell-prompt-git-hook
 
 	# Only expand the full thing if there's a significant amount of space left.
 	PS1+='%F{43}%$((COLUMNS / 5))(l.%2v.%1v)'

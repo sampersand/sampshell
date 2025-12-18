@@ -18,15 +18,24 @@ PS1+="%F{cyan}%D{%_I:%M:%S.%. %p} "                         #   Current time
 PS1+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
 PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
 # PS1+='%(2L. %F{red}SHLVL=%L.)'                            #   (SHLVL, if >1)
-PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
+# PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
 PS1+='%B%F{blue}]%b '                                       # ]
 
+function set-stored-lines {
+	if (( $#_SampShell_stored_lines )) {
+		psvar[3]=$#_SampShell_stored_lines
+	} else {
+		psvar[3]=
+	}
+}
+
+add-zsh-hook precmd set-stored-lines
 
 unset RPS1
 RPS1='@'
 RPS1+='%(2L.%F{red} SHLVL=%L.)' # SHLVL
-RPS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
-RPS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
+RPS1+='%(1j.%F{166} (%j job%(2j.s.)).)' #   (job count, if >0)
+RPS1+='%f %(3V.%3v stored.) ' # amoutn of stored lines; todo, update this
 
 
 ####################################################################################################
@@ -141,7 +150,8 @@ if zstyle -T ':sampshell:prompt:git' display; then
 	# Always run this function before a prompt, instead of adding it as part
 	# of the prompt. (`$()` and `${}` are done before prompt expansions, and
 	# so there's no way to get a length.)
-	precmd_functions+=(_SampShell-prompt-git-hook)
+	typeset -aU precmd_functions
+	add-zsh-hook precmd _SampShell-prompt-git-hook
 
 	# Only expand the full thing if there's a significant amount of space left.
 	PS1+='%F{43}%$((COLUMNS / 5))(l.%2v.%1v)'
