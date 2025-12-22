@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'optparse/date'
+
+OptParse2.new do |op|
+	op.program_name.sub! '-', ' '
+	op.banner = "usage: #{op.program_name} [options] [--] [branch name to be joined by hyphens]"
+
+  op.define('-d', '--date=DATE', Date, 'Set the date')
+  	.default('today') { Date.today }
+
+  op.on '-p', '--prefix=PREFIX', 'Set branch prefix', default: proc {
+		ENV.fetch('SampShell_git_branch_prefix') { ENV.fetch('LOGNAME') { abort "need login name if no prefix" } }
+  }, default_description: 'current user'
+
+  op.on '-s', '--sep=SEP', 'Sets the separator', default: ENV.fetch('SampShell_git_separator', '/')
+  op.parse! into: OptParse2::Globals
+end
+
+print $prefix, $sep, $date, $sep, $*.join('-')

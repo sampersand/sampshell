@@ -1,90 +1,91 @@
-# TODO: see if this is accurate
-function prompt-length() {
-  emulate -L zsh
-  local -i COLUMNS=${2:-COLUMNS}
-  local -i x y=${#1} m
-  if (( y )); then
-	 while (( ${${(%):-$1%$y(l.1.0)}[-1]} )); do
-		x=y
-		(( y *= 2 ))
-	 done
-	 while (( y > x + 1 )); do
-		(( m = x + (y - x) / 2 ))
-		(( ${${(%):-$1%$m(l.x.y)}[-1]} = m ))
-	 done
-  fi
-  typeset -g REPLY=$x
+function precmd {
+    local TERMWIDTH
+    (( TERMWIDTH = ${COLUMNS} - 1 ))
+
+    # Truncate the path if it's too long.
+    PR_FILLBAR=""
+    PR_PWDLEN=""
+
+    local promptsize=${#${(%):---(me@computer:%l)---()--}}
+    local pwdsize=${#${(%):-%~}}
+
+    if [[ "$promptsize + $pwdsize" -gt $TERMWIDTH ]]; then
+    ((PR_PWDLEN=$TERMWIDTH - $promptsize))
+    else
+    PR_FILLBAR="\${(l.(($TERMWIDTH - ($promptsize + $pwdsize)))..${PR_HBAR}.)}"
+    fi
 }
 
-function fill-line() {
-  emulate -L zsh
-  prompt-length $1
-  local -i left_len=REPLY
-  prompt-length $2 9999
-  local -i right_len=REPLY
-  local -i pad_len=$((COLUMNS - left_len - right_len - ${ZLE_RPROMPT_INDENT:-1}))
-  if (( pad_len < 1 )); then
-	 # Not enough space for the right part. Drop it.
-	 typeset -g REPLY=$1
-  else
-	 local pad=${(pl.$pad_len..─.)}  # pad_len spaces
-	 typeset -g REPLY=${1}${pad}${2}
-  fi
+setprompt () {
+    setopt prompt_subst
+
+    # See if we can use colors.
+    autoload colors zsh/terminfo
+    if [[ "$terminfo[colors]" -ge 8 ]]; then
+    colors
+    fi
+    for color in RED GREEN YELLOW BLUE MAGENTA CYAN WHITE; do
+        #eval PR_$color='%{$terminfo[bold]$fg[${(L)color}]%}'
+        #eval PR_LIGHT_$color='%{$fg[${(L)color}]%}'
+        eval PR_$color='%{$fg[${(L)color}]%}'
+        eval PR_LIGHT_$color='%{$terminfo[bold]$fg[${(L)color}]%}'
+        (( count = $count + 1 ))
+    done
+    PR_NO_COLOUR="%{$terminfo[sgr0]%}"
+
+    # See if we can use extended characters to look nicer.
+    typeset -A altchar
+    set -A altchar ${(s..)terminfo[acsc]}
+    PR_SET_CHARSET="%{$terminfo[enacs]%}"
+    PR_SHIFT_IN="%{$terminfo[smacs]%}"
+    PR_SHIFT_OUT="%{$terminfo[rmacs]%}"
+    PR_HBAR=${altchar[q]:--}
+    PR_ULCORNER=${altchar[l]:--}
+    PR_LLCORNER=${altchar[m]:--}
+    PR_LRCORNER=${altchar[j]:--}
+    PR_URCORNER=${altchar[k]:--}
+
+    # Decide if we need to set titlebar text.
+    case $TERM in
+    xterm*)
+        PR_TITLEBAR=$'%{\e]0;%(!.-=*[ROOT]*=- | .)me@computer:%~ | ${COLUMNS}x${LINES} | %y\a%}'
+    ;;
+    rxvt*)
+        PR_TITLEBAR=$'%{\e]2;%(!.-=*[ROOT]*=- | .)me@computer:%~ | %y\a%}'
+    ;;
+    screen)
+        PR_TITLEBAR=$'%{\e_screen \005 (\005t) | %(!.-=[ROOT]=- | .)me@computer:%~ | ${COLUMNS}x${LINES} | %y\e\\%}'
+    ;;
+    *)
+        PR_TITLEBAR=''
+    ;;
+    esac
+
+    # Finally, the prompt.
+
+    PROMPT='$PR_SET_CHARSET$PR_STITLE${(e)PR_TITLEBAR}\
+$PR_CYAN$PR_SHIFT_IN$PR_ULCORNER$PR_BLUE$PR_HBAR$PR_SHIFT_OUT(\
+$PR_GREEN%(!.%SROOT%s.me)$PR_GREEN@computer:%l\
+$PR_BLUE)$PR_SHIFT_IN$PR_HBAR$PR_CYAN$PR_HBAR${(e)PR_FILLBAR}$PR_BLUE$PR_HBAR$PR_SHIFT_OUT(\
+$PR_MAGENTA%$PR_PWDLEN<...<%~%<<\
+$PR_BLUE)$PR_SHIFT_IN$PR_HBAR$PR_CYAN$PR_URCORNER$PR_SHIFT_OUT\
+
+$PR_CYAN$PR_SHIFT_IN$PR_LLCORNER$PR_BLUE$PR_HBAR$PR_SHIFT_OUT(\
+%(?..$PR_LIGHT_RED%?$PR_BLUE:)\
+$PR_YELLOW%T\
+$PR_LIGHT_BLUE:%(!.$PR_RED.$PR_WHITE)%#$PR_BLUE)$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT\
+$PR_CYAN$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT\
+$PR_NO_COLOUR '
+
+RPROMPT=' $PR_CYAN$PR_SHIFT_IN$PR_HBAR$PR_BLUE$PR_HBAR$PR_SHIFT_OUT\
+($PR_YELLOW%D{%a,%b%d}$PR_BLUE)$PR_SHIFT_IN$PR_HBAR$PR_CYAN$PR_LRCORNER$PR_SHIFT_OUT$PR_NO_COLOUR'
+
+
+PS2='$PR_CYAN$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT\
+$PR_BLUE$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT(\
+$PR_LIGHT_GREEN%_$PR_BLUE)$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT\
+$PR_CYAN$PR_SHIFT_IN$PR_HBAR$PR_SHIFT_OUT$PR_NO_COLOUR '
+
 }
 
-# Sets PROMPT and RPROMPT.
-#
-# Requires: prompt_percent and no_prompt_subst.
-function set-prompt() {
-  emulate -L zsh
-  local git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-  git_branch=${git_branch//\%/%%}  # escape '%'
-
-  # ~/foo/bar                     master
-  # % █                            10:51
-  #
-  # Top left:      Blue current directory.
-  # Top right:     Green Git branch.
-  # Bottom left:   '#' if root, '%' if not; green on success, red on error.
-  # Bottom right:  Yellow current time.
-  local top_left top_right bottom_left bottom_right
-
-  top_left='┌─[%(?.%F{green}✔.%F{red}✘%B)%?%b%f]-[%F{yellow}%~%f]-[!%!]-[%n@%M]-[%y]-[J%j-L%L]'
-  top_right='┐'
-  bottom_left='└%F{%(?.green.red)}%#%f '
-  PS1+='%F{11}'                                # The path colour
-  PS1+="%-1$d"                                 # always have the first component
-  PS1+="%$len</…<"                             # start path truncation.
-  PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
-  PS1+='%<< '                                  # stop truncation
-
-  bottom_right='┘'
-
-  # PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "
-  # top_left='┌─⎨%F{red}%n@%M%f⎬'
-  # top_left+='─⎨%F{blue}%~%f⎬'
-  # # top_left+='%(1j.─⎨%F{166}%j job%(2j.s.)%f⎬─.)'
-
-  # top_left+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "             #   Current time
-  # top_left+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
-  # top_left+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
-  # top_left+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
-  # top_left+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
-  # top_left+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
-
-  # top_right="%F{green}${git_branch}%f┐"
-  # bottom_left='└%F{%(?.green.red)}%#%f '
-  # bottom_right='%F{yellow}%T%f┘'
-
-  local REPLY
-  fill-line "$top_left" "$top_right"
-  PROMPT=$REPLY$'\n'$bottom_left
-  RPROMPT=$bottom_right
-}
-
-typeset -aU precmd_functions
-precmd_functions+=(set-prompt)
-# unset RPS1
-# PS1=
-
-# PS1='%F{8}%#%f ' # ending %
+setprompt
