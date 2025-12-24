@@ -10,6 +10,7 @@ typeset -g PS1=''
 1 () source ~ss/zsh/prompt/ps1.zsh
 2 () source ~ss/zsh/prompt/ps12.zsh
 3 () source ~ss/zsh/prompt/ps13.zsh
+4 () source ~ss/zsh/prompt/prompt_sampshell_setup
 
 ####################################################################################################
 #                                          Bracket Prefix                                          #
@@ -81,11 +82,14 @@ typeset -g PS1=''
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                                # The path colour
-	PS1+="%-1$d"                                 # always have the first component
-	PS1+="%$len</…<"                             # start path truncation.
-	PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
-	PS1+='%<< '                                  # stop truncation
+	# PS1+='%F{11}'                                # The path colour
+	# PS1+="%-1$d"                                 # always have the first component
+	# PS1+="%$len</…<"                             # start path truncation.
+	# PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
+	# PS1+='%<< '                                  # stop truncation
+
+	PS1+='%F{11}' # color
+	PS1+='%(5~.%-1~/…/%3~.%~)' # trailing part of the path
 }
 
 ####################################################################################################
