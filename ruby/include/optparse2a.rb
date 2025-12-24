@@ -28,19 +28,59 @@ class OptParse2 < OptParse
     super
   end
 
-  class ::OptParse::Switch
-    def default(description=nil, &block)
-      if block
-        @default = block
-        @default_description = description
-        self
-      elsif description
-        fail ArgumentError, 'description given and no block given'
+  module Default
+    # requires `switch_name`, `desc` to work
+
+    def set_default(value, description=nil)
+      if value.respond_to? :call
+        @default = value
       else
-        @default.call(switch_name)
+        @default = proc { value }
       end
+
+      @default_description = description
+    end
+
+    def default = @default.(switch_name)
+    def default_description = @default_description || default.inspect
+    def desc
+      x = super
+      x << '' if x.empty?
+      x.last << " [default: #{default_description}]"
+      x
     end
   end
+
+  # class ::OptParse::Switch
+
+  #   # default: () -> untyped -- actually get the default
+  #   #        | () { () -> untyped } -- description comes from block
+  #   #        | (_ToS) { () -> untyped} -- description comes from first arg
+  #   #        | (_ToS) -- description and value
+  #   #        | (untyped, _ToS) -- value and description
+  #   def default(*args, &block)
+  #     # no arguments, no block, then fetch the default
+  #     if args.empty? && !block
+  #       return @default.call switch_name
+  #     end
+
+  #     if block_given?
+  #       @default = block
+  #       case args
+  #       in []      then # do nothing; description comes from block
+  #       in [descr] then @default_description = descr
+  #       else fail ArgumentError, "only a description may be given with a block"
+  #       end
+  #     else
+  #       case args
+  #       in [value] then @default = proc{ value }
+  #       in [value, descr] then @default = proc{ value }; @default_description = descr
+  #       else fail ArgumentError, "only a value and description may be given"
+  #       end
+  #     end
+  #     self
+  #   end
+  # end
 
   # Update `make_switch` to support OptParse2's keyword arguments
   def make_switch(opts, block, hidden: false, key: nil, default: nodefault=true, default_description: nil)
@@ -56,15 +96,8 @@ class OptParse2 < OptParse
       end
 
       @defaults[sw.switch_name] = default
-
-      sw.define_singleton_method(:default) { default.(switch_name) }
-      sw.define_singleton_method(:default_description){ default_description || self.default.inspect }
-      sw.define_singleton_method(:desc) {
-        x = super()
-        x << '' if x.empty?
-        x.last << " [default: #{self.default_description}]"
-        x
-      }
+      sw.include Default
+      sw.set_default default, description
     end
 
     [sw, *rest]

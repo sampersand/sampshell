@@ -2,20 +2,37 @@
 
 require 'optparse2'
 require 'optparse/date'
+require 'optparse2/globals'
 
 OptParse2.new do |op|
-	op.program_name.sub! '-', ' '
-	op.banner = "usage: #{op.program_name} [options] [--] [branch name to be joined by hyphens]"
+  op.program_name.sub! '-', ' '
+  op.banner = "usage: #{op.program_name} [options] [--] [branch name to be joined by hyphens]"
 
-  op.define('-d', '--date=DATE', Date, 'Set the date')
-  	.default('today') { Date.today }
+  DEFAULT_PREFIX = ENV['SampShell_git_branch_prefix'] || ENV.fetch('LOGNAME')
+  # DEFAULT_PREFIX = ENV.fetch('SampShell_git_branch_prefix')
+  #   op.env('SampShell_git_branch_prefix', 'Default prefix for -p',
+  #          unset: :empty, default: proc{ ENV.fetch('LOGNAME') })
 
-  op.on '-p', '--prefix=PREFIX', 'Set branch prefix', default: proc {
-		ENV.fetch('SampShell_git_branch_prefix') { ENV.fetch('LOGNAME') { abort "need login name if no prefix" } }
-  }, default_description: 'current user'
+  DEFAULT_SEP = ENV['SampShell_git_separator'] || '/'
 
-  op.on '-s', '--sep=SEP', 'Sets the separator', default: ENV.fetch('SampShell_git_separator', '/')
+  # DEFAULT_SEP =
+  #   op.env('SampShell_git_separator', 'Default separator', default: '/')
+
+  op.on '-d', '--date=DATE', Date, 'Set the date',
+    default: proc{ Date.today }, default_description: 'today'
+
+  op.on '-p', '--prefix=PREFIX', 'Set branch prefix',
+    default: DEFAULT_PREFIX, default_description: 'current user'
+
+  op.on '-s', '--sep=SEP', 'Sets the separator',
+    default: DEFAULT_SEP
+
+  op.positional 1.., 'Branch name (to be joined by `-`)' do |args|
+    args.join('-')
+  end
+
   op.parse! into: OptParse2::Globals
 end
+BEGIN{ $* << 'a'}
 
-print $prefix, $sep, $date, $sep, $*.join('-')
+print $prefix, $sep, $date, $sep, $args
