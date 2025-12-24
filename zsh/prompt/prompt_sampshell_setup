@@ -52,7 +52,7 @@ function prompt_sampshell_setup {
 
 	if ! zstyle -s ':sampshell:prompt:time' format timefmt; then
 		timefmt='%D{%_I:%M:%S.%. %p}'
-		# timefmt='%*'
+		timefmt='%*'
 	fi
 
 	PS1+='%B%F{blue}[%b'                   # [
