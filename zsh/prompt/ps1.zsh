@@ -10,10 +10,17 @@ typeset -g PS1=''
 1 () source ~ss/zsh/prompt/ps1.zsh
 2 () source ~ss/zsh/prompt/ps12.zsh
 3 () source ~ss/zsh/prompt/ps13.zsh
+4 () source ~ss/zsh/prompt/prompt_sampshell_setup
 
 ####################################################################################################
 #                                          Bracket Prefix                                          #
 ####################################################################################################
+
+_set_stored_lines () {
+	psvar[7]=
+	if (( $#_SampShell_stored_lines )) psvar[7]=$#_SampShell_stored_lines
+}
+precmd_functions+=( _set_stored_lines )
 
 () {
 	local timefmt
@@ -25,7 +32,7 @@ typeset -g PS1=''
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
-	PS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
+	PS1+='%(7V. %f(%7v).)'                                      #   (amount of stored lines, if >0)
 	PS1+='%B%F{blue}]%b '                                       # ]
 }
 
@@ -81,11 +88,14 @@ typeset -g PS1=''
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                                # The path colour
-	PS1+="%-1$d"                                 # always have the first component
-	PS1+="%$len</…<"                             # start path truncation.
-	PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
-	PS1+='%<< '                                  # stop truncation
+	# PS1+='%F{11}'                                # The path colour
+	# PS1+="%-1$d"                                 # always have the first component
+	# PS1+="%$len</…<"                             # start path truncation.
+	# PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
+	# PS1+='%<< '                                  # stop truncation
+
+	PS1+='%F{11}' # color
+	PS1+='%(5~.%-1~/…/%3~.%~) ' # trailing part of the path
 }
 
 ####################################################################################################

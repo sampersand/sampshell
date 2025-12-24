@@ -7,36 +7,28 @@
 # would inherit it, and they certainly don't understand the formatting), and initialize it to an
 # empty string (so we can construct it down below)
 typeset -g PS1=''
-unset PS1 RPS1
-type set-prompt @N @2N && unfunction set-prompt
+1 () source ~ss/zsh/prompt/ps1.zsh
+2 () source ~ss/zsh/prompt/ps12.zsh
+3 () source ~ss/zsh/prompt/ps13.zsh
+4 () source ~ss/zsh/prompt/prompt_sampshell_setup
+
 ####################################################################################################
 #                                          Bracket Prefix                                          #
 ####################################################################################################
 
-PS1+='%B%F{blue}[%b'                                        # [
-PS1+="%F{cyan}%D{%_I:%M:%S.%. %p} "                         #   Current time
-PS1+='%f${_SampShell_history_disabled:+%F{red\}}%U%!%u '    #   History Number; red if disabled
-PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
-# PS1+='%(2L. %F{red}SHLVL=%L.)'                            #   (SHLVL, if >1)
-# PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
-PS1+='%B%F{blue}]%b '                                       # ]
+() {
+	local timefmt
+	zstyle -s ':sampshell:prompt:time' format timefmt
 
-function set-stored-lines {
-	if (( $#_SampShell_stored_lines )) {
-		psvar[3]=$#_SampShell_stored_lines
-	} else {
-		psvar[3]=
-	}
+	PS1+='%B%F{blue}[%b'                                        # [
+	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "             #   Current time
+	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u '                  #   History Number; red if disabled.
+	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
+	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)
+	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'                      #   (job count, if >0)
+	PS1+='%f (${#_SampShell_stored_lines}) ' # amoutn of stored lines; todo, update this
+	PS1+='%B%F{blue}]%b '                                       # ]
 }
-
-add-zsh-hook precmd set-stored-lines
-
-unset RPS1
-RPS1='@'
-RPS1+='%(2L.%F{red} SHLVL=%L.)' # SHLVL
-RPS1+='%(1j.%F{166} (%j job%(2j.s.)).)' #   (job count, if >0)
-RPS1+='%f %(3V.%3v stored.) ' # amoutn of stored lines; todo, update this
-
 
 ####################################################################################################
 #                                      Username and Hostname                                       #
@@ -90,11 +82,14 @@ RPS1+='%f %(3V.%3v stored.) ' # amoutn of stored lines; todo, update this
 	# disabled by setting the length to 0 or an empty string.
 	zstyle -s ':sampshell:prompt:path' length len || len='$((COLUMNS / 5))'
 
-	PS1+='%F{11}'                                # The path colour
-	PS1+="%-1$d"                                 # always have the first component
-	PS1+="%$len</…<"                             # start path truncation.
-	PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
-	PS1+='%<< '                                  # stop truncation
+	# PS1+='%F{11}'                                # The path colour
+	# PS1+="%-1$d"                                 # always have the first component
+	# PS1+="%$len</…<"                             # start path truncation.
+	# PS1+="\${\${(*)\${(%):-%$d}##?[^/]#}/\%/%%}" # everything but first component
+	# PS1+='%<< '                                  # stop truncation
+
+	PS1+='%F{11}' # color
+	PS1+='%(5~.%-1~/…/%3~.%~)' # trailing part of the path
 }
 
 ####################################################################################################
@@ -150,7 +145,6 @@ if zstyle -T ':sampshell:prompt:git' display; then
 	# Always run this function before a prompt, instead of adding it as part
 	# of the prompt. (`$()` and `${}` are done before prompt expansions, and
 	# so there's no way to get a length.)
-	typeset -aU precmd_functions
 	add-zsh-hook precmd _SampShell-prompt-git-hook
 
 	# Only expand the full thing if there's a significant amount of space left.
