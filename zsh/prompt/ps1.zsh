@@ -27,7 +27,7 @@ precmd_functions+=( _set_stored_lines )
 	zstyle -s ':sampshell:prompt:time' format timefmt
 
 	PS1+='%B%F{blue}[%b'                                        # [
-	PS1+="%F{cyan}%D{${timefmt:-%_I:%M:%S.%. %p}} "             #   Current time
+	PS1+="%F{cyan}${timefmt:-%D{%_I:%M:%S.%. %p\}} "            #   Current time
 	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u '                  #   History Number; red if disabled.
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'                       #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'                              #   (SHLVL, if >1)

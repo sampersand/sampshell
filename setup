@@ -1,0 +1,13 @@
+#!/bin/zsh
+# This is nowhere near done
+
+if (( $# != 1 )) {
+	echo >&2 "usage: $0 <sampshell rootdir>"
+	return 1
+}
+
+rootdir=${1:P:h}
+: ${ZDOTDIR:=$HOME}
+
+print "source ${rootdir}/.zprofile" >>$ZDOTDIR/.zprofile
+print "source ${rootdir}/.zshrc" >>$ZDOTDIR/.zshrc

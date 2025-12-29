@@ -237,7 +237,12 @@ alias -g @2N='2>/dev/null'
 
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 
-alias reload='exec =zsh -il'
+function reload {
+	# exec =zsh -il
+	local opts=-i
+	if [[ $options[login] == on ]] opts+=l
+	exec =zsh $opts
+}
 function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
 
 # Copies the current directory, or a subdirectory of the current direcotry if given
