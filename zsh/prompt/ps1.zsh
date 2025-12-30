@@ -135,7 +135,7 @@ function _SampShell-prompt-git-hook {
 
 	## Perform the substitution
 	local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
-	psvar[1]=${$(__git_ps1 '⇄%s ')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
+	psvar[1]=${$(__git_ps1 '⇄%s')/\%\%/!}' ' # the `/%%/!` replaces `%` with my `!`
 	psvar[2]=$psvar[1]
 
 	## If there's a prefix pattern, then set `psvar[2]` to that replacement.
