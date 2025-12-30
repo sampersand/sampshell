@@ -109,11 +109,7 @@ function prompt_sampshell_setup {
 
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
 		timefmt='%D{%_I:%M:%S.%. %p}'
-		# timefmt='%*'
 	fi
-
-# zstyle ':prompt:sampshell:time' format '%*'
-
 
 	PS1+='%B%F{blue}[%b'                       # [
 	PS1+="%F{cyan}$timefmt "                   #   Current time
@@ -124,7 +120,10 @@ function prompt_sampshell_setup {
 	PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v).)"                     #   (amnt stored lines, if >0)
 	PS1+='%B%F{blue}]%b '                      # ]
 
-	if [[ $SSH_CONNECTION ]] PS1+='%F{242}%n@%m%f '
+	# If we're SSHed into something, then display the currentuser and hostname
+	if (( $+SSH_CONNECTION )) {
+		PS1+='%F{242}%n@%m%f '
+	}
 
 	# set the path
 	PS1+='%F{11}' # color
@@ -145,7 +144,7 @@ function prompt_sampshell_setup {
 
 
 	RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
-	RPS1+=' [%n@%m:%l %F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
+	RPS1+=' [%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
 	setopt transient_rprompt
 }
 
