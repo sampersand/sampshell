@@ -151,10 +151,9 @@ zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
 setopt PROMPT_SUBST # Lets you use variables and $(...) in prompts.
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
-# fpath+=( ~ss/zsh/prompt )
-autoload -Uz promptinit; promptinit
 source ~ss/zsh/prompt/ps1.zsh
 source ~ss/zsh/prompt/rps1.zsh
+# fpath+=( ~ss/zsh/prompt ); autoload -Uz promptinit; promptinit
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
