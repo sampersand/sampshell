@@ -145,15 +145,15 @@ function j { jobs -ld $@ | paste - - } # Also coulda used 'N;s/\n/ /'
 ####################################################################################################
 
 # Default zstyle for prompt
-zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??"
-
-## Options for prompt expansion
-setopt PROMPT_SUBST # Lets you use variables and $(...) in prompts.
+zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??" # for old one
+zstyle ':prompt:sampshell:git:*' pattern "$(whoami)/????-??-??"
 
 ## Load in the definitions for the `PS1` and `RPS1` variables
-source ~ss/zsh/prompt/ps1.zsh
-source ~ss/zsh/prompt/rps1.zsh
-# fpath+=( ~ss/zsh/prompt ); autoload -Uz promptinit; promptinit
+# source ~ss/zsh/prompt/ps1.zsh
+# source ~ss/zsh/prompt/rps1.zsh
+
+zstyle ':prompt:sampshell:time' format '%*'
+fpath+=( ~ss/zsh/prompt ); autoload -Uz promptinit; promptinit; prompt sampshell
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it

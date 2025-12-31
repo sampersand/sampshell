@@ -1,14 +1,35 @@
 #!zsh
 
 4 () source ~ss/zsh/prompt/prompt_sampshell_setup
-typeset -g +x prompt_sampshell_var_lines=1
-typeset -g +x prompt_sampshell_var_short_git=2
-typeset -g +x prompt_sampshell_var_long_git=3
-typeset -g +x prompt_sampshell_var_ruby_version=4
-typeset -g +x prompt_sampshell_var_time_diff=5
-typeset -g +x prompt_sampshell_var_time_str=6
+typeset -g +x prompt_sampshell_var_lines=11
+typeset -g +x prompt_sampshell_var_short_git=12
+typeset -g +x prompt_sampshell_var_long_git=13
+typeset -g +x prompt_sampshell_var_ruby_version=14
+typeset -g +x prompt_sampshell_var_time_diff=15
+typeset -g +x prompt_sampshell_var_time_str=16
 
+# setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
+#
+# if [[ -z $prompt_newline ]]; then
+# 	# This variable needs to be set, usually set by promptinit.
+	typeset -g prompt_newline=$'\n%{\r%}'
+# fi
+
+
+
+# Track the rough time a shell command began execution, so that we can get a rough
+# time estimate of the duration. Note that it's not exact, especially if other
+# `preexec` functions are executed after this one.
+function prompt_sampshell_preexec {
+	typeset -gFH PROMPT_SAMPSHELL_LAST_EXEC_TIME=$EPOCHREALTIME
+}
+
+# Executed right before a line is drawn; we use it to populate `psvar`.
 function prompt_sampshell_precmd {
+	# Get the current duration as soon as possible, for calculating the duration
+	# of a command, Note it's not at all exact, especially if this function isn't
+	# the first precmd function.
+	typeset -F now=$EPOCHREALTIME # for calculating the duration
 	typeset -ga psvar #=() # clear psvar
 
 	if (( $#_SampShell_stored_lines )) {
@@ -21,7 +42,7 @@ function prompt_sampshell_precmd {
 		psvar[prompt_sampshell_var_ruby_version]=$(ruby -v | awk '{print $2}')
 	fi
 
-	_SampShell-prompt-display-time-hook1
+	prompt_sampshell_time_to_human $now
 }
 
 ## The function that's used to fetch the git status.
@@ -44,7 +65,7 @@ function _SampShell-prompt-git-hook1 {
 
 	## Perform the substitution
 	local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
-	psvar[prompt_sampshell_var_long_git]="${$(__git_ps1 '⇄%s ')/\%\%/!}" # the `/%%/!` replaces `%` with my `!`
+	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
 	psvar[prompt_sampshell_var_short_git]=$psvar[prompt_sampshell_var_long_git]
 
 	## If there's a prefix pattern, then set `psvar[prompt_sampshell_var_short_git]` to that replacement.
@@ -54,17 +75,11 @@ function _SampShell-prompt-git-hook1 {
 	fi
 }
 
-function prompt_sampshell_preexec {
-	typeset -gFH _SampShell_last_exec_time1=$EPOCHREALTIME
-}
+function prompt_sampshell_time_to_human {
+	float now=$1
 
-function _SampShell-prompt-display-time-hook1 {
-	zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile for `strftime`
-	# Get the current duration as soon as possible
-	float now=$EPOCHREALTIME
-
-	if (( !_SampShell_last_exec_time1 )) return
-	float diff='now - _SampShell_last_exec_time1'
+	if (( !PROMPT_SAMPSHELL_LAST_EXEC_TIME )) return
+	float diff='now - PROMPT_SAMPSHELL_LAST_EXEC_TIME'
 
 	# Make it red if the difference is more than 3s
 	psvar[prompt_sampshell_var_time_diff]=
@@ -81,71 +96,109 @@ function _SampShell-prompt-display-time-hook1 {
 	if (( minutes )) tmp+=${tmp:+ }${minutes}m
 	psvar[prompt_sampshell_var_time_str]=${tmp:+ }${seconds}s
 
-	_SampShell_last_exec_time1=
+	PROMPT_SAMPSHELL_LAST_EXEC_TIME=
 }
 
-
-# zstyle ':prompt:sampshell:time' format '%*'
-typeset -gFH _SampShell_last_exec_time1= #$EPOCHREALTIME
+function prompt_sampshell_help {
+	print '
+		usage: prompt sampshell [default|minimal|full]
+			default: the normal view
+			minimal: removes some unneeded things, like RPS1 and git
+			full: more expanded view than default; doesnt hide paths or git branches
+	'
+}
 
 function prompt_sampshell_setup {
-	prompt_opts=(percent subst)
+	#################################################################################################
+	#                                             Setup                                             #
+	#################################################################################################
 
-	setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
+	# Figure out the kind that's being used; fail on an invalid one
+	typeset -g PROMPT_SAMPSHELL_KIND=${1:-default}
+	if [[ $PROMPT_SAMPSHELL_KIND != (default|minimal|full) ]] {
+		prompt_sampshell_help >&2
+		return 1
+	}
 
-	if [[ -z $prompt_newline ]]; then
-		# This variable needs to be set, usually set by promptinit.
-		typeset -g prompt_newline=$'\n%{\r%}'
-	fi
+	prompt_opts=(percent subst cr sp) # We use percent; TODO: we don't need subst if we fix histfile
+	typeset -g PS1='' RPS1='' # Clear both PS1 and RPS1
+
+	# We only do precmd and preexec if we're not in a minimal prompt
+	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+		add-zsh-hook precmd prompt_sampshell_precmd
+
+		zmodload -F zsh/datetime p:EPOCHREALTIME
+		typeset -gFH PROMPT_SAMPSHELL_LAST_EXEC_TIME=$EPOCHREALTIME
+		add-zsh-hook preexec prompt_sampshell_preexec
+	}
+
+	#################################################################################################
+	#                                           Setup PS1                                           #
+	#################################################################################################
 
 	local timefmt
-	typeset -g PS1='' RPS1=''
-
-	zmodload -F zsh/datetime p:EPOCHREALTIME # <-- todo, could this be worthwhile for `strftime`
-	typeset -gFH _SampShell_last_exec_time1=$EPOCHREALTIME
-
-	add-zsh-hook precmd prompt_sampshell_precmd
-	add-zsh-hook preexec prompt_sampshell_preexec
-
+	# Still need to figure out which prompt we want...
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
-		timefmt='%D{%_I:%M:%S.%. %p}'
+		# In minimal prompt, default to a small one
+		if [[ $PROMPT_SAMPSHELL_KIND == minimal ]] {
+			timefmt='%@'
+		} else {
+			timefmt='%D{%_I:%M:%S.%. %p}'
+		}
 	fi
 
+	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
 	PS1+='%B%F{blue}[%b'                       # [
 	PS1+="%F{cyan}$timefmt "                   #   Current time
-	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u ' #   History Number; red if disabled.
+	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u ' #   History Number; red if disabled; TODO: find a way to not require histfile
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'      #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'             #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     #   (job count, if >0)
-	PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v).)"                     #   (amnt stored lines, if >0)
+	# how many lines are stored; minimal shells don't need this
+	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] { # TODO: do we wnat this to be disabled in minimal shells?
+		PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v).)"                     #   (amnt stored lines, if >0)
+	}
 	PS1+='%B%F{blue}]%b '                      # ]
 
-	# If we're SSHed into something, then display the currentuser and hostname
-	if (( $+SSH_CONNECTION )) {
+	## Add the `user@host` if we're either SSH'd into something, or the zstyle has it enabled
+	if (( $+SSH_CONNECTION )) || zstyle -t ':prompt:sampshell:host' display; then
 		PS1+='%F{242}%n@%m%f '
-	}
-
-	# set the path
-	PS1+='%F{11}' # color
-	PS1+='%(5~.%-1~/…/%3~.%~) ' # trailing part of the path
-
-	# git, if we're displaying it
-	if zstyle -T ':prompt:sampshell:git' display; then
-		emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
-		# Only expand the full thing if there's a significant amount of space left.
-		PS1+='%F{43}%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v)'
 	fi
 
-	# if [[ $SSH_CONNECTION ]]; then
+	## The path; in full mode, display the full thing. Otherwise, only display the first and then
+	# the remaining last 3 segments (or the full thing if there's more)
+	PS1+='%F{11}'
+	if [[ $PROMPT_SAMPSHELL_KIND == full ]] {
+		PS1+='%~ '
+	} else {
+		PS1+='%(5~.%-1~/…/%3~.%~) ' # trailing part of the path
+	}
+
+	## Git status; we don't display it in a minimal prompt
+	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+		emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
+		# Only expand the full thing if there's a significant amount of space left.
+		PS1+='%F{43}⇄'
+		if [[ $PROMPT_SAMPSHELL_KIND == full ]] {
+			PS1+='%'${prompt_sampshell_var_long_git}'v '
+		} else {
+			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
+			PS1+='%-100(l.%'${prompt_sampshell_var_long_git}'v.%'${prompt_sampshell_var_short_git}'v) '
+		}
+	}
 
 	PS1+='%F{8}%#%f ' # ending %
 
-	# Set rps1 to the ruby version, and the hostname
+	#################################################################################################
+	#                                  Setup RPS1, if not minimal                                   #
+	#################################################################################################
 
-
-	RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
-	RPS1+=' [%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
-	setopt transient_rprompt
+	# Set rps1 to the ruby version and the time difference, if we're displaying that
+	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+		RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
+		RPS1+=' [%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
+		setopt transient_rprompt # TODO: How to unset this
+	}
 }
 
-prompt_sampshell_setup
+prompt_sampshell_setup "$@"
