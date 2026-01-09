@@ -8,16 +8,15 @@
 # global variable.
 ##
 
+require 'gvars'
+
 ## Emulate other `$-x` globals, so you can check for `g`'s inclusion with `$-g`.
-$-g = true
+$-g = []
 
-## The list of all global variables that `g` parsed out
-GLOBALS = []
-
-## A singleton method on `GLOBALS` used to validate that all variables that
+## A singleton method on `$-g` used to validate that all variables that
 # were parsed were expected. Note that because of how `g` works, there's no way
 # to differentiate between `-x` and `--x`, but I've never had that be a problem.
-def GLOBALS.expect!(*allowed)
+def $-g.expect!(*allowed)
   # Delete all leading `-`s that were possibly provided
   allowed = Array(*allowed).map { _1.sub!(/\A-*/, '') }
 
@@ -28,8 +27,8 @@ def GLOBALS.expect!(*allowed)
 end
 
 ## Set a global variable to a value. This not only assigns to the actual global
-# variable, but also adds it to the `GLOBALS` array, if it's not already there.
-def GLOBALS.assign(flag, value, orig)
+# variable, but also adds it to the `$-g` array, if it's not already there.
+def $-g.assign(flag, value, orig)
   flag.tr!('-', '_')
 
   # Only allow alphanumerics as flags
@@ -52,7 +51,7 @@ def GLOBALS.assign(flag, value, orig)
   # Assign the global variable. Sadly, there's no `global_variable_set`, so we
   # must use `eval`. We checked earlier to make sure that `flag` only contained
   # alphanumerics, so we know this `eval` is safe.
-  eval "\$#{flag} = value"
+  GVars[flag] = value
 end
 
 # Handle each argument, extracting the flag, or putting it back and `break`ing if we're done
@@ -64,11 +63,11 @@ while (arg = ARGV.shift)
 
   # Negated flags: `--no-foo` is the same as `--foo=false`
   when /\A--no-([^=]+)\z/
-    GLOBALS.assign($1, false, arg)
+    $-g.assign($1, false, arg)
 
   # long-form flags, both with and without arguments
   when /\A--([^=]+)\K(=)?/
-    GLOBALS.assign($1, $2 ? $' : true, $`)
+    $-g.assign($1, $2 ? $' : true, $`)
 
   # Shorthand flags
   when /\A-[^-]/
@@ -77,7 +76,7 @@ while (arg = ARGV.shift)
     while (short = arg.slice! 0)
       # Shorthand flag is given an argument with `=`
       if arg.delete_prefix!('=')
-        GLOBALS.assign(short, arg, "-#{short}")
+        $-g.assign(short, arg, "-#{short}")
         break
       end
 
@@ -87,12 +86,12 @@ while (arg = ARGV.shift)
           abort("integer argument for -#{short} has trailing chars: #{arg}")
         end
 
-        GLOBALS.assign(short, arg, "-#{short}")
+        $-g.assign(short, arg, "-#{short}")
         break
       end
 
       # Everything else is a single-character short string
-      GLOBALS.assign(short, true, "-#{short}")
+      $-g.assign(short, true, "-#{short}")
     end
 
   # Everything else is a normal argument, and we stop parsing
