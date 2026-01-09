@@ -136,7 +136,7 @@ history-ignore-command h history-{enable,disable}
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-function j { jobs -ld $@ | paste - - } # Also coulda used 'N;s/\n/ /'
+function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 
 ####################################################################################################
 #                                                                                                  #
@@ -149,7 +149,6 @@ zstyle ':sampshell:prompt:git:*' pattern "$(whoami)/????-??-??" # for old one
 zstyle ':prompt:sampshell:git:*' pattern "$(whoami)/????-??-??"
 zstyle ':prompt:sampshell:time' format '%*'
 
-fpath+=( ~ss/zsh/prompt )
 autoload -Uz promptinit && promptinit
 prompt sampshell
 
