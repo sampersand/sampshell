@@ -1,6 +1,5 @@
 #!zsh
 
-4 () source ~ss/zsh/prompt/prompt_sampshell_setup
 typeset -g +x prompt_sampshell_var_lines=11
 typeset -g +x prompt_sampshell_var_short_git=12
 typeset -g +x prompt_sampshell_var_long_git=13
@@ -12,9 +11,8 @@ typeset -g +x prompt_sampshell_var_time_str=16
 #
 # if [[ -z $prompt_newline ]]; then
 # 	# This variable needs to be set, usually set by promptinit.
-	typeset -g prompt_newline=$'\n%{\r%}'
+#	typeset -g prompt_newline=$'\n%{\r%}'
 # fi
-
 
 
 # Track the rough time a shell command began execution, so that we can get a rough
@@ -65,7 +63,7 @@ function _SampShell-prompt-git-hook1 {
 
 	## Perform the substitution
 	local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
-	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
+	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '⇄%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
 	psvar[prompt_sampshell_var_short_git]=$psvar[prompt_sampshell_var_long_git]
 
 	## If there's a prefix pattern, then set `psvar[prompt_sampshell_var_short_git]` to that replacement.
@@ -176,14 +174,16 @@ function prompt_sampshell_setup {
 
 	## Git status; we don't display it in a minimal prompt
 	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
-		emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
+		__git_ps1 >/dev/null 2>&1 # <-- TODO: why does this need to always be run?
+		# emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
+
 		# Only expand the full thing if there's a significant amount of space left.
-		PS1+='%F{43}⇄'
+		PS1+='%F{43}'
 		if [[ $PROMPT_SAMPSHELL_KIND == full ]] {
-			PS1+='%'${prompt_sampshell_var_long_git}'v '
+			PS1+='%'${prompt_sampshell_var_long_git}'v'
 		} else {
 			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
-			PS1+='%-100(l.%'${prompt_sampshell_var_long_git}'v.%'${prompt_sampshell_var_short_git}'v) '
+			PS1+='%-100(l.%'${prompt_sampshell_var_long_git}'v.%'${prompt_sampshell_var_short_git}'v)'
 		}
 	}
 
