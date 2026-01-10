@@ -207,7 +207,23 @@ source ~ss/zsh/completion.zsh
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure yet about.
-[[ -n $SampShell_EXPERIMENTAL ]] && source ~ss/zsh/experimental.zsh
+if [[ -n $SampShell_EXPERIMENTAL ]] {
+	## Options I'm not sure if I want to set or not.
+	# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
+
+	: "${REPORTTIME=4}" # Print the duration of commands that take more than 4s of CPU time
+
+	setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
+	setopt COMPLETE_IN_WORD
+	setopt CORRECT              # Correct commands when executing.
+	setopt CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
+
+	CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting with `_`
+
+	## Defaults that probably shoudl eb set
+	unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
+	: command_not_found_handler # <-- thing executed when a command'snot found
+}
 
 ####################################################################################################
 #                                                                                                  #
@@ -229,7 +245,7 @@ source ~ss/zsh/misc.zsh
 
 # Shorthands for redirecting to `/dev/null`
 alias -g @N='>/dev/null'
-alias -g @2N='2>/dev/null'
+alias -g 2@N='2>/dev/null'
 
 alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 
@@ -243,7 +259,7 @@ function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
 
 # Copies the current directory, or a subdirectory of the current direcotry if given
 function pwdc () (
-	if (( $ARGC > 1 )); then print "at most 1 argument allowed" @2N; return 1 ; fi
+	if (( $ARGC > 1 )); then print "at most 1 argument allowed" 2@N; return 1 ; fi
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
 
@@ -254,7 +270,7 @@ function pk9 { pkill -KILL -afl $@ }
 
 # Interact with zsh files
 function szfiles {
-	if (( ARGC != 0 )) { print @2N exactly 0 args must be given; return 1 }
+	if (( ARGC != 0 )) { print 2@N exactly 0 args must be given; return 1 }
 	subl ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
 }
 
