@@ -22,3 +22,5 @@ unsetopt NO_EQUALS          # Enables `=foo`, which expands to the full path eg 
 unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands, eg `for x in *; echo $x`
 
 unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask for confirmation
+
+unsetopt GLOB_SUBST SH_GLOB # defaults that should be set

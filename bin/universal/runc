@@ -3,7 +3,7 @@
 # This file is incredibly overengineered haha.
 
 def usage! success = false
-  $stdout = $stderr unless success
+  $> = $stderr unless success
 
   puts <<~USAGE; exit(success)
     usage: #$0 [-c compiler] [-o output] [compiler opts ...] [prelude ...] main [-- main-arguments]
@@ -12,6 +12,11 @@ def usage! success = false
       - prelude is done before 'main'
       - lots of defaults are imported by default
       - P is a macro shorthand for printf(...), putchar('\\n')
+
+    examples:
+      runc -w 'enum foo { a, b }' 'printf("%s/%d", argv[1], b)' -- 34
+        => 34/11
+
   USAGE
 end
 
@@ -19,7 +24,7 @@ class Program
   def Program::MakeOutputFile()
     $EXECUTABLE_FILE = %x<mktemp>.chop # Don't rely upon `tempfile`
     $?.success? or fail('cannot make temp file')
-    trap 'EXIT', 'File.delete $EXECUTABLE_FILE' and fail('made two temp files')
+    trap %s[EXIT], %(puts File.delete $EXECUTABLE_FILE) and fail('made two temp files')
     $EXECUTABLE_FILE
   end
 
@@ -33,9 +38,9 @@ class Program
 private
 
   def initialize argv=ARGV
-    @compiler = 'cc'
-    @compilerOpts = []
-    @prelude = []
+    @compiler     = 'cc'
+    @compilerOpts = Array.new
+    @prelude      = Array.new
 
     self.parseOptions(argv)
   end
@@ -63,7 +68,7 @@ public
     IO.copy_stream DATA, write
 
     for line in @prelude
-      line.concat ';' unless line =~ /^\s*#/
+      line += ';' unless line =~ /^\s*#/
       write.puts line
     end
 
@@ -103,7 +108,7 @@ else
   system( [program.executable] * 2, *$* )
 end
 
-executeProgram Program.new(ARGV)
+executeProgram Program.new()
 exit Process::last_status.exitstatus
 
 __END__

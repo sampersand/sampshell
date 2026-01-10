@@ -1,7 +1,7 @@
 #!/usr/bin/env -S ruby -rg -rscript
 
 # Expect exactly these flags, and error otherwise
-GLOBALS.expect! %w[h help w width]
+$-g.expect! %w[h help w width]
 
 # Usage
 $h || $_help and exit <<EOS

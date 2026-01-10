@@ -35,6 +35,8 @@ bash|*/bash)
 	;;
 esac
 
+verbose=
+
 # Parse clenv arguments, if present
 while (( $# > 0 )); do
 	arg=$1
@@ -44,10 +46,12 @@ while (( $# > 0 )); do
 	--) break ;;
 	-h) usage; exit ;;
 	-s) clenv_args+=( -m'^SampShell_' ) ;;
+	-v) verbose=1;;
 	*)  clenv_args+=( "$arg" ) ;;
 	esac
 done
 
 shell_args+=( "$@" )
 
+if [[ $verbose ]]; then set -x; fi
 exec clenv "${clenv_args[@]+"${clenv_args[@]}"}" -- "$shellname" "${shell_args[@]+"${shell_args[@]}"}"
