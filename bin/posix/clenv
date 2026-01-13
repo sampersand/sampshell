@@ -27,6 +27,7 @@ die () {
 # Note that setting the `-a` flag, which is used to to pass through inherited
 # variables, does not affect these variables; they're never passed onwards.
 unset -v __clenv_user_vars \
+		 __clenv_unset_vars \
          __clenv_all_variables \
          __clenv_verbose \
          __clenv_dry \
@@ -36,9 +37,7 @@ unset -v __clenv_user_vars \
          __clenv_name \
          __clenv_value \
 		 __clenv_alt_path \
-		 __clenv_unset_vars \
 		 __clenv_opt \
-		 __clenv_fmt \
 		 __clenv_utility_path
 
 # The list of variables that are added by default to all invocations unless -a
