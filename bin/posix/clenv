@@ -85,35 +85,35 @@ is_variable_set () {
 	eval "[ -n \"\${$1+1}\" ]"
 }
 
-## Adds a variable to the list of user-defined variables. The first argument is
-# required, and is the variable name. The second argument is the value to use;
-# if omitted, it uses the current value (or aborts if it's not set). The value
-# is normally added to the end, but if the `__clenv_prepend` variable is set, it
-# will add it to the front.
+## Adds a variable to the list of user-defined variables.
+# The first argument is either `prepend` or `append`, which is how the var
+# should be added. The second argument is # required, and is the variable name.
+# The third argument is the value to use; if omitted, it uses the current value
+# (or aborts if it's not set).
 add_user_variable () {
 	# Make sure the variable name's valid
-	validate_variable_name "$1"
+	validate_variable_name "$2"
 
 	# If the value to use isn't provided, then fetch its current value.
-	if [ $# -eq 1 ]; then
+	if [ $# -eq 2 ]; then
 		# Make sure it's set, and abort if it isn't.
-		if ! is_variable_set "$1"; then
-			die "variable $1 is unset."
+		if ! is_variable_set "$2"; then
+			die "variable $2 is unset."
 		fi
 
-		eval "set -- $1 \"\$$1\""
+		eval "set -- $1 $2 \"\$$2\""
 	fi
 
 	# Assign the variable; We use `__clenv_var_<varname>` as the value for the
 	# variable, as assigning arbitrary to arbitrary variables isn't great (e.g.
 	# assigning to `$PATH` will overwrite things)
-	eval "__clenv_var_$1=\$2"
+	eval "__clenv_var_$2=\$3"
 
 	# Add the variable to `__clenv_user_vars`.
-	if [ -z "${__clenv_prepend-}" ]; then
-		__clenv_user_vars="$__clenv_user_vars $1"
+	if [ "$1" = append ]; then
+		__clenv_user_vars="$__clenv_user_vars $2"
 	else
-		__clenv_user_vars="$1 $__clenv_user_vars"
+		__clenv_user_vars="$2 $__clenv_user_vars"
 	fi
 }
 
@@ -155,9 +155,9 @@ while getopts 'hDVanipP:m:v:u:U:' __clenv_opt; do
 		__clenv_value=${OPTARG#"$__clenv_name"}
 
 		if [ -n "$__clenv_value" ]; then
-			add_user_variable "$__clenv_name" "${__clenv_value#=}"
+			add_user_variable append "$__clenv_name" "${__clenv_value#=}"
 		else
-			add_user_variable "$__clenv_name"
+			add_user_variable append "$__clenv_name"
 		fi ;;
 
 	m)
@@ -170,7 +170,7 @@ while getopts 'hDVanipP:m:v:u:U:' __clenv_opt; do
 
 		# Add each variable in
 		for __clenv_name in $__clenv_tmp; do
-			add_user_variable "$__clenv_name"
+			add_user_variable append "$__clenv_name"
 		done ;;
 
 	## Unset a variable
@@ -255,8 +255,8 @@ fi
 
 ## Add in default variables
 for __clenv_tmp in $__clenv_default_vars; do
-	if is_variable_set "$__clenv_tmp"; then
-		__clenv_prepend=1 add_user_variable "$__clenv_tmp"
+	if is_variable_set "$__clenv_tmp" && ! is_variable_set "__clenv_var_$__clenv_tmp"; then
+		add_user_variable prepend "$__clenv_tmp"
 	fi
 done
 
