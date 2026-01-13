@@ -35,7 +35,6 @@ unset -v __clenv_user_vars \
          __clenv_tmp __clenv_tmp2 \
          __clenv_name \
          __clenv_value \
-		 __clenv_prepend \
 		 __clenv_alt_path \
 		 __clenv_unset_vars \
 		 __clenv_opt \
@@ -224,11 +223,9 @@ fi
 
 ## Initialize the command with `exec /path/to/env`. We intentionally don't use
 # an alternative path here, as we want to ensure `env` is always accessible.
-__clenv_cmd="exec $(command -pv env)" || die 'unable to locate: env'
-
-# Setup debug and verbose options
-[ -n "$__clenv_dry"     ] && __clenv_cmd=": $__clenv_cmd"
-[ -n "$__clenv_verbose" ] && __clenv_cmd="PS4=; set -x; $__clenv_cmd"
+if ! __clenv_cmd="exec $(command -pv env)"; then
+	die 'unable to locate: env'
+fi
 
 # Unless `-a` was supplied, we clear away all other variables.
 if [ -z "$__clenv_all_variables" ]; then
@@ -317,4 +314,14 @@ fi
 #                             Execute the command                              #
 ################################################################################
 
+# Setup debug and verbose options
+if [ -n "$__clenv_dry" ]; then
+	__clenv_cmd=": $__clenv_cmd"
+fi
+
+if [ -n "$__clenv_verbose" ]; then
+	__clenv_cmd="PS4=; set -x; $__clenv_cmd"
+fi
+
+# Actually execute the command
 eval "$__clenv_cmd \"\$@\""
