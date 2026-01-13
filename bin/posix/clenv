@@ -2,16 +2,19 @@
 
 ## clenv -- like 'env', except with a few more QoL features
 # Features that env doesn't have:
-# 1. Only pass in variables that match a pattern (`-m "SampShell_*"`)
-# 2. Just have to specify variable names if they already exist (`-vPATH`)
-# 3. Commonly needed variables for shells exported by default (TERM, HOME, etc.)
-#
+#  - Just have to specify variable names if they already exist (`-vPATH`)
+#  - Only pass in variables that match a pattern (`-m "SampShell_*"`)
+#  - Unset variables you don't want
+#  - Commonly needed variables for shells exported by default (TERM, HOME, etc.)
+##
 
 # Safety First!
 set -efuC
 
+# Name of the program; used in `die` and usage
 readonly __clenv_scriptname="${0##*/}"
 
+# Print a message out and abort
 die () {
 	fmt="%s: $1\n"
 	shift
@@ -39,10 +42,6 @@ unset -v __clenv_user_vars \
 		 __clenv_alt_path \
 		 __clenv_opt \
 		 __clenv_utility_path
-
-# The list of variables that are added by default to all invocations unless -a
-# or -n are specified.
-__clenv_default_vars=${CLENV_DEFAULT_VARS-'TERM HOME SHLVL LANG'}
 
 usage () { cat; } <<USAGE
 usage: $__clenv_scriptname [options] [--] [utility [argument ...]]
@@ -119,7 +118,9 @@ add_user_variable () {
 #                                Parse Options                                 #
 ################################################################################
 
-# Default the path to find the exe to `$PATH`
+# The list of variables that are added by default to all invocations unless -a
+# or -n are specified.
+__clenv_default_vars='TERM HOME SHLVL LANG'
 __clenv_dry=
 __clenv_verbose=
 __clenv_all_variables=
@@ -129,7 +130,6 @@ __clenv_user_vars=  # User-specified variables
 
 while getopts 'hDVanipP:m:v:u:U:' __clenv_opt; do
 	case $__clenv_opt in
-
 	# Print usage with `-h`
 	h) usage; exit ;;
 
