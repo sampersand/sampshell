@@ -190,11 +190,16 @@ done
 ## Finish argument parsing.
 shift $(( OPTIND - 1 ))
 
+## Add in default variables, if any are set
+for __clenv_tmp in $__clenv_default_vars; do
+	if is_variable_set "$__clenv_tmp" && ! is_variable_set "__clenv_var_$__clenv_tmp"; then
+		add_user_variable prepend "$__clenv_tmp"
+	fi
+done
+
 if [ -n "$__clenv_verbose" ]; then
 	log () {
-		__clenv_fmt="#clenv $1\n"
-		shift
-		printf "$__clenv_fmt" "$@"
+		printf '#clenv ' && printf "$@" && echo
 	} >&2
 else
 	log () { :; }
@@ -249,13 +254,6 @@ if [ $# -gt 0 ] && [ -n "$__clenv_alt_path" ]; then
 	shift
 	set -- "$__clenv_utility_path" "$@"
 fi
-
-## Add in default variables
-for __clenv_tmp in $__clenv_default_vars; do
-	if is_variable_set "$__clenv_tmp" && ! is_variable_set "__clenv_var_$__clenv_tmp"; then
-		add_user_variable prepend "$__clenv_tmp"
-	fi
-done
 
 ## Add in user variables
 for __clenv_tmp in $__clenv_user_vars; do
