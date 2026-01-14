@@ -1,4 +1,4 @@
-#!/usr/bin/env -S ruby --disable=all
+#!/usr/bin/env ruby
 # -*- encoding: UTF-8; frozen-string-literal: true -*-
 # (NOTE: The UTF-8 encoding above is to override whatever `RUBYOPT` may have supplied, as we want
 # strings in this file to be UTF-8, because I haven't tested with others.)
@@ -24,6 +24,8 @@
 # fully portable, and `dup`ing 1MB isn't that big of a deal.)
 ##
 ARGV.replace ARGV.map { |arg| (+arg).force_encoding('binary') }
+
+VERSION = '0.17.0' # Put the version at the top, so it's easily viewable
 
 ####################################################################################################
 #                                                                                                  #
@@ -413,15 +415,17 @@ $from_stdin = :auto
 ## Parse Options
 OptParse.new do |op|
   op.program_name = PROGRAM_NAME
-  op.version = '0.16.0'
+  op.version = VERSION
   op.banner = <<~BANNER
   #{STANDOUT_BEGIN}usage#{STANDOUT_END}: #{BOLD_BEGIN}#{PROGRAM_NAME} [options]#{BOLD_END}#{' '*30}read from stdin
          #{BOLD_BEGIN}#{PROGRAM_NAME} [options] STRING [STRING...]#{BOLD_END} #{' '*10}print strings
          #{BOLD_BEGIN}#{PROGRAM_NAME} [options] -f FILE [FILE...]#{BOLD_END}  #{' '*10}read from files
+         #{BOLD_BEGIN}#{PROGRAM_NAME} [options] -s #{BOLD_END}                #{' '*10}read from stdin
   BANNER
 
   # Support `--debug`, but don't show it in the argument list
-  op.base.long['debug'] = OptParse::Switch::NoArgument.new { $-d = $-v = true }
+  def (op.define('--debug') { $-d = $-v = true }).summarize(*) end
+  # op.base.long['debug'] = OptParse::Switch::NoArgument.new { $-d = $-v = true }
 
   ## Accept actions
   # (There's no `op.accept :PATTERN`, as patterns are only created after all arguments are parsed,
@@ -469,10 +473,10 @@ OptParse.new do |op|
       -x (-X)         Print in hex notation
       -o (-O)         Print in octal notation
       -d (-D)         Delete from the output
-      -p (-P)         Print unchanged
+      -u (-U)         Print unchanged
       -. (-@)         Replace with a period ('.')
       -r (-R)         Replace with the replacement character (#{Action::REPLACEMENT_CHARACTER_REPR})
-      -C              Replace escaped chars with their "control pictures"
+      -p              Replace escaped chars with "pictures"
     #{BOLD_BEGIN}ESCAPE SHORTHANDS#{BOLD_END}
       -l / -w         Don't escape newlines / newlines, tabs, or spaces.
       -S / -_         Escape spaces by highlighting it / with "pictures".
@@ -505,10 +509,11 @@ OptParse.new do |op|
     $files = f
   end
 
-  op.on '-s', '--[no-]stdin[=WHEN]', :WHEN, 'Read from stdin if no arguments given. [default: auto',
+  op.on '--[no-]stdin[=WHEN]', :WHEN, 'Read from stdin if no arguments given. [default: auto',
                                             'which means only if stdin isnt a tty and stdout is]' do |stdin|
     $from_stdin = stdin
   end
+  op.on '-s', 'Same as --stdin' do $from_stdin = true end
 
   ##################################################################################################
   #                                            Outputs                                             #
@@ -665,7 +670,7 @@ OptParse.new do |op|
     Pattern.raw_default = Pattern::NONE
   end
 
-  op.on '-p', 'Same as --default-action=print' do
+  op.on '-u', 'Same as --default-action=print (-u b/c "unchanged")' do
     Action.default = Action::PRINT
   end
 
@@ -689,7 +694,7 @@ OptParse.new do |op|
     Action.default = Action::OCTAL
   end
 
-  op.on '-C', 'Same as --default-action=picture (`-C` b/c "control pic")' do
+  op.on '-p', 'Same as --default-action=picture' do
     Action.default = Action::PICTURE
   end
 
@@ -722,7 +727,7 @@ OptParse.new do |op|
     Action.error = Action::DELETE
   end
 
-  op.on '-P', 'Same as --invalid-action=print' do
+  op.on '-U', 'Same as --invalid-action=print' do
     Action.error = Action::PRINT
   end
 
@@ -792,7 +797,7 @@ end
 #                                                                                                  #
 ####################################################################################################
 
-if $from_stdin == :auto
+if $from_stdin == :auto # Unsure if I want this
   $from_stdin = !$stdin.tty? && $stdout.tty?
 end
 
@@ -803,12 +808,8 @@ if $*.empty?
     abort '-f/--files supplied, but no files given'
   end
 
-  # Exit early if `--stdin` was supplied
+  # Exit early unless `--stdin` was supplied
   exit unless $from_stdin
-
-  # if $stdin.tty?
-  #   abort "no arguments given, and stdin was detected to be a tty\n\nuse -h for short help or --help for long help\n"
-  # end
 
   # Handle the no-argument case as if `--no-prefixes -f -` were passed
   $*.replace %w[-]
@@ -817,9 +818,9 @@ if $*.empty?
   $trailing_newline = false if $trailing_newline == :auto
 end
 
-$PREFIXES_NIL=$prefixes = $*.length > 1 if $prefixes == :auto
-$quiet and $stdout = File.open(File::NULL, 'w')
-$trailing_newline = $*.length >= 1 if $trailing_newline == :auto
+$quiet                     and $stdout = File.open(File::NULL, 'w')
+$prefixes == :auto         and $prefixes = $*.length > 1
+$trailing_newline == :auto and $trailing_newline = $*.length >= 1
 
 PatternAndAction.build!
 
