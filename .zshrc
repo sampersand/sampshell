@@ -79,6 +79,7 @@ function d { builtin dirs ${@:--v} }
 setopt CDABLE_VARS  # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
 setopt AUTO_PUSHD   # Have `cd` push directories onto the directory stack like `pushd`
 setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing directories.
+setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
 typeset -Ua zsh_directory_name_functions
@@ -151,6 +152,7 @@ zstyle ':prompt:sampshell:time' format '%*'
 
 autoload -Uz promptinit && promptinit
 prompt sampshell
+setopt transient_rprompt # TODO: How to set this in the prompt
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
