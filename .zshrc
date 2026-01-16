@@ -189,6 +189,7 @@ setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
 
 alias bk='noglob bindkey'
 alias bkg='bindkey | noglob fgrep -ie'
+alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
 alias which-command=which # for `^[?`
 
 # function bindkey { print "bindkey: $*"; builtin bindkey $@ }
@@ -200,7 +201,27 @@ source ~ss/zsh/keybinds.zsh
 #                                           Autocomplete                                           #
 #                                                                                                  #
 ####################################################################################################
-source ~ss/zsh/completion.zsh
+autoload -U compinit
+[[ ! -e $SampShell_CACHEDIR ]] && mkdir "$SampShell_CACHEDIR"
+if [[ -f $SampShell_CACHEDIR/.zcompdump ]] then
+  compinit -d $SampShell_CACHEDIR/.zcompdump
+else
+  compinit
+fi
+
+zstyle ':completion:*' use-compctl false # never use old-style completion
+
+if [[ $VENDOR = apple ]]; then
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
+  fignore+=(DS_Store) # boo, DS_Store files!
+fi
+
+zmodload -i zsh/complist # May not be required
+zstyle ':completion:*' list-colors '' # Add colours to completions
+zstyle ':completion:*:*:cd:*' file-sort modification
+zstyle ':completion:*:*:rm:*' completer _ignored
+zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
+# zstyle ':completion:*:files' file-sort '!ignored-patterns '*.DS_Store'
 
 ####################################################################################################
 #                                                                                                  #
@@ -276,3 +297,23 @@ function szfiles {
 
 function szrc { subl ~/.zshrc }
 function zfns { typeset -m '*_functions' }
+sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
+
+# Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
+# vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
+alias   clsh='clean-shell sh'
+alias clbash='clean-shell bash'
+alias  clzsh='clean-shell zsh'
+alias cldash='clean-shell dash'
+
+## Banner utility
+alias banner='noglob ~ss/bin/universal/banner'
+alias b80='banner --copy --width=80'
+alias b100='banner --copy --width=100'
+
+## Adding default arguments to builtin commands
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias ps='ps -ax'
+

@@ -3,8 +3,6 @@
 # TODO: get rid of
 : "${SampShell_git_branch_prefix:="$(whoami)"}"
 
-. ${0:P:h}/deprecated.zsh
-
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
 () while (( $# )) do
@@ -116,7 +114,7 @@ alias gdm='git diff "$(git master-branch)"'
 alias gds='git diff --stat'
 alias gdms='git diff --stat "$(git master-branch)"'
 
-alias gdno='__deprecated git diff --name-only'
+alias gdno='git diff --name-only'
 gdh () {
 	if (( $# == 0 )) set -- 'HEAD~1'
 	git diff "$@"

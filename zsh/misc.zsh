@@ -1,15 +1,4 @@
-## Shorthand for functions to ensure that the right arguments are given. It's an alias
-# so it shoudl be the first thing. Example:
-#	gs () ARGC_EXACTLY_0 git status
-() {
-	local i
-	for i in {0..9}; do
-		alias ARGC_EXACTLY_$i='${${$(((#=='$i'))&&print x):?exactly '$i' args needed}:#*} '
-		alias ARGC_AT_MOST_$i='${${$(((#<='$i'))&&print x):?at most '$i' args needed}:#*} '
-	done
-}
-
-. ${0:P:h}/functions.zsh
+old () git mv $1 ~ss/old/${1#~ss}
 
 if [[ $VENDOR == apple ]] {
 	function  enable-wifi { networksetup -setairportpower en0 on }
@@ -29,7 +18,9 @@ alias hg='noglob _SampShell-hg'
 
 alias -- +rwx='chmod +rwx'
 
-diffs () ARGC_EXACTLY_2	diff <(print -r "$1") <(print -r "$2")
+diffs () { if (( $# != 2 )) { echo "need 2 args"; return 1}
+	diff <(print -r "$1") <(print -r "$2")
+}
 
 alias ps='ps -ax'
 alias hd='hexdump -C'
@@ -37,7 +28,7 @@ alias psg='noglob ps -ax | grep '
 alias pinge='ping www.example.com -c10'
 
 hr () xx ${@:--}
-hrc () { ARGC_EXACTLY_0 hr | pbcopy }
+hrc () { hr "$@" | pbcopy }
 
 ################################################################################
 
@@ -47,7 +38,7 @@ ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
 
 ################################################################################
 
-awkf () ARGC_EXACTLY_1 awk "BEGIN{$1; exit}"
+awkf () awk "BEGIN{${(j:;:)@}; exit}"
 
 function -- -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
 compdef -- _precommand -x
@@ -89,9 +80,7 @@ allbytes=$asciibytes$'\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8A\x8B\x8C\x8D\x
 ################################################################################
 # Random misc utils from work laptop. not sure how useful they are, or how tested.
 ################################################################################
-sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
 alias show-cursor='tput cnorm'
-alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
 
 # Check if in git repo
 is-in-a-git-repo () (

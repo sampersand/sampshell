@@ -53,3 +53,23 @@ function {SampShell-,}randint {
 	# `shuf` isn't posix compliant, but the following is:
 	# od -vAn -N8 -tu8 < /dev/urandom | tr -d ' '
 }
+
+
+# --- other functions
+# Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
+# vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
+alias   clsh='clean-shell sh'
+alias clbash='clean-shell bash'
+alias  clzsh='clean-shell zsh'
+alias cldash='clean-shell dash'
+
+## Banner utility
+alias banner='noglob ~ss/bin/universal/banner'
+alias b80='banner --copy --width=80'
+alias b100='banner --copy --width=100'
+
+## Adding default arguments to builtin commands
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias ps='ps -ax'

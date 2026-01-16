@@ -15,3 +15,14 @@ alias clprompt='_clprompt; set -x'
 function chomp () print -rnl -- "$(</dev/stdin)"
 function chomp () ruby -lne 'print $l if $l; $l=$_; END{$>.write $l}'
 
+## don't need to print arrays anyomre
+function pa {
+	local a b i=0
+	if [[ ${(tP)1} = array-* ]]; then
+		p ${(P)1}
+	else
+		for a b in ${(kvP)1}; do
+			printf "%3d: %-20s%s\n" $((i++)) $a $b
+		done
+	fi
+}
