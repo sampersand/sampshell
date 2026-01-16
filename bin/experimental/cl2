@@ -1,0 +1,62 @@
+#!/usr/bin/env -S ruby --disable=all
+
+require 'optparse'
+require 'set'
+
+OPTS={}
+USER_VARS = {}
+UNSET_VARS = Set[]
+OptParse.new do |op|
+  op.on '-V', '--[no]-verbose'
+  op.on '-D', '--[no]-dry'
+
+  op.on '-P', '--alt-path=altpath'
+
+  op.on '-a', '--all' do OPTS[:ignore] = false; true end
+  op.on '-i', '-n', '--ignore', '--none' do OPTS[:all] = false; true end
+
+  VAR = /[a-zA-Z_]\w*/
+
+  op.on '-v', '--var=VAR', /\A(#{VAR})(?:=(.*))?\z/ do |_, name, value|
+    USER_VARS[name] = value || ENV.fetch(name)
+  end
+
+  op.on '-m', '--matching=PATTERN', Regexp do |pattern|
+    USER_VARS.merge! ENV.select { _2; _1 =~ pattern }
+  end
+
+  op.on '-u', '--unset=VAR', /\A#{VAR}\z/ do |var|
+    UNSET_VARS << var
+  end
+
+  op.on '-U', '--unset-matching=VAR', Regexp do |rxp|
+    UNSET_VARS << rxp
+  end
+
+  op.parse! into: OPTS
+  # op.parse! %w[-vHOME -vfoo=3 -mSampShell.* -ufoo -USa env], into: OPTS
+
+end
+
+$clenv_cmd = `command -pv env`.chomp
+abort 'unable to locate: env' unless $?.success?
+
+unless OPTS[:ignore]
+  %w[TERM HOME SHLVL LANG].each do |x|
+    USER_VARS[x] ||= ENV[x] || next
+  end
+end
+
+env = USER_VARS.dup
+UNSET_VARS.each do |var|
+  env.keys.grep(var).each do |key|
+    env.delete key
+  end
+end
+
+exec(
+  env,
+  [$clenv_cmd] * 2,
+  *$*,
+  unsetenv_others: !OPTS[:all]
+)

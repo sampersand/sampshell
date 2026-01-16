@@ -1,6 +1,7 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env -S ruby -W0
 
 # This file is incredibly overengineered haha.
+require 'English'
 
 def usage! success = false
   $> = $stderr unless success
@@ -21,43 +22,50 @@ def usage! success = false
 end
 
 class Program
-  def Program::MakeOutputFile()
-    $EXECUTABLE_FILE = %x<mktemp>.chop # Don't rely upon `tempfile`
-    $?.success? or fail('cannot make temp file')
-    trap %s[EXIT], %(puts File.delete $EXECUTABLE_FILE) and fail('made two temp files')
-    $EXECUTABLE_FILE
+  def Program::Make_Output_File()
+    ::EXECUTABLE_FILE << file = %x<mktemp>.chop # Don't rely upon `tempfile`
+  rescue
+    Object::const_set('EXECUTABLE_FILE', %w//)
+    trap %s[EXIT], %(EXECUTABLE_FILES.each { File.delete it }) and fail('two exists')
+    retry
+  else
+    unless $?.success? then fail('cannot make temp file') else file end
   end
 
-  attr('compiler')
-  attr('compilerOpts')
+  public  attr :compiler, true
+  public  attr :compilerOpts, true
+  private attr :prelude, true
+  private attr :main, true
 
-  public def executable
-    @executable ||= Program::MakeOutputFile()
+  def executable
+    @executable ||= Program::Make_Output_File()
   end
 
 private
 
   def initialize argv=ARGV
-    @compiler     = 'cc'
-    @compilerOpts = Array.new
-    @prelude      = Array.new
+    self.compiler     = 'cc'
+    self.compilerOpts = Array::new
+    self.prelude      = Array::new
 
     self.parseOptions(argv)
   end
 
   def parseOptions argv
     while (arg = argv.shift()) do
-      case (arg)
+      case ( arg )
       when '-h'   then usage! true
-      when /^-c/  then @compiler = $' || argv.shift() or usage!()
-      when /^-o/  then @output   = $' || argv.shift() or usage!()
+      when '-v'   then $VERBOSE = true
+      when /^-c/  then self.compiler = $' || argv.shift() or usage!()
       when '--'   then break()
-      when /^-.*/ then @compilerOpts << arg
-      else @prelude << arg
+      when /^-.*/ then self.compilerOpts << arg
+      else self.prelude << arg
       end
     end
 
-    usage! unless (@main = @prelude.pop())
+    unless (self.main = self.prelude.pop())
+      usage!
+    end
   end
 
 public
@@ -65,37 +73,47 @@ public
   def writeProgram
     read, write = IO.pipe()
 
-    IO.copy_stream DATA, write
+    if ( $-v ) then
+      told = DATA.tell()
+      IO::copy_stream(DATA, $DEFAULT_OUTPUT)
+      DATA.seek(told, IO::SEEK_SET)
 
-    for line in @prelude
-      line += ';' unless line =~ /^\s*#/
-      write.puts line
+      def write.write *x
+        $>.write *x
+        super
+      end
     end
 
-    printf write, <<~'C', @main
+    IO::copy_stream(DATA, write)
+
+    for $LAST_READ_LINE in ( self.prelude )
+      $LAST_READ_LINE += ';' unless /^\s*#/ or /;$/
+      write.print()
+      ?\C-J.display(write)
+    end
+
+    printf write, <<~'C', self.main
       int main(int argc, const char **argv) {
         %s;
       }
     C
 
     write.close()
-
     return( read )
   end
 end
 
-def executeProgram program
+def executeProgram! program
   out = program.writeProgram()
 
   system(
-    { 'RUNC_ARGV0' => program.executable },
     program.compiler,
     '-xc',
     '-o',
     program.executable,
     '/dev/fd/10',
     *program.compilerOpts,
-    10 => out,
+    0d10 => out,
     exception: true
   )
 rescue Errno::ENOENT
@@ -105,10 +123,15 @@ rescue RuntimeError
   raise
 else
   # Don't use `exec` so we can run our `trap` to remove it
-  system( [program.executable] * 2, *$* )
+  system(
+    Hash['RUNC_ARGV0', program.executable],
+    Array[program.executable] * 2,
+    *$ARGV
+  )
 end
 
-executeProgram Program.new()
+$*.replace [ '-v', '-w', 'enum foo { a, b }', "int x;", 'printf("%s / %d", getenv("RUNC_ARGV0"), b)', '--', '34']
+executeProgram! Program::new()
 exit Process::last_status.exitstatus
 
 __END__
