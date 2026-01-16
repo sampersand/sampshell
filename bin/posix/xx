@@ -36,8 +36,8 @@ fi
 
 # If no width or count were given, default width
 if [ -z "$width" ] && [ -z "$count" ]; then
-	width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')}
-	: "${width:=80}"
+	# width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')}
+	width=80
 fi
 
 # Actually print out the string
