@@ -11,10 +11,10 @@ usage: $scriptname [options] [--] [message [...]]
        $(printf "%${#scriptname}s") [options] -f [--] [files [...]]
 
    -h         show help and exit
-   -f         instead of interpreting args as strings, interpet as files
+   -f         instead of interpreting args as strings, interpret as files
    -c         put single backticks (\`) around the copied text
    -b         put copied text into a code block (surround with \`\`\`)
-   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -b
+   -s SYNTAX  put SYNTAX after starting triple backticks. Implies -b
    -n         put newline after the message. Only really useful without -f
    -p SCRIPT  specify clipbord func; defaults to 'pbcopy'.
 

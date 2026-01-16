@@ -1,0 +1,139 @@
+#!/usr/bin/env ruby
+
+# TODO: finish this?
+
+require 'optparse2'
+
+OPTS = {
+  clipboard: 'pbcopy'
+}
+
+$*.replace %w[--syntax=q]
+
+OptParse2.new do |op|
+  op.program_name = File.basename($0)
+  op.banner = <<~USAGE
+    usage: #{op.program_name} [options] [--] [message [...]]
+           #{op.program_name} [options] -f [--] [files [...]]
+  USAGE
+
+  op.on '-f', '--files', 'instead of interpreting args as strings, interpret as files'
+
+  op.on '-c', '--code',  'put single backticks (`) around the copied text', key: :SS do
+    ['`', '`']
+  end
+
+  op.on '-b', '--block', 'put copied text into a code block (surround with ```)', key: :SS do
+    ["```\n", "\n```"]
+  end
+
+  op.on '-s', '--syntax=SYNTAX', 'Put syntax after starting triple backticks; Implies -b', key: :SS do |syntax|
+    ["```#{syntax}\n", "\n```"]
+  end
+
+  op.on '-n', '--newline', 'Put a newline after the message. Only really useful with -f'
+  op.on '-p', '--clipboard=FUNC', "Specify clipboard func. [default: #{OPTS[:clipboard]}]"
+  op.on '--[no-]chomp', 'Delete final trailing line. TODO: THIS'
+
+  op.parse! into: OPTS rescue op.abort
+end
+
+read, $stdout = IO.popen(OPTS[:clipboard]) rescue abort("bad clipboard: #{OPTS[:clipboard]}")
+
+start, stop = OPTS.FETCH 'SS'
+
+print start
+if $*.empty? || OPTS[:files]
+  
+
+# {
+#   # Print prefix
+#   printf %s "$start"
+
+#   # If no args are given, or if `-f` was specified, use `cat`.
+#   if [ $# -eq 0 ] || [ -n "$files" ]; then
+#     cat "$@" | chomp -a
+#   else
+#     printf %s "$*"
+#   fi
+
+#   # Print suffix, and optional trailing newline
+#   printf %s "$end$newline"
+# } | "$clipboard"
+# p OPTS
+
+__END__
+shift $(( OPTIND - 1 ))
+
+{
+  # Print prefix
+  printf %s "$start"
+
+  # If no args are given, or if `-f` was specified, use `cat`.
+  if [ $# -eq 0 ] || [ -n "$files" ]; then
+    cat "$@" | chomp -a
+  else
+    printf %s "$*"
+  fi
+
+  # Print suffix, and optional trailing newline
+  printf %s "$end$newline"
+} | "$clipboard"
+
+
+p OPTS
+BEGIN { $* << '--no-chomp'}
+__END__
+
+\unalias -a
+set -eu
+
+nl=$(printf '\n.'); readonly nl="${nl%.}"
+readonly scriptname="${0##*/}"
+
+usage () { cat; } <<USAGE
+usage: $scriptname [options] [--] [message [...]]
+       $(printf "%${#scriptname}s") [options] -f [--] [files [...]]
+
+   -h         show help and exit
+   -f         instead of interpreting args as strings, interpet as files
+   -c         put single backticks (\`) around the copied text
+   -b         put copied text into a code block (surround with \`\`\`)
+   -s SYNTAX  put SYNTAX after starting tripple backticks. Implies -b
+   -n         put newline after the message. Only really useful without -f
+   -p SCRIPT  specify clipbord func; defaults to 'pbcopy'.
+
+Copies 'message' to the clipboard; if more than one argument is given, they are
+concatenated with spaces. If no arguments are given, stdin is copied. The '-f'
+argument instead interprets all the args as files.
+USAGE
+
+start='' end='' newline='' clipboard=pbcopy files=''
+while getopts 'hfcbs:np:' opt; do
+  case $opt in
+  c) start='`' end='`' ;;
+  [bs]) start='```'"${OPTARG-}$nl" end="$nl"'```' ;;
+  n) newline=$nl ;;
+  p) clipboard=$OPTARG ;;
+  f) files=1 ;;
+  h) usage; exit; ;;
+  *) exit 2 ;;
+  esac
+done
+
+shift $(( OPTIND - 1 ))
+
+{
+  # Print prefix
+  printf %s "$start"
+
+  # If no args are given, or if `-f` was specified, use `cat`.
+  if [ $# -eq 0 ] || [ -n "$files" ]; then
+    cat "$@" | chomp -a
+  else
+    printf %s "$*"
+  fi
+
+  # Print suffix, and optional trailing newline
+  printf %s "$end$newline"
+} | "$clipboard"

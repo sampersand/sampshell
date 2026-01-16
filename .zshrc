@@ -317,3 +317,5 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias ps='ps -ax'
 
+function hr () { xx ${@:--} }
+function hrc () { hr "$@" | pbcopy }

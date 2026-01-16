@@ -14,7 +14,8 @@ unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remai
 
 unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
 unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_{CR,SP} # Ensure a `\r` is printed before a line starts
+unsetopt NO_PROMPT_CR # Ensure a `\r` is printed before a line starts
+unsetopt NO_PROMPT_SP # Ensure a `\r` is printed before a line starts
 
 unsetopt NO_BANG_HIST     # Lets you do `!!` and friends on the command line.
 
@@ -23,4 +24,7 @@ unsetopt NO_SHORT_LOOPS     # Allow short-forms of commands, eg `for x in *; ech
 
 unsetopt RM_STAR_SILENT # In case it's accidentally unset, force `rm *` to ask for confirmation
 
-unsetopt GLOB_SUBST SH_GLOB # defaults that should be set
+unsetopt GLOB_SUBST # defaults that should be set
+unsetopt SH_GLOB # defaults that should be set
+
+# is () for x; print $x $options[$x]

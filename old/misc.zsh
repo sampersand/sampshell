@@ -8,3 +8,12 @@
 		alias ARGC_AT_MOST_$i='${${$(((#<='$i'))&&print x):?at most '$i' args needed}:#*} '
 	done
 }
+
+# overwrite the `pbc` command to chomp arguments; no longer neeeded, this is done now
+pbc () { if [[ $# ]] then command pbc $@; else chomp | command pbc; fi }
+
+
+alias ps='ps -ax'
+alias hd='hexdump -C' # `p` has kinda taken over the need for this
+
+alias psg='noglob ps -ax | grep ' # `pg` has kinda taken over this
