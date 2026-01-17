@@ -21,6 +21,52 @@
 	defaultBranch = master
 
 [alias]
+	s = status
+	ss = status --short
+
+	rb = rebase
+	rbm = !git rebase "$(git master-branch)"
+	rba = rebase --abort
+
+	rs = reset
+	co = checkout
+	com = !git checkout "$(git master-branch)" --
+	cp = cherry-pick
+	g = grep
+
+	d = diff
+	dm = !git diff "$(git master-branch)"
+	ds = diff --stat
+	dms = !git diff --stat "$(git master-branch)"
+	dsm = dms
+	dno = diff --name-only
+
+	m = "!f () { if [ $# -eq 0 ]; then set '@{-1}'; fi; git merge \"$@\"; }; f"
+	mm = !git diff "$(git master-branch)"
+	ma = merge --abort
+
+	a = add
+	aa = !git add --all && git status
+
+	cm = commit-msg
+	cma = cm --amend
+	cmn = cm --no-verify
+	cman = cm --amend --no-verify
+	cmna = cman
+
+	nb = new-branch
+
+	br = branch
+	brc = branch --show-current
+
+	sw = "!f() { if [ $# -eq 0 ]; then set '@{-1}'; fi; git switch \"$@\"; }; f"
+	swm = !git switch "$(git master-branch)"e
+
+	st = stash
+	stp = stash pop
+
+
+[alias]
 	current-branch = branch --show-current
 	aliases = config --get-regexp ^alias\\.
 	nit     = commit --amend --no-edit

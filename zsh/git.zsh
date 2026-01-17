@@ -12,6 +12,11 @@ done $(seq 1 10)
 
 alias g=git
 
+galias () {
+	local tmp
+	for tmp do alias ${tmp}="g ${tmp#g}"; done
+}
+
 ################################################################################
 #                              Everyday Commands                               #
 ################################################################################
@@ -67,20 +72,20 @@ alias gi='git ignore'
 ################################
 # Interacting with remote code #
 ################################
-alias gst='git stash'
+galias gst
+galias gstp
 alias gstash=gst
-alias gstp='git stash pop'
 
 #####################
 # Changing branches #
 #####################
 
-alias gnb='git new-branch'
+galias gnb
 
-function gsw () git switch "${@:-@{-1\}}"
-alias    gswm='git switch "$(git-master-branch)"'
-alias    gbr='git branch'
-alias    gbrc='git branch --show-current'
+galias gsw
+galias gswm
+galias gbr
+galias gbrc
 
 alias grename='git branch --move' # TODO: clean this up
 
@@ -88,32 +93,32 @@ alias grename='git branch --move' # TODO: clean this up
 # Custom git "functions" #
 ##########################
 
-alias ga='git add'
-function gaa () { git add --all && git status }
+galias ga
+galias gaa
 
-alias gcm='noglob git commit-msg'
-alias gcma='gcm --amend'
-alias gcmn='gcm --no-verify'
-alias gcman='gcm --amend --no-verify' gcmna=gcman
+alias gcm='noglob git cm'
+galias gcma
+galias gcmn
+galias gcman gcmna
 
 ################################################################################
 #                                   Merging                                    #
 ################################################################################
 
-function gm () git merge "${@:-@{-1\}}"
-alias gmm='git merge "$(git master-branch)"'
-alias gma='git merge --abort'
+galias gm
+galias gmm
+galias gma
 
 ################################################################################
 #                                    Diffs                                     #
 ################################################################################
 
-alias gd='git diff'
-alias gdm='git diff "$(git master-branch)"'
-alias gds='git diff --stat'
-alias gdms='git diff --stat "$(git master-branch)"'
+galias gd
+galias gdm
+galias gds
+galias gdms
+galias gdno
 
-alias gdno='git diff --name-only'
 gdh () {
 	if (( $# == 0 )) set -- 'HEAD~1'
 	git diff "$@"
@@ -132,21 +137,19 @@ gpristine () {
 
 alias gisancestor='git merge-base --is-ancestor'
 
-alias gs='STTY=noflsh git status' # TODO: we have the STTY here, do we want that?
-alias gss='git status --short'
-alias grb='git rebase'
-alias grbm='git rebase "$(git-master-branch)"'
-alias grba='git rebase --abort'
+galias gs
+galias gss
+galias grb
+galias grbm
+galias grba
 
-alias grs='git reset'
-alias greset=grs
-alias grm='git rm'
-alias gco='git checkout'
-alias gcom='git checkout "$(git-master-branch)" --'
+galias grs
+galias grm
+galias gco
+galias gcom
 
-alias gcp='git cherry-pick'
-alias gg='git grep'
-alias ginit='git init'
+galias gcp
+galias gg
 
 gnita () { gaa && gnit; }
 
