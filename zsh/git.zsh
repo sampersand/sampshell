@@ -41,29 +41,29 @@ function gruc () {
 }
 
 alias gopen=gruo gopenc=gruc
-alias gf='git fetch'
-alias gpl='git pull'
-alias gph='git push'
-alias gphf='git push --force'
+galias gf
+galias gpl
+galias gph
+galias gphf
 
 alias gpr='git create-pr'
 alias gprv='gh pr view --web'
 
-function ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
-function gcl () {
-	git clone "${1?'must supply a repo'}" || return "$?"
-	set -- "$(basename "$1")"
-	cd -- "${1%%.*}"
-}
+# function ghcl () { gh repo clone ${${1:?}#https://github.com/} && cd $_:t }
+# function gcl () {
+# 	git clone "${1?'must supply a repo'}" || return "$?"
+# 	set -- "$(basename "$1")"
+# 	cd -- "${1%%.*}"
+# }
 
 ################################################################################
 #                                     TODO                                     #
 ################################################################################
 
 alias gdirs='git prev-branches'
-alias gnit='git nit'
-alias goops='git oops'
-alias gsquash='git squash'
+galias gnit
+galias goops
+galias gsquash
 
 ## Spellcheck
 alias gti=git
@@ -72,9 +72,8 @@ alias gi='git ignore'
 ################################
 # Interacting with remote code #
 ################################
-galias gst
+galias gst gstash
 galias gstp
-alias gstash=gst
 
 #####################
 # Changing branches #
@@ -151,6 +150,6 @@ galias gcom
 galias gcp
 galias gg
 
-gnita () { gaa && gnit; }
+# gnita () { gaa && gnit; }
 
-alias gl='git log'
+# alias gl='git log'

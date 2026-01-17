@@ -65,6 +65,11 @@
 	st = stash
 	stp = stash pop
 
+	f = fetch
+	pl = pull
+	ph = push
+	phf = push --force
+
 
 [alias]
 	current-branch = branch --show-current
