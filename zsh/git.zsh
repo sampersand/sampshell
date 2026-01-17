@@ -82,7 +82,6 @@ alias    gswm='git switch "$(git-master-branch)"'
 alias    gbr='git branch'
 alias    gbrc='git branch --show-current'
 
-alias gbrd='git branch --delete'
 alias grename='git branch --move' # TODO: clean this up
 
 ##########################

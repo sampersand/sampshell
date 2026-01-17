@@ -17,3 +17,10 @@ alias ps='ps -ax'
 alias hd='hexdump -C' # `p` has kinda taken over the need for this
 
 alias psg='noglob ps -ax | grep ' # `pg` has kinda taken over this
+
+# `h` now has this builtin
+function _SampShell-hg { h | grep $* }
+alias hg='noglob _SampShell-hg'
+
+# i never need to do this lol
+alias -- +rwx='chmod +rwx'

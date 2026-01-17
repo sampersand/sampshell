@@ -319,3 +319,11 @@ alias ps='ps -ax'
 
 function hr () { xx ${@:--} }
 function hrc () { hr "$@" | pbcopy }
+function ncol { awk "{ print \$$1 }" }
+
+# `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
+alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
+
+# TODO: investigate this more. maybe `du -chd1`?
+function ducks { du -chs -- ${@:-*} | sort -h }
+function awkf () awk "BEGIN{${(j:;:)@}; exit}"

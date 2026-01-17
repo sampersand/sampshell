@@ -8,16 +8,6 @@ if [[ $VENDOR == apple ]] {
 
 function ducks { du -chs -- $@ | sort -h }
 
-# `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
-function prp { print -P $@ } # NOTE: You can also use `print ${(%)@}`
-
-function ncol { awk "{ print \$$1 }" }
-
-function _SampShell-hg { h | grep $* }
-alias hg='noglob _SampShell-hg'
-
-alias -- +rwx='chmod +rwx'
-
 diffs () { if (( $# != 2 )) { echo "need 2 args"; return 1}
 	diff <(print -r "$1") <(print -r "$2")
 }
@@ -32,7 +22,6 @@ ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
 
 ################################################################################
 
-awkf () awk "BEGIN{${(j:;:)@}; exit}"
 
 function -- -x { typeset +g -x SampShell_XTRACE=1; set -x; "$@" }
 compdef -- _precommand -x

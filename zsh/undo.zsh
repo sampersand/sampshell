@@ -12,11 +12,6 @@ unsetopt NO_CHECK_JOBS         # Confirm before exiting the shell if there's sus
 unsetopt NO_CHECK_RUNNING_JOBS # Same as CHECK_JOBS, but also for running jobs.
 unsetopt NO_HUP                # When the shell closes, send SIGHUP to all remaining jobs.
 
-unsetopt PROMPT_BANG       # Don't make `!` mean history number; we do this with %!.
-unsetopt NO_PROMPT_PERCENT # Ensure `%` escapes in prompts are enabled.
-unsetopt NO_PROMPT_CR # Ensure a `\r` is printed before a line starts
-unsetopt NO_PROMPT_SP # Ensure a `\r` is printed before a line starts
-
 unsetopt NO_BANG_HIST     # Lets you do `!!` and friends on the command line.
 
 unsetopt NO_EQUALS          # Enables `=foo`, which expands to the full path eg `/bin/foo`
