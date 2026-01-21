@@ -73,6 +73,7 @@ function _SampShell-prompt-git-hook1 {
 	fi
 }
 
+# TODO: is there a way to replace this with a unix command?
 function prompt_sampshell_time_to_human {
 	float now=$1
 
