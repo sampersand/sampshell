@@ -119,8 +119,8 @@ if [ -n "$create" ]; then
 	done
 fi
 
-SampShell_EXPERIMENTAL=1
-if [ -n "${SampShell_EXPERIMENTAL-}" ] && [ "$editor" = "sublime4" ]; then
+# TODO: Do we want to optimize this? or maybe replace the `subl` command?
+if [ "$editor" = "subl" ]; then
 	for file; do
 		[ ! -e "$file" ] && [ ! -e "${file%:*}" ] && die 'file does not exist: %s' "$file"
 	done

@@ -86,7 +86,7 @@ export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$XDG_STATE_HOME/sampshell}"
 mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$SampShell_CACHEDIR" || echo "oops failed: $?" # TODO
 
 ## Misc variables
-export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
+export SampShell_EDITOR="${SampShell_EDITOR:-subl}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 
 ################################################################################
@@ -95,14 +95,12 @@ export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 #                                                                              #
 ################################################################################
 
-## Words is something I use quite frequently; only assign `$words` though if it
-# doesn't exist, and `$SampShell_WORDS` is a file.
+# Words is something I use occasionally. Only set it if the variable isn't
+# already set, and the file exists
 if [ -z "${words-}" ]; then
-   export words="/usr/share/dict/words"
+   export words=/usr/share/dict/words
 
-   if [ ! -f "$words" ]; then
-      unset -v words
-   fi
+   if [ ! -f "$words" ]; then unset -v words; fi
 fi
 
 ## Disable homebrew analytics.
