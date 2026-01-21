@@ -3,12 +3,14 @@ alias warn	'echo >/dev/stderr'
 
 if ( $?prompt ) then
 	# Set SHLVL, as CSH doesn't support it
-	if ( $?SHLVL ) then
-		@ tmp = $SHLVL + 1
-		setenv SHLVL $tmp
-		unset tmp
-	else
-		setenv SHLVL 1
+	if ( ! $?tcsh ) then
+		if ( $?SHLVL ) then
+			@ tmp = $SHLVL + 1
+			setenv SHLVL $tmp
+			unset tmp
+		else
+			setenv SHLVL 1
+		endif
 	endif
 
 	# Shell options

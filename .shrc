@@ -150,10 +150,8 @@ alias ssubl='subl --create'
 #                                                                              #
 ################################################################################
 
-## TODO: IDK IF I WANT THIS
-if [ -n "${SampShell_EXPERIMENTAL-}" ]; then
-	[ -t 0 ] && stty noflsh
-fi
+## When you CTRL+C, it doesn't clear the current line.
+if [ -t 0 ]; then stty noflsh; fi
 
 ################################################################################
 #                                                                              #
