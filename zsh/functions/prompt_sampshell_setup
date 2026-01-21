@@ -55,10 +55,10 @@ function _SampShell-prompt-git-hook1 {
 	## Configure variables for the `__git_ps1` function
 	local GIT_PS1_{HIDE_IF_PWD_IGNORED,SHOW{UNTRACKEDFILES,UPSTREAM,{DIRTY,CONFLICT}STATE}}
 	zstyle -T ":prompt:sampshell:git:dirty:$PWD"     display && GIT_PS1_SHOWDIRTYSTATE=1
-	zstyle -t ":prompt:sampshell:git:stash:$PWD"     display && GIT_PS1_SHOWSTASHSTATE=1
 	zstyle -T ":prompt:sampshell:git:untracked:$PWD" display && GIT_PS1_SHOWUNTRACKEDFILES=1
 	zstyle -T ":prompt:sampshell:git:conflict:$PWD"  display && GIT_PS1_SHOWCONFLICTSTATE=1
 	zstyle -T ":prompt:sampshell:git:hidepwd:$PWD"   display && GIT_PS1_HIDE_IF_PWD_IGNORED=1
+	zstyle -t ":prompt:sampshell:git:stash:$PWD"     display && GIT_PS1_SHOWSTASHSTATE=1
 	zstyle -t ":prompt:sampshell:git:upstream:$PWD"  display && GIT_PS1_SHOWUPSTREAM=1
 
 	## Perform the substitution
@@ -112,8 +112,8 @@ function prompt_sampshell_setup {
 	#################################################################################################
 
 	# Figure out the kind that's being used; fail on an invalid one
-	typeset -g PROMPT_SAMPSHELL_KIND=${1:-default}
-	if [[ $PROMPT_SAMPSHELL_KIND != (default|minimal|full) ]] {
+	local kind=${1:-default}
+	if [[ $kind != (default|minimal|full) ]] {
 		prompt_sampshell_help >&2
 		return 1
 	}
@@ -122,7 +122,7 @@ function prompt_sampshell_setup {
 	typeset -g PS1='' RPS1='' # Clear both PS1 and RPS1
 
 	# We only do precmd and preexec if we're not in a minimal prompt
-	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+	if [[ $kind != minimal ]] {
 		add-zsh-hook precmd prompt_sampshell_precmd
 
 		zmodload -F zsh/datetime p:EPOCHREALTIME
@@ -138,7 +138,7 @@ function prompt_sampshell_setup {
 	# Still need to figure out which prompt we want...
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
 		# In minimal prompt, default to a small one
-		if [[ $PROMPT_SAMPSHELL_KIND == minimal ]] {
+		if [[ $kind == minimal ]] {
 			timefmt='%@'
 		} else {
 			timefmt='%D{%_I:%M:%S.%. %p}'
@@ -153,7 +153,7 @@ function prompt_sampshell_setup {
 	PS1+='%(2L. %F{red}SHLVL=%L.)'             #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     #   (job count, if >0)
 	# how many lines are stored; minimal shells don't need this
-	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] { # TODO: do we wnat this to be disabled in minimal shells?
+	if [[ $kind != minimal ]] { # TODO: do we wnat this to be disabled in minimal shells?
 		PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v).)"                     #   (amnt stored lines, if >0)
 	}
 	PS1+='%B%F{blue}]%b '                      # ]
@@ -166,20 +166,20 @@ function prompt_sampshell_setup {
 	## The path; in full mode, display the full thing. Otherwise, only display the first and then
 	# the remaining last 3 segments (or the full thing if there's more)
 	PS1+='%F{11}'
-	if [[ $PROMPT_SAMPSHELL_KIND == full ]] {
+	if [[ $kind == full ]] {
 		PS1+='%~ '
 	} else {
 		PS1+='%(5~.%-1~/…/%3~.%~) ' # trailing part of the path
 	}
 
 	## Git status; we don't display it in a minimal prompt
-	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+	if [[ $kind != minimal ]] {
 		__git_ps1 >/dev/null 2>&1 # <-- TODO: why does this need to always be run?
 		# emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
 
 		# Only expand the full thing if there's a significant amount of space left.
 		PS1+='%F{43}'
-		if [[ $PROMPT_SAMPSHELL_KIND == full ]] {
+		if [[ $kind == full ]] {
 			PS1+='%'${prompt_sampshell_var_long_git}'v'
 		} else {
 			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
@@ -194,7 +194,7 @@ function prompt_sampshell_setup {
 	#################################################################################################
 
 	# Set rps1 to the ruby version and the time difference, if we're displaying that
-	if [[ $PROMPT_SAMPSHELL_KIND != minimal ]] {
+	if [[ $kind != minimal ]] {
 		RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
 		RPS1+=' [%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
 		setopt transient_rprompt # TODO: How to unset this
