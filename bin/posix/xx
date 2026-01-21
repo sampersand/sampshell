@@ -8,19 +8,21 @@
 ####################################################################################################
 
 usage () { cat; } <<USAGE
-usage: $(basename -- "$0") [-n] (-W | -w WIDTH | -c COUNT) [--] string
-	-n         Don't print the trailing newline
-	-c COUNT   Print 'string' COUNT times
-	-w WIDTH   Repeat 'string' until WIDTH chars are printed [default=-w80]
-	-W         Like -w, but uses \$COLUMNS (or stty size)
+usage: $(basename -- "$0") [-n] [-jSTRING] (-c COUNT | -W | -w WIDTH) [--] string [...]
+  -n         Don't print the trailing newline
+  -c COUNT   Print 'string' COUNT times
+  -w WIDTH   Repeat 'string' until WIDTH chars are printed [default=80]
+  -W         Like -w, but uses \$COLUMNS (or stty size)
+  -j STRING  String to put between arguments. [default=space]
 USAGE
 
-no_newline= count= width=
-while getopts 'nWhc:w:' option; do
+no_newline= count= width= join=' '
+while getopts 'nWhj:c:w:' option; do
 	case $option in
 	n) no_newline=1 ;;
 	c) count=$OPTARG width= ;;
 	w) width=$OPTARG count= ;;
+	j) join=$OPTARG ;;
 	W) width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')} count= ;;
 	h) usage; exit ;;
 	\?) exit 2 ;;
@@ -28,12 +30,21 @@ while getopts 'nWhc:w:' option; do
 done
 
 shift $(( OPTIND - 1 ))
-string=$*
 
 # Error out if no string to print was given
 if [ $# -eq 0 ]; then
 	usage >&2
 	exit 1
+fi
+
+if [ "$join" = ' ' ]; then
+	string=$*
+else
+	string=${1-}
+	while [ $# -ne 0 ]; do
+		string=$string$join$1
+		shift
+	done
 fi
 
 # If no width or count were given, default width
