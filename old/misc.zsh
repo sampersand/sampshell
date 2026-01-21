@@ -24,3 +24,11 @@ alias hg='noglob _SampShell-hg'
 
 # i never need to do this lol
 alias -- +rwx='chmod +rwx'
+
+# most commands to have `_SampShell` as a prefix anymore
+ufns () {
+	preexec_functions=${preexec_functions:#_SampShell*}
+	chpwd_functions=${chpwd_functions:#_SampShell*}
+	precmd_functions=${precmd_functions:#_SampShell*}
+	zshaddhistory_functions=${zshaddhistory_functions:#_SampShell*}
+}
