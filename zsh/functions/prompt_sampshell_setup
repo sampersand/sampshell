@@ -24,6 +24,7 @@ function prompt_sampshell_preexec {
 
 # Executed right before a line is drawn; we use it to populate `psvar`.
 function prompt_sampshell_precmd {
+	emulate -L zsh
 	# Get the current duration as soon as possible, for calculating the duration
 	# of a command, Note it's not at all exact, especially if this function isn't
 	# the first precmd function.

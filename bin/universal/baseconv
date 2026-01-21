@@ -7,8 +7,35 @@
 
 alias die 'echo \!* > /dev/stderr ; exit 1'
 
+set argv = ( `getopt hxXbBi:o: $argv` )
+set input = 10
+set output = 10
+
+while ( $# )
+   set opt = $1; shift
+   switch ( $opt )
+   case -h:
+      goto help
+   case "-x":
+      set input = 16; breaksw
+   case -X:
+      set output = 16; breaksw
+   case -b:
+      set input = 2; breaksw
+   case -B:
+      set output = 2; breaksw
+   case -i:
+      set input = $1; shift; breaksw
+   case -o:
+      set output = $1; shift; breaksw
+   case "--":
+      break
+   endsw
+end
+set argv = ( $input $output $argv )
 if ( $#argv < 3 ) then
-   die "usage: $0:t input-base output-base numbers [...]\
+help:
+   die "usage: $0:t [-x | -b | -i input] [-X | -B | -o output] numbers [...]\
 (you can also aliases for bases: x=16, o=8, d=10, b=2.)"
 endif
 
