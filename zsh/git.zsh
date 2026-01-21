@@ -60,7 +60,7 @@ alias gprv='gh pr view --web'
 #                                     TODO                                     #
 ################################################################################
 
-alias gdirs='git prev-branches'
+galias gdirs
 galias gnit
 galias goops
 galias gsquash
@@ -117,11 +117,7 @@ galias gdm
 galias gds
 galias gdms
 galias gdno
-
-gdh () {
-	if (( $# == 0 )) set -- 'HEAD~1'
-	git diff "$@"
-}
+galias gdh
 
 ################################################################################
 #                                     Misc                                     #

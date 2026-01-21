@@ -41,8 +41,9 @@
 	dms = !git diff --stat "$(git master-branch)"
 	dsm = dms
 	dno = diff --name-only
+	dh = "!f () { if [ $# -eq 0 ]; then set -- 'HEAD~1'; fi; git diff \"$@\"; }; f"
 
-	m = "!f () { if [ $# -eq 0 ]; then set '@{-1}'; fi; git merge \"$@\"; }; f"
+	m = "!f () { if [ $# -eq 0 ]; then set -- '@{-1}'; fi; git merge \"$@\"; }; f"
 	mm = !git diff "$(git master-branch)"
 	ma = merge --abort
 
@@ -56,6 +57,7 @@
 	cmna = cman
 
 	nb = new-branch
+	dirs = prev-branches
 
 	br = branch
 	brc = branch --show-current
@@ -70,7 +72,6 @@
 	pl = pull
 	ph = push
 	phf = push --force
-
 
 [alias]
 	current-branch = branch --show-current
