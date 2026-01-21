@@ -87,11 +87,7 @@ mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$SampShell_CACHEDIR" || ech
 
 ## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-sublime4}"
-export SampShell_WORDS="${SampShell_WORDS:-/usr/share/dict/words}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
-
-## TODO: Remove `SampShell_no_experimental`.
-export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
 
 ################################################################################
 #                                                                              #
@@ -101,8 +97,12 @@ export SampShell_no_experimental=$(( ! SampShell_EXPERIMENTAL ))
 
 ## Words is something I use quite frequently; only assign `$words` though if it
 # doesn't exist, and `$SampShell_WORDS` is a file.
-if [ -z "${words-}" ] && [ -f "${SampShell_WORDS-}" ]; then
-   export words="$SampShell_WORDS"
+if [ -z "${words-}" ]; then
+   export words="/usr/share/dict/words"
+
+   if [ ! -f "$words" ]; then
+      unset -v words
+   fi
 fi
 
 ## Disable homebrew analytics.
@@ -117,7 +117,7 @@ fi
 ## Use `vim` for editing history commands. (This is only really needed for
 # shells without better history mechanisms, which are quite rare---even dash has
 # history if `set -o emacs` is enabled.)
-export FCEDIT=vim
+export FCEDIT="${FCEDIT-vim}"
 
 ## Set `LANG` if it's not already present. (This is a POSIX env variable that I
 # don't see much of a need for, but eh whatever, why not add it in.)

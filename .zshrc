@@ -3,7 +3,7 @@
 #
 # The definitions in this file aren't really meant to be changed, as they codify how I use ZSH. Any
 # options I'm not certain about go into `experimental.zsh`, which is `source`d unless the variable
-# `$SampShell_no_experimental` is set to a nonempty value.
+# `$SampShell_EXPERIMENTAL` is set
 #
 # This file is not the location for functions, but rather configuration; Functions go into the
 # `utils.zsh` or `functions.zsh` files instead.
