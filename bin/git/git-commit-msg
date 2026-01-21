@@ -16,10 +16,12 @@ while (( $# )) do
 	case $1 in
 	--) shift; message+=( $@ ); break ;;
 	-*) flags+=( $1 ) ;;
-	*)  message+=( $1 ) ;;
+	*)  message+=( $1 ); shift; break ;;
 	esac
 
 	shift
 done
+
+message+=( $@ )
 
 git commit ${flags} ${message:+--message="$message"}
