@@ -14,8 +14,11 @@ EOS
 
 $width = Integer($width || $w || 80)
 
+STANDOUT = `tput smso` # also could be `\e[7m`
+STANDIN  = `tput rmso` # also could be `\e[27m`
+
 while line = $<.gets(chomp: true)
   line = line.ljust($width)
-  line.insert($width, "\e[7m|")
-  print line, "\e[27m\n"
+  line.insert($width, "#{STANDOUT}|")
+  print line, STANDIN, "\n"
 end

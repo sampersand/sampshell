@@ -3,4 +3,4 @@
 # (This file exists to be a counterpart to `pbc`; It feels weird to have one
 # and not the other...)
 
-pbpaste
+exec pbpaste

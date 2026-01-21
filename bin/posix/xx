@@ -16,13 +16,13 @@ usage: $(basename -- "$0") [-n] [-jSTRING] (-c COUNT | -W | -w WIDTH) [--] strin
   -j STRING  String to put between arguments. [default=space]
 USAGE
 
-no_newline= count= width= join=' '
+no_newline= count= width=80 join=' '
 while getopts 'nWhj:c:w:' option; do
 	case $option in
 	n) no_newline=1 ;;
+	j) join=$OPTARG ;;
 	c) count=$OPTARG width= ;;
 	w) width=$OPTARG count= ;;
-	j) join=$OPTARG ;;
 	W) width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')} count= ;;
 	h) usage; exit ;;
 	\?) exit 2 ;;
@@ -37,19 +37,20 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-if [ "$join" = ' ' ]; then
+# Join the arguments. If the `-j` argument is a single character, then we can
+# go ahead and use `IFS` for it:
+if [ "${#join}" -le 1 ]; then
+	tmp=$IFS IFS=$join
 	string=$*
+	IFS=$tmp
 else
-	string=${1-}
+	# Otherwise, we need to manually join the arguments
+	string=$1
+	shift
 	while [ $# -ne 0 ]; do
 		string=$string$join$1
 		shift
 	done
-fi
-
-# If no width or count were given, default width
-if [ -z "$width" ] && [ -z "$count" ]; then
-	width=80
 fi
 
 # Actually print out the string
