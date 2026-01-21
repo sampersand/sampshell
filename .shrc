@@ -137,7 +137,7 @@ alias ll='l -l'
 alias lt='l -tl'
 alias j=jobs
 alias p=mviz # shorthand for the `mviz` command
-alias -- +x='chmod +x' # This is allowed by the posix standard, who woulda known
+alias +x='chmod +x' # This is allowed by the posix standard, who woulda known
 
 ## Sublime Text editor shorthand aliases
 alias s=subl
