@@ -12,7 +12,7 @@ Every file in the root corresponds to a top-level file, and should be somehow so
 
 Notably, `.shrc` and `.profile` as 100% POSIX compliant, and can be sourced from any POSIX shell (and are in the ZSH and Bash configurations!)
 
-> [!IMPORTANT] The remainder of this readme ahsn't been updated, and is no longer correct
+> [!IMPORTANT] The remainder of this readme hasn't been updated, and is no longer correct
 
 # Quick Start
 Add the following to the shell's startup files (`~/.zshrc`, `~/.bash_profile`, etc.):

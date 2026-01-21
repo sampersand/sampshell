@@ -21,10 +21,11 @@
 	defaultBranch = master
 
 [alias]
-	s = status
+	s  = status
 	ss = status --short
 
-	rb = rebase
+	x = "! /Users/sampersand/code/sh/whatshell.sh"
+	rb  = rebase
 	rbm = !git rebase "$(git master-branch)"
 	rba = rebase --abort
 
@@ -60,7 +61,7 @@
 	brc = branch --show-current
 
 	sw = "!f() { if [ $# -eq 0 ]; then set '@{-1}'; fi; git switch \"$@\"; }; f"
-	swm = !git switch "$(git master-branch)"e
+	swm = !git switch "$(git master-branch)"
 
 	st = stash
 	stp = stash pop

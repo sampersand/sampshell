@@ -1,3 +1,7 @@
+# This is no longer necessary; it once also held definitions for "debug" stuff,
+# but I didn't use those and removed them. now, I haven't used it in so long that
+# it's kinda pointless
+
 #### Basic SampShell definitions for _all_ ZSH shell instances.
 # Since this file is going to be `source`d for _every_ zsh instance, it should be kept short. Not
 # only will this make it faster to load (which speeds up execution of scripts), but also keeps our

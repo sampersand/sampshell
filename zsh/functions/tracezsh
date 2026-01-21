@@ -3,6 +3,8 @@
 (( ! $# )) && set -- -ilc :
 # SampShell_DISABLED=1 tracezsh
 
+
+echo "SampShell_PROFILE is not set. todo, set it up"
 clenv \
 	-i \
 	-v SampShell_PROFILE= \
@@ -19,3 +21,12 @@ clenv \
 	--sourcetrace \
 	--prompt-subst \
 	${==@}
+
+# TODO: put this in a ~/.zshenv somehow. that `SampShell_PROFILE=` is unused
+
+## If the `$SampShell_PROFILE` variable is defined and nonempty, then we enable profiling.
+# (We eval it so we doesn't parse it if it's not profiling)
+[[ -n ${SampShell_PROFILE-} ]] && eval '
+zshexit_functions+=(_SampShell_profile_exit)
+function _SampShell_profile_exit { zprof }
+zmodload zsh/zprof'
