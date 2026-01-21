@@ -6,6 +6,8 @@
 [core]
 	excludesFile = ~/.gitignore_global
 	editor = vim
+	# hooksPath = ~/.sampshell/git; #!/bin/sh; echo "precmd"; x=$GIT_DIR/hooks/pre-commit; if [ -e "$x" ]; then exec "$x" "$@"; fi
+
 
 [branch]
 	# sort = ??
@@ -76,6 +78,8 @@
 	nit     = commit --amend --no-edit
 	current-branch = branch --show-current
 	aliases = config --get-regexp ^alias\\.
+
+	l = log
 
 [alias]
 
