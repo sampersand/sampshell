@@ -34,9 +34,8 @@
 	co = checkout
 	com = !git checkout "$(git master-branch)" --
 	cp = cherry-pick
-	g = grep
 
-	d = diff
+	d  = diff
 	dm = !git diff "$(git master-branch)"
 	ds = diff --stat
 	dms = !git diff --stat "$(git master-branch)"
@@ -57,7 +56,8 @@
 	cman = cm --amend --no-verify
 	cmna = cman
 
-	nb = "!f() { branch=$(git branch-name "$@") && git switch --create "$branch"; }; f"
+	new-branch = "!f() { branch=$(git branch-name "$@") && git switch --create "$branch"; }; f"
+	nb = new-branch
 	dirs = prev-branches
 
 	br = branch
@@ -79,14 +79,23 @@
 	aliases = config --get-regexp ^alias\\.
 
 	l = log
+	log-short = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short
 
-[alias]
+	# interacting with github
+	pr = create-pr
+	prv = !gh pr view --web
+	ru = remote-url
+	ruo = "!f () { if [ \"$1\" == -h ]; then git remote-url -h >&2; return 1; fi; remote=$(git remote-url \"$@\") && open -- \"$remote\"; }; f"
+	ruc = "!f () { if [ \"$1\" == -h ]; then git remote-url -h >&2; return 1; fi; git remote-url \"$@\" | pbcopy; }; f"
+
+	# others idk i need
+	isancestor = merge-base --is-ancestor
+	g = grep
 
 	# oops = !git add --all && git commit --amend --no-edit && git push --force
 # TODO: Only `git push --force` if a remote is available
 
 	# Stuff from work:
 	unstage = reset HEAD --
-	log-short = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short
  	# list branches sorted by last modified
  	b = "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
