@@ -58,7 +58,7 @@
 	cman = cm --amend --no-verify
 	cmna = cman
 
-	nb = new-branch
+	nb = "!f() { branch=$(git branch-name "$@") && git switch --create "$branch"; }; f"
 	dirs = prev-branches
 
 	br = branch

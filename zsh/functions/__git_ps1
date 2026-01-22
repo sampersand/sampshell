@@ -1,5 +1,6 @@
-# SOURCED FROM https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh
-# (NOTE: This file shoudl be kept as `__git_ps1` so the `autoload` functionality works.)
+# SOURCED FROM https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh,
+# with the only exception is the final `if test -n "${__SAMPSHELL_RUN_GIT_PS1-}"; then __git_ps1 "$@"; fi` line, so that tcsh can run it lol. it works without it in every other shell.
+# (NOTE: This file should be kept as `__git_ps1` so the `autoload` functionality works.)
 
 #
 # bash/zsh git prompt support
@@ -674,3 +675,5 @@ __git_ps1 ()
 
 	return "$exit"
 }
+
+if test -n "${__SAMPSHELL_RUN_GIT_PS1-}"; then __git_ps1 "$@"; fi

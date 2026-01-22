@@ -1,5 +1,0 @@
-#!/bin/sh
-
-set -euC
-cd -- "${SampShell_ROOTDIR:?}"
-git pull 

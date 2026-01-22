@@ -1,0 +1,3 @@
+#!/bin/sh
+
+branch=$(git branch-name "$@") && git switch --create "$branch"

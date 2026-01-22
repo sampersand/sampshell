@@ -1,3 +1,0 @@
-#!/bin/sh
-
-branch=$(git SampShell-branch-name "$@") && git switch --create "$branch"
