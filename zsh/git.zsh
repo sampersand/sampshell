@@ -145,6 +145,8 @@ galias gcom
 
 galias gcp
 galias gg
+galias gl
+alias gls='git log-short'
 
 # gnita () { gaa && gnit; }
 
