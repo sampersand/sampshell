@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+require 'optparse'
+
+
+OPTS={}
+OptParse.new do |op|
+  op.on '-k', '--keep', 'keeps the date and prefix'
+  op.on '-d', '--date=DATE', 'Forwarded to git branch-name'
+  op.on '-p', '--prefix=PREFIX', 'Forwarded to git branch-name'
+  op.on '-s', '--sep=SEP', 'Forwarded to git branch-name'
+  op.parse! into: OPTS
+end
