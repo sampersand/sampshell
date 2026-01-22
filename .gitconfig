@@ -1,7 +1,3 @@
-[user]
-	name = SamW
-	email = mail@sampersand.me
-
 # TODO: aliases?
 [core]
 	excludesFile = ~/.gitignore_global
@@ -23,16 +19,24 @@
 	defaultBranch = master
 
 [alias]
+	############################################################################
+	#                            Shorthand Commands                            #
+	############################################################################
+
+	# git status
 	s  = status
 	ss = status --short
 
+	# git rebase
 	rb  = rebase
 	rbm = !git rebase "$(git master-branch)"
 	rba = rebase --abort
 
-	rs = reset
+	# git checkout
 	co = checkout
 	com = !git checkout "$(git master-branch)" --
+
+	rs = reset
 	cp = cherry-pick
 
 	d  = diff
