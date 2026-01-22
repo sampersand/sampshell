@@ -1,6 +1,10 @@
 #!tcsh
 alias warn 'echo >/dev/stderr'
 
+if ( ! $?SampShell_ROOTDIR ) then
+	setenv SampShell_ROOTDIR "$HOME/sampshell"
+endif
+
 source "$SampShell_ROOTDIR"/.cshrc
 
 if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is defined
@@ -44,15 +48,9 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 
 	alias helpcommand '\!:1 --help'
 	## OTHER STUFF I HAVENT FIGURE DOUT IF I WANT
-	# alias '>' = ''
-	# alias subl 'open \!* -a sublime4'
-	# set histchars = '`\!,'
-	# # set cdpath =
-	# # Ignore `>`, eg from the examples
-	# alias '>' = ''
 	# # alias precmd date
 	# # set backslash_quote <-- let's live dangerouslynadnot set it
-	# set color dunique
+	# set color
 	# set correct = cmd
 	# # set ellipsis
 	#               Under very rare circumstances, the shell may report `You have mail.' instead of `You have new mail.'
@@ -74,5 +72,5 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	end
 
 	#alias gs        'git status'
-	#alias g         'git'
+	alias g         'git'
 endif

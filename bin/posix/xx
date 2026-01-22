@@ -3,35 +3,54 @@
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
 
-####################################################################################################
-#                                          Parse Options                                           #
-####################################################################################################
+set -eu # Safety!
+readonly program_name="$(basename -- "$0")"
+
+################################################################################
+#                             Handle CLI Arguments                             #
+################################################################################
 
 usage () { cat; } <<USAGE
-usage: $(basename -- "$0") [-n] [-jSTRING] (-c COUNT | -w WIDTH | -W) [--] string [...]
+usage: $program_name [-n] [-jSTRING] [-sSEP] (-cCOUNT | -wWIDTH | -W) [--] string [...]
   -n         Don't print the trailing newline
   -c COUNT   Print 'string' COUNT times
   -w WIDTH   Repeat 'string' until WIDTH chars are printed [default=80]
   -W         Like -w, but uses \$COLUMNS (or stty size)
-  -j STRING  String to put between arguments. [default=space]
+  -j STRING  Join extra 'string's with STRING. [default=space]
+  -s SEP     Print SEP between every iteration [default=empty]
 USAGE
 
-no_newline= count= width=80 join=' '
-while getopts 'nWhj:c:w:' option; do
+validate_is_an_int () {
+	case $2 in
+	*[!0-9]*)
+		printf >&2 "%s: argument to $1 must be an integer; got: %s\n" \
+			"$program_name" "$2"
+		exit 1
+	esac
+}
+
+no_newline= count= width=80 join=' ' sep=
+while getopts 'nWhj:c:w:s:' option; do
 	case $option in
+	h) usage; exit ;;
 	n) no_newline=1 ;;
 	j) join=$OPTARG ;;
-	c) count=$OPTARG width= ;;
-	w) width=$OPTARG count= ;;
-	W) width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')} count= ;;
-	h) usage; exit ;;
+	s) sep=$OPTARG ;;
+	c)	validate_is_an_int '-c' "$OPTARG"
+		count=$OPTARG width= ;;
+	w)
+		validate_is_an_int '-w' "$OPTARG"
+		width=$OPTARG count= ;;
+	W)
+		width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')} count=
+		validate_is_an_int '-W' "$width" ;; # sanity check; it should always be correct though
 	\?) exit 2 ;;
 	esac
 done
 
 shift $(( OPTIND - 1 ))
 
-# Error out if no string to print was given
+# Require at least one string as an argument
 if [ $# -eq 0 ]; then
 	usage >&2
 	exit 1
@@ -39,7 +58,7 @@ fi
 
 # Join the arguments. If the `-j` argument is a single character, then we can
 # go ahead and use `IFS` for it:
-if [ "${#join}" -le 1 ]; then
+if [ ${#join} -le 1 ]; then
 	tmp=$IFS IFS=$join
 	string=$*
 	IFS=$tmp
@@ -47,36 +66,47 @@ else
 	# Otherwise, we need to manually join the arguments
 	string=$1
 	shift
-	while [ $# -ne 0 ]; do
-		string=$string$join$1
-		shift
+	for arg; do
+		string=$string$join$arg
 	done
 fi
 
-# Actually print out the string
-if [ -z "$string" ]; then
-	# Print nothing for empty strings
+################################################################################
+#                           Perform the Repetitions                            #
+################################################################################
+
+if [ -z "$string" ] || [ "${width:-$count}" -eq 0 ]; then
+	# Do nothing for empty strings, or zero widths/counts
 	:
-elif [ "${#string}" -eq 1 ]; then
-	# Special case for single-character strings, we can go through `tr`
-	printf "% ${width:-$count}s" "" | tr ' ' "$string"
+elif [ ${#string} -eq 1 ] && [ ${#sep} -eq 0 ]; then
+	# Special case for single-character strings, and no separator between
+	# arguments: We can actually just use `printf` and pipe to `tr`. Also,
+	# when the string length is 1, no need for separate width/count fns.
+	printf "% *s" "${width:-$count}" "" | tr ' ' "$string"
 elif [ -n "$width" ]; then
 	# (TODO: Can you optimize this based on printing `$width / ${#string}`
 	# full entires and `$width % ${#string}` remainder)
-	# We want a `width` iteration
+
+	# do a printf first, so we can just prepend the separator
+	printf "%.*s" "$width" "$string"
+	: $(( width -= ${#string} ))
+	string=$sep$string
+
 	while [ "$width" -gt 0 ]; do
-		printf "%.${width}s" "$string"
+		printf "%.*s" "$width" "$string"
 		: "$(( width -= ${#string} ))"
 	done
 else
-	# Otherwise, we want a count iteration.
-	while [ "$(( count -= 1 ))" -ge 0 ]; do
+	# do a printf first, so we can just prepend the separator
+	printf %s "$string"
+	string=$sep$string
+
+	while [ "$(( count -= 1 ))" -gt 0 ]; do
 		printf %s "$string"
 	done
 fi
 
-# Print out a newline unless it is suppressed
-[ -z "$no_newline" ] && echo
-
-# Always return successfully
-exit 0
+# Print out a newline, unless it's been suppressed
+if [ -z "$no_newline" ]; then
+	echo
+fi
