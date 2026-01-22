@@ -26,7 +26,6 @@
 	s  = status
 	ss = status --short
 
-	x = "! /Users/sampersand/code/sh/whatshell.sh"
 	rb  = rebase
 	rbm = !git rebase "$(git master-branch)"
 	rba = rebase --abort
