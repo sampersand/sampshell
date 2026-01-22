@@ -67,10 +67,11 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	}'\'
 
 	# aliases based on git aliases
-	foreach tmp ( `git config -f $SampShell_ROOTDIR/.gitconfig --get-regexp '^alias\.' | sed 's/^alias\.\([a-z]*\).*/\1/'` )
+	foreach tmp ( `git config -f $SampShell_ROOTDIR/.gitconfig --get-regexp '^alias\.' | grep -v '^alias\.[a-z]*-' | sed 's/^alias\.\([a-z]*\).*/\1/'` )
 		alias g$tmp "git $tmp"
 	end
+	unset tmp
 
-	#alias gs        'git status'
-	alias g         'git'
+	alias g   'git'
+	alias gls 'git ls-short'
 endif
