@@ -1,0 +1,97 @@
+#!/usr/bin/env ruby
+require 'optparse'
+require 'gvars'
+
+$width = 80
+$join = ' '
+$sep = ''
+
+OptParse.new do |op|
+  op.banner.concat 'string [...]'
+  op.on '-n', '--no-newline', "Don't print the trailing newline"
+  op.on '-c', '--count=COUNT', Integer, "Print 'string' COUNT times" do |c|
+    $width = 0
+    c
+  end
+
+  op.on '-w', '--width=WIDTH', Integer, "Repeat 'string' until WIDTH chars are printed [default=80]" do |c|
+    $count = 0
+    c
+  end
+  op.on '-W', '--stty-width', "Like -w, but uses $COLUMNS (or stty size)" do
+    $count = 0
+    $width = ENV['COLUMNS'] || `stty size 2>&- | cut -f2 -d ' '`.chomp.tap { $?.success? or raise }
+  end
+
+  op.on '-j', '--join=STRING', "Join extra 'string's with STRING. [default=space]"
+  op.on '-s', '--sep=SEP', "Print SEP between every iteration [default=empty]"
+
+  op.parse! into: GVars
+  op.abort "must provide a string" if $*.empty?
+end
+
+string = $*.join($sep)
+
+if $count != 0
+  print string
+  string = $sep + string
+  ($count - 1).times { print string }
+else
+  printf('%.*s', $width, string)
+  $width -= string.length
+  string = $sep + string
+
+  while $width > 0
+    printf('%.*s', $width, string)
+    $width -= string.length
+  end
+end
+
+puts
+__END__
+case
+when string.empty? || ($width == 0 && $count == 0)
+  # do nothing
+
+
+__END__
+
+################################################################################
+#                           Perform the Repetitions                            #
+################################################################################
+
+if [ -z "$string" ] || [ "${width:-$count}" -eq 0 ]; then
+  # Do nothing for empty strings, or zero widths/counts
+  :
+elif [ ${#string} -eq 1 ] && [ ${#sep} -eq 0 ]; then
+  # Special case for single-character strings, and no separator between
+  # arguments: We can actually just use `printf` and pipe to `tr`. Also,
+  # when the string length is 1, no need for separate width/count fns.
+  printf "% *s" "${width:-$count}" "" | tr ' ' "$string"
+elif [ -n "$width" ]; then
+  # (TODO: Can you optimize this based on printing `$width / ${#string}`
+  # full entires and `$width % ${#string}` remainder)
+
+  # do a printf first, so we can just prepend the separator
+  printf "%.*s" "$width" "$string"
+  : $(( width -= ${#string} ))
+  string=$sep$string
+
+  while [ "$width" -gt 0 ]; do
+    printf "%.*s" "$width" "$string"
+    : "$(( width -= ${#string} ))"
+  done
+else
+  # do a printf first, so we can just prepend the separator
+  printf %s "$string"
+  string=$sep$string
+
+  while [ "$(( count -= 1 ))" -gt 0 ]; do
+    printf %s "$string"
+  done
+fi
+
+# Print out a newline, unless it's been suppressed
+if [ -z "$no_newline" ]; then
+  echo
+fi
