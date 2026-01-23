@@ -4,13 +4,6 @@
 # this file's job is to hook into ZSH's "add history" mechanism, and to output every line that'd be
 # stored to ZSH's history _also_ to a separate file.
 
-## Add the record history function to the end.
-# We want it to be the last function, so it'll only record things down if all the previous history
-# functions have passed. However, it's not critical for it to be the last one (as this is just used
-# for statistical purposes, and nothing mission-critical), so that if functions are added after it,
-# it's ok.
-zshaddhistory_functions+=(_SampShell-record-every-command)
-
 ## Global, non-exported variable, that's hidden from end-users; if set, we won't store history.
 #
 # This variable is also `typeset` within `disable-history.zsh`.
@@ -48,7 +41,7 @@ typeset -g SampShell_current_record_all_history_file
 # just `line`, but where all newlines have a tab added after them (to make it easier to parse).
 #
 # We rotate the file we store it in each day, so as to not have one massive history file.
-_SampShell-record-every-command () {
+function _SampShell-record-every-command () {
 	## Setup
 	local -A opts=("${(kv@)options[@]}") # Store options, so we can check for hist options later.
 	emulate -L zsh -o EXTENDED_GLOB   # Reset all options (until fn return), then set `EXTENDED_GLOB`
@@ -138,3 +131,5 @@ function ss-history () {
 		cat $filename
 	done | jq "${1+".date + \": \" +"} .line" --raw-output | p -ls
 }
+
+_SampShell-record-every-command "$@"

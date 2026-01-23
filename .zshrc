@@ -99,7 +99,12 @@ function cd {
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
-	source ~ss/zsh/record-every-command.zsh
+	## Add the record history function to the end.
+	# We want it to be the last function, so it'll only record things down if all the previous history
+	# functions have passed. However, it's not critical for it to be the last one (as this is just used
+	# for statistical purposes, and nothing mission-critical), so that if functions are added after it,
+	# it's ok.
+	zshaddhistory_functions+=( _SampShell-record-every-command )
 fi
 
 ## Setup history parameters
