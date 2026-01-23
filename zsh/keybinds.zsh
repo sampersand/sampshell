@@ -45,6 +45,7 @@ bindkey '^[$' SampShell-make-prompt-simple
 ## up and down history, but without going line-by-line
 bindkey '^P' up-history
 bindkey '^N' down-history
+bindkey '^[^[[A' up-history
 
 # Arrow keys that can be used in the future
 bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
@@ -89,3 +90,11 @@ bindkey '^[c' SampShell-copy-command
 bindkey '^[Z' execute-last-named-cmd # it's normally bound to `^[z`
 bindkey '^[z' SampShell-put-back-zle
 
+
+####################################################################################################
+#                                             Movement                                             #
+####################################################################################################
+
+# ESC + <left/right-arrow> + char = goes to the prev/next instance of `char`
+bindkey '^[^[[D' vi-find-prev-char
+bindkey '^[^[[C' vi-find-next-char

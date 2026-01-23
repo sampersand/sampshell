@@ -1,3 +1,8 @@
+# I don't need to transpose words really
+autoload -Uz transpose-words-match
+zle -N SampShell-transpose-argument transpose-words-match
+bindkey '^[T' SampShell-transpose-argument
+
 
 ## Subsumed by me just learning `^W`
 # backwards-delete-char-or-region () {
@@ -74,3 +79,15 @@ bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to 
 # }
 # zle -N zle_line_aborted-or-up-line-or-history
 # bindkey '^[[A' zle_line_aborted-or-up-line-or-history
+
+
+
+# bindkey 'å'=
+# bindkey 'å^[[D' SampShell-backward-argument
+# bindkey 'å^[b'  SampShell-backward-argument
+# bindkey 'å^[[C' SampShell-forward-argument
+# bindkey 'å^[f' SampShell-forward-argument
+# bindkey 'å^?' SampShell-backward-kill-argument
+# bindkey 'å^[[3~' SampShell-forward-kill-argument
+# bindkey 'å^[^?' SampShell-forward-kill-argument
+	

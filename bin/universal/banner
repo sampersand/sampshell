@@ -46,7 +46,7 @@ OptParse.new do |op|
   op.on '-p', '--pre=AMNT', Integer, 'Add AMNT spaces before the banner'
   op.on '-s', '--style=STYLE', REGONIZED_STYLES, "Use STYLE for the banner. Valid: #{REGONIZED_STYLES}. [default: #{OPTS[:style]}]"
   op.on '-j', '--justify=HOW', :justify, "Justify text either left, right, center. [default: #{OPTS[:justify]}]"
-  op.on '-t', '--tab', 'Output --pre as a single tab; still use --pre for tab width though'
+  op.on '-t', '-x', '--tab', 'Output --pre as a single tab; still use --pre for tab width though'
 
   op.on '-m', '--multiline', 'Interpret each arg as a separate line'
   op.on '-b', '--blank', 'Add a blank line before and after the banner contents'

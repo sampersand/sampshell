@@ -136,5 +136,5 @@ function ss-history () {
 
 	for filename in $SampShell_HISTDIR/*.sampshell-history(^on); do
 		cat $filename
-	done | jq "${1+".date + \": \" +"} .line" --raw-output | dump -l
+	done | jq "${1+".date + \": \" +"} .line" --raw-output | p -ls
 }

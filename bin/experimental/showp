@@ -4,7 +4,7 @@ for path in ENV.fetch('PATH').split(':') do
 	next unless test 'd', path and test 'x', path
 
 	for path2 in Dir.foreach path do
-		path2 = path + '/' + path2
+		path2 = sprintf '%s/%s', path, path2
 		if test 's', path2 and test 'x', path2 then
 			puts path2
 		end
