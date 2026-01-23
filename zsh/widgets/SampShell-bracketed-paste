@@ -1,0 +1,26 @@
+#!zsh
+
+emulate -L zsh
+
+local content
+local wantraw=${NUMERIC:-0}
+local start=$#LBUFFER
+
+zle .$WIDGET -N content
+
+if (( $wantraw == 0 )) then
+	content=${content%%$'\n'##}
+
+	# Taken from `bracketed-paste-url-magic`
+	local -a schema
+	zstyle -a :bracketed-paste-url-magic schema schema || schema=(http:// https:// ftp:// ftps:// file:// ssh:// sftp:// magnet:)
+
+	if [[ $content = (${(~j:|:)schema})* ]] then
+		content=${(q-)content}
+	fi
+fi
+
+LBUFFER+=$content
+YANK_START=$start
+YANK_END=$#LBUFFER
+zle -f yank
