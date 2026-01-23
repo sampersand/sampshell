@@ -1,17 +1,14 @@
 #!/bin/sh
 
 # TODO: get rid of
-: "${SampShell_git_branch_prefix:="$(whoami)"}"
-alias gti=git
-alias g=git
+alias gti=git # spellcheck
 
-## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
-# the var will leak
-() while (( $# )) do
-	alias -g "@-$1=@{-$1}"
-	shift
-done $(seq 1 10)
+# Git shorthand, make `@-X` be the same as `@{-X}`.
+alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
+         '@-4=@{-4}' '@-5=@{-5}' '@-6=@{-6}' \
+         '@-7=@{-7}' '@-8=@{-8}' '@-9=@{-9}'
 
+# Registers commands as git alises
 galias () {
 	local git_alias
 	for git_alias do
@@ -23,33 +20,23 @@ galias () {
 	done
 }
 
-# --
-gpristine () {
-	git status &&
-		read -q '?really clear changes it?' &&
-		git reset --hard "$(git-master-branch)" && git clean -xdf
-}
-
-################################################################################
-#                        Direct aliases from .gitconfig                        #
-################################################################################
-
-galais ga{,a}                                   # git add
-galias gcm='noglob git cm' gcm{a,n,an,na}       # git commit
-galias gm{,m,a}                                 # git merge
-galias gd{,m,s,ms,no,h}                         # git diff
-galias gsw{,m}                                  # git switch
-galias gbr{,c}                                  # git branch
-galias gph{,f}                                  # git push
-galias gpl                                      # git pull
-galias gs{,s}                                   # git status
-galias grb{,m,a}                                # git rebase
-galias gco{,m}                                  # git checkout
-galias gst{,p} gstash                           # git stash
-galias gf                                       # git fetch
-galias grs                                      # git reset
-galias gl gls='git log-short'                   # git log
-galias gg                                       # git grep
+## Aliases based on normal git commands
+galias ga{,a}                             # git add
+galias gcm='noglob git cm' gcm{a,n,an,na} # git commit
+galias gm{,m,a}                           # git merge
+galias gd{,m,s,ms,no,h}                   # git diff
+galias gsw{,m}                            # git switch
+galias gbr{,c}                            # git branch
+galias gph{,f}                            # git push
+galias gpl                                # git pull
+galias gs{,s}                             # git status
+galias grb{,m,a}                          # git rebase
+galias gco{,m}                            # git checkout
+galias gst{,p} gstash                     # git stash
+galias gf                                 # git fetch
+galias grs                                # git reset
+galias gl gls='git log-short'             # git log
+galias gg                                 # git grep
 
 ## Aliases based on custom commands
 galias gdirs     # git dirs
@@ -67,3 +54,8 @@ galias gi='git ignore'
 galias grename='git branch --move' # TODO: clean this up
 # galias grm              # git rm; idk how often i use this
 # galias gcp              # git cp; idk how often i use this
+gpristine () {
+	git status &&
+		read -q '?really clear changes it?' &&
+		git reset --hard "$(git-master-branch)" && git clean -xdf
+}
