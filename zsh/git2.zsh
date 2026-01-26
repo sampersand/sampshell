@@ -24,7 +24,7 @@ galias () {
 galias ga{,a}                             # git add
 galias gcm='noglob git cm' gcm{a,n,an,na} # git commit
 galias gm{,m,a}                           # git merge
-galias gd{,m,s,ms,no,h}                   # git diff
+galias gd{,m,s,ms,no,h,hs}                # git diff
 galias gsw{,m}                            # git switch
 galias gbr{,c}                            # git branch
 galias gph{,f}                            # git push

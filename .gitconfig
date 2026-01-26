@@ -46,6 +46,7 @@
 	dsm = dms
 	dno = diff --name-only
 	dh = "!f () { if [ $# -eq 0 ]; then set -- 'HEAD~1'; fi; git diff \"$@\"; }; f"
+	dhs = "!f () { if [ $# -eq 0 ]; then set -- 'HEAD~1'; fi; git diff --stat \"$@\"; }; f"
 
 	m = "!f () { if [ $# -eq 0 ]; then set -- '@{-1}'; fi; git merge \"$@\"; }; f"
 	mm = !git diff "$(git master-branch)"
