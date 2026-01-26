@@ -1,0 +1,6 @@
+#!zsh
+
+# (This overwrites the builtin widget of the same name)
+
+# Print out the history number when searching for lines in history
+zle -M "Line $HISTNO"

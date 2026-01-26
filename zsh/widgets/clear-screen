@@ -1,0 +1,6 @@
+#!zsh
+
+# (This overwrites the builtin widget of the same name)
+
+# Have `clear-screen` instead call our `cls` function
+cls && zle reset-prompt 

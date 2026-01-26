@@ -1,0 +1,6 @@
+#!zsh
+
+# (This overwrites the builtin widget of the same name)
+
+# Clear the result from the updated `zsh-isearch-update` when accepting a line
+zle -M ''

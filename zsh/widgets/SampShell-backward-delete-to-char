@@ -1,0 +1,2 @@
+#!zsh
+zle delete-to-char -n $(( - ${NUMERIC:-1} ))

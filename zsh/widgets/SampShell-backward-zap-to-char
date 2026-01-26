@@ -1,0 +1,2 @@
+#!zsh
+zle zap-to-char -n $(( - ${NUMERIC:-1} ))

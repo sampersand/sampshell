@@ -3,7 +3,9 @@ autoload -Uz transpose-words-match
 zle -N SampShell-transpose-argument transpose-words-match
 bindkey '^[T' SampShell-transpose-argument
 
+## TODO: HAVE UP ARROW USE `ZLE_LINE_ABORTED`
 
+bindkey '^q' push-line-or-edit
 ## Subsumed by me just learning `^W`
 # backwards-delete-char-or-region () {
 # 	if (( MARK != 0 )) {
@@ -91,3 +93,15 @@ bindkey '^S'     SampShell-strip-whitespace && : # stty -ixon # need `-ixon` to 
 # bindkey 'å^[[3~' SampShell-forward-kill-argument
 # bindkey 'å^[^?' SampShell-forward-kill-argument
 	
+
+
+# I neve ended up using these:
+# Arrow keys that can be used in the future
+# bindkey '^[[1;2C' undefined-key # Terminal.app's default sequence for "SHIFT + RIGHT ARROW"
+# bindkey '^[[1;2D' undefined-key # Terminal.app's default sequence for "SHIFT + LEFT ARROW"
+# bindkey '^[[1;5A' up-history    # (Added as a custom sequence for "CTRL + UP ARROW")
+# bindkey '^[[1;5B' down-history  # (Added as a custom sequence for "CTRL + DOWN ARROW")
+# bindkey '^[[1;5C' undefined-key # Terminal.app's default sequence for "CTRL + RIGHT ARROW"
+# bindkey '^[[1;5D' undefined-key # Terminal.app's default sequence for "CTRL + LEFT ARROW"
+# bindkey '^[[H'    undefined-key # TODO: Add into terminal.app as a sequence for `HOME`
+# bindkey '^[[E'    undefined-key # TODO: Add into terminal.app as a sequence for `END`
