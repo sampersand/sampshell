@@ -255,7 +255,7 @@ if [[ -n $SampShell_EXPERIMENTAL ]] {
 #                                          Git Shorthands                                          #
 #                                                                                                  #
 ####################################################################################################
-source ~ss/zsh/git.zsh
+source ~ss/zsh/git2.zsh
 # x=( ${(f):-"$(git config -f $PWD/.gitconfig -l | sed -n 's/^alias\.\([a-z]*\)=.*/g\1=g \1/p')"} )
 
 
