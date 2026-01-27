@@ -1,0 +1,43 @@
+{
+	"ignored_packages":
+	[
+		"Vintage",
+		"ZSH",
+	],
+	"font_face": "FiraCode-Retina",
+	"font_size": 16,
+	"color_scheme": "Monokai.sublime-color-scheme",
+	"tab_size": 3,
+	"shift_tab_unindent": true,
+	"spell_check": true,
+	"trim_trailing_white_space_on_save": "not_on_caret",
+	"ensure_newline_at_eof_on_save": true,
+	"scroll_past_end": true,
+	"ignored_words":
+	[
+		"leaderboard"
+	],
+	"rulers": [100, 80],
+	"translate_tabs_to_spaces": false,
+
+	"added_words":
+	[
+		"behaviour",
+		"whitespace",
+		"arity",
+		"minotaur",
+		"truthy",
+		"refcount",
+		"deallocating",
+		"builtins",
+		"portably",
+		"Globbing",
+		"Codepoint",
+		"unicode",
+		"charset",
+		"args",
+		"charsets",
+	],
+	"index_files": true,
+	"theme": "auto",
+}

@@ -1,3 +1,4 @@
+#!zsh
 ## This file is used for the "record every command" feature of sampshell.
 # I want to do statistical analysis and whatnot on all the commands I've ever run, but I don't want
 # to store _all_ those commands within the history (as they're far too easily deleted). As such,

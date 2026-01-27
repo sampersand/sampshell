@@ -142,6 +142,7 @@ history-ignore-command h history-{enable,disable}
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
+unalias j
 function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 
 ####################################################################################################
