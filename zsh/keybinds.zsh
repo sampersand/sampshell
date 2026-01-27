@@ -13,9 +13,7 @@ bindkey '^?' kill-region-or-backward-delete-char
 bindkey '^[#'  pound-insert
 bindkey '^X^R' redo # like `^X^U` for undo
 
-bindkey '^[/'    SampShell-delete-path-segment
-# bindkey '^[h'    SampShell-help
-
+bindkey '^[/' SampShell-delete-path-segment
 bindkey '^[$' SampShell-make-prompt-simple
 
 ## up and down history, but not line-by-line.

@@ -321,7 +321,6 @@ alias b100='banner --copy --width=100'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
-alias ps='ps -ax'
 
 function hr () { xx ${@:--} }
 function hrc () { hr "$@" | pbcopy }
