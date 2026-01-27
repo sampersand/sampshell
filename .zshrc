@@ -298,7 +298,7 @@ function pk9 { pkill -KILL -afl $@ }
 
 # Interact with zsh files
 function szfiles {
-	if (( ARGC != 0 )) { print 2@N exactly 0 args must be given; return 1 }
+	if (( ARGC != 0 )) { print @2N exactly 0 args must be given; return 1 }
 	subl ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
 }
 

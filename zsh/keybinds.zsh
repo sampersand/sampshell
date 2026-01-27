@@ -13,9 +13,6 @@ bindkey '^?' kill-region-or-backward-delete-char
 bindkey '^[#'  pound-insert
 bindkey '^X^R' redo # like `^X^U` for undo
 
-bindkey '^[/' SampShell-delete-path-segment
-bindkey '^[$' SampShell-make-prompt-simple
-
 ## up and down history, but not line-by-line.
 bindkey '^[^[[A' up-history
 bindkey '^[^[[B' down-history
@@ -40,7 +37,8 @@ bindkey '^[p' SampShell-add-pbcopy
 bindkey '^[c' SampShell-copy-command
 bindkey '^[Z' execute-last-named-cmd # it's normally bound to `^[z`
 bindkey '^[z' SampShell-put-back-zle
-
+bindkey '^[/' SampShell-delete-path-segment
+bindkey '^[$' SampShell-make-prompt-simple
 
 ####################################################################################################
 #                                             Movement                                             #

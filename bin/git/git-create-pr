@@ -6,8 +6,8 @@ master=$(git master-branch -f)
 ndiffs=$(git rev-list --count $master...HEAD)
 
 if (( ndiffs != 1 )) {
-	print >&2 "exactly 1 change should be made, but $ndiffs were seen"
-	return 1
+	print >&2 "warn: exactly 1 change should be made, but $ndiffs were seen"
+	# return 1
 }
 
 git push
