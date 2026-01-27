@@ -73,5 +73,5 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	unset tmp
 
 	alias g   'git'
-	alias gls 'git ls-short'
+	alias gls 'git log-short'
 endif
