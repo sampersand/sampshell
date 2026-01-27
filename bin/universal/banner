@@ -39,7 +39,7 @@ OptParse.new do |op|
     end
   end
 
-  op.on '--debug' do $DEBUG = 1 end
+  def (op.define('--debug') { $DEBUG = 1 }).summarize(*) end
   op.on '-w', '--width=(AMNT/auto)', :width, 'Set the total line width. A width of "auto" (or 0) is the',
                                              "smallest possible that fits everything [default: #{OPTS[:width]}]"
 
@@ -115,7 +115,7 @@ end
 
 if $DEBUG
   print '0', (1..($width + $pre) / 10).map { (_1-1).to_s * 10 }.join[2..], "\n"
-print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n"
+  print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n"
 end
 
 case OPTS[:style]

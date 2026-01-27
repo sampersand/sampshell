@@ -3,7 +3,12 @@
 exit=0
 
 for arg; do
-	local paths=( ${^path}/$arg(UN^-*) )
+	# if the arg is a path, then just use it. otherwise, find it in path
+	if [[ -f $arg ]] {
+		paths=( "$arg" )
+	} else {
+		paths=( ${^path}/$arg(UN^-*) )
+	}
 
 	case $#paths in
 	0)

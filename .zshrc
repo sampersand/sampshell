@@ -67,10 +67,10 @@ function add-named-dir {
 	hash -d -- ${(*)@/#%(#m)^[[:alnum:]_-]#=*/${MATCH:t}=$MATCH}
 }
 
-[[ -n $SampShell_TRASHDIR ]] && add-named-dir trash=$SampShell_TRASHDIR
-[[ -d ~/tmp               ]] && add-named-dir tmp=$HOME/tmp
-[[ -d ~/Desktop           ]] && add-named-dir d=$HOME/Desktop
-[[ -d ~/Downloads         ]] && add-named-dir dl=$HOME/Downloads
+if [[ -n $SampShell_TRASHDIR ]] add-named-dir trash=$SampShell_TRASHDIR
+if [[ -d ~/tmp               ]] add-named-dir tmp=$HOME/tmp
+if [[ -d ~/Desktop           ]] add-named-dir d=$HOME/Desktop
+if [[ -d ~/Downloads         ]] add-named-dir dl=$HOME/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d { builtin dirs ${@:--v} }
