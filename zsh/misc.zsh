@@ -40,3 +40,11 @@ is-in-a-git-repo () (
 	git rev-parse --is-inside-work-tree >&/dev/null
 )
 
+# prints an associative array
+prA () {
+	emulate -L zsh
+	local opts=()
+	if [[ -n $NO_COLOR || ! -t 1 ]] opts+=(-c -M)
+	for k v ( ${(@kvP)1} ) opts+=( --arg "$k" "$v" )
+	jq -n '$ARGS.named' "${opts[@]}"
+}

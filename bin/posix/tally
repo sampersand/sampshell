@@ -1,5 +1,7 @@
 #!/usr/bin/awk -f
 
+# NOTE: This is actually just `sort | uniq -c | sort`
+
 ###
 # Tallies the amount of times line sin the input appear.
 #
