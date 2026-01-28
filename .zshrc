@@ -153,7 +153,6 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 
 # Default zstyle for prompt
 zstyle ':prompt:sampshell:git:*' pattern "$(whoami)?[0-9]???-??-??"
-zstyle ':prompt:sampshell:time' format '%*'
 
 autoload -Uz promptinit && promptinit
 prompt sampshell

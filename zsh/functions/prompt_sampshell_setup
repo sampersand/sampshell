@@ -139,12 +139,8 @@ function prompt_sampshell_setup {
 	local timefmt
 	# Still need to figure out which prompt we want...
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
-		# In minimal prompt, default to a small one
-		if [[ $kind == minimal ]] {
-			timefmt='%@'
-		} else {
-			timefmt='%D{%_I:%M:%S.%. %p}'
-		}
+		# timefmt='%D{%_I:%M:%S.%. %p}'
+		timefmt='%(t.DING!.%*)' # hehe, add a ding in
 	fi
 
 	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
