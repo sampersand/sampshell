@@ -280,6 +280,7 @@ function reload {
 	# exec =zsh -il
 	local opts=-i
 	if [[ $options[login] == on ]] opts+=l
+	fc -W
 	exec =zsh $opts
 }
 function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }

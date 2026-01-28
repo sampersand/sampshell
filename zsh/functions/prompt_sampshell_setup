@@ -140,7 +140,7 @@ function prompt_sampshell_setup {
 	# Still need to figure out which prompt we want...
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
 		# timefmt='%D{%_I:%M:%S.%. %p}'
-		timefmt='%(t.DING!.%*)' # hehe, add a ding in
+		timefmt='%(t.%f%K{cyan}DING!%k.%*)' # hehe, add a ding in
 	fi
 
 	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
