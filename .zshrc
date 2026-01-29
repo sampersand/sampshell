@@ -333,3 +333,5 @@ alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 # TODO: investigate this more. maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
+
+function alt-clrs () ruby -ple '$..even? and ($> << "\e[48;5;236m"; $_.concat "\e[49m")'
