@@ -146,7 +146,7 @@ function prompt_sampshell_setup {
 	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
 	PS1+='%B%F{blue}[%b'                       # [
 	PS1+="%F{cyan}$timefmt "                   #   Current time
-	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u ' #   History Number; red if disabled; TODO: find a way to not require histfile
+	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%h%u ' #   History Number; red if disabled; TODO: find a way to not require histfile
 	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'      #   Previous exit code
 	PS1+='%(2L. %F{red}SHLVL=%L.)'             #   (SHLVL, if >1)
 	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     #   (job count, if >0)
