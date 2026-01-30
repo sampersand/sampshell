@@ -217,10 +217,10 @@ function prompt_sampshell_setup {
 		# Only expand the full thing if there's a significant amount of space left.
 		PS1+='%F{43}'
 		if [[ $kind == full ]] {
-			PS1+='%'${prompt_sampshell_var_long_git}'v'
+			PS1+="%${prompt_sampshell_var_long_git}v"
 		} else {
 			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
-			PS1+='%-100(l.%'${prompt_sampshell_var_long_git}'v.%'${prompt_sampshell_var_short_git}'v)'
+			PS1+="%-100(l.%${prompt_sampshell_var_long_git}v.%${prompt_sampshell_var_short_git}v)"
 		}
 	}
 
@@ -232,13 +232,13 @@ function prompt_sampshell_setup {
 
 	# Set rps1 to the ruby version and the time difference, if we're displaying that
 	if [[ $kind != minimal ]] {
-		RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
+		RPS1="%(${prompt_sampshell_var_ruby_version}V.💎%F{red}%${prompt_sampshell_var_ruby_version}v%f.)"
 		RPS1+=' ['
-		RPS1+='%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f'
+		RPS1+="%F{%(${prompt_sampshell_var_time_diff}V.red.green)}%${prompt_sampshell_var_time_str}v%f"
 
 		local _tmp
 		if zstyle -s ':prompt:sampshell:stock' ticker _tmp; then
-			RPS1+=' %('${prompt_sampshell_var_stock_good}"V.%F{green}📈.%F{red}📉)\$%${prompt_sampshell_var_stock_price}v%f"
+			RPS1+=" %(${prompt_sampshell_var_stock_good}V.%F{green}📈.%F{red}📉)\$%${prompt_sampshell_var_stock_price}v%f"
 			if [[ ! -v PERIOD ]] {
 				zstyle -s ':prompt:sampshell:stock' period PERIOD || PERIOD=1800
 			}
@@ -251,4 +251,3 @@ function prompt_sampshell_setup {
 }
 
 prompt_sampshell_setup "$@"
-return

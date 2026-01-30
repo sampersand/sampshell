@@ -3,15 +3,12 @@
 # TODO: get rid of
 : "${SampShell_git_branch_prefix:="$(whoami)"}"
 
-## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
-# the var will leak
-() while (( $# )) do
-	alias -g "@-$1=@{-$1}"
-	shift
-done $(seq 1 10)
+# Git shorthand, make `@-X` be the same as `@{-X}`.
+alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
+         '@-4=@{-4}' '@-5=@{-5}' '@-6=@{-6}' \
+         '@-7=@{-7}' '@-8=@{-8}' '@-9=@{-9}'
 
 alias gti=git
-alias g=git
 
 ################################################################################
 #                              Shorthand Commands                              #
@@ -39,6 +36,7 @@ alias    gds='git diff --stat'
 alias    gdms='git diff --stat "$(git master-branch)"'
 alias    gdno='git diff --name-only'
 function gdh () { git diff "${@:-HEAD~1}" }
+function gdhs () { git diff --stat "${@:-HEAD~1}" }
 
 # git switch
 function gsw () git switch "${@:-@{-1\}}"
@@ -47,6 +45,7 @@ alias    gswm='git switch "$(git-master-branch)"'
 # git branch
 alias    gbr='git branch'
 alias    gbrc='git branch --show-current'
+alias    gnb='git new-branch'
 
 # git push
 alias    gph='git push'
@@ -93,7 +92,6 @@ alias gdirs='git prev-branches'
 alias gnit='git nit'
 alias goops='git oops'
 alias gsquash='git squash'
-alias gnb='git new-branch'
 
 alias gpr='git create-pr'
 alias gprv='gh pr view --web'

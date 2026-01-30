@@ -37,10 +37,21 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	set ignoreeof   = 2
 	set listflags   = A color
 
+	############################################################################################
+	#                                          prompt                                          #
+	############################################################################################
+
 	unset promptchars # MACOS SETS THIS FOR SOME REASON
 	set prompt                    = '%S%B[%b%p \\!%U\!%u ?%?'
 	if ( $SHLVL != 1 ) set prompt = "$prompt L%"\$SHLVL
 	set prompt                    = "$prompt%B]%b %c03 %n%B%#%b%s "
+
+	alias __git_ps1 'sh -c ". $SampShell_ROOTDIR/zsh/functions/__git_ps1; __git_ps1 "\"\$@\" --'
+
+
+	############################################################################################
+	#                                       other stuff                                        #
+	############################################################################################
 
 
 	# Ignore `>`, eg from the examples
@@ -75,3 +86,4 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	alias g   'git'
 	alias gls 'git log-short'
 endif
+
