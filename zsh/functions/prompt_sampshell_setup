@@ -6,6 +6,8 @@ typeset -g +x prompt_sampshell_var_long_git=13
 typeset -g +x prompt_sampshell_var_ruby_version=14
 typeset -g +x prompt_sampshell_var_time_diff=15
 typeset -g +x prompt_sampshell_var_time_str=16
+typeset -g +x prompt_sampshell_var_stock_price=17
+typeset -g +x prompt_sampshell_var_stock_good=18
 
 # setopt noprompt{bang,cr,percent,subst} "prompt${^prompt_opts[@]}"
 #
@@ -98,6 +100,43 @@ function prompt_sampshell_time_to_human {
 
 	PROMPT_SAMPSHELL_LAST_EXEC_TIME=
 }
+
+function prompt_sampshell_periodic {
+	emulate -L zsh -o ERR_RETURN
+	typeset -u ticker
+	typeset -i period time now
+	typeset -F2 price last
+	zstyle -s ':prompt:sampshell:stock' ticker ticker
+	zstyle -s ':prompt:sampshell:stock' period period || period=1800 # check every half hour
+
+	local file=${XDG_CACHE_HOME:-~/.cache}/stockprice
+
+	now=$(date +%s)
+	if [[ -e $file ]] {
+		read time price < $file
+	}
+
+	last=$price
+	if (( time + period <= now )) {
+		# There's probably a better way to get stock prices than grepping the
+		# html output of a google webpage lol
+		price=$(curl -s "https://www.google.com/finance/quote/$ticker:NYSE" \
+			| rg -o 'data-last-price="([^"]*)"' -r '$1')
+
+		if [[ ! -d ${file:h} ]] mkdir -p $file:h # make the file's enclosing dir if needed
+		print $now $price >! $file
+	}
+
+	psvar[prompt_sampshell_var_stock_price]=$price
+	if (( last == price )) {
+		# do nothing with the `prompt_sampshell_var_stock_good`
+	} elif (( last < price )) {
+		psvar[prompt_sampshell_var_stock_good]=1
+	} else {
+		psvar[prompt_sampshell_var_stock_good]=
+	}
+}
+
 
 function prompt_sampshell_help {
 	print '
@@ -194,9 +233,22 @@ function prompt_sampshell_setup {
 	# Set rps1 to the ruby version and the time difference, if we're displaying that
 	if [[ $kind != minimal ]] {
 		RPS1='%('${prompt_sampshell_var_ruby_version}'V.💎%F{red}%'${prompt_sampshell_var_ruby_version}'v%f.)'
-		RPS1+=' [%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f]'
+		RPS1+=' ['
+		RPS1+='%F{%('${prompt_sampshell_var_time_diff}'V.red.green)}%'${prompt_sampshell_var_time_str}'v%f'
+
+		local _tmp
+		if zstyle -s ':prompt:sampshell:stock' ticker _tmp; then
+			RPS1+=' %('${prompt_sampshell_var_stock_good}"V.%F{green}📈.%F{red}📉)\$%${prompt_sampshell_var_stock_price}v%f"
+			if [[ ! -v PERIOD ]] {
+				zstyle -s ':prompt:sampshell:stock' period PERIOD || PERIOD=1800
+			}
+			add-zsh-hook periodic prompt_sampshell_periodic
+		fi
+		RPS1+=']'
+
 		setopt transient_rprompt # TODO: How to unset this
 	}
 }
 
 prompt_sampshell_setup "$@"
+return
