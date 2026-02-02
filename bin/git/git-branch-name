@@ -19,7 +19,7 @@ OptParse.new do |op|
 end
 
 $date   ||= Date.today
-$prefix ||= `git config sampshell.branchPrefix`
-$sep    ||= `git config sampshell.branchSeparator`
+$prefix ||= `git config --get sampshell.branchPrefix`
+$sep    ||= `git config --get sampshell.branchSeparator`
 
 print $prefix, $sep, $date, $sep, $*.join('-')
