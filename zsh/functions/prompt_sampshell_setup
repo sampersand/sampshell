@@ -31,16 +31,14 @@ function prompt_sampshell_precmd {
 	# of a command, Note it's not at all exact, especially if this function isn't
 	# the first precmd function.
 	typeset -F now=$EPOCHREALTIME # for calculating the duration
-	typeset -ga psvar #=() # clear psvar
 
-	if (( $#_SampShell_stored_lines )) {
-		psvar[prompt_sampshell_var_lines]=$#_SampShell_stored_lines
-	}
+	# Set the amount of stored lines; replace `0` with an empty string (for `%V`)
+	psvar[prompt_sampshell_var_lines]=${${#_SampShell_stored_lines}:#0}
 
 	_SampShell-prompt-git-hook1
 
-	if zstyle -T ':prompt:sampshell:ruby-version' display && whence ruby >/dev/null; then
-		psvar[prompt_sampshell_var_ruby_version]=$(ruby -v | awk '{print $2}')
+	if zstyle -T ':prompt:sampshell:ruby-version' display; then
+		psvar[prompt_sampshell_var_ruby_version]=${$(ruby --version)[2]} || true
 	fi
 
 	prompt_sampshell_time_to_human $now
@@ -107,9 +105,9 @@ function prompt_sampshell_periodic {
 	typeset -i period time now
 	typeset -F2 price last
 	zstyle -s ':prompt:sampshell:stock' ticker ticker
-	zstyle -s ':prompt:sampshell:stock' period period || period=1800 # check every half hour
+	zstyle -s ':prompt:sampshell:stock' period period || period=$PERIOD # default to the var
 
-	local file=${XDG_CACHE_HOME:-~/.cache}/stockprice
+	local file=${XDG_CACHE_HOME:-~/.cache}/sampshell/stockprice
 
 	now=$(date +%s)
 	if [[ -e $file ]] {

@@ -11,7 +11,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	alias cd        'pushd'
 	alias cdd       'cd `dirname \!*`'
 
-	alias reload    'source ~/.tcshrc'
+	alias reload    'source ~/.tcshrc' # TODO: `exec tcsh`, but with `-l`?
 	alias md        'mkdir -p \!*:q && \cd -- \!*q'
 	alias ls        'ls -AFqhGb'
 	alias s         'subl'
@@ -22,7 +22,6 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	# TODO, look at highlight
 	set globstar noclobber printexitvalue rmstar autolist correct \
 		dunique highlight pushdsilent
-
 
 	set shell       = /bin/sh
 	set symlinks    = chase
