@@ -4,18 +4,22 @@ require 'optparse'
 require 'optparse/date'
 require 'gvars'
 
+def `(cmd)
+  super.chomp.tap { raise unless $?.success? }
+end
+
 OptParse.new do |op|
   op.banner.concat 'branch name'
   op.on '-d', '--date=DATE', Date, 'Set the date. [default: today]'
-  op.on '-p', '--prefix=PREFIX', 'Set branch prefix. [default: `whoami`]'
-  op.on '-s', '--sep=SEP', 'Set the separator. [default: /]'
+  op.on '-p', '--prefix=PREFIX', 'Set branch prefix. [default: <git sampshell.branchPrefix>]'
+  op.on '-s', '--sep=SEP', 'Set the separator. [default: <git sampshell.branchSeparator>]'
 
   op.parse! into: GVars rescue op.abort
   op.abort 'branch name needed' if $*.empty?
 end
 
-$date ||= Date.today
-$prefix ||= ENV['SampShell_git_branch_prefix'] || `whoami`.chomp.tap{ raise unless $?.success? }
-$sep ||= ENV['SampShell_git_separator'] || '/'
+$date   ||= Date.today
+$prefix ||= `git config sampshell.branchPrefix`
+$sep    ||= `git config sampshell.branchSeparator`
 
 print $prefix, $sep, $date, $sep, $*.join('-')

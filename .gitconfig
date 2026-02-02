@@ -18,6 +18,10 @@
 [init]
 	defaultBranch = master
 
+[sampshell]
+	branchSeparator = /
+	branchPrefix = swesterman
+
 [alias]
 	############################################################################
 	#                            Shorthand Commands                            #
