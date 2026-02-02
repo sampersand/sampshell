@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# TODO: get rid of
-: "${SampShell_git_branch_prefix:="$(whoami)"}"
-
 ## Git shorthand, make `@-X` be the same as `@{-X}`. this has to be in an anonymous function, else
 # the var will leak
 () while (( $# )) do

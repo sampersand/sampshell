@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# TODO: get rid of
-: "${SampShell_git_branch_prefix:="$(whoami)"}"
-
 # Git shorthand, make `@-X` be the same as `@{-X}`.
 alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
          '@-4=@{-4}' '@-5=@{-5}' '@-6=@{-6}' \
