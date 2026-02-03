@@ -1,0 +1,19 @@
+#!zsh
+
+# Strip leading spaces; if `HIST_IGNORE_SPACE` is set, then leave a single one (if present)
+# (technically, we don't need to leave the dangling space, as the line won't be saved lol)
+local pre=
+if [[ -o HIST_IGNORE_SPACE && $BUFFER[1] = ' ' ]] pre=' '
+BUFFER=$pre${BUFFER##[[:space:]]#}
+
+
+# Strip trailing spaces; if a backslash is present, respect it
+local MATCH MBEGIN MEND
+BUFFER=${BUFFER%%(#m)[[:space:]]#}
+if [[ $BUFFER[-1] == '\' ]] {
+	BUFFER=${BUFFER%?} # delete trailing backslash
+	# Add in a quoted version of the last character, unless it's a newline
+	if [[ $MATCH[1] != $'\n' ]] BUFFER+=${(q+)MATCH[1]}
+}
+
+zle .accept-line
