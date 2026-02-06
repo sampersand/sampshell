@@ -1,5 +1,7 @@
 #!zsh
 
+emulate -L zsh -o EXTENDED_GLOB
+
 # Strip leading spaces; if `HIST_IGNORE_SPACE` is set, then leave a single one (if present)
 # (technically, we don't need to leave the dangling space, as the line won't be saved lol)
 local pre=
