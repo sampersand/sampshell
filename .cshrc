@@ -14,7 +14,8 @@ if ( $?prompt ) then
 	endif
 
 	# Shell options
-	set filec ignoreeof savehist notify
+	if ( $SHLVL == 1 ) set ignoreeof = 2 
+	set filec savehist notify
 	set fignore     = ( .o .out )
 	set cdpath      = ( ~ )
 	set histchars   = '\!,'
