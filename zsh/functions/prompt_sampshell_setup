@@ -107,23 +107,26 @@ function prompt_sampshell_periodic {
 	zstyle -s ':prompt:sampshell:stock' ticker ticker
 	zstyle -s ':prompt:sampshell:stock' period period || period=$PERIOD # default to the var
 
-	local file=${XDG_CACHE_HOME:-~/.cache}/sampshell/stockprice
+	# xstock --period=$period --ticker=$ticker
 
-	now=$(date +%s)
-	if [[ -e $file ]] {
-		read time price < $file
-	}
+	# local file=${XDG_CACHE_HOME:-~/.cache}/sampshell/stockprice
 
-	last=$price
-	if (( time + period <= now )) {
-		# There's probably a better way to get stock prices than grepping the
-		# html output of a google webpage lol
-		price=$(curl -s "https://www.google.com/finance/quote/$ticker:NYSE" \
-			| rg -o 'data-last-price="([^"]*)"' -r '$1')
+	# now=$(date +%s)
+	# if [[ -e $file ]] {
+	# 	read time price < $file
+	# }
 
-		if [[ ! -d ${file:h} ]] mkdir -p $file:h # make the file's enclosing dir if needed
-		print $now $price >! $file
-	}
+	last=$psvar[prompt_sampshell_var_stock_price]
+	price=`xstock --period=$period --ticker=$ticker`
+	# if (( time + period <= now )) {
+	# 	# There's probably a better way to get stock prices than grepping the
+	# 	# html output of a google webpage lol
+	# 	price=$(curl -s "https://www.google.com/finance/quote/$ticker:NYSE" \
+	# 		| rg -o 'data-last-price="([^"]*)"' -r '$1')
+
+	# 	if [[ ! -d ${file:h} ]] mkdir -p $file:h # make the file's enclosing dir if needed
+	# 	print $now $price >! $file
+	# }
 
 	psvar[prompt_sampshell_var_stock_price]=$price
 	if (( last == price )) {
