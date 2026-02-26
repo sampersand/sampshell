@@ -2,6 +2,7 @@
 # This file is janky
 
 require 'sscript'
+require 'xdg'
 require 'optparse2'
 require 'optparse2/globals'
 require 'optparse2/pathname'
@@ -9,19 +10,27 @@ require 'open3'
 require 'fileutils'
 
 OptParse2.new do |op|
-	op.on '-V', '--[no-]verbose' do $-v = true end
-	op.on '-t', '--ticker=TICKER', 'The stock ticker to use', &:upcase
+	op.banner.concat ' ticker'
+	op.on '--[no-]debug', hidden: true
 
+	op.on '-f', '--force', 'Forcibly write to the out file; if neither period nor flush are give, nothing is written'
 	op.on '--period=SECONDS', Float, 'If supplied, don\'t query if `--cache-file` was modified less than PERIOD seconds ago', default: 3600.0
-	op.on '-f', '--flush', 'Forcibly write to the out file; if neither period nor flush are give, nothing is written'
-	op.on '--[no-]cache-file=PATH', Pathname, 'Path to write results to', default: (
-		Pathname(ENV.fetch_nonempty('XDG_CACHE_HOME', '~/.cache')) / 'sampshell' / 'stockprice'
-	)
+	op.on '--[no-]cache-folder=PATH', Pathname, 'Path to write results to',
+		default: proc{ XDG.new.cache_home / 'sampshell' / 'stockprice' },
+		default_description: '$XDG_CACHE_HOME/sampshell/stockprice/<ticker>'
+
+	op.on '--ticker=ticker', hidden: true
 
 	op.parse! into: OptParse2::Globals rescue op.abort
 	defined?($flush) && $flush and $period = 0
-	op.abort 'no arguments allowed' unless $*.empty?
-	op.abort 'no ticker given' unless $ticker
+	$ticker ||= $*.shift&.upcase or op.abort 'no ticker given'
+	op.abort op.to_s unless $*.empty?
+end
+
+if $debug
+	def log = $stderr.puts("# #{yield}")
+else
+	def log = nil
 end
 
 def get_price(ticker)
@@ -32,13 +41,17 @@ def get_price(ticker)
 	out[/data-last-price="([^"]*)"/, 1]
 end
 
+$cache_file = $cache_folder / $ticker if $cache_folder
+
 if $cache_file
 	if ! $cache_file.exist?
 		FileUtils.mkdir_p $cache_file.parent
 	else
 		$old_value = File.read($cache_file)
-		if $period && ($cache_file.mtime + $period > Time.now)
-			$VERBOSE and $stderr.puts "# using cached value for #$ticker (from #$cache_file): #$old_value"
+		if $old_value.empty?
+			warn "old value empty, not using"
+		elsif $period && ($cache_file.mtime + $period > Time.now)
+			log { "using cached value for #$ticker (from #$cache_file): #$old_value" }
 			puts "#$old_value"
 			exit
 		end
@@ -46,10 +59,10 @@ if $cache_file
 end
 
 $price = get_price($ticker)
-$VERBOSE and $stderr.puts "# got price for #$ticker: #$price"
+log { "got price for #$ticker: #$price" }
 
 if $cache_file
-	$VERBOSE and $stderr.puts "# writing cached value for #$ticker (to #$cache_file): #$price"
+	log { "writing cached value for #$ticker (to #$cache_file): #$price" }
 	$cache_file.write("#$price\n")
 end
 
