@@ -31,6 +31,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	set histdup     = prev
 	set history     = 1000
 	set savehist    = ( 10000 merge lock )
+	set correct     = cmd
 	if ( ! $?XDG_STATE_HOME ) setenv XDG_STATE_HOME ~/.local/state
 	mkdir -p "$XDG_STATE_HOME"/tcsh
 	set histfile    = "$XDG_STATE_HOME"/tcsh/history
@@ -92,7 +93,6 @@ __EOS__
 	# # alias precmd date
 	# # set backslash_quote <-- let's live dangerouslynadnot set it
 	# set color
-	# set correct = cmd
 	# # set ellipsis
 	#               Under very rare circumstances, the shell may report `You have mail.' instead of `You have new mail.'
 
