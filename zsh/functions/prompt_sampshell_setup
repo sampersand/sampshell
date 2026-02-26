@@ -101,32 +101,13 @@ function prompt_sampshell_time_to_human {
 
 function prompt_sampshell_periodic {
 	emulate -L zsh -o ERR_RETURN
-	typeset -u ticker
-	typeset -i period time now
+	local ticker period
 	typeset -F2 price last
 	zstyle -s ':prompt:sampshell:stock' ticker ticker
 	zstyle -s ':prompt:sampshell:stock' period period || period=$PERIOD # default to the var
 
-	# xstock --period=$period --ticker=$ticker
-
-	# local file=${XDG_CACHE_HOME:-~/.cache}/sampshell/stockprice
-
-	# now=$(date +%s)
-	# if [[ -e $file ]] {
-	# 	read time price < $file
-	# }
-
 	last=$psvar[prompt_sampshell_var_stock_price]
-	price=`xstock --period=$period --ticker=$ticker`
-	# if (( time + period <= now )) {
-	# 	# There's probably a better way to get stock prices than grepping the
-	# 	# html output of a google webpage lol
-	# 	price=$(curl -s "https://www.google.com/finance/quote/$ticker:NYSE" \
-	# 		| rg -o 'data-last-price="([^"]*)"' -r '$1')
-
-	# 	if [[ ! -d ${file:h} ]] mkdir -p $file:h # make the file's enclosing dir if needed
-	# 	print $now $price >! $file
-	# }
+	price=$(xstock --period=$period --ticker=${(U)ticker})
 
 	psvar[prompt_sampshell_var_stock_price]=$price
 	if (( last == price )) {
@@ -140,12 +121,13 @@ function prompt_sampshell_periodic {
 
 
 function prompt_sampshell_help {
-	print '
+	cat <<-EOS
 		usage: prompt sampshell [default|minimal|full]
 			default: the normal view
 			minimal: removes some unneeded things, like RPS1 and git
 			full: more expanded view than default; doesnt hide paths or git branches
-	'
+			all: display _everything_
+	EOS
 }
 
 function prompt_sampshell_setup {
@@ -155,7 +137,7 @@ function prompt_sampshell_setup {
 
 	# Figure out the kind that's being used; fail on an invalid one
 	local kind=${1:-default}
-	if [[ $kind != (default|minimal|full) ]] {
+	if [[ $kind != (default|minimal|full|all) ]] {
 		prompt_sampshell_help >&2
 		return 1
 	}
@@ -172,39 +154,62 @@ function prompt_sampshell_setup {
 		add-zsh-hook preexec prompt_sampshell_preexec
 	}
 
-	#################################################################################################
-	#                                           Setup PS1                                           #
-	#################################################################################################
+	#############################################################################
+	#                             Beginning Segment                             #
+	#############################################################################
+	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
 
+	# Prefix `[`
+	PS1+='%B%F{blue}[%b'
+
+	# Current time. Still need to figure out which prompt we want...
 	local timefmt
-	# Still need to figure out which prompt we want...
 	if ! zstyle -s ':prompt:sampshell:time' format timefmt; then
 		# timefmt='%D{%_I:%M:%S.%. %p}'
-		timefmt='%(t.%f%K{cyan}DING!%k.%*)' # hehe, add a ding in
+		timefmt='%*'
 	fi
+	PS1+="%F{cyan}%(t.%f%K{cyan}DING!%k.$timefmt) "
 
-	## Beginning segment: `[<time> <hist> <exit> <shlvl> <job#> <lines>]`
-	PS1+='%B%F{blue}[%b'                       # [
-	PS1+="%F{cyan}$timefmt "                   #   Current time
-	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u ' #   History Number; red if disabled; TODO: find a way to not require histfile
-	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'      #   Previous exit code
-	PS1+='%(2L. %F{red}SHLVL=%L.)'             #   (SHLVL, if >1)
-	PS1+='%(1j.%F{166} (%j job%(2j.s.)).)'     #   (job count, if >0)
+	# History Number; red if disabled. TODO: find a way to not require histfile
+	PS1+='${${HISTFILE:+%f}:-%F{red\}}%U%!%u '
+
+	# Previous exit code (red if nonzero)
+	PS1+='%(?.%F{green}✔.%F{red}✘%B)%?%b'
+
+	# SHLVL. (if >1, or all)
+	if [[ $kind != all ]] PS1+='%(2L.'
+	PS1+=' %F{red}SHLVL=%L'
+	if [[ $kind != all ]] PS1+='.)'
+
+	# job count (if >0, or all)
+	if [[ $kind != all ]] PS1+='%(1j.'
+	PS1+=' %F{166}(%j job%(2j.s.))'
+	if [[ $kind != all ]] PS1+='.)'
+
 	# how many lines are stored; minimal shells don't need this
-	if [[ $kind != minimal ]] { # TODO: do we wnat this to be disabled in minimal shells?
-		PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v).)"                     #   (amnt stored lines, if >0)
+	if [[ $kind != minimal ]] { # TODO: do we want this to be disabled in minimal shells?
+		# (amnt stored lines, if >0)
+		PS1+="%(${prompt_sampshell_var_lines}V.%f (%${prompt_sampshell_var_lines}v%)."
+		if [[ $kind == all ]] PS1+='%f (0%)'
+		PS1+=')'
 	}
-	PS1+='%B%F{blue}]%b '                      # ]
+
+	# Suffix `]`
+	PS1+='%B%F{blue}]%b '
+
+	#############################################################################
+	#                               Remaining PS1                               #
+	#############################################################################
 
 	## Add the `user@host` if we're either SSH'd into something, or the zstyle has it enabled
-	if (( $+SSH_CONNECTION )) || zstyle -t ':prompt:sampshell:host' display; then
+	if (( $+SSH_CONNECTION )) || zstyle -t ':prompt:sampshell:host' display || [[ $kind == all ]] {
 		PS1+='%F{242}%n@%m%f '
-	fi
+	}
 
 	## The path; in full mode, display the full thing. Otherwise, only display the first and then
 	# the remaining last 3 segments (or the full thing if there's more)
 	PS1+='%F{11}'
-	if [[ $kind == full ]] {
+	if [[ $kind == full || $kind == all ]] {
 		PS1+='%~ '
 	} else {
 		PS1+='%(5~.%-1~/…/%3~.%~) ' # trailing part of the path
@@ -217,7 +222,7 @@ function prompt_sampshell_setup {
 
 		# Only expand the full thing if there's a significant amount of space left.
 		PS1+='%F{43}'
-		if [[ $kind == full ]] {
+		if [[ $kind == full || $kind == all ]] {
 			PS1+="%${prompt_sampshell_var_long_git}v"
 		} else {
 			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
@@ -230,6 +235,10 @@ function prompt_sampshell_setup {
 	#################################################################################################
 	#                                  Setup RPS1, if not minimal                                   #
 	#################################################################################################
+
+	#############################################################################
+	#                                 The RPS1                                  #
+	#############################################################################
 
 	# Set rps1 to the ruby version and the time difference, if we're displaying that
 	if [[ $kind != minimal ]] {
