@@ -259,7 +259,7 @@ source ~ss/zsh/misc.zsh
 alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
 
-alias '%= ' '$= ' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
+alias '%=' '$=' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 
 function reload {
 	# exec =zsh -il

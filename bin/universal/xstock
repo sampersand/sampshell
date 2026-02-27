@@ -14,8 +14,8 @@ OptParse2.new do |op|
     default: nil,
     default_description: '$STOCK_TICKER'
 
-  op.on '-r', '--read', 'Read stock value from cached file'
-  op.on '-w', '--write', 'Write fetched results to cached file'
+  op.on '-r', '--[no-]read', 'Read stock value from cached file'
+  op.on '-w', '--[no-]write', 'Write fetched results to cached file'
   op.on '-p', '--period=SECONDS', Float, "If supplied, only read cached file if <SECODNS has passed", default: 3600.0
   op.on '--cache-folder=PATH', Pathname, 'Path to the cached folder',
     default: proc{ XDG.new.cache_home / 'sampshell' / 'stockprice' },
