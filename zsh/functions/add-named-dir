@@ -1,0 +1,13 @@
+#!zsh
+
+emulate -L zsh
+
+if (( ! $# )) then
+	print >&2 -r "usage: $0 [name=]dir [[name=]dir ...]"
+	print >&2 "adds 'dir' to the list of named directories; if no name is"
+	print >&2 "given, it defaults to the base of 'dir'."
+	return 1
+fi
+
+local MATCH MBEGIN MEND
+hash -d -- ${(*)@/#%(#m)^[[:alnum:]_-]#=*/${MATCH:t}=$MATCH}

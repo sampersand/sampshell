@@ -4,7 +4,8 @@
 # Print the url for a repo, or a file in the repo
 ##
 
-require 'optparse'
+require 'optparse2'
+require 'gvars'
 
 PROGRAM_NAME = File.basename($0, '.*').sub(/\Agit-/, 'git ')
 
@@ -20,41 +21,26 @@ end
 
 $branch = :master
 
-OptParse.new nil, 20 do |op|
+OptParse2.new nil, 20 do |op|
   op.program_name = PROGRAM_NAME
   op.banner = "usage: #{op.program_name} [options] [file] [start[-end]]"
 
   op.on_head 'Print the link to a repository, a file in the repo, or a range within it.'
 
-  op.on '-r', '--repo=REPO', 'Use REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.' do |repo|
-    $repo = repo
-  end
+  op.on '-r', '--repo=REPO', 'Use REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.'
 
-  op.on '-b', '--branch=NAME', 'Explicitly use branch NAME' do |branch|
-    $branch = branch
-  end
-
-  op.on '-c', '--current', 'Use the current branch' do
-    $branch = :current
-  end
-
-  op.on '-m', '--master', 'Use the master branch [default]' do
-    $branch = :master
-  end
-
-  op.on '-p', '--permalink', 'Use a permalink' do
-    $branch = :permalink
-  end
+  op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
+  op.on '-c', '--current', 'Use the current branch', key: :branch
+  op.on '-m', '--master', 'Use the master branch [default]', key: :branch
+  op.on '-p', '--permalink', 'Use a permalink', key: :branch
 
   begin
-    op.parse!
+    op.parse! into: GVars
   rescue OptionParser::InvalidOption => err
     abort err
   end
 
-  unless $*.length <= 2
-    abort op.help
-  end
+  abort op.help unless $*.length <= 2
 end
 
 file, range = $*

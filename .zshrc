@@ -52,21 +52,6 @@ autoload -Uz ~ss/zsh/{functions,widgets,zsh_directory_name_functions}/*
 #                                                                                                  #
 ####################################################################################################
 
-## Add named directories
-function add-named-dir {
-	emulate -L zsh
-
-	if (( ! $# )) then
-		print >&2 -r "usage: $0 [name=]dir [[name=]dir ...]"
-		print >&2 "adds 'dir' to the list of named directories; if no name is"
-		print >&2 "given, it defaults to the base of 'dir'."
-		return 1
-	fi
-
-	local MATCH MBEGIN MEND
-	hash -d -- ${(*)@/#%(#m)^[[:alnum:]_-]#=*/${MATCH:t}=$MATCH}
-}
-
 if [[ -n $SampShell_TRASHDIR ]] add-named-dir trash=$SampShell_TRASHDIR
 if [[ -d ~/tmp               ]] add-named-dir tmp=$HOME/tmp
 if [[ -d ~/Desktop           ]] add-named-dir d=$HOME/Desktop
