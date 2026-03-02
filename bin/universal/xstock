@@ -2,28 +2,25 @@
 
 require 'xdg'
 require 'optparse2'
-require 'optparse2/globals'
 require 'optparse2/pathname'
 require 'open3'
+require 'gvars'
 
 OptParse2.new do |op|
   op.banner.concat ' [ticker]'
   op.on '--[no-]debug', hidden: true
 
-  op.on '-t', '--ticker=TICKER', 'Stock ticker to use; required, but can be passed as positional argument',
-    default: nil,
-    default_description: '$STOCK_TICKER'
-
+  op.on '-t', '--ticker=TICKER', 'Stock ticker to use; required, but can be passed as positional argument'
   op.on '-r', '--[no-]read', 'Read stock value from cached file'
   op.on '-w', '--[no-]write', 'Write fetched results to cached file'
-  op.on '-p', '--period=SECONDS', Float, "If supplied, only read cached file if <SECODNS has passed", default: 3600.0
+  op.on '-p', '--period=SECONDS', Float, "If supplied, only read cached file if fewer than SECONDS has passed"
   op.on '--cache-folder=PATH', Pathname, 'Path to the cached folder',
     default: proc{ XDG.new.cache_home / 'sampshell' / 'stockprice' },
     default_description: '$XDG_CACHE_HOME/sampshell/stockprice'
 
-  op.parse! into: OptParse2::Globals rescue op.abort
+  op.parse! into: GVars rescue op.abort
 
-  $ticker ||= $*.shift || ENV['STOCK_TICKER'] or op.abort('no ticker given (use -t or pass on command line)')
+  $ticker ||= $*.shift or op.abort('no ticker given (use -t or pass on command line)')
   $ticker = $ticker.upcase
   op.abort op.to_s unless $*.empty?
 end
@@ -35,6 +32,7 @@ else
 end
 
 def get_price(ticker)
+  # ruby -rjson -e 'p JSON[`curl ''https://api.nasdaq.com/api/quote/AAPL/info?assetclass=stocks'' -s -H ''User-Agent: Mozilla/6.0''`].dig("data", "primaryData", "lastSalePrice")'
   out, ok = Open3.capture2('curl', '-s',
     "https://www.google.com/finance/quote/#{ticker}")
   raise "unable to get ticker for #{ticker}: exit status #{ok.exitstatus}" unless ok.success?
