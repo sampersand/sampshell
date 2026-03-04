@@ -1,21 +1,21 @@
-  #!/usr/bin/env ruby
+#!/usr/bin/env ruby
 
-  require 'optparse2'
-  require 'optparse/date'
-  require 'gvars'
+require 'optparse2'
+require 'optparse/date'
+require 'gvars'
 
-  def `(cmd)
-    super.chomp.tap { raise unless $?.success? }
-  end
+def `(cmd)
+  super.chomp.tap { raise unless $?.success? }
+end
 
-  OptParse2.new do |op|
-    op.banner.concat 'branch name'
-    op.on '-d', '--date=DATE', Date, 'Set the date.',    default: proc{Date.today}, default_description: 'today'
-    op.on '-p', '--prefix=PREFIX', 'Set branch prefix.', default: proc{`git config --get sampshell.branchPrefix`}
-    op.on '-s', '--sep=SEP', 'Set the separator.',       default: proc{`git config --get sampshell.branchSeparator`}
+OptParse2.new do |op|
+  op.banner.concat 'branch name'
+  op.on '-d', '--date=DATE', Date, 'Set the date.',    default: proc{Date.today}, default_description: 'today'
+  op.on '-p', '--prefix=PREFIX', 'Set branch prefix.', default: proc{`git config --get sampshell.branchPrefix`}
+  op.on '-s', '--sep=SEP', 'Set the separator.',       default: proc{`git config --get sampshell.branchSeparator`}
 
-    op.parse! into: GVars rescue op.abort
-    op.abort 'branch name needed' if $*.empty?
-  end
+  op.parse! into: GVars rescue op.abort
+  op.abort 'branch name needed' if $*.empty?
+end
 
-  puts [$prefix, $date, $*.join('-')].join($sep)
+puts [$prefix, $date, $*.join('-')].join($sep)
