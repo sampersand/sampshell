@@ -268,6 +268,7 @@ function reload {
 	fc -W
 	exec =zsh $opts
 }
+history-ignore-command reload
 function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
 
 # Copies the current directory, or a subdirectory of the current direcotry if given

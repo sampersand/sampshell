@@ -64,14 +64,11 @@ function _SampShell-prompt-git-hook1 {
 
 	## Perform the substitution
 	local GIT_PS1_STATESEPARATOR= # Set to an empty string so there's no separator
-	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '⇄%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
-	psvar[prompt_sampshell_var_short_git]=$psvar[prompt_sampshell_var_long_git]
+	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
 
-	## If there's a prefix pattern, then set `psvar[prompt_sampshell_var_short_git]` to that replacement.
-	local pattern
-	if zstyle -s ":prompt:sampshell:git:$PWD" pattern pattern; then
-		psvar[prompt_sampshell_var_short_git]=${(*)psvar[prompt_sampshell_var_short_git]/${~pattern}/…}
-	fi
+	local prefix=$(git config --get --default=$USERNAME sampshell.branchPrefix)
+	local sep=$(git config --get --default=/ sampshell.branchSeparator)
+	psvar[prompt_sampshell_var_short_git]=${(*)psvar[prompt_sampshell_var_long_git]/#$prefix([^$sep]#[$sep])(#c2)/…}
 }
 
 # TODO: is there a way to replace this with a unix command?
@@ -221,13 +218,16 @@ function prompt_sampshell_setup {
 		# emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
 
 		# Only expand the full thing if there's a significant amount of space left.
-		PS1+='%F{43}'
+		PS1+="%(${prompt_sampshell_var_long_git}V.%F{43}⇄" #%(${prompt_sampshell_var_git}V.⇄%${prompt_sampshell_var_git}v .)"
+
 		if [[ $kind == full || $kind == all ]] {
 			PS1+="%${prompt_sampshell_var_long_git}v"
 		} else {
 			# PS1+='%-$((COLUMNS * 4 / 5))(l.%'${prompt_sampshell_var_short_git}'v.%'${prompt_sampshell_var_long_git}'v) '
-			PS1+="%-100(l.%${prompt_sampshell_var_long_git}v.%${prompt_sampshell_var_short_git}v)"
+			# PS1+="%-100(l.%${prompt_sampshell_var_git}v.%${prompt_sampshell_var_short_git}v)"
+			PS1+="%${prompt_sampshell_var_short_git}v"
 		}
+		PS1+=' .)'
 	}
 
 	PS1+='%F{8}%#%f ' # ending %

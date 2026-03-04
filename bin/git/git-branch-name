@@ -9,7 +9,7 @@ def `(cmd)
 end
 
 OptParse2.new do |op|
-  op.banner.concat 'branch name'
+  op.banner.concat ' branch name'
   op.on '-d', '--date=DATE', Date, 'Set the date.',    default: proc{Date.today}, default_description: 'today'
   op.on '-p', '--prefix=PREFIX', 'Set branch prefix.', default: proc{`git config --get sampshell.branchPrefix`}
   op.on '-s', '--sep=SEP', 'Set the separator.',       default: proc{`git config --get sampshell.branchSeparator`}
