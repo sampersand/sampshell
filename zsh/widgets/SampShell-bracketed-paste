@@ -16,7 +16,7 @@ if (( $wantraw == 0 )) then
 	zstyle -a :bracketed-paste-url-magic schema schema || schema=(http:// https:// ftp:// ftps:// file:// ssh:// sftp:// magnet:)
 
 	if [[ $content = (${(~j:|:)schema})* ]] then
-		content=${(q-)content}
+		content=${(q-)content%%[[:blank:]]}
 	fi
 fi
 

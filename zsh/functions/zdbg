@@ -1,0 +1,54 @@
+#!zsh
+
+# undoes zdbg--removes `zdbg_seconds`, and untraces all functions
+function uzdbg {
+	precmd_functions=( ${precmd_functions:#zdbg_seconds} )
+	functions +Tm '*'
+}
+
+# reload szdbg
+function zr {
+	local x=$functions_source[zdbg]
+	uzdbg && unfunction zdbg && autoload -Uz $x && zdbg
+}
+
+################################################################################
+#                                Setup SECONDS                                 #
+################################################################################
+
+# Print out seconds in the PS4 prompt, so you can see duration of commands
+typeset -g +x -F6 SECONDS=0
+PS4='+ $SECONDS %N:$i> '
+
+# Always reset SECONDS after each command is run; makes easier to see the
+# time it takes
+function zdbg_seconds { SECONDS=0 }
+precmd_functions+=(zdbg_seconds)
+
+
+################################################################################
+#                               Trace Functions                                #
+################################################################################
+
+## trace _every_ function, then we'll ignore ones we don't want
+functions -Tm '*'
+
+# don't trace zdbg functions
+functions +T uzdbg zdbg_seconds
+
+# Ignore leading underscores
+functions +Tm '_*'
+functions -T '__git_ps1' # except for `__git_ps1`; we want that!
+
+# autocomplete functions
+functions +Tm 'azhw:*'
+functions +T is-at-least
+
+# ignore misc ones
+functions +T update_terminal_cwd # MacOS builtin
+functions +T SampShell-zdn-repo-root # sampshell builtin
+
+# ignore widgets
+zmodload -F zsh/zleparameter p:widgets
+functions +T -- ${(k)widgets}
+

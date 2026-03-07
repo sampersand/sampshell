@@ -1,0 +1,17 @@
+#!zsh
+
+#######################################
+# Reloads ZSH by restarting the shell #
+#######################################
+
+# Save history if a HISTFILE is set
+if [[ -n $HISTFILE ]] fc -AI
+
+# Options to give to the new zsh; it's always `-i`, but if
+# the current shell is a login shell, we pass that too.
+
+local opts=-i
+if [[ -o LOGIN ]] opts+=l
+
+# Run zsh
+exec =zsh $opts

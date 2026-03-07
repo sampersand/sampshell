@@ -260,16 +260,7 @@ alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
 
 alias '%=' '$=' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
-
-function reload {
-	# exec =zsh -il
-	local opts=-i
-	if [[ $options[login] == on ]] opts+=l
-	fc -W
-	exec =zsh $opts
-}
 history-ignore-command reload
-function freload { unfunction $@ && autoload -zU $@; print "reloaded: $@" }
 
 # Copies the current directory, or a subdirectory of the current direcotry if given
 function pwdc () (
