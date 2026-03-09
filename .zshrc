@@ -310,3 +310,13 @@ alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 # TODO: investigate this more. maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
+
+function paa () {
+	local -A ary=( ${(kvP)1} )
+	local k v MBEGIN MEND MATCH
+	local max_len=${${(*Onk)ary/(#m)*/$MEND}[1]}
+	foreach k v ( ${(kv)ary} ) {
+		printf ' %*s: ' $max_len "$k"
+		p --no-prefixes --trailing-newline -- "$v"
+	}
+}
