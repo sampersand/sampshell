@@ -1,0 +1,196 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'optparse2/pathname'
+require 'time'
+require 'xdg'
+require 'json'
+require 'securerandom'
+
+Task = Struct.new :uuid, :due, :complete, :message do
+  alias complete? complete
+  def self.create(due:, message:, complete: false)
+    new(uuid: SecureRandom.uuid, due:, message:, complete:)
+  end
+
+  def to_json(...) = { uuid:, due:, complete:, message: }.to_json(...)
+  def to_s = "#{complete? ? '✔' : '✘'} #{uuid[/^[^-]*/]} #{due} #{message}"
+end
+
+class Tasks
+  attr_accessor :tasks
+
+  def initialize(path)
+    @path = path
+    acquire_lock_file!
+
+    @tasks = JSON.load(@path)&.map { Task.new(**it) }
+  end
+
+  def acquire_lock_file!
+    if !@path.exist?
+      @path.parent.mkpath
+      @path.write '[]'
+    end
+
+    @lockfile = Pathname(@path.to_s + '.lock')
+
+    if @lockfile.exist?
+      raise "lockfile #@lockfile already held"
+    else
+      open @lockfile, 'a' do |l| l.write $$.to_s end
+      raise "lockfile #@lockfile already held" if @lockfile.read != $$.to_s
+      at_exit { @lockfile.delete rescue nil }
+    end
+  end
+
+  include Enumerable
+  def each(...) = @tasks.each(...)
+
+  def add(...)
+    task = Task.create(...)
+    @tasks.push task
+    task
+  end
+
+  def write!(tasks = @tasks)
+    open @path, 'w' do |file|
+      file.puts tasks.to_json
+    end
+  end
+
+  class UUIDMatchError < RuntimeError; end
+
+  def find_task(uuid)
+    matching_tasks = select { it.uuid.start_with? uuid }
+
+    case matching_tasks.length
+    when 0
+      raise UUIDMatchError, "uuid does not exist: #{uuid}"
+    when 1
+      return matching_tasks.first
+    else
+      raise UUIDMatchError, "uuid matches multiple: #{matching_tasks.map(&:uuid)}"
+    end
+  end
+end
+
+op = OptParse2.new
+op.on '--current-todo-file=FILE', Pathname, 'Where to locate todos',
+  default: proc{ XDG.new.state_home / 'sampshell' / 'todos' / 'current' },
+  default_description: '$XDG_CACHE_HOME/sampshell/todos/current'
+
+op.accept :due do |arg|
+  time = Time.parse(arg)
+  # if Date._parse(arg)
+  # exit
+end
+
+
+def op.parse_and_tasks!(opts)
+  parse! into: opts
+  Tasks.new opts.delete(:'current-todo-file')
+end
+
+def op.help!
+  banner.concat ' subcommand [...]'
+  on_head 'General Options:'
+  on 'Subcommands:'
+  on '  h,help      Print this help message'
+  on '  l,list      Read the current todo list'
+  on '  n,new       Create a new todo'
+  on '  c,complete  Mark a todo as complete'
+  on '  m,modify    Modify a TODO'
+  help_exit
+end
+
+def op.list!
+  on '-j', '--json', 'Output as JSON, instead of human-readable'
+  on '-a', '--all', 'Also output TODOs which are complete [default just shows what is left]'
+
+  tasks = parse_and_tasks!(opts = {}).to_a
+  tasks.reject!(&:complete?) unless opts[:all]
+  puts opts[:json] ? tasks.to_json : tasks
+end
+
+def op.new!
+  banner.concat ' [message, if not given via -m]'
+  on '-t', '--tomorrow', 'Due tomorrow', key: :due do (Time.now + 24*60*60) end
+  on '-d', '--due=WHEN', :due, 'When the task is due (REQUIRED!)'
+  on '-c', '--complete', 'Already mark as already completed'
+  on '-m', '--message=STRING', 'Explicitly set the message (you can also use cmdline args)'
+
+  tasks = parse_and_tasks!(opts = {})
+  if opts.fetch(:message, '').empty? ^ !$*.empty?
+    abort 'exactly one of -m or command-line args can eb used to supply the message'
+  end
+
+  opts[:message] ||= $*.join(' ')
+  opts[:due] or abort 'a due date is required (either via -d or command-line args)'
+
+  task = tasks.add(
+    due: opts[:due],
+    complete: !!opts[:complete],
+    message: opts[:message]
+  )
+
+  tasks.write!
+  puts "create task: #{task.uuid}"
+end
+
+def op.complete!
+  banner.concat ' [uuids to complete]'
+  on '-u', '--uncomplete', 'Mark tasks as uncompleted, instead of completed'
+
+  tasks = parse_and_tasks!(opts = {})
+  $*.empty? and abort 'at least one uuid must be given'
+
+  success = true
+  $*.each do |uuid|
+    tasks.find_task(uuid).complete = !opts[:complete]
+  rescue UUIDMatchError => err
+    warn err
+    success = false
+  end
+
+  tasks.write!
+  exit success
+end
+
+def op.modify!
+  banner.concat ' (uuid to modify)'
+
+  on       '--delete', 'Completely deletes the task (dangerous! prefer --complete instead)'
+  on '-c', '--complete', 'Mark task as completed'
+  on '-u', '--uncomplete', 'Mark task as uncompleted, instead of completed', key: :complete do false end
+  on '-d', '--due=WHEN', :due, 'Modify due date'
+  on '-m', '--message=WHAT', 'Set the task message'
+
+  tasks = parse_and_tasks!(opts = {})
+  uuid = $*.shift
+  uuid.nil? || !$*.empty? and abort 'exactly one uuid must be given'
+
+  task = begin tasks.find_task(uuid); rescue UUIDMatchError; abort end
+
+  task.complete = opts[:complete] if opts.key?(:complete)
+  task.due = opts[:due] if opts.key?(:due)
+  task.message = opts[:message] if opts.key?(:message)
+
+  if opts[:delete]
+    tasks.tasks.delete task
+    warn "deleted task: #{task}"
+  end
+
+  tasks.write!
+end
+
+
+case (cmd = $*.shift)
+when '_' then puts XDG.new.state_home / 'sampshell' / 'todos' / 'current'
+when 'l', 'list' then op.list!
+when 'n', 'new' then op.new!
+when 'c', 'complete' then op.complete!
+when 'm', 'modify' then op.modify!
+when nil, 'h', 'help' then op.help!
+else op.abort "unknown command: #{cmd}; use #{op.program_name} help"
+end
