@@ -19,7 +19,7 @@ class Task
     new(**json)
   end
 
-  def initialize(uuid:, due: nil, complete:, message:, priority:, estimate: nil, tags: [])
+  def initialize(uuid:, due: nil, complete:, message:, priority: nil, estimate: nil, tags: [])
     @uuid, @due, @complete, @message, @priority, @estimate, @tags = uuid, due, complete, message, priority, estimate, tags
   end
 
@@ -37,7 +37,8 @@ class Task
       1 => k(1, 1),
       2 => k(2, 130),
       3 => k(3, 66),
-      4 => k(4, 242) , }.fetch(priority, priority)
+      4 => k(4, 242),
+      nil => nil }.fetch(priority, priority)
     tag_s = tags.empty? ? nil : tags.map { |tag|
       {
         'dog' => '🐶',
@@ -122,6 +123,7 @@ op = OptParse2.new
 op.on '--current-todo-file=FILE', Pathname, 'Where to locate todos',
   default: proc{ XDG.new.state_home / 'sampshell' / 'todos' / 'current' },
   default_description: '$XDG_CACHE_HOME/sampshell/todos/current'
+op.banner = "usage: #{op.program_name} [options]"
 
 op.accept :due do |arg|
   time = Time.parse(arg)
@@ -170,7 +172,8 @@ def op.list!
   tasks.select! { |task| opts[:tags].all? { task.tags.include? it } } if opts[:tags]
   out = []
 
-  tasks.sort_by!(&opts[:sort].to_sym)
+  sort = opts[:sort].to_sym
+  tasks.sort_by! { it.public_send(sort) || (sort == :priority ? 2.5 : nil) }
   out.concat tasks.select(&:overdue?) unless opts[:overdue] == false
   out.concat tasks.reject(&:overdue?) unless opts[:overdue] == true
 
@@ -184,31 +187,34 @@ def op.list!
 end
 
 def op.new!
-  banner.concat ' [message, if not given via -m]'
+  self.banner = "usage: #{program_name} [options] [task message, will be joined with spaces]" \
+                "       #{program_name} [options] [-m/--multiple] 'task' [...]"
+
   on '-T', 'sets due date to tomorrow', key: :due do Time.now + 24*60*60 end
   on '-d', '--due=WHEN', :due, 'When the task is due [optional]'
   on '-c', '--complete', 'Already mark as already completed'
-  on '-m', '--message=STRING', 'Explicitly set the message (you can also use cmdline args)'
-  on '-p', '--priority=INTEGER', :priority, 'How important it is (0 is most important)', default: 2
+  on '-m', '--multiple', 'Create multiple tasks at once'
+  on '-p', '--priority=INTEGER', :priority, 'How important it is (0 is most important)'
   on '-e', '--estimate=TIME', :estimate, 'How many minutes it will take take'
   on '-t', '--tags=TAGLIST', Array, 'List of tags to use'
 
   tasks = parse_and_tasks!(opts = {})
-  if opts.fetch(:message, '').empty? ^ !$*.empty?
-    abort 'exactly one of -m or command-line args can eb used to supply the message'
+  task_messages = opts[:multiple] ? $*.dup : [$*.join(' ')]
+  abort "#{opts[:multiple] ? "at least one" : "a"} task message must be supplied" if task_messages.empty?
+
+  task_messages.each do |message|
+    task = tasks.add(
+      due: opts[:due]&.to_time,
+      complete: !!opts[:complete],
+      message:,
+      priority: opts[:priority],
+      estimate: opts[:estimate],
+      tags: opts[:tags],
+    )
+    puts "create task: #{task}"
   end
 
-  task = tasks.add(
-    due: opts[:due]&.to_time,
-    complete: !!opts[:complete],
-    message: opts[:message] || $*.join(' '),
-    priority: opts[:priority],
-    estimate: opts[:estimate],
-    tags: opts[:tags],
-  )
-
   tasks.write!
-  puts "create task: #{task}"
 end
 
 def op.complete!
