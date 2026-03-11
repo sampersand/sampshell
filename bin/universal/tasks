@@ -9,28 +9,46 @@ require 'securerandom'
 
 class Task
   attr_reader :uuid
-  attr_accessor :due, :complete, :message, :priority, :estimate
+  attr_accessor :due, :complete, :message, :priority, :estimate, :tags
 
   def self.create(**) = new(uuid: SecureRandom.uuid, **)
 
   def self.from_json(json)
-    json => { due:, **rest }
-    new(due: Time.parse(due), **rest)
+    json = json.dup
+    json[:due] &&= Time.parse json[:due]
+    new(**json)
   end
 
-  def initialize(uuid:, due:, complete:, message:, priority:, estimate: nil)
-    @uuid, @due, @complete, @message, @priority, @estimate = uuid, due, complete, message, priority, estimate
+  def initialize(uuid:, due: nil, complete:, message:, priority:, estimate: nil, tags: [])
+    @uuid, @due, @complete, @message, @priority, @estimate, @tags = uuid, due, complete, message, priority, estimate, tags
   end
 
   alias complete? complete
 
-  def to_h = { uuid:, due:, complete:, message:, priority:, estimate: }.compact
+  def to_h = { uuid:, due:, complete:, message:, priority:, estimate:, tags: }.compact
   def to_json(...) = to_h.to_json(...)
 
   def short_uuid = uuid[/^[^-]*/]
   def uuid_matches?(other) = uuid.start_with?(other)
 
-  def to_pretty_s = "#{complete? ? '✔' : '✘'}#{overdue? ? '!!!!' : ''} #{short_uuid} #{due} [#{priority}#{estimate && " @ #{estimate_s}"}] #{message}"
+  def k(c,m) = "\e[48;5;#{m}mP#{c}\e[49m"
+  def to_pretty_s
+    pr = { 0 => k(0, 196),
+      1 => k(1, 1),
+      2 => k(2, 130),
+      3 => k(3, 66),
+      4 => k(4, 242) , }.fetch(priority, priority)
+    tag_s = tags.empty? ? nil : tags.map { |tag|
+      {
+        'dog' => '🐶',
+        'house' => '🏠',
+        'wedding'=> '💍',
+      }.fetch(tag, &:inspect)
+    }.join
+    "#{complete? ? '✔' : '✘'}#{overdue? ? '!!!!' : ''} #{due&.to_date || ' '*10} #{short_uuid} [#{pr}#{estimate && " @ #{estimate_s}"}] #{tag_s}#{tag_s && ' '}#{message}"
+  end
+
+
   def to_s = "#{short_uuid} #{message}"
 
   def estimate_s
@@ -39,7 +57,7 @@ class Task
     "#{hr > 0 ? "#{hr}h" : nil}#{sec > 0 ? "#{sec}m" : nil}"
   end
 
-  def overdue? = Time.now > @due
+  def overdue? = due && Time.now > due
 end
 
 class Tasks
@@ -142,17 +160,19 @@ def op.list!
   on '-a', '--all', 'Also output TODOs which are complete [default just shows what is left]'
   on '-o', '--[no-]overdue', 'Only print overdue (or not overdue)'
   on '-p', '--priority=INTEGER', :priority, 'Only print tasks with the given priority'
+  on '-t', '--tags=TAGLIST', Array, 'Only select tasks with all of the given tags'
+  on '--sort=WHAT', %w[tags priority due], 'How to sort', default: :priority
 
   tasks = parse_and_tasks!(opts = {}).to_a
-  unless $*.empty?
-    tasks.select! { |task| $*.any? { task.uuid_matches? it } }
-  end
+  tasks.select! { |task| $*.any? { task.uuid_matches? it } } unless $*.empty?
   tasks.reject!(&:complete?) unless opts[:all]
   tasks.select! { it.priority == opts[:priority] } if opts[:priority]
-
+  tasks.select! { |task| opts[:tags].all? { task.tags.include? it } } if opts[:tags]
   out = []
-  out.concat tasks.select(&:overdue?).sort_by(&:priority) unless opts[:overdue] == false
-  out.concat tasks.reject(&:overdue?).sort_by(&:priority) unless opts[:overdue] == true
+
+  tasks.sort_by!(&opts[:sort].to_sym)
+  out.concat tasks.select(&:overdue?) unless opts[:overdue] == false
+  out.concat tasks.reject(&:overdue?) unless opts[:overdue] == true
 
   if opts[:'pretty-json']
     puts JSON.pretty_generate out
@@ -165,11 +185,13 @@ end
 
 def op.new!
   banner.concat ' [message, if not given via -m]'
-  on '-d', '--due=WHEN', :due, 'When the task is due [optional; defaults to tomorrow]', default: (Time.now + 24*60*60)
+  on '-T', 'sets due date to tomorrow', key: :due do Time.now + 24*60*60 end
+  on '-d', '--due=WHEN', :due, 'When the task is due [optional]'
   on '-c', '--complete', 'Already mark as already completed'
   on '-m', '--message=STRING', 'Explicitly set the message (you can also use cmdline args)'
   on '-p', '--priority=INTEGER', :priority, 'How important it is (0 is most important)', default: 2
   on '-e', '--estimate=TIME', :estimate, 'How many minutes it will take take'
+  on '-t', '--tags=TAGLIST', Array, 'List of tags to use'
 
   tasks = parse_and_tasks!(opts = {})
   if opts.fetch(:message, '').empty? ^ !$*.empty?
@@ -177,11 +199,12 @@ def op.new!
   end
 
   task = tasks.add(
-    due: opts[:due].to_time,
+    due: opts[:due]&.to_time,
     complete: !!opts[:complete],
     message: opts[:message] || $*.join(' '),
     priority: opts[:priority],
     estimate: opts[:estimate],
+    tags: opts[:tags],
   )
 
   tasks.write!
@@ -210,31 +233,39 @@ def op.complete!
 end
 
 def op.modify!
-  banner.concat ' (uuid to modify)'
+  banner.concat ' (uuids to modify)'
 
   on       '--delete', 'Completely deletes the task (dangerous! prefer --complete instead)'
   on '-c', '--complete', 'Mark task as completed'
   on '-u', '--uncomplete', 'Mark task as uncompleted, instead of completed', key: :complete do false end
-  on '-d', '--due=WHEN', :due, 'Modify due date'
-  on '-m', '--message=WHAT', 'Set the task message'
+  on '-d', '--[no-]due=WHEN', :due, 'Modify due date (or disables it)'
+  on '-m', '--message=WHAT', 'Set the task message [must supply exactly one uuid]'
   on '-p', '--priority=INTEGER', Integer, 'How important it is (0 is most important)'
-  on '-e', '--estimate=TIME', :estimate, 'How many minutes it will take take'
+  on '-e', '--[no-]estimate=TIME', :estimate, 'How many minutes it will take take'
+  on '-t', '--[no-]tags=TAGLIST', Array, 'List of tags to use'
 
   tasks = parse_and_tasks!(opts = {})
-  uuid = $*.shift
-  uuid.nil? || !$*.empty? and abort 'exactly one uuid must be given'
+  # uuid = $*.shift
+  # uuid.nil? || !$*.empty? and abort 'exactly one uuid must be given'
 
-  task = begin tasks.find_task(uuid); rescue UUIDMatchError; abort end
+  tasks_to_modify = $*.map { begin tasks.find_task(it); rescue Tasks::UUIDMatchError; abort end }
+  abort 'at least one uuid must be given' if tasks_to_modify.empty?
+  abort 'can only supply --message when exactly one uuid is being modified' if opts.key?(:message) && tasks_to_modify.length != 1
 
-  (task.complete = opts[:complete]; puts "changed complete to #{opts[:complete]} for: #{task}") if opts.key?(:complete)
-  (task.due = opts[:due]; puts "changed due to #{opts[:due]} for: #{task}") if opts.key?(:due)
-  (task.message = opts[:message]; puts "changed message to #{opts[:message]} for: #{task}") if opts.key?(:message)
-  (task.priority = opts[:priority]; puts "changed priority to #{opts[:priority]} for: #{task}") if opts.key?(:priority)
-  (task.estimate = opts[:estimate]; puts "changed estimate to #{opts[:estimate]} for: #{task}") if opts.key?(:estimate)
+  opts[:tags] = [] if opts[:tags] == false
 
-  if opts[:delete]
-    tasks.tasks.delete task
-    warn "deleted task: #{task}"
+  tasks_to_modify.each do |task|
+    (task.complete = opts[:complete]; puts "changed complete to #{opts[:complete]} for: #{task}") if opts.key?(:complete)
+    (task.due = opts[:due] ? opts[:due] : nil; puts "changed due to #{opts[:due]} for: #{task}") if opts.key?(:due)
+    (task.message = opts[:message]; puts "changed message to #{opts[:message]} for: #{task}") if opts.key?(:message)
+    (task.priority = opts[:priority]; puts "changed priority to #{opts[:priority]} for: #{task}") if opts.key?(:priority)
+    (task.estimate = opts[:estimate] ? opts[:estimate] : nil; puts "changed estimate to #{opts[:estimate]} for: #{task}") if opts.key?(:estimate)
+    (task.tags = opts[:tags]; puts "changed tags to #{opts[:tags]} for: #{task}") if opts.key?(:tags)
+
+    if opts[:delete]
+      tasks.tasks.delete task
+      warn "deleted task: #{task} (#{task.to_json})"
+    end
   end
 
   tasks.write!
@@ -242,11 +273,11 @@ end
 
 
 case (cmd = $*.shift)
-when '_' then puts XDG.new.state_home / 'sampshell' / 'todos' / 'current'
-when 'l', 'list' then op.list!
+when 'raw' then x=XDG.new.state_home / 'sampshell' / 'todos' / 'current'; puts x; puts x.read
+when nil, 'l', 'list' then op.list!
 when 'n', 'new', 'a', 'add' then op.new!
 when 'c', 'complete' then op.complete!
 when 'm', 'modify' then op.modify!
-when nil, 'h', 'help' then op.help!
+when 'h', 'help' then op.help!
 else op.abort "unknown command: #{cmd}; use #{op.program_name} help"
 end
