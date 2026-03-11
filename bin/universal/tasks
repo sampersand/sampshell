@@ -157,8 +157,7 @@ end
 
 def op.list!
   banner.concat ' [specific uuids]'
-  on '-j', '--json', 'Output as JSON, instead of human-readable'
-  on '--pretty-json', 'Output as pretty JSON'
+  on '-j', '--json[=pretty/compact]', 'Output as JSON, instead of human-readable' do it || 'pretty' end
   on '-a', '--all', 'Also output TODOs which are complete [default just shows what is left]'
   on '-o', '--[no-]overdue', 'Only print overdue (or not overdue)'
   on '-p', '--priority=INTEGER', :priority, 'Only print tasks with the given priority'
@@ -177,11 +176,11 @@ def op.list!
   out.concat tasks.select(&:overdue?) unless opts[:overdue] == false
   out.concat tasks.reject(&:overdue?) unless opts[:overdue] == true
 
-  if opts[:'pretty-json']
-    puts JSON.pretty_generate out
-  elsif opts[:json]
-    puts out.to_json
+  case opts[:json]
+  when 'pretty' then puts JSON.pretty_generate out
+  when 'compact' then puts out.to_json
   else
+    warn "invalid json: #{opts[:json]}" if opts.key? :json
     puts out.map(&:to_pretty_s)
   end
 end
