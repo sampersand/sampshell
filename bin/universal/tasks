@@ -31,7 +31,7 @@ class Task
   def short_uuid = uuid[/^[^-]*/]
   def uuid_matches?(other) = uuid.start_with?(other)
 
-  def k(c,m) = "\e[48;5;#{m}mP#{c}\e[49m"
+  def k(c,m) = "\e[38;5;#{m}mP#{c}\e[39m"
   def to_pretty_s
     pr = { 0 => k(0, 196),
       1 => k(1, 1),
@@ -46,7 +46,7 @@ class Task
         'wedding'=> '💍',
       }.fetch(tag, &:inspect)
     }.join
-    "#{complete? ? '✔' : '✘'}#{overdue? ? '!!!!' : ''} #{due&.to_date || ' '*10} #{short_uuid} [#{pr}#{estimate && " @ #{estimate_s}"}] #{tag_s}#{tag_s && ' '}#{message}"
+    "#{overdue? ? "\e[48;5;196m" : ''}#{complete? ? '✔' : '✘'} #{due&.to_date || ' '*10} #{short_uuid} [#{pr}#{estimate && " @ #{estimate_s}"}] #{tag_s}#{tag_s && ' '}#{message}#{overdue? ? "\e[49m" : ""}"
   end
 
 
@@ -147,11 +147,11 @@ def op.help!
   banner.concat ' subcommand [...]'
   on_head 'General Options:'
   on 'Subcommands:'
-  on '  h,help      Print this help message'
-  on '  l,list      Read the current todo list'
-  on '  n,new,a,add Create a new todo'
-  on '  c,complete  Mark a todo as complete'
-  on '  m,modify    Modify a TODO'
+  on '  help      Print this help message'
+  on '  list      Read the current todo list'
+  on '  new,add Create a new todo'
+  on '  complete  Mark a todo as complete'
+  on '  modify    Modify a TODO'
   help_exit
 end
 
@@ -159,6 +159,7 @@ def op.list!
   banner.concat ' [specific uuids]'
   on '-j', '--json[=pretty/compact]', 'Output as JSON, instead of human-readable' do it || 'pretty' end
   on '-a', '--all', 'Also output TODOs which are complete [default just shows what is left]'
+  on '-f', '--full', 'Print the full messages, not just up to the column width'
   on '-o', '--[no-]overdue', 'Only print overdue (or not overdue)'
   on '-p', '--priority=INTEGER', :priority, 'Only print tasks with the given priority'
   on '-t', '--tags=TAGLIST', Array, 'Only select tasks with all of the given tags'
@@ -180,8 +181,9 @@ def op.list!
   when 'pretty' then puts JSON.pretty_generate out
   when 'compact' then puts out.to_json
   else
-    warn "invalid json: #{opts[:json]}" if opts.key? :json
-    puts out.map(&:to_pretty_s)
+    warn "invalid key json: #{opts[:json]}" if opts.key? :json
+    cols = opts[:full] ? nil : `tput cols`.to_i - 1 # if tput cols fails, it'll also be -1
+    puts out.map { it.to_pretty_s[..cols] }
   end
 end
 
@@ -279,10 +281,10 @@ end
 
 case (cmd = $*.shift)
 when 'raw' then x=XDG.new.state_home / 'sampshell' / 'todos' / 'current'; puts x; puts x.read
-when nil, 'l', 'list' then op.list!
-when 'n', 'new', 'a', 'add' then op.new!
-when 'c', 'complete' then op.complete!
-when 'm', 'modify' then op.modify!
-when 'h', 'help' then op.help!
+when nil, 'list' then op.list!
+when 'new', 'add' then op.new!
+when 'complete' then op.complete!
+when 'modify' then op.modify!
+when 'help' then op.help!
 else op.abort "unknown command: #{cmd}; use #{op.program_name} help"
 end

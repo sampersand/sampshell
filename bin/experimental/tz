@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+
+require 'time'
+p Time.now in: 'Z'
+
+binding.irb
+p Time.zone_offset 'PST'
+
+p Time::ZoneOffset
