@@ -104,7 +104,7 @@ function prompt_sampshell_periodic {
 	zstyle -s ':prompt:sampshell:stock' period period || period=$PERIOD # default to the var
 
 	last=$psvar[prompt_sampshell_var_stock_price]
-	price=$(xstock --read --write --period=$period --ticker=$ticker)
+	price=$(xstock --read --write --period=$period -- $ticker | cut -f2)
 
 	psvar[prompt_sampshell_var_stock_price]=$price
 	if (( last == price )) {
@@ -115,7 +115,6 @@ function prompt_sampshell_periodic {
 		psvar[prompt_sampshell_var_stock_good]=
 	}
 }
-
 
 function prompt_sampshell_help {
 	cat <<-EOS
