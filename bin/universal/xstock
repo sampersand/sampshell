@@ -7,10 +7,8 @@ require 'open3'
 require 'gvars'
 
 OptParse2.new do |op|
-  op.banner.concat ' [ticker]'
   op.on '--[no-]debug', hidden: true
 
-  op.on '-t', '--ticker=TICKER', 'Stock ticker to use; required, but can be passed as positional argument'
   op.on '-r', '--[no-]read', 'Read stock value from cached file'
   op.on '-w', '--[no-]write', 'Write fetched results to cached file'
   op.on '-p', '--period=SECONDS', Float, "If supplied, only read cached file if fewer than SECONDS has passed"
@@ -18,11 +16,9 @@ OptParse2.new do |op|
     default: proc{ XDG.new.cache_home / 'sampshell' / 'stockprice' },
     default_description: '$XDG_CACHE_HOME/sampshell/stockprice'
 
-  op.parse! into: GVars rescue op.abort
+  op.rest 'tickers', 'stock tickers to use', required: 1 do it.map(&:upcase) end
 
-  $ticker ||= $*.shift or op.abort('no ticker given (use -t or pass on command line)')
-  $ticker = $ticker.upcase
-  op.abort op.to_s unless $*.empty?
+  op.parse! into: GVars rescue op.abort
 end
 
 if $debug
@@ -40,33 +36,35 @@ def get_price(ticker)
   out[/data-last-price="([^"]*)"/, 1] or abort "unable to get stock for: #{ticker}"
 end
 
-if $read || $write
-  $cache_file = $cache_folder / $ticker
-end
+$tickers.each do |ticker|
+  if $read || $write
+    $cache_file = $cache_folder / ticker
+  end
 
-if $read
-  if ! $cache_file.exist?
-    log { "cache file #$cache_file does not exist; cannot read" }
-  else
-    $old_value = $cache_file.read
+  if $read
+    if ! $cache_file.exist?
+      log { "cache file #$cache_file does not exist; cannot read" }
+    else
+      $old_value = $cache_file.read
 
-    if $old_value.empty?
-      warn "old value empty, not using"
-    elsif $period && ($cache_file.mtime + $period > Time.now)
-      log { "using cached value for #$ticker (from #$cache_file): #$old_value" }
-      puts "#$old_value"
-      exit
+      if $old_value.empty?
+        warn "old value empty, not using"
+      elsif $period && ($cache_file.mtime + $period > Time.now)
+        log { "using cached value for #{ticker} (from #$cache_file): #$old_value" }
+        puts "#$old_value"
+        exit
+      end
     end
   end
+
+  $price = get_price(ticker)
+  log { "got price for #{ticker}: #$price" }
+
+  if $write
+    $cache_file.parent.mkpath
+    log { "writing cached value for #{ticker} (to #$cache_file): #$price" }
+    $cache_file.write("#$price\n")
+  end
+
+  printf "%s\t%s\n", ticker, $price
 end
-
-$price = get_price($ticker)
-log { "got price for #$ticker: #$price" }
-
-if $write
-  $cache_file.parent.mkpath
-  log { "writing cached value for #$ticker (to #$cache_file): #$price" }
-  $cache_file.write("#$price\n")
-end
-
-puts $price

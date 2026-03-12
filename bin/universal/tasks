@@ -55,7 +55,7 @@ class Task
   def estimate_s
     return '0s' if @estimate.zero?
     hr, sec = @estimate.divmod 60
-    "#{hr > 0 ? "#{hr}h" : nil}#{sec > 0 ? "#{sec}m" : nil}"
+    "#{"#{hr}h" if 0 < hr}#{"#{sec}m" if 0 < sec}"
   end
 
   def overdue? = due && Time.now > due
