@@ -191,9 +191,9 @@ source ~ss/zsh/keybinds.zsh
 #                                                                                                  #
 ####################################################################################################
 autoload -U compinit
-[[ ! -e $SampShell_CACHEDIR ]] && mkdir "$SampShell_CACHEDIR"
-if [[ -f $SampShell_CACHEDIR/.zcompdump ]] then
-  compinit -d $SampShell_CACHEDIR/.zcompdump
+[[ ! -e $XDG_STATE_HOME/sampshell ]] && mkdir "$XDG_STATE_HOME/sampshell"
+if [[ -f $XDG_STATE_HOME/sampshell/.zcompdump ]] then
+  compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 else
   compinit
 fi
@@ -310,6 +310,7 @@ alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 # TODO: investigate this more. maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
+alias cpu='top -o cpu'
 
 function paa () {
 	local -A ary=( ${(kvP)1} )

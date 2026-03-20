@@ -24,8 +24,10 @@ for arg; do
 		;& # fall thru
 
 	1)
-		read -q "?make executable [y/N]? ${(q+)paths} " && echo
-		(( !$status )) && chmod +x $paths
+		echo "making executable: ${(q+)paths}"
+		# read -q "?make executable [y/N]? ${(q+)paths} " && echo
+		# (( !$status )) &&
+		chmod +x $paths
 		;;
 	esac
 done

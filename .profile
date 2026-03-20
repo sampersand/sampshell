@@ -82,8 +82,7 @@ unset -f SampShell_ensure_xdg_variable
 
 export SampShell_TRASHDIR="${SampShell_TRASHDIR:-$XDG_STATE_HOME/sampshell/trash}"
 export SampShell_HISTDIR="${SampShell_HISTDIR-$XDG_STATE_HOME/sampshell/history}"
-export SampShell_CACHEDIR="${SampShell_CACHEDIR:-$XDG_STATE_HOME/sampshell}"
-mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$SampShell_CACHEDIR" || echo "oops failed: $?" # TODO
+mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$XDG_STATE_HOME/sampshell" || echo "oops failed: $?" # TODO
 
 ## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-subl}"

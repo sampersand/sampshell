@@ -105,8 +105,9 @@ class Tasks
 
   class UUIDMatchError < RuntimeError; end
 
-  def find_task(uuid)
+  def find_task(uuid, incomplete_only: false)
     matching_tasks = select { it.uuid_matches? uuid }
+    matching_tasks.reject!(&:complete?) if incomplete_only
 
     case matching_tasks.length
     when 0
@@ -225,11 +226,12 @@ def op.complete!
   tasks = parse_and_tasks!(opts = {})
   $*.empty? and abort 'at least one uuid must be given'
 
+  uncomplete = opts[:uncomplete]
   success = true
   $*.each do |uuid|
-    task = tasks.find_task(uuid)
-    task.complete = !opts[:uncomplete]
-    puts "marked task as #{opts[:uncomplete] ? "un" : ""}complete: #{task}"
+    task = tasks.find_task(uuid, incomplete_only: !uncomplete)
+    task.complete = !uncomplete
+    puts "marked task as #{uncomplete ? "un" : ""}complete: #{task}"
   rescue Tasks::UUIDMatchError => err
     warn err
     success = false
