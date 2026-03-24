@@ -1,7 +1,7 @@
 # TODO: aliases?
 [core]
 	excludesFile = ~/.gitignore_global
-	editor = vim
+	# editor = 'subl --wait'
 	# hooksPath = ~/.sampshell/git; #!/bin/sh; echo "precmd"; x=$GIT_DIR/hooks/pre-commit; if [ -e "$x" ]; then exec "$x" "$@"; fi
 
 

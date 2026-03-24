@@ -1,0 +1,104 @@
+#!/bin/sh
+
+## Remove an empty directory; A single `.DS_Store` file in the directory
+## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
+
+scriptname=${0##*/}
+
+usage () { cat; } <<USAGE
+usage: $scriptname [-rev] dir [..]
+
+Alias for 'rmdir', except it'll also remove directories which
+only contain a '.DS_Store' file. (.DS_Store is a hidden macOS
+file in each directory Finder.app opens to store GUI info, eg
+file positions, "preview icon size", etc. If we are trying to
+remove an empty directory, then it can be removed too.)
+
+The '-r' flag will recursively go into directories
+The '-e' flag exits early if there's any problems; normally, problems are ignored.
+The '-v' flag sets verbose mode; prints out each folders as theyre remvoed
+USAGE
+
+recursive= exit_early= verbose=
+while getopts 'hrev' option; do
+	case $option in
+	h) usage; exit ;;
+	r) recursive=1 ;;
+	e) exit_early=1 ;;
+	v) verbose=1 ;;
+	*) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+# Require at least one string as an argument
+if [ $# -eq 0 ]; then
+	usage >&2
+	exit 1
+fi
+
+if [ -n "$verbose" ]; then
+	log_file_for_deletion () { printf '%s\n' "$1"; }
+else
+	log_file_for_deletion () { :; }
+fi
+
+# Print a message to stderr, then sets the exit status
+warn () {
+	fmt="%s: $1\n"
+	shift
+	printf "$fmt" "$scriptname" "$@" >&2
+
+	set_exit_status
+}
+
+# Either exit early, or set the delayed exit status, depending on the `-e` flag
+set_exit_status () {
+	if [ -n "$exit_early" ]; then
+		exit 1
+	else
+		exit_status=1
+	fi
+}
+
+exit_status=0
+remove_directory () {
+	# If it's not a directory, then just set the error, and return
+	if [ ! -d "$1" ]; then
+		warn '%s: Not a directory' "$1"
+		return
+	fi
+
+	# If there's a `.DS_Store` file, go ahead and remove it
+	if [ -e "$1"/.DS_Store ]; then
+		log_file_for_deletion "$1/.DS_Store"
+		if ! command -p rm -f -- "$1"/.DS_Store; then
+			set_exit_status
+			return
+		fi
+	fi
+
+	# if there are files in the folder, and we're recursive, then delete them
+	if command -p ls -A1q -- "$1" | grep -q . && [ -n "$recursive" ]; then
+		for file in "$1"/* "$1"/.*; do
+			# If it doesn't exist, or is `.` or `..`, then ignore it
+			[ -e "$file" ] || continue
+			case $file in */.|*/..) continue; esac
+
+			if [ -d "$file" ]; then
+				remove_directory "$file"
+			fi
+		done
+	fi
+
+	# Remove the directory; if there's a problem, set the exit status.
+	log_file_for_deletion "$1"
+	command rmdir -- "$1" || set_exit_status
+}
+
+for directory; do
+	remove_directory "$directory"
+done
+
+exit $exit_status

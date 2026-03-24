@@ -87,6 +87,7 @@ mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$XDG_STATE_HOME/sampshell" 
 ## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-subl}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
+export EDITOR=
 
 ################################################################################
 #                                                                              #
