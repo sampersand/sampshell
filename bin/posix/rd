@@ -3,7 +3,10 @@
 ## Remove an empty directory; A single `.DS_Store` file in the directory
 ## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
 
-scriptname=${0##*/}
+# Safety first!
+set -euC
+
+readonly scriptname=${0##*/}
 
 usage () { cat; } <<USAGE
 usage: $scriptname [-rev] dir [..]
@@ -18,6 +21,10 @@ The '-r' flag will recursively go into directories
 The '-e' flag exits early if there's any problems; normally, problems are ignored.
 The '-v' flag sets verbose mode; prints out each folders as theyre remvoed
 USAGE
+
+################################################################################
+#                                Parse Options                                 #
+################################################################################
 
 recursive= exit_early= verbose=
 while getopts 'hrev' option; do
@@ -38,31 +45,43 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
+################################################################################
+#                                Helper Methods                                #
+################################################################################
+
+# Define the `log_file_for_deletion` method only to print files as they're
+# deleted if verbose mode is enabled
 if [ -n "$verbose" ]; then
 	log_file_for_deletion () { printf '%s\n' "$1"; }
 else
 	log_file_for_deletion () { :; }
 fi
 
-# Print a message to stderr, then sets the exit status
+# Handle failure conditions during the script; if an early exit is requested,
+# then we exit immediately. Normally, though, we just set the `exit_status`
+# which is reported at the end of the script
+exit_status=0
+if [ -n "$exit_status" ]; then
+	set_exit_status () { exit 1; }
+else
+	set_exit_status () { exit_status=1; }
+fi
+
+# Warn prints a message to stderr, then sets the exit status. It prepends the
+# script name, and appends a newline, for ease-of-use.
 warn () {
 	fmt="%s: $1\n"
 	shift
 	printf "$fmt" "$scriptname" "$@" >&2
-
 	set_exit_status
 }
+################################################################################
+#                             Meat of the Program                              #
+################################################################################
 
-# Either exit early, or set the delayed exit status, depending on the `-e` flag
-set_exit_status () {
-	if [ -n "$exit_early" ]; then
-		exit 1
-	else
-		exit_status=1
-	fi
-}
-
-exit_status=0
+# Removes an empty directory, deleting any `.DS_Store`s which may exist (and
+# also recursively descending into child directories if `-r` was supplied)
+# first. Any deleted files are logged if verbose mode is enabled.
 remove_directory () {
 	# If it's not a directory, then just set the error, and return
 	if [ ! -d "$1" ]; then
@@ -80,7 +99,7 @@ remove_directory () {
 	fi
 
 	# if there are files in the folder, and we're recursive, then delete them
-	if command -p ls -A1q -- "$1" | grep -q . && [ -n "$recursive" ]; then
+	if command -p ls -A1q -- "$1" | command -p grep -q . && [ -n "$recursive" ]; then
 		for file in "$1"/* "$1"/.*; do
 			# If it doesn't exist, or is `.` or `..`, then ignore it
 			[ -e "$file" ] || continue
@@ -94,11 +113,14 @@ remove_directory () {
 
 	# Remove the directory; if there's a problem, set the exit status.
 	log_file_for_deletion "$1"
-	command rmdir -- "$1" || set_exit_status
+	command -p rmdir -- "$1" || set_exit_status
 }
 
+
+# Remove each directory argument supplied
 for directory; do
 	remove_directory "$directory"
 done
 
+# Exit with the exit status
 exit $exit_status
