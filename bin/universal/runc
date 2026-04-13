@@ -130,7 +130,6 @@ else
   )
 end
 
-$*.replace [ '-v', '-w', 'enum foo { a, b }', "int x;", 'printf("%s / %d", getenv("RUNC_ARGV0"), b)', '--', '34']
 executeProgram! Program::new()
 exit Process::last_status.exitstatus
 

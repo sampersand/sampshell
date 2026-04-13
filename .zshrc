@@ -52,10 +52,10 @@ autoload -Uz ~ss/zsh/{functions,widgets,zsh_directory_name_functions}/*
 #                                                                                                  #
 ####################################################################################################
 
-if [[ -n $SampShell_TRASHDIR ]] add-named-dir trash=$SampShell_TRASHDIR
-if [[ -d ~/tmp               ]] add-named-dir tmp=$HOME/tmp
-if [[ -d ~/Desktop           ]] add-named-dir d=$HOME/Desktop
-if [[ -d ~/Downloads         ]] add-named-dir dl=$HOME/Downloads
+if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR
+if [[ -d ~/tmp               ]] hash -d tmp=$HOME/tmp
+if [[ -d ~/Desktop           ]] hash -d d=$HOME/Desktop
+if [[ -d ~/Downloads         ]] hash -d dl=$HOME/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
 function d { builtin dirs ${@:--v} }
@@ -140,7 +140,11 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 zstyle ':prompt:sampshell:git:*' pattern "$(whoami)?[0-9]???-??-??"
 
 autoload -Uz promptinit && promptinit
-prompt sampshell
+() {
+	local prompt_style
+	zstyle -s ':sampshell:interactive:prompt' style prompt_style || prompt_style=default
+	prompt sampshell $prompt_style
+}
 setopt transient_rprompt # TODO: How to set this in the prompt
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special

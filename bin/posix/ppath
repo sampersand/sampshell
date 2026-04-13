@@ -1,15 +1,15 @@
 #!/bin/sh
 
 IFS=:
+set +f
 for dir in $PATH
-do
-	if [ ! -d "$dir" ] || [ ! -x "$dir" ]
-	then
-		continue
+do	if test ! -d "$dir" || test ! -x "$dir"
+	then continue
 	fi
 
 	for file in "$dir"/*
-	do
-		[ -x "$file" ] && echo "$file"
+	do	if test -x "$file"
+		then echo "$file"
+		fi
 	done
 done
