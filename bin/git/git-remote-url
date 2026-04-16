@@ -30,9 +30,9 @@ OptParse2.new nil, 20 do |op|
   op.on '-r', '--repo=REPO', 'Use REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.'
 
   op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
-  op.on '-c', '--current', 'Use the current branch', key: :branch
-  op.on '-m', '--master', 'Use the master branch [default]', key: :branch
-  op.on '-p', '--permalink', 'Use a permalink', key: :branch
+  op.on '-c', '--current', 'Use the current branch', key: :branch do :current end
+  op.on '-m', '--master', 'Use the master branch [default]', key: :branch do :master end
+  op.on '-p', '--permalink', 'Use a permalink', key: :branch #do :permalink end
 
   begin
     op.parse! into: GVars

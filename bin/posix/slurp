@@ -1,3 +1,44 @@
 #!/bin/sh
 
-cat -- "$@" | tr -s '\n' ' ' && echo
+usage () { cat; } <<EOS
+usage: $0 [-hZn] [-s STRING] [files]
+joins newlines and "slurps" them together
+    -h        print usage and exit
+    -Z        disables squeezing adjacent newlines into one character
+    -n        do not print a trailing newline
+    -sSTRING  separator to replace newliens with, instead of default space
+EOS
+
+squeeze=1
+separator=' '
+no_newline=
+
+while getopts 'hZs:n' opt; do
+	case $opt in
+	Z) squeeze= ;;
+	n) no_newline=1 ;;
+	s) separator=$OPTARG ;;
+	h) usage; exit ;;
+	*) exit 2 ;;
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+# Special case for one character, we can just use `tr`
+set -e
+if [ ${#separator} -eq 1 ]; then
+	cat -- "$@" | tr ${squeeze:+-s} '\n' "$separator"
+elif [ ${#squeeze} -ne 0 ]; then
+	cat -- "$@" | awk -v sep="$separator" '
+	$0 != "" {
+		if (NR > 1) printf "%s", sep
+		printf "%s", $0
+	}'
+else
+	cat -- "$@" | awk -v ORS="$separator" '{ print }'
+fi
+
+if [ -z "$no_newline" ]; then
+	echo
+fi

@@ -4,24 +4,36 @@ set -eu
 newline=$(printf '\nx'); readonly newline="${newline%x}"
 
 usage () { cat; } <<EOS
-usage: $(basename -- "$0") [-a]
+usage: $(basename -- "$0") [-ar]
 
-Deletes final trailing newline from input. If -a
-is supplied, deletes all trailing newlines instead.
+Deletes final trailing newline from input. Options:
+   -r    reverse; delete from the front
+   -a    deletes all newlines, not just the first
 EOS
 
 # Parse options
-all=
-while getopts 'ha' opt; do
+all= reverse=;
+while getopts 'hars' opt; do
 	case $opt in
 	h) usage; exit;;
 	a) all=1 ;;
+	r) reverse=1 ;;
 	\?) usage >&2; exit 1;;
 	esac
 done
 
 shift $(( OPTIND - 1 ))
 [ "$#" -ne 0 ] && { usage >&2; exit 1; }
+
+# Reverse mode---go from the front
+if [ "$reverse" = 1 ]; then
+	if [ "$all" = 1 ]; then
+		sed '1,/./{/./p;d;}' || exit
+	else
+		sed '1{/^$/d;}' || exit
+	fi
+	exit 0
+fi
 
 # Read each line from stdin, and print them out, prepended by the last
 # line's terminator.
