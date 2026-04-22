@@ -3,47 +3,59 @@
 # `xx`: A helper script to repeat a string a certain amount of times
 # mnemonic: just like the `xx` operator in raku, or the `x` operator in perl.
 
-set -eu # Safety!
-readonly program_name="$(basename -- "$0")"
+set -euC # Safety first!
 
 ################################################################################
 #                             Handle CLI Arguments                             #
 ################################################################################
 
-usage () { cat; } <<USAGE
-usage: $program_name [-n] [-jSTRING] [-sSEP] (-cCOUNT | -wWIDTH | -W) [--] string [...]
+# Prints a message and aborts
+die () { fmt="%s: $1\n"; shift; printf >&2 "$fmt" "${0##*/}" "$@"; exit 1; }
+
+# Prints the suage to stdout
+usage () { cat <<USAGE; }
+usage: ${0##*/} [-n] [-jSTRING] [-sSEP] (-cCOUNT | -wWIDTH | -W) [--] string [...]
   -n         Don't print the trailing newline
   -c COUNT   Print 'string' COUNT times
   -w WIDTH   Repeat 'string' until WIDTH chars are printed [default=80]
   -W         Like -w, but uses \$COLUMNS (or stty size)
   -j STRING  Join extra 'string's with STRING. [default=space]
   -s SEP     Print SEP between every iteration [default=empty]
+Repeats a string sequence. Last of -c / -w / -W wins.
 USAGE
 
-validate_is_an_int () {
-	case $2 in
+validate_optarg_is_an_int () {
+	case $OPTARG in
+	'')
+		die "argument to $option cannot be empty" ;;
 	*[!0-9]*)
-		printf >&2 "%s: argument to $1 must be an integer; got: %s\n" \
-			"$program_name" "$2"
-		exit 1
+		die "argument to $option must be a positive integer; got %s" "$OPTARG" ;;
+	0*[!0]*) # Strip leading 0s from octals
+		OPTARG=${OPTARG#"${OPTARG%%[!0]*}"}
 	esac
 }
 
 no_newline= count= width=80 join=' ' sep=
-while getopts 'nWhj:c:w:s:' option; do
+while getopts 'hnj:c:Ww:s:' option; do
 	case $option in
 	h) usage; exit ;;
 	n) no_newline=1 ;;
 	j) join=$OPTARG ;;
 	s) sep=$OPTARG ;;
-	c)	validate_is_an_int '-c' "$OPTARG"
+	c)
+		validate_optarg_is_an_int
 		count=$OPTARG width= ;;
 	w)
-		validate_is_an_int '-w' "$OPTARG"
-		width=$OPTARG count= ;;
+		validate_optarg_is_an_int
+		count= width=$OPTARG ;;
 	W)
-		width=${COLUMNS:-$(stty size 2>&- | cut -f2 -d ' ')} count=
-		validate_is_an_int '-W' "$width" ;; # sanity check; it should always be correct though
+		OPTARG=${COLUMNS-}
+		if [ -z "$OPTARG" ]; then
+			OPTARG=$(stty size 2>/dev/null) || die "No \$COLUMNS or stty size found"
+			OPTARG=${OPTARG##*' '}
+		fi
+		validate_optarg_is_an_int # sanity check; it should always be correct though
+		count= width=$OPTARG ;;
 	\?) exit 2 ;;
 	esac
 done
@@ -57,7 +69,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # Join the arguments. If the `-j` argument is a single character, then we can
-# go ahead and use `IFS` for it:
+# go ahead and use `IFS` for it.
 if [ ${#join} -le 1 ]; then
 	tmp=$IFS IFS=$join
 	string=$*

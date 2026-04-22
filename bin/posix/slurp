@@ -6,7 +6,7 @@ joins newlines and "slurps" them together
     -h        print usage and exit
     -Z        disables squeezing adjacent newlines into one character
     -n        do not print a trailing newline
-    -sSTRING  separator to replace newliens with, instead of default space
+    -sSTRING  separator to replace newlines with, instead of default space
 EOS
 
 squeeze=1

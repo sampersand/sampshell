@@ -72,6 +72,9 @@ validate_variable_name () {
 	__clenv_*)
 		die 'invalid variable name (cannot start with __clenv_): %s' "$1" ;;
 
+	'')
+		die 'invalid variable name (cannot have empty names)' ;;
+
 	*[!a-zA-Z0-9_]*)
 		die 'invalid variable name (must match [\w_]): %s' "$1" ;;
 	esac

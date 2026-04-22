@@ -43,8 +43,12 @@ export PATH="${PATH%.}" LC_ALL=C POSIXLY_CORRECT=1
 
 ## If the `TERM` variable is defined, then determine the default escape seqs.
 if [ -n "${TERM-}" ]; then
-   : "${P_SH_SMSO=$(tput -T "$TERM" smso)}"
-   : "${P_SH_RMSO=$(tput -T "$TERM" rmso)}"
+   if [ -z "${P_SH_SMSO-}" ]; then
+      P_SH_SMSO=$(tput smso) || exit
+   fi
+   if [ -z "${P_SH_RMSO-}" ]; then
+      P_SH_RMSO=$(tput rmso) || exit
+   fi
 else
    : "${P_SH_SMSO=}"
    : "${P_SH_RMSO=}"

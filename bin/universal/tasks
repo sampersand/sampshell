@@ -32,7 +32,7 @@ class Task
   def uuid_matches?(other) = uuid.start_with?(other)
 
   def k(c,m) = "\e[38;5;#{m}mP#{c}\e[39m"
-  def to_pretty_s
+  def to_pretty_s(width = nil)
     pr = { 0 => k(0, 196),
       1 => k(1, 1),
       2 => k(2, 130),
@@ -46,7 +46,8 @@ class Task
         'wedding'=> '💍',
       }.fetch(tag, &:inspect)
     }.join
-    "#{overdue? ? "\e[48;5;196m" : ''}#{complete? ? '✔' : '✘'} #{due&.to_date || ' '*10} #{short_uuid} [#{pr}#{estimate && " @ #{estimate_s}"}] #{tag_s}#{tag_s && ' '}#{message}#{overdue? ? "\e[49m" : ""}"
+    middle = "#{complete? ? '✔' : '✘'} #{due&.to_date || ' '*10} #{short_uuid} [#{pr}#{estimate && " @ #{estimate_s}"}] #{tag_s}#{tag_s && ' '}#{message}"
+    "#{overdue? ? "\e[48;5;196m" : ''}#{middle[..width]}#{overdue? ? "\e[49m" : ""}"
   end
 
 
@@ -68,7 +69,7 @@ class Tasks
     @path = path
     acquire_lock_file!
 
-    @tasks = JSON.unsafe_load(@path, symbolize_names: true)&.map { Task.from_json(it) } || []
+    @tasks = JSON.load(@path, nil, symbolize_names: true, create_additions: false)&.map { Task.from_json(it) } || []
   end
 
   def acquire_lock_file!
@@ -184,7 +185,7 @@ def op.list!
   else
     warn "invalid key json: #{opts[:json]}" if opts.key? :json
     cols = opts[:full] ? nil : `tput cols`.to_i - 1 # if tput cols fails, it'll also be -1
-    puts out.map { it.to_pretty_s[..cols] }
+    puts out.map { it.to_pretty_s(cols) }
   end
 end
 
