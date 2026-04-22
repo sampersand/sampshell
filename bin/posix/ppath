@@ -47,7 +47,7 @@ do
 	n) mode=name ;;
 	d) mode=dir ;;
 	h) usage; exit ;;
-	*) usage >&2; exit 2
+	*) exit 2
 	esac
 done
 
