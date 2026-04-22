@@ -18,7 +18,7 @@ die () {
 ################################################################################
 
 usage () { cat; } <<EOS
-usage: $script_name [-a] [-f | -n | -d] [-p | -P SHELL]
+usage: $script_name [-a] [-f | -n | -d] [-p | -s SHELL]
        $script_name [-a] [-f | -n | -d] [path]
 Prints all executables found in the given path
 
@@ -27,7 +27,7 @@ Prints all executables found in the given path
 	-n        print the name of executables, not their full path
 	-d        print directories containing at least one executable
 	-p        use the default system \$PATH (via 'getconf')
-	-P SHELL  get the default path for SHELL (via '\$SHELL -c printf \$PATH')
+	-s SHELL  get the default path for non-interactive SHELL instances
 	path      colon-separated list of directories to search [default=\$PATH]
 EOS
 
@@ -37,11 +37,11 @@ all=
 default_path=
 default_path_shell=
 
-while getopts 'hpafndP:' opt
+while getopts 'hpafnds:' opt
 do
 	case $opt in
 	p) default_path=1 default_path_shell= ;;
-	P) default_path= default_path_shell=$OPTARG ;;
+	s) default_path= default_path_shell=$OPTARG ;;
 	a) all=1 ;;
 	f) mode=full ;;
 	n) mode=name ;;
@@ -66,7 +66,7 @@ then
 	path_to_search=${path_to_search%?.}
 elif [ -n "$default_path_shell" ]
 then
-	[ $# -ne 0 ] && die 'cannot supply -P and a path'
+	[ $# -ne 0 ] && die 'cannot supply -s and a path'
 	path_to_search=$(env -i "$default_path_shell" -c 'printf %s. "$PATH"') || \
 		die "Cannot get default path for shell %s" "$default_path_shell"
 	path_to_search=${path_to_search%.}
