@@ -67,7 +67,7 @@ then
 elif [ -n "$default_path_shell" ]
 then
 	[ $# -ne 0 ] && die 'cannot supply -P and a path'
-	path_to_search=$(command -p env -i "$default_path_shell" -c 'printf %s. "$PATH"') || \
+	path_to_search=$(env -i "$default_path_shell" -c 'printf %s. "$PATH"') || \
 		die "Cannot get default path for shell %s" "$default_path_shell"
 	path_to_search=${path_to_search%.}
 elif [ $# -le 1 ]
