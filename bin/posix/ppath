@@ -3,11 +3,13 @@
 ## A script to print out entries in `$PATH`
 
 set -euC # Safety first
+readonly script_name=${0##*/}
 
+# Print a message and exit
 die () {
 	fmt="%s: $1\n"
 	shift
-	printf >&2 "$fmt" "$0" "$@"
+	printf >&2 "$fmt" "$script_name" "$@"
 	exit 1
 }
 
@@ -16,14 +18,17 @@ die () {
 ################################################################################
 
 usage () { cat; } <<EOS
-usage: $0 [-pa] (-f / -n / -d) [path=\$PATH]
-	-p          uses the default system \$PATH; omit 'path'
-	-P SHELL    get path from '\$SHELL -c "printf \$PATH"''
-	-a	    do not check to see if files are executable/directories exist
-	-f	    print the entire path of executables [default]
-	-n	    print the name of the executables, not their full path
-	-d	    print directories containing at least one executable
-Prints out all executables based on \$PATH
+usage: $script_name [-a] [-f | -n | -d] [-p | -P SHELL]
+       $script_name [-a] [-f | -n | -d] [path]
+Prints all executables found in the given path
+
+	-a        also include non-executable files and non-existent directories
+	-f        print the entire path of executables [default]
+	-n        print the name of executables, not their full path
+	-d        print directories containing at least one executable
+	-p        use the default system \$PATH (via 'getconf')
+	-P SHELL  get the default path for SHELL (via '\$SHELL -c printf \$PATH')
+	path      colon-separated list of directories to search [default=\$PATH]
 EOS
 
 
@@ -81,10 +86,20 @@ fi
 IFS=:
 for dir in $path_to_search
 do
+	# Legacy artifact: empty path segments are actually `.`
+	if [ -z "$dir" ]
+	then
+		dir=.
+	fi
+
 	# Check to make sure the directory even exists
 	if [ ! -d "$dir" ] || [ ! -x "$dir" ]
 	then
-		[ -n "$all" ] && [ $mode = dir ] && printf '%s\n' "$dir"
+		if [ -n "$all" ] && [ $mode = dir ]
+		then
+			printf '%s\n' "$dir"
+		fi
+
 		continue
 	fi
 
@@ -95,17 +110,23 @@ do
 		continue
 	fi
 
-	for file in $dir/* $dir/.*
+	for file in "$dir"/* "$dir"/.*
 	do
 		# Make sure the file even exists (get around glob problems)
-		[ ! -f "$file" ] && continue
+		if [ ! -f "$file" ]
+		then
+			continue
+		fi
 
 		# Make sure it's executable (or `-a` was passed)
-		[ -z "$all" ] && [ ! -x "$file" ] && continue
+		if [ -z "$all" ] && [ ! -x "$file" ]
+		then
+			continue
+		fi
 
 		# Print out the the file; `##*/` is safe here because we know
 		# that the expansion will give us files and not end in `/`
-		if [ $mode = base ]
+		if [ $mode = name ]
 		then
 			printf '%s\n' "${file##*/}"
 		else
