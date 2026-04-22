@@ -7,7 +7,7 @@ def usage! success = false
   $> = $stderr unless success
 
   puts <<~USAGE; exit(success)
-    usage: #$0 [-c compiler] [-o output] [compiler opts ...] [prelude ...] main [-- main-arguments]
+    usage: #$0 [-c compiler] [compiler opts ...] [prelude ...] main [-- main-arguments]
     compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
     interspersed within arguments.
       - prelude is done before 'main'
@@ -16,8 +16,7 @@ def usage! success = false
 
     examples:
       runc -w 'enum foo { a, b }' 'printf("%s/%d", argv[1], b)' -- 34
-        => 34/11
-
+        => 34/1
   USAGE
 end
 
@@ -26,7 +25,7 @@ class Program
     ::EXECUTABLE_FILE << file = %x<mktemp>.chop # Don't rely upon `tempfile`
   rescue
     Object::const_set('EXECUTABLE_FILE', %w//)
-    trap %s[EXIT], %(EXECUTABLE_FILES.each { File.delete it }) and fail('two exists')
+    trap %s[EXIT], %(EXECUTABLE_FILE.each { File.delete it }) and fail('two exists')
     retry
   else
     unless $?.success? then fail('cannot make temp file') else file end
@@ -56,7 +55,7 @@ private
       case ( arg )
       when '-h'   then usage! true
       when '-v'   then $VERBOSE = true
-      when /^-c/  then self.compiler = $' || argv.shift() or usage!()
+      when /^-c/  then self.compiler = $' != '' && $' || argv.shift() or usage!()
       when '--'   then break()
       when /^-.*/ then self.compilerOpts << arg
       else self.prelude << arg

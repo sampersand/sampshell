@@ -57,16 +57,21 @@ shift $(( OPTIND - 1 ))
 #                          Determine the $PATH to use                          #
 ################################################################################
 
-
 if [ -n "$default_path" ]
 then
 	[ $# -ne 0 ] && die 'cannot supply -p and a path'
+
+	# The `echo .` and `%?.` hack is to get around the extreme edgecase of
+	# a default `$PATH` ending in a newline
 	path_to_search=$(getconf PATH && echo .) || \
 		die 'cannot fetch default $PATH'
 	path_to_search=${path_to_search%?.}
 elif [ -n "$default_path_shell" ]
 then
 	[ $# -ne 0 ] && die 'cannot supply -s and a path'
+
+	# The `printf .` and `%?.` hack is to get around the extreme edgecase of
+	# a default `$PATH` ending in a newline
 	path_to_search=$(env -i "$default_path_shell" -c 'printf %s. "$PATH"') || \
 		die "Cannot get default path for shell %s" "$default_path_shell"
 	path_to_search=${path_to_search%.}
