@@ -1,15 +1,115 @@
 #!/bin/sh
 
+## A script to print out entries in `$PATH`
+
+set -euC # Safety first
+
+die () {
+	fmt="%s: $1\n"
+	shift
+	printf >&2 "$fmt" "$0" "$@"
+	exit 1
+}
+
+################################################################################
+#                                Parse CLI opts                                #
+################################################################################
+
+usage () { cat; } <<EOS
+usage: $0 [-pa] (-f / -n / -d) [path=\$PATH]
+	-p          uses the default system \$PATH; omit 'path'
+	-P SHELL    get path from '\$SHELL -c "printf \$PATH"''
+	-a	    do not check to see if files are executable/directories exist
+	-f	    print the entire path of executables [default]
+	-n	    print the name of the executables, not their full path
+	-d	    print directories containing at least one executable
+Prints out all executables based on \$PATH
+EOS
+
+
+mode=full
+all=
+default_path=
+default_path_shell=
+
+while getopts 'hpafndP:' opt
+do
+	case $opt in
+	p) default_path=1 default_path_shell= ;;
+	P) default_path= default_path_shell=$OPTARG ;;
+	a) all=1 ;;
+	f) mode=full ;;
+	n) mode=name ;;
+	d) mode=dir ;;
+	h) usage; exit ;;
+	*) usage >&2; exit 2
+	esac
+done
+
+shift $(( OPTIND - 1 ))
+
+################################################################################
+#                          Determine the $PATH to use                          #
+################################################################################
+
+
+if [ -n "$default_path" ]
+then
+	[ $# -ne 0 ] && die 'cannot supply -p and a path'
+	path_to_search=$(getconf PATH && echo .) || \
+		die 'cannot fetch default $PATH'
+	path_to_search=${path_to_search%?.}
+elif [ -n "$default_path_shell" ]
+then
+	[ $# -ne 0 ] && die 'cannot supply -P and a path'
+	path_to_search=$(command -p env -i "$default_path_shell" -c 'printf %s. "$PATH"') || \
+		die "Cannot get default path for shell %s" "$default_path_shell"
+	path_to_search=${path_to_search%.}
+elif [ $# -le 1 ]
+then
+	path_to_search=${1-$PATH}
+else
+	usage >&2
+	exit 2
+fi
+
+
+################################################################################
+#                              Perform the Checks                              #
+################################################################################
+
 IFS=:
-set +f
-for dir in $PATH
-do	if test ! -d "$dir" || test ! -x "$dir"
-	then continue
+for dir in $path_to_search
+do
+	# Check to make sure the directory even exists
+	if [ ! -d "$dir" ] || [ ! -x "$dir" ]
+	then
+		[ -n "$all" ] && [ $mode = dir ] && printf '%s\n' "$dir"
+		continue
 	fi
 
-	for file in "$dir"/*
-	do	if test -x "$file"
-		then echo "$file"
+	# If we're in directory mode, just print out the dir
+	if [ $mode = dir ]
+	then
+		printf '%s\n' "$dir"
+		continue
+	fi
+
+	for file in $dir/* $dir/.*
+	do
+		# Make sure the file even exists (get around glob problems)
+		[ ! -f "$file" ] && continue
+
+		# Make sure it's executable (or `-a` was passed)
+		[ -z "$all" ] && [ ! -x "$file" ] && continue
+
+		# Print out the the file; `##*/` is safe here because we know
+		# that the expansion will give us files and not end in `/`
+		if [ $mode = base ]
+		then
+			printf '%s\n' "${file##*/}"
+		else
+			printf '%s\n' "$file"
 		fi
 	done
 done
