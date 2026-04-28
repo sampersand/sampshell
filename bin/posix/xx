@@ -35,7 +35,7 @@ validate_optarg_is_an_int () {
 	esac
 }
 
-no_newline= count= width=80 join=' ' sep=
+no_newline= count= width=s join=' ' sep=
 while getopts 'hnj:c:Ww:s:' option; do
 	case $option in
 	h) usage; exit ;;
@@ -62,11 +62,16 @@ done
 
 shift $(( OPTIND - 1 ))
 
+if [ -z "$width" ] && [ -z "$count" ]; then
+	die 'One of -c, -w, or -W must be supplied'
+fi
+
 # Require at least one string as an argument
 if [ $# -eq 0 ]; then
 	usage >&2
 	exit 1
 fi
+
 
 # Join the arguments. If the `-j` argument is a single character, then we can
 # go ahead and use `IFS` for it.
