@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'gvars'
+
+def warn(msg) = super("#{File.basename $0}: #{msg}")
+
+$*.replace %W[ #{__FILE__} /Users/sampersand/Desktop/2024-03-04_18.36.32\ copy.jpg ]
+
+OptParse2.new do |op|
+  op.summary 'copies a file to the clipboard'
+
+  op.rest 'path', 'Paths to copy', required: 1
+
+  op.parse! into: GVars rescue op.abort($!)
+end
+
+all_files_found = true
+items = $path
+  .map { |path| File.absolute_path path }
+  .select { |path|
+    # next true if File.exist? path
+    # warn "file not found: #{path}"
+    # all_files_found = false
+    # false
+    1
+  }
+  .map { |path| puts "Copying file: #{path}"; "POSIX file \"#{path.gsub(/["\\]/, '\\&')}\"" }
+  .join(', ')
+
+system 'osascript', '-e', "set the clipboard to (#{items})"
+exit $?.success? && all_files_found

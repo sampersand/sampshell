@@ -1,43 +1,69 @@
 #!/usr/bin/env ruby
 
-# TODO: finish this?
-
 require 'optparse2'
 
-OPTS = {
-  clipboard: 'pbcopy'
-}
-
-$*.replace %w[--syntax=q]
+OPTS = {}
 
 OptParse2.new do |op|
   op.program_name = File.basename($0)
   op.banner = <<~USAGE
-    usage: #{op.program_name} [options] [--] [message [...]]
-           #{op.program_name} [options] -f [--] [files [...]]
+    usage: #{op.program_name} [options] [message [...]]
+           #{op.program_name} [options] -f [files [...]]
+           #{op.program_name} [-p | --path] file [...]
   USAGE
 
   op.on '-f', '--files', 'instead of interpreting args as strings, interpret as files'
+  op.on '-p', '--path', 'Copy macOS oascript posix files to clipboard, instead of their contents.'
 
-  op.on '-c', '--code',  'put single backticks (`) around the copied text', key: :SS do
-    ['`', '`']
-  end
-
-  op.on '-b', '--block', 'put copied text into a code block (surround with ```)', key: :SS do
-    ["```\n", "\n```"]
-  end
-
-  op.on '-s', '--syntax=SYNTAX', 'Put syntax after starting triple backticks; Implies -b', key: :SS do |syntax|
-    ["```#{syntax}\n", "\n```"]
+  op.group :syntax do
+    op.on '--code',  'put single backticks (`) around the copied text'
+    op.on '-b', '--block', 'put copied text into a code block (surround with ```)'
+    op.on '-s', '--syntax[=SYNTAX]', 'Put syntax after starting triple backticks'
   end
 
   op.on '-n', '--newline', 'Put a newline after the message. Only really useful with -f'
-  op.on '-p', '--clipboard=FUNC', "Specify clipboard func. [default: #{OPTS[:clipboard]}]"
   op.on '--[no-]chomp', 'Delete final trailing line. TODO: THIS'
 
   op.parse! into: OPTS rescue op.abort
 end
 
+def write(msgs)
+  IO.popen('pbcopy', 'w') do |pbc|
+    pbc.print(msgs)
+    pbc.puts if OPTS[:newline]
+  end
+end
+
+#read, $stdout = IO.popen(OPTS[:clipboard]) rescue abort("bad clipboard: #{OPTS[:clipboard]}")
+if OPTS[:files]
+  abort
+end
+
+# Read from stdin if empty
+if $*.empty?
+  case OPTS[:syntax]
+  when :code then write "`#{$*.join(' ')}`"
+  when :block then write "```\n#{$*.join("\n")}\n```"
+  when String then write "```#{OPTS[:syntax]}\n#{$*.join("\n")}\n```"
+  when :syntax then abort "Cannot infer syntax if no files are given"
+  when nil then write $*.join(' ')
+  else raise "bad syntax: #{OPTS[:syntax]}"
+  end
+end
+
+
+case OPTS[:syntax]
+when :code then write "`#{$*.join(' ')}`"
+when :block then write "```\n#{$*.join("\n")}\n```"
+when String then write "```#{OPTS[:syntax]}\n#{$*.join("\n")}\n```"
+when :syntax then abort "Cannot infer syntax if no files are given"
+when nil then write $*.join(' ')
+else raise "bad syntax: #{OPTS[:syntax]}"
+end
+
+p OPTS
+
+__END__
 read, $stdout = IO.popen(OPTS[:clipboard]) rescue abort("bad clipboard: #{OPTS[:clipboard]}")
 
 start, stop = OPTS.FETCH 'SS'

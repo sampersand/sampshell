@@ -1,0 +1,394 @@
+#!/usr/bin/env ruby
+
+def warn(msg) = super("#{File.basename $0}: #{msg}")
+def abort(msg) = super("#{File.basename $0}: #{msg}")
+
+require '/Users/sampersand/code/ruby/optparse2/lib/optparse2.rb'
+
+
+OptParse2.new do |op|
+  op.banner = <<~BANNER
+  usage: #{op.program_name} [options] [--] source target
+         #{op.program_name} [options] [--] source ... directory
+  BANNER
+
+  op.group :mode, default: :'dont-overwrite' do
+    op.on '-i', '--interactive', 'Ask to overwrite files that exist'
+    op.on '-n', '--dont-overwrite', 'Do not overwrite existing files'
+    op.on '-r', '--rename[=HOW]', 'Rename files when copying' do |how|
+      op.into[:rename] = how || '%s (%n)%e'
+      :rename
+    end
+  end
+
+  op.on '-d', '--delete-empty', 'Deletes empty files/folders (.DS_Store in folders also counts as empty)'
+  op.on '-v', '--[no-]verbose', 'Enables [or disables] verbose mode'
+  op.on '-q', '--quiet', 'Sets verbose mode to 0' do
+    op.into[:verbose] = 0
+    op.dont_set!
+  end
+
+  op.parse! into: GVars rescue op.abort
+  op.abort "at least a source and target are required" if $*.length < 2
+end
+
+def expand_escapes(escape, path, attempt_number)
+  escape.gsub /%\d*./ do |esc|
+    case esc
+    when '%%' then '%'
+    when '%e' then File.extname(path)
+    when '%b' then File.basename(path, '.*')
+    when '%s' then path.delete_suffix File.extname(path)
+    when '%d' then File.dirname(path)
+    when '%f' then path
+    when '%.' then File.extname(path)[0]
+    when '%E' then File.extname(path)[1..]
+    when /\A%(\d+)?r\z/
+      digits = $1&.to_i || 6
+      "%0#{digits}d" % rand(0..10**digits - 1)
+    when /\A%(\d+)?n\z/
+      $1 ? "%0#$1d" % number : number
+    else
+      raise "Invalid escape: #{esc}"
+    end
+end
+
+# See if we should even attempt to move
+def should_attempt_a_move?(source, target)
+  # Attempt to delete empty targets if `--delete-empty` was supplied
+  if $delete_empty
+    if File.file?(target) && !File.size?(target)
+      puts "removed empty file: #{target}" if $verbose >= 2
+      File.unlink(target) rescue (warn $!.message; return 2)
+         ## If the target is a file and it's empty, then forcibly remove it.
+         if [ -f "$target" ] && [ ! -s "$target" ]; then
+            rm "-f$verbose_flag" -- "$target" || return 2
+
+         ## If the target is a folder, and there's nothing in it, delete it.
+         # On macOS, we consider folders that just contain `.DS_Store` empty as
+         # well, so we go ahead and delete the `.DS_Store`.
+         #
+         # Note that `ls | grep` is usually a bad idea, as parsing the output of
+         # `ls` is fraught with danger. However, in this case, since we're just
+         # checking if _anything_ was outputted (via `grep -q .`), then it's
+         # fine.
+         #
+         # If somehow `ls` fails, then the `pipefile` that was set at the start
+         # of the program will cause the entire `! ls | grep` to be false, and
+         # the `rm` command will not be run.
+         elif [ -d "$target" ] && {
+         # elif [ -d "$target" ]; then
+         #    rd -- "$target" || return 2
+            # On macOS, we allow "empty folders" to contain `.DS_Store`. With
+            # bizarre race conditions, it might end up where the `.DS_Store` is
+            # deleted, but not the folder it was in. However, it's remote enough
+            # that it's not worth bothering with. (Also, I dont really use
+            # `.DS_Store` a lot, so it's not big deal if it gets removed.)
+            [ "$(uname)" = Darwin ] && rm -f -- "$target/.DS_Store"
+
+            # Now check to see if it's empty
+            ! ls -A1q -- "$target" | grep -q .
+         }; then
+            rm "-fd$verbose_flag" -- "$target" || return 2
+
+         ## Otherwise, the target is non-empty; we will defer to the `mv`
+         # command on what to do.
+         else
+            :
+         fi
+      fi
+
+      ## Try to rename '$source' to '$target'; This uses `$move_flag`, which is,
+      # is either `n` (default; never override things) or `i` (prompt for
+      # overriding).
+      # <> Note we still use `-n` here on the off chance that the file was
+      # created after a clobbered file was removed.
+      mv "-$move_flag$verbose_flag" -- "$source" "$target" || return 2
+
+      ## Now, after moving it, does the source still exist? ...
+      [ -e "$source" ]
+end
+
+def try_move(source, target)
+  unless File.exist? source
+    warn "cannot move #{source}: No such file or directory"
+    return 1
+  end
+
+  if File.identical? source, target
+    warn "cannot move #{source} to #{target}: Paths are identical"
+    return 2
+  end
+
+  # Attempt number; use in renaming files
+  attempt = 1
+
+  orig_target = target # For randomization
+
+  while should_attempt_a_move?(source, targete)
+end
+
+BEGIN{
+  $*.replace %w[ -r file file2 ]
+
+  <<~`EOS`; abort unless $?.success?; Dir.chdir File.expand_path '~/tmp/mvs-test'
+  mkdir -p ~/tmp/mvs-test && cd $_
+  rm -fr ~/tmp/mvs-test/*
+  mkdir folder
+  touch file folder/file
+  EOS
+}
+
+try_move *$*
+
+=begin
+try_move () {
+   ## Set the attempt number to one.
+   # Used in renaming files if `--rename` is supplied.
+   attempt=1
+
+   ## Attempt to move the (now-known-to-be-extant) target to the (non-identical)
+   # destination.
+   #
+   # Unlike most languages, the `while` loop of POSIX-compliant shells can be
+   # any series of commands, and the last one's exit status determines whether
+   # to execute the body. In this case, we do three separate tasks in order:
+   #   1. Remove empty files/folders if `--clobber-empty` was supplied
+   #   2. Attempt to move the file, prompting or not based on `$move_flag`
+   #   3. Check to see if the file still exists.
+   # If the file still exists after those three steps, that means we couldn't
+   # move the file; if `--rename` was not supplied we just return, but if it
+   # was, we attempt to rename the file and try again.
+   while
+      ## Attempt to delete empty files/dirs if `--clobber-empty` was passed.
+      # Note that this _does_ have race condition issues with it, however there
+      # is no good way to solve that...
+      if [ -n "$clobber_empty" ]; then
+         ## If the target is a file and it's empty, then forcibly remove it.
+         if [ -f "$target" ] && [ ! -s "$target" ]; then
+            rm "-f$verbose_flag" -- "$target" || return 2
+
+         ## If the target is a folder, and there's nothing in it, delete it.
+         # On macOS, we consider folders that just contain `.DS_Store` empty as
+         # well, so we go ahead and delete the `.DS_Store`.
+         #
+         # Note that `ls | grep` is usually a bad idea, as parsing the output of
+         # `ls` is fraught with danger. However, in this case, since we're just
+         # checking if _anything_ was outputted (via `grep -q .`), then it's
+         # fine.
+         #
+         # If somehow `ls` fails, then the `pipefile` that was set at the start
+         # of the program will cause the entire `! ls | grep` to be false, and
+         # the `rm` command will not be run.
+         elif [ -d "$target" ] && {
+         # elif [ -d "$target" ]; then
+         #    rd -- "$target" || return 2
+            # On macOS, we allow "empty folders" to contain `.DS_Store`. With
+            # bizarre race conditions, it might end up where the `.DS_Store` is
+            # deleted, but not the folder it was in. However, it's remote enough
+            # that it's not worth bothering with. (Also, I dont really use
+            # `.DS_Store` a lot, so it's not big deal if it gets removed.)
+            [ "$(uname)" = Darwin ] && rm -f -- "$target/.DS_Store"
+
+            # Now check to see if it's empty
+            ! ls -A1q -- "$target" | grep -q .
+         }; then
+            rm "-fd$verbose_flag" -- "$target" || return 2
+
+         ## Otherwise, the target is non-empty; we will defer to the `mv`
+         # command on what to do.
+         else
+            :
+         fi
+      fi
+
+      ## Try to rename '$source' to '$target'; This uses `$move_flag`, which is,
+      # is either `n` (default; never override things) or `i` (prompt for
+      # overriding).
+      # <> Note we still use `-n` here on the off chance that the file was
+      # created after a clobbered file was removed.
+      mv "-$move_flag$verbose_flag" -- "$source" "$target" || return 2
+
+      ## Now, after moving it, does the source still exist? ...
+      [ -e "$source" ]
+   do
+      # ... It does still exist!
+
+      ## Since the original file still exists, and we're not renaming things,
+      # then just return; returning 0 mimics the behaviour of `mv -n`, where
+      # not moving files returns 0.
+      if [ -z "$rename" ]; then
+         [ "$verbose_level" -ge 1 ] && printf 'not overwriting %s\n' "$target"
+         return 0
+      fi
+
+      # Now we attempt to find a new name for the file
+
+      ## An index of 1 means that we have not yet tried to find a new name for
+      # this file. As such, let's go ahead and setup all the required variables
+      # for it.
+      if [ "$attempt" -eq 1 ]; then
+         # Note that we have to do this silly dance here with the `printf` in
+         # case the filename ends with a newline, as command substitution strips
+         # all ending newlines. So by having `printf x`, we'll print out `x`,
+         # which we can then strip via `%?x`. (Note that `$target` is safe to
+         # use here because we haven't yet updated it.)
+         base=$(basename -- "$target" && printf x) || {
+            warn 'unable to get basename of %s' "$target"
+            return 3
+         }; base=${base%?x}
+         stem=${base%%.*}
+         ext=${base#"$stem"} # quote `$stem` to prevent glob interpretation
+         dir=$(dirname -- "$target" && printf x) || {
+            warn 'unable to get dirname of %s' "$target"
+            return 3
+         }; dir=${dir%?x}
+         root=$dir/$stem
+      fi
+
+      ## Set `target` to the newname---`<dir>/<stem> <attempt><ext>`---and
+      # increment the index while we're at it. This is why the index always
+      # starts at 1, so that `$((attempt=attempt+1))` will start at 2, not 1.
+      target="$root $((attempt += 1))$ext"
+   done
+
+   ## Looks like we were able to rename the file successfully, huzzah! Return 0.
+   return 0
+}
+=end
+
+__END__
+
+## Prints out a longer usage message
+longusage () { cat; } <<LONGUSAGE
+options:
+   -h    print help, then exit
+   -i    ask to overwrite files that exist (disables -n)
+   -n    dont overwrite existing files (disables -i; default)
+   -r    rename files to prevent conflicts mode
+   -R    disables -r
+   -c    delete empty files/folders targets
+   -C    disables -c
+   -q    disable verbose output
+   -v    print verbose output (default)
+   -V    print more verbose output; not POSIX-compliant
+return value: (if both 1 and 2 occur, the last one encounterd is returned)
+   0  everything was successful
+   1  a source doesn't exist
+   2  there was a problem moving a file/removing a file to be clobbered.
+   3  internal error
+   64 invalid command-line options were supplied
+bug:
+   This currently has a bug where 'mv-safe folder1 folder2' will not overwrite
+   folder2, but instead will move 'folder1' as 'folder1/folder2'. RIP.
+
+Without any flags, this acts the same as 'mv -n' (or 'mv -i' if --interactive
+was given).
+
+If the '--clobber-empty' flag is given, then attempting to overwrite empty
+files/folders will succeed. (Note that this is susceptible to race conditions)
+
+If the '--rename' flag is given, then files will first be moved via 'mv -n',
+but if the target file exists, the the first 'num' where the path
+'<dir>/<base> <num><ext>' does not exist will be used instead.
+LONGUSAGE
+
+## Setup option variables
+# These are configurable via flags on the command line.
+rename=         # nonempty means it's set
+clobber_empty=  # nonempty means it's set
+move_flag=n     # should be an `X` that `mv -X` understands
+verbose_level=1 # verbosity level, should be an integer.
+
+## Parse command line options.
+# I'm not using the POSIX-supplied `getopts` here, as it does not support long-
+# form options (ie `--foo`) which I use.
+while getopts ':nirRcCqvVh' opt; do
+   case $opt in
+      n) move_flag=n     ;;
+      i) move_flag=i     ;;
+      r) rename=1        ;;
+      R) rename=         ;;
+      c) clobber_empty=1 ;;
+      C) clobber_empty=  ;;
+      q) verbose_level=0 ;;
+      v) verbose_level=1 ;;
+      V) verbose_level=2 ;;
+      h) shortusage; longusage; exit 1 ;;
+      \?) shortusage >&2; exit 2;;
+   esac
+done
+
+shift $(( OPTIND - 1 ))
+
+## Post-command-line-arg processing
+verbose_flag=
+[ "$verbose_level" -ge 2 ] && verbose_flag=v
+
+## The `try_move` function attempts to move files/directories to a target.
+# It is the meat of the program, responsible for attempting to moving files/
+# directories, along with clobbering of empty files and renaming when needed.
+#
+# It takes two arguments, the first is the source, the second, the destination.
+#
+# It returns `0` if the file was successfully moved; or if it wasn't moved and
+# rename mode was not enabled. Nonzero exit status codes are returned in case
+# of errors, and are the same as in the usage.
+
+
+## If not enough arguments are given, then error out with the usage.
+if [ $# -le 1 ]; then
+   shortusage >&2
+   exit 64
+fi
+
+## Handle the first command form (ie `mv-safe source target`): If exactly two
+# arguments are given, and the second is not a directory, then just attempt to
+# move the first to the second, and return the exit status of that `try_move`
+if [ $# -eq 2 ] && ! [ -d "$2" ]; then
+   try_move "$1" "$2"
+   exit
+fi
+
+# Now we know we're in the second form (ie `mv-safe source ... directory`).
+
+## Get the destination for where all the files should go, which is the last
+# command-line argument. Note that we have to use `eval` here (icky!) because
+# POSIX has no way to get the last argument (unlike bash's `${!#}` or zsh's
+# `$@[#]`), which is unfortunate. Also note that `\${$#}` is used instead of
+# `\$$#`, as when `$#` is more than 9 you need braces (eg `${10}`).
+eval "target_folder=\${$#}" || exit 3
+
+# We do not check for permissions for the `target_folder`, as the `mv`/`rm`
+# functions we eventually run will error out if there's problems; why check for
+# perms ahead-of-time when we can rely on `mv`/`rm` failing if there's problems?
+
+## The last exit status of `try_move`; we exit with the last non-zero status
+# that was encountered.
+exit_status=0
+
+## Try to move each argument given. Note that we have to use a `while` loop, not
+# a `for` loop, as the last argument is the `$target_folder`. If POSIX supported
+# a way to "pop" arguments off the end of `$@` (like zsh's `shift -p`), then we
+# could use a `for` loop. This is also why we have to go until we have one
+# argument left---it's the target folder.
+while [ $# -gt 1 ]; do
+   ## Get the basename of the file, used for moving it to the folder. Check the
+   # body of the `try_move`'s while loop for why we have to do this convoluted.
+   base=$(basename -- "$1" && printf x) || {
+      warn 'unable to get basename of %s' "$1"
+      exit_status=3
+      continue
+   }; base=${base%?x}
+
+   ## Attempt to move the argument into its destination; if there's any problems
+   # doing that, then set the last status to the exit code.
+   try_move "$1" "$target_folder/$base" || exit_status=$?
+
+   ## Delete the argument and go to the next one.
+   shift
+done
+
+## Exit with the exit status---the most recent non-zero exit code that was
+# encountered, or `0` if it was all successful.
+exit "$exit_status"

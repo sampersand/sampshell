@@ -129,7 +129,7 @@ do
 			continue
 		fi
 
-		# Print out the the file; `##*/` is safe here because we know
+		# Print out the file; `##*/` is safe here because we know
 		# that the expansion will give us files and not end in `/`
 		if [ $mode = name ]
 		then
