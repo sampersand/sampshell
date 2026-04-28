@@ -13,7 +13,7 @@ OptParse2.new do |op|
   op.on '-p', '--prefix=PREFIX', 'Set branch prefix.', default: proc{ git_config('sampshell.branchPrefix') }
   op.on '-s', '--sep=SEP', 'Set the separator.',       default: proc{ git_config('sampshell.branchSeparator') }
   op.rest 'branch name', 'name of the branch (separated by -)', required: 1 do it.join '-' end
-  op.parse! into: GVars rescue op.abort
+  op.parse! into: GVars, abort: true
 end
 
 puts [$prefix, $date, $branch_name].join($sep)

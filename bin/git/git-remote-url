@@ -19,36 +19,29 @@ def `(cmd)
   end
 end
 
-$branch = :master
-
 OptParse2.new nil, 20 do |op|
   op.program_name = PROGRAM_NAME
-  op.banner = "usage: #{op.program_name} [options] [file] [start[-end]]"
+  op.summary 'Print the link to a repository, a file in the repo, or a range within it.'
 
-  op.on_head 'Print the link to a repository, a file in the repo, or a range within it.'
+  op.on '-r', '--repo=REPO', 'Change to REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.'
 
-  op.on '-r', '--repo=REPO', 'Use REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.'
-
-  op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
-  op.on '-c', '--current', 'Use the current branch', key: :branch do :current end
-  op.on '-m', '--master', 'Use the master branch [default]', key: :branch do :master end
-  op.on '-p', '--permalink', 'Use a permalink', key: :branch #do :permalink end
-
-  begin
-    op.parse! into: GVars
-  rescue OptionParser::InvalidOption => err
-    abort err
+  op.group :branch do
+    op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
+    op.on '-c', '--current', 'Use the current branch'
+    op.on '-m', '--master', 'Use the master branch', default: true
+    op.on '-p', '--permalink', 'Use a permalink'
   end
 
-  abort op.help unless $*.length <= 2
-end
+  op.pos 'file', 'The file to use'
+  op.pos 'start[-end]', 'The range of lines in the file', /\d+(?:-\d+)?/, key: :range
 
-file, range = $*
+  op.parse! into: GVars, abort: true
+end
 
 if $repo
   Dir.chdir $repo rescue abort "cannot cd to repo #$repo"
-elsif file
-  dir = File.directory?(file) ? file : File.dirname(file)
+elsif $file
+  dir = File.directory?($file) ? $file : File.dirname($file)
   Dir.chdir(dir) rescue abort "cannot cd to dir: #{dir}"
 end
 
@@ -60,17 +53,17 @@ BRANCH = case $branch
          else                 $branch
          end
 
-if file
-  if File.directory?(file) && !file.end_with?('/')
-    file += '/'
+if $file
+  if File.directory?($file) && !$file.end_with?('/')
+    $file += '/'
   end
 
-  file = file.delete_prefix(`git rev-parse --show-toplevel` + '/') # maybe also --show-prefix eventually?
-  file.concat "#L#{range.sub('-', '-L')}" if range
+  $file = $file.delete_prefix(`git rev-parse --show-toplevel` + '/') # maybe also --show-prefix eventually?
+  $file.concat "#L#{$range.sub('-', '-L')}" if $range
 end
 
-if !file && $branch == :master
+if !$file && $branch == :master
   puts REPO
 else
-  puts "#{REPO}/#{file ? 'blob' : 'tree'}/#{BRANCH}#{file && '/'}#{file}"
+  puts "#{REPO}/#{$file ? 'blob' : 'tree'}/#{BRANCH}#{$file && '/'}#{$file}"
 end
