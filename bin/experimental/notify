@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+# if system("")
+  # abort "terminal-notifier is required"
+# end
+
+require 'optparse2'
+
+ENV['TERM_PROGRAM'] = 'Apple_Terminal'
+
+OptParse2.new do |op|
+  op.pos 'term-program', default: proc{ ENV.fetch('TERM_PROGRAM') }, default_description: '$TERM_PROGRAM'
+
+  op.parse! into: OPTS={}
+end
+
+
+p OPTS

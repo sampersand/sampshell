@@ -21,7 +21,6 @@ usage () { cat; } <<EOS
 usage: $script_name [-a] [-f | -n | -d] [-p | -s SHELL]
        $script_name [-a] [-f | -n | -d] [path]
 Prints all executables found in the given path
-
 	-a        also include non-executable files and non-existent directories
 	-f        print the entire path of executables [default]
 	-n        print the name of executables, not their full path
@@ -30,7 +29,6 @@ Prints all executables found in the given path
 	-s SHELL  get the default path for non-interactive SHELL instances
 	path      colon-separated list of directories to search [default=\$PATH]
 EOS
-
 
 mode=full
 all=
