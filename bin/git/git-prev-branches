@@ -33,4 +33,5 @@ git reflog show --grep-reflog=checkout: | # show all the `checkout` commands
 	nl -n ln              | # Number each branch, putting numbers on the left
 	sort -k2db $unique -s | # Keep unique branch names, in stable order
 	sort -n               | # Sort by the column
+	sed 's/\t//'          | # Delete tabs that exist for some reason
 	head -n "$amount"       # Get the `$amount`-th most recent ones
