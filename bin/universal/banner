@@ -15,28 +15,28 @@ class Style
   end
 
   def style_width = @prefix.length + @suffix.length
-  def top = @top.call
-  def bottom = @bottom.call
+  def top(width) = @top.call(width)
+  def bottom(width) = @bottom.call(width)
 
   attr_reader :prefix, :suffix
 end
 
 STYLES = {
   '#' => Style.new(
-    top:    ->{ ['#' * $width] },
-    bottom: ->{ ['#' * $width] },
+    top:    ->(width){ ['#' * width] },
+    bottom: ->(width){ ['#' * width] },
     prefix: '#',
     suffix: '#',
   ),
   '/' => Style.new(
-    top:    ->{ ['/' * $width] },
-    bottom: ->{ ['/' * $width] },
+    top:    ->(width){ ['/' * width] },
+    bottom: ->(width){ ['/' * width] },
     prefix: '//',
     suffix: '//',
   ),
   '*' => Style.new(
-    top:    ->{ ['/', '*' * ($width - 2)] },
-    bottom: ->{ [' ', '*' * ($width - 2), '/'] },
+    top:    ->(width){ ['/', '*' * (width - 2)] },
+    bottom: ->(width){ [' ', '*' * (width - 2), '/'] },
     prefix: ' *',
     suffix: '*',
   ) { def style_width = super + 1 },
@@ -109,7 +109,6 @@ if $width.zero?
   $width = $pre + $message.map(&:length).max + $style.style_width
 end
 
-
 # If debug mode is enabled, prints out a table prefix so we can see widths
 if $debug
   ($width.to_s.length - 1).downto 0 do |r|
@@ -127,7 +126,6 @@ elsif $width < (max_msg_width = $message.map(&:length).max)
   abort "message width (#{max_msg_width}) is longer than width (#$width)"
 end
 
-
 ####################################################################################################
 #                                          Business Logic                                          #
 ####################################################################################################
@@ -144,89 +142,10 @@ def print_prefixed(*a)
   print(PREFIX, *a, "\n")
 end
 
-print_prefixed(*$style.top)
+print_prefixed(*$style.top($width))
 
 MSG_WIDTH = $width - $style.style_width
 $message.each do |line|
   print_prefixed $style.prefix, line.public_send($justify, MSG_WIDTH), $style.suffix
 end
-print_prefixed(*$style.bottom)
-__END__
-
-# Join arguments by a space, unless the user passed `--multline`
-unless OPTS[:multiline]
-  ARGV.replace [ARGV.join(' ')]
-end
-
-# If the user requested blank padding, add an empty line before and after the args.
-if OPTS[:blank]
-  ARGV.unshift ''
-  ARGV.push ''
-end
-
-# If the user requested `--copy`, then pipe the output to `pbcopy` (macOS's copy command)
-if OPTS[:copy]
-  $stdout = IO.popen('pbcopy', 'w')
-end
-
-# Calculate the width if an auto width was requested
-if OPTS[:width].zero?
-  OPTS[:width] = $*.map(&:length).max + 4 # TODO: use other pres
-  OPTS[:width] -= 2 unless OPTS[:padding]
-  OPTS[:width] += OPTS[:pre] || 0
-end
-
-if (OPTS[:width] - OPTS[:pre]).negative?
-  abort "#{File.basename($0)}: -p > -w; no space remaining for text"
-end
-
-$width = OPTS.fetch(:width, 80)
-$pre   = OPTS.fetch(:pre, 0)
-
-$width -= $pre
-
-PREFIX = OPTS[:tab] ? "\t" : ' ' * $pre
-def ppre(*a)
-  print(PREFIX, *a, "\n")
-end
-
-def print_lines(prefix, suffix=prefix, lines: ARGV)
-  if OPTS[:padding]
-    (suffix = +suffix).prepend ' '
-    (prefix = +prefix).concat ' '
-  end
-
-  msg_width = $width - prefix.length - suffix.length
-  method = case OPTS[:justify]
-           when :left   then :ljust
-           when :right  then :rjust
-           when :center then :center
-           else fail "<bug: bad justify given: #$justify>"
-           end
-
-  lines.each do |line|
-    ppre prefix,line.public_send(method, msg_width), suffix
-  end
-end
-
-if $debug
-  print '0', (1..($width + $pre) / 10).map { (_1-1).to_s * 10 }.join[2..], "\n"
-  print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n"
-end
-
-case OPTS[:style]
-when '#'
-  ppre '#' * $width
-  print_lines('#')
-  ppre '#' * $width
-when '/'
-  ppre '/' * $width
-  print_lines('//')
-  ppre '/' * $width
-when '*'
-  ppre '/', '*' * ($width - 2), ' '
-  print_lines(' *', '* ')
-  ppre ' ', '*' * ($width - 2), '/'
-else
-  abort 'unknown style %s' % OPTS[:style]
-end
+print_prefixed(*$style.bottom($width))
