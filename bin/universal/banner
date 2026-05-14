@@ -49,6 +49,9 @@ JUSTIFIES = {
   'c' => :center, 'center' => :center
 }.freeze
 
+# class OptParse2
+  # module SetReason
+
 # Parse options out
 OptParse2.new do |op|
   op.accept :width do |arg|
@@ -57,22 +60,22 @@ OptParse2.new do |op|
 
   op.on '--debug', hidden: true
 
-  op.on '-w', '--width=AMNT|auto',  :width,  'Total line width; "auto" (or 0) fits text', default: 80
-  op.on '-p', '--pre=AMNT',         Integer, 'Indent the banner by AMNT spaces', default: 0
-  op.on '-t', '-x', '--tab[=AMNT]', Integer, 'Indent banner via tabs (which are AMNT spaces wide); extra',
-                                             'remainder whitespace is filled with spaces. AMNT defaults to 4' do |amnt|
-    amnt || 4
+  op.on '-w', '--width=WIDTH|auto',  :width,  'Total banner width; use "auto" (or 0) to fit text', default: 80
+  op.on '-p', '--pre=SPACES',        Integer, 'Indent the banner by SPACES',                       default: 0
+  op.on '-t', '-x', '--tab[=WIDTH]', Integer, 'Use tabs for indentation; WIDTH is tab size (default: 4)',
+                                              'Leftover indentation is filled with spaces' do |width|
+    width || 4
   end
 
-  op.on '-s', '--style=STYLE',  STYLES,    "Banner style; one of #{STYLES.keys}",     default: STYLES['#'], default_description: '#'
-  op.on '-j', '--justify=HOW',  JUSTIFIES, 'Justify text: (l)eft, (r)ight, (c)enter', default: :center
-  op.on       '--[no-]padding',            'PAd the front and end of each line',      default: true
+  op.on '-s', '--style=STYLE',  STYLES,    "Banner style [options: #{STYLES.keys.join ', '}]",            default: STYLES['#'], default_description: '#'
+  op.on '-j', '--justify=HOW',  JUSTIFIES, 'Justify text: l/left, r/ight, c/center',                      default: :center
+  op.on       '--[no-]padding',            'Pad each message with leading and trailing spaces if needed', default: true
 
-  op.on '-m', '--multiline', 'Treat each arg as a separate line'
-  op.on '-b', '--blank',     'Add a blank line before and after the message'
-  op.on '-c', '--copy',      'Pipe output to pbcopy'
+  op.on '-m', '--multiline', 'Treat each argument as a separate line'
+  op.on '-b', '--blank',     'Add an empty line above and below the message'
+  op.on '-c', '--copy',      'Copy output to macOS clipboard'
 
-  op.rest 'message', 'Messeage text to display', required: 1
+  op.rest 'message', 'Message text to display', required: 1
 
   op.parse! into: GVars, abort: true
 end
@@ -81,17 +84,15 @@ end
 #                                   Handle Command-line Options                                    #
 ####################################################################################################
 
-# Make sure that if `--tab` was supplied, a `--pre` was also given, and that the tab is a multiple
-# of the prefix
+# Make sure that if `--tab` was supplied, a `--pre` was also given
 if $tab
-  abort '--tab supplied without --pre' if $pre.zero?
-  abort '--tab is not a multiple of --pre' unless ($pre % $tab).zero?
+  abort '--tab requires --pre to set indentation width' if $pre.zero?
 end
 
 # Write messages to the macos clipboard if `--copy` was given
 $stdout = IO.popen('pbcopy', 'w') if $copy
 
-# Join all arguments together into a singel string, unless `--multline` was given
+# Join all arguments together into a single string, unless `--multiline` was given
 $message.replace [$message.join(' ')] unless $multiline
 
 # If padding is given (the default), add a space before and after each line
@@ -104,7 +105,7 @@ $message.unshift('').push('') if $blank
 #                                         Calculate Width                                          #
 ####################################################################################################
 
-# Calculate teh width if an auto width was requested.
+# Calculate the width if an auto width was requested.
 if $width.zero?
   $width = $pre + $message.map(&:length).max + $style.style_width
 end
@@ -121,9 +122,9 @@ $width -= $pre # TODO: use a `MASTER_WIDTH` or something
 
 # Validate the width is positive, and messages can fit in it
 if $width.negative?
-  abort 'width is negative; no space remaining for text'
+  abort "--pre (#$pre) is greater than --width (#{$width + $pre}); no space remains for text"
 elsif $width < (max_msg_width = $message.map(&:length).max)
-  abort "message width (#{max_msg_width}) is longer than width (#$width)"
+  abort "message is too wide (#{max_msg_width}) for --width (#$width after indentation)"
 end
 
 ####################################################################################################
