@@ -4,58 +4,154 @@
 ################################################################################
 # Banner: Surround messages in boxes, to use for separators in source files.   #
 ################################################################################
-require 'optparse'
+require 'optparse2'
+require 'gvars'
 
 # The styles that are recognized
-REGONIZED_STYLES = %w[# * /]
-
-OPTS = {
-  width: 80,
-  pre: 0,
-  style: '#',
-  padding: true,
-  justify: :center,
-  tab: false,
-}
-
-# Parse options
-OptParse.new do |op|
-  op.banner.concat ' [message ...]'
-
-  op.accept :width do |arg|
-    if arg == 'auto'
-      0
-    else
-      Integer arg rescue raise OptParse::InvalidArgument
-    end
+class Style
+  def initialize(top:, bottom:, prefix:, suffix:, &block)
+    @top, @bottom, @prefix, @suffix = top, bottom, prefix, suffix
+    instance_exec(&block) if defined? yield
   end
 
-  op.accept :justify do |arg|
-    case arg
-    when 'l', 'left' then :left
-    when 'r', 'right' then :right
-    when 'c', 'center' then :center
-    else raise OptParse::InvalidArgument
-    end
-  end
+  def style_width = @prefix.length + @suffix.length
+  def top = @top.call
+  def bottom = @bottom.call
 
-  def (op.define('--debug') { $DEBUG = 1 }).summarize(*) end
-  op.on '-w', '--width=(AMNT/auto)', :width, 'Set the total line width. A width of "auto" (or 0) is the',
-                                             "smallest possible that fits everything [default: #{OPTS[:width]}]"
-
-  op.on '-p', '--pre=AMNT', Integer, 'Add AMNT spaces before the banner'
-  op.on '-s', '--style=STYLE', REGONIZED_STYLES, "Use STYLE for the banner. Valid: #{REGONIZED_STYLES}. [default: #{OPTS[:style]}]"
-  op.on '-j', '--justify=HOW', :justify, "Justify text either left, right, center. [default: #{OPTS[:justify]}]"
-  op.on '-t', '-x', '--tab', 'Output --pre as a single tab; still use --pre for tab width though'
-
-  op.on '-m', '--multiline', 'Interpret each arg as a separate line'
-  op.on '-b', '--blank', 'Add a blank line before and after the banner contents'
-  op.on '--[no-]padding', 'Add padding to the front and end of lines. [default]'
-  op.on '-c', '--copy', 'Pipe output to pbcopy command'
-
-  op.parse! into: OPTS rescue op.abort $!
-  ARGV.empty? and abort op.help
+  attr_reader :prefix, :suffix
 end
+
+STYLES = {
+  '#' => Style.new(
+    top:    ->{ ['#' * $width] },
+    bottom: ->{ ['#' * $width] },
+    prefix: '#',
+    suffix: '#',
+  ),
+  '/' => Style.new(
+    top:    ->{ ['/' * $width] },
+    bottom: ->{ ['/' * $width] },
+    prefix: '//',
+    suffix: '//',
+  ),
+  '*' => Style.new(
+    top:    ->{ ['/', '*' * ($width - 2)] },
+    bottom: ->{ [' ', '*' * ($width - 2), '/'] },
+    prefix: ' *',
+    suffix: '*',
+  ) { def style_width = super + 1 },
+}.freeze
+
+# How text can be aligned
+JUSTIFIES = {
+  'l' => :ljust,  'left'  => :ljust,
+  'r' => :rjust,  'right' => :rjust,
+  'c' => :center, 'center' => :center
+}.freeze
+
+# Parse options out
+OptParse2.new do |op|
+  op.accept :width do |arg|
+    arg == 'auto' ? 0 : (Integer arg rescue raise OptParse::InvalidArgument)
+  end
+
+  op.on '--debug', hidden: true
+
+  op.on '-w', '--width=AMNT|auto',  :width,  'Total line width; "auto" (or 0) fits text', default: 80
+  op.on '-p', '--pre=AMNT',         Integer, 'Indent the banner by AMNT spaces', default: 0
+  op.on '-t', '-x', '--tab[=AMNT]', Integer, 'Indent banner via tabs (which are AMNT spaces wide); extra',
+                                             'remainder whitespace is filled with spaces. AMNT defaults to 4' do |amnt|
+    amnt || 4
+  end
+
+  op.on '-s', '--style=STYLE',  STYLES,    "Banner style; one of #{STYLES.keys}",     default: STYLES['#'], default_description: '#'
+  op.on '-j', '--justify=HOW',  JUSTIFIES, 'Justify text: (l)eft, (r)ight, (c)enter', default: :center
+  op.on       '--[no-]padding',            'PAd the front and end of each line',      default: true
+
+  op.on '-m', '--multiline', 'Treat each arg as a separate line'
+  op.on '-b', '--blank',     'Add a blank line before and after the message'
+  op.on '-c', '--copy',      'Pipe output to pbcopy'
+
+  op.rest 'message', 'Messeage text to display', required: 1
+
+  op.parse! into: GVars, abort: true
+end
+
+####################################################################################################
+#                                   Handle Command-line Options                                    #
+####################################################################################################
+
+# Make sure that if `--tab` was supplied, a `--pre` was also given, and that the tab is a multiple
+# of the prefix
+if $tab
+  abort '--tab supplied without --pre' if $pre.zero?
+  abort '--tab is not a multiple of --pre' unless ($pre % $tab).zero?
+end
+
+# Write messages to the macos clipboard if `--copy` was given
+$stdout = IO.popen('pbcopy', 'w') if $copy
+
+# Join all arguments together into a singel string, unless `--multline` was given
+$message.replace [$message.join(' ')] unless $multiline
+
+# If padding is given (the default), add a space before and after each line
+$message.map! { |line| " #{line} " } if $padding
+
+# Add a blank line before and after the messages if `--blank` was supplied
+$message.unshift('').push('') if $blank
+
+####################################################################################################
+#                                         Calculate Width                                          #
+####################################################################################################
+
+# Calculate teh width if an auto width was requested.
+if $width.zero?
+  $width = $pre + $message.map(&:length).max + $style.style_width
+end
+
+
+# If debug mode is enabled, prints out a table prefix so we can see widths
+if $debug
+  ($width.to_s.length - 1).downto 0 do |r|
+    puts (1..$width).map { |x| ((x / 10 ** r) % 10).to_s }.join
+  end
+end
+
+# Now remove the prefix length from the width
+$width -= $pre # TODO: use a `MASTER_WIDTH` or something
+
+# Validate the width is positive, and messages can fit in it
+if $width.negative?
+  abort 'width is negative; no space remaining for text'
+elsif $width < (max_msg_width = $message.map(&:length).max)
+  abort "message width (#{max_msg_width}) is longer than width (#$width)"
+end
+
+
+####################################################################################################
+#                                          Business Logic                                          #
+####################################################################################################
+
+# TODO: simplify?
+PREFIX = if $tab
+  "\t" * ($pre / $tab) + " " * ($pre % $tab)
+else
+  ' ' * $pre
+end
+
+# Like `print`, except it prepends any `--pre` that was given
+def print_prefixed(*a)
+  print(PREFIX, *a, "\n")
+end
+
+print_prefixed(*$style.top)
+
+MSG_WIDTH = $width - $style.style_width
+$message.each do |line|
+  print_prefixed $style.prefix, line.public_send($justify, MSG_WIDTH), $style.suffix
+end
+print_prefixed(*$style.bottom)
+__END__
 
 # Join arguments by a space, unless the user passed `--multline`
 unless OPTS[:multiline]
@@ -113,7 +209,7 @@ def print_lines(prefix, suffix=prefix, lines: ARGV)
   end
 end
 
-if $DEBUG
+if $debug
   print '0', (1..($width + $pre) / 10).map { (_1-1).to_s * 10 }.join[2..], "\n"
   print (1..$width+$pre).map { _1.to_s[-1] }.join, "\n"
 end
