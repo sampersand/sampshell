@@ -1,0 +1,92 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'gvars'
+
+OptParse2.new do |op|
+  op.summary <<~EOS
+    Delete empty files/directories. Note that this does have a race condition
+    with deleting empty files, as there's no way to actually guarantee they're
+    empty.
+  EOS
+
+  op.group :kind do
+    $kind = :both # ddefault
+    op.on '-f', '--files',       'Only delete empty files (conflicts with -d, -a)'
+    op.on '-d', '--directories', 'Only delete empty directories (conflicts with -f, -d)'
+    op.on       '--both',        'Delete empty files and directories [default]'
+  end
+
+  op.on '-n', '--dry-run',   "Don't actually do removals (implies -v)" do $verbose = true end
+  op.on '-r', '--recursive', 'Recursively descend into folders'
+
+  op.on '-v', '--verbose', 'Emit verbose output'
+  op.on       '--[no-]ds-store', 'Delete .DS_Store entries in folders on macos', default: true
+
+  op.rest 'paths', 'The paths to delete', required: 1
+
+  op.parse! into: GVars, abort: true
+end
+
+DELETE_DOT_FILES = RUBY_PLATFORM.include?('darwin') && $ds_store
+
+if $verbose
+  def log(...) = puts(...)
+else
+  def log(...) end
+end
+
+# TODO: how do cyclical symlinks work?
+def recursive_delete!(path)
+  children = Dir.children(path).map { |child| File.join(path, child) }
+  children.each do |child|
+    delete_path child
+  end
+end
+
+def delete_path(path)
+  case File.ftype(path)
+  when 'file'
+    if $kind == :directories
+      log "not removing non-directory path: #{path}"
+    elsif !File.empty?(path)
+      log "not removing non-empty file: #{path}"
+    else
+      File.unlink path unless $dry_run
+      log "removed empty file: #{path}"
+    end
+
+  when 'directory'
+    recursive_delete! path if $recursive
+
+    if $kind == :files
+      log "not removing non-file path: #{path}"
+      return
+    end
+
+    # TODO: Sanity check and only delete if it's the only file in it
+    if DELETE_DOT_FILES
+      ds = File.join(path, '.DS_Store')
+      if File.file?(ds)
+        log "removing .DS_Store: #{ds}"
+        File.unlink ds unless $dry_run
+      elsif File.exist?(ds)
+        warn ".DS_Store is not a file: #{ds}"
+      end
+    end
+
+    # Now check
+    if Dir.empty?(path)
+      log "removing empty folder: #{path}"
+      Dir.rmdir path unless $dry_run
+    else
+      log "not removing non-empty folder: #{path}"
+    end
+  else
+    warn "non-file non-dir type (todo: how do we hand symlinks?): #{path}"
+  end
+end
+
+$paths.each do |path|
+  delete_path path
+end
