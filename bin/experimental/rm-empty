@@ -3,6 +3,8 @@
 require 'optparse2'
 require 'gvars'
 
+def warn(msg) = super("#{File.basename($0)}: #{msg}")
+
 OptParse2.new do |op|
   op.summary <<~EOS
     Delete empty files/directories. Note that this does have a race condition
@@ -11,9 +13,9 @@ OptParse2.new do |op|
   EOS
 
   op.group :kind do
-    $kind = :both # ddefault
-    op.on '-f', '--files',       'Only delete empty files (conflicts with -d, -a)'
-    op.on '-d', '--directories', 'Only delete empty directories (conflicts with -f, -d)'
+    $kind = :both # default
+    op.on '-f', '--files',       'Only delete empty files (last of -f/-d/--both wins)'
+    op.on '-d', '--directories', 'Only delete empty directories (last of -f/-d/--both wins)'
     op.on       '--both',        'Delete empty files and directories [default]'
   end
 
@@ -28,7 +30,7 @@ OptParse2.new do |op|
   op.parse! into: GVars, abort: true
 end
 
-DELETE_DOT_FILES = RUBY_PLATFORM.include?('darwin') && $ds_store
+DELETE_DS_STORE = RUBY_PLATFORM.include?('darwin') && $ds_store
 
 if $verbose
   def log(...) = puts(...)
@@ -36,46 +38,55 @@ else
   def log(...) end
 end
 
-# TODO: how do cyclical symlinks work?
-def recursive_delete!(path)
-  children = Dir.children(path).map { |child| File.join(path, child) }
-  children.each do |child|
-    delete_path child
+def delete_path(path, is_first:)
+  unless File.exist?(path)
+    warn "path does not exist: #{path}"
+    $SUCCESS = false
+    return
   end
-end
 
-def delete_path(path)
-  case File.ftype(path)
+  case (ftype = File.ftype(path))
   when 'file'
     if $kind == :directories
       log "not removing non-directory path: #{path}"
     elsif !File.empty?(path)
       log "not removing non-empty file: #{path}"
     else
+      log "removing empty file: #{path}"
       File.unlink path unless $dry_run
-      log "removed empty file: #{path}"
     end
 
   when 'directory'
-    recursive_delete! path if $recursive
+    # When `--recursive` is passed, go through the children paths and delete
+    # them if empty as well. Do this before checking for `$kind`, as this
+    # lets us do `rm-empty --files --recursive path/to/dir`
+    if $recursive
+      Dir.children(path).sort.each do |child|
+        delete_path File.join(path, child), is_first: false
+      end
+    end
 
     if $kind == :files
       log "not removing non-file path: #{path}"
       return
     end
 
-    # TODO: Sanity check and only delete if it's the only file in it
-    if DELETE_DOT_FILES
+    # If we're deleting `.DS_Store`, delete it if it's the only file that exists.
+    # Note that this does have a race condition, as after checking here, someone
+    # could make another file. But that doesn't really matter much, as if there's
+    # no extra files, there's no point in a `.DS_Store`
+    if DELETE_DS_STORE && Dir.children(path) == ['.DS_Store']
       ds = File.join(path, '.DS_Store')
+
       if File.file?(ds)
         log "removing .DS_Store: #{ds}"
         File.unlink ds unless $dry_run
-      elsif File.exist?(ds)
+      else
         warn ".DS_Store is not a file: #{ds}"
       end
     end
 
-    # Now check
+    # Now check to see if the directory is empty; if it is we remove it
     if Dir.empty?(path)
       log "removing empty folder: #{path}"
       Dir.rmdir path unless $dry_run
@@ -83,10 +94,17 @@ def delete_path(path)
       log "not removing non-empty folder: #{path}"
     end
   else
-    warn "non-file non-dir type (todo: how do we hand symlinks?): #{path}"
+    # Skip symlinks, as they're not really "empty". Also, this helps prevent cycles.
+    warn "not removing #{ftype}: #{path}"
   end
 end
 
+$SUCCESS = true
 $paths.each do |path|
-  delete_path path
+  delete_path path, is_first: true
+rescue SystemCallError => err
+  warn "#{path}: #{err}"
+  $SUCCESS = false
 end
+
+exit $SUCCESS
