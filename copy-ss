@@ -39,6 +39,6 @@ for x in *(D); do
 	cp -r $x $sampshell
 done
 
-if [[ $eject ]] {
+if (( $eject )) {
 	eject $sampinox
 }

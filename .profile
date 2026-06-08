@@ -67,7 +67,7 @@ SampShell_ensure_xdg_variable XDG_DATA_HOME "$HOME/.local/share"
 SampShell_ensure_xdg_variable XDG_CONFIG_HOME "$HOME/.config"
 SampShell_ensure_xdg_variable XDG_STATE_HOME "$HOME/.local/state"
 SampShell_ensure_xdg_variable XDG_CACHE_HOME "$HOME/.cache"
-SampShell_ensure_xdg_variable XDG_RUNTIME_DIR "/run/user/$UID"
+[ -d /run/user ] && SampShell_ensure_xdg_variable XDG_RUNTIME_DIR "/run/user/$UID"
 unset -f SampShell_ensure_xdg_variable
 
 ################################################################################
@@ -87,7 +87,7 @@ mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" "$XDG_STATE_HOME/sampshell" 
 ## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-subl}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
-export EDITOR=
+# export EDITOR=
 
 ################################################################################
 #                                                                              #
@@ -119,7 +119,7 @@ export FCEDIT="${FCEDIT-vim}"
 
 ## Set `LANG` if it's not already present. (This is a POSIX env variable that I
 # don't see much of a need for, but eh whatever, why not add it in.)
-export LANG="${LANG-en_US}"
+export LANG="${LANG-en_US.UTF-8}"
 
 # Add `$SampShell_ROOTDIR/ruby/include` to the list of imports for `RUBYLIB` if
 # it's not already there

@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'gvars'
+require 'shellwords'
+require 'io/console'
+
+OptParse2.new nil, 20 do |op|
+  op.on '--[no-]hup', 'Send a SIGHUP to the shell; disable to only close when',
+                      'the shell closes on its own',
+                      default: true
+  op.on '--tty=TTY', %r{\A/dev/?[A-Za-z0-9]+\z}, "Target this TTY instead of this script's controlling terminal",
+    default: proc { STDIN.ttyname or op.abort "no tty attached" },
+    default_description: '`tty`'
+
+  op.parse! %w[--tty /dev/ttys005], into: GVars, abort: true
+end
+
+p $tty
+exit
+SHELL_PID =
+  if !$hup
+    nil
+  else
+    any_pid = `pgrep -t #{$tty.delete_prefix('/dev/').shellescape}`.lines.first&.strip&.to_i
+    abort "no processes on #$tty" if any_pid.nil? || any_pid <= 0
+    Process.getsid anypid
+  end
+

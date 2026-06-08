@@ -1,5 +1,5 @@
 # Ensure we're not disabled
-if (( $SampShell_DISABLED )); then
+if [[ -n ${SampShell_DISABLED-} ]]; then
 	return
 fi
 

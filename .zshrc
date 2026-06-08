@@ -122,7 +122,7 @@ history-ignore-command h history-{enable,disable}
 #                                               Jobs                                               #
 #                                                                                                  #
 ####################################################################################################
-	
+
 ## Setup job options (jobs programs in the background, started by eg `echo hi &`)
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
@@ -197,16 +197,16 @@ source ~ss/zsh/keybinds.zsh
 autoload -U compinit
 [[ ! -e $XDG_STATE_HOME/sampshell ]] && mkdir "$XDG_STATE_HOME/sampshell"
 if [[ -f $XDG_STATE_HOME/sampshell/.zcompdump ]] then
-  compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
+	compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 else
-  compinit
+	compinit
 fi
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
 
 if [[ $VENDOR = apple ]]; then
-  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
-  fignore+=(DS_Store) # boo, DS_Store files!
+	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
+	fignore+=(DS_Store) # boo, DS_Store files!
 fi
 
 zmodload -i zsh/complist # May not be required
