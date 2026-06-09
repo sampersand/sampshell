@@ -1,0 +1,86 @@
+#!/usr/bin/env ruby
+
+require 'optparse2'
+require 'gvars'
+
+def `(cmd)
+  super.tap { raise "cmd failed: #{cmd} (exit: #{$?.exitstatus})" unless $?.success? }
+end
+
+####################################################################################################
+#                                          Parse CLI Opts                                          #
+####################################################################################################
+
+OptParse2.new do |op|
+  op.pos 'gem', 'The name of the gem', default: proc { File.basename Dir.pwd }, default_description: 'current dir'
+
+  op.on '-f', '--force', 'Proceed even with dirty git status'
+  op.on '-n', '--dry', 'Do not actually publish the gem'
+
+  op.group :version do
+    op.on '--version VERSION', 'Set the version string to VERSION', required: true
+    op.on '-p', '--patch', 'Bump the patch version up'
+    op.on '-m', '--minor', 'Bump the minor version up (and reset patch to 0)'
+  end
+
+  op.on '--[no-]version-file=PATH', 'The file where the new version is stored',
+    default: proc { File.join("lib", $gem, "version.rb") },
+    default_description: 'lib/<gem>/version.rb'
+
+
+  # note: no `--major`, as that should be done with `--version`
+  op.parse! into: GVars
+end
+
+####################################################################################################
+#                                      Check Git Dirty Status                                      #
+####################################################################################################
+
+unless `git status --porcelain`.chomp.empty?
+  if $force
+    warn "Proceeding with a dirty git status"
+  else
+    abort "Not proceeding due to dirty git status; use --force to override"
+  end
+end
+
+####################################################################################################
+#                                   Update VERSION, if supplied                                    #
+####################################################################################################
+
+# Fetch the git version
+def get_old_version
+  File.read($version_file)[/VERSION\s+=\s+"(\d+\.\d+\.\d+)"/, 1] or fail "cannot fetch old version"
+end
+
+def update_version!
+  case $version
+  when :patch then $version = get_old_version.succ!
+  when :minor then $version = get_old_version.sub!(/\A(\d+\.\d+)\.\d*\z/, '\1').succ + '.0'
+  when String then # already set
+  else raise
+  end
+
+  puts "Using version #$version"
+  vf = File.read($version_file)
+  vf.sub!(/(VERSION\s+=\s+")\d+\.\d+\.\d+(")/, "\\1#$version\\2") or fail "cannot update version"
+  File.write $version_file, vf
+
+  unless $dry
+    system('git', 'add', '--', $version_file, exception: true)
+    system('git', 'commit', '-m', "Version #$version", exception: true)
+    system('git', 'push', exception: true)
+  end
+end
+
+update_version! if $version_file
+
+####################################################################################################
+#                                    Build and Publish the Gem                                     #
+####################################################################################################
+
+system('gem', 'build', exception: true)
+unless $dry
+  system('gem', 'push', "#$gem-#$version.gem", exception: true)
+  system('gem', 'install', $gem, exception: true)
+end

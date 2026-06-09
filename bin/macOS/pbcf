@@ -1,0 +1,29 @@
+#!/usr/bin/env osascript
+
+-- Copy a file to the clipboard
+
+use framework "AppKit"
+use scripting additions
+
+on run argv
+	if (count of argv) is 0 then error "usage: pbcf FILE ..."
+
+	set pb to current application's NSPasteboard's generalPasteboard()
+	pb's clearContents()
+
+	set pbItems to current application's NSMutableArray's alloc's init()
+	set paths to {}
+	repeat with a in argv
+		set p to (contents of a)
+		set theURL to (current application's NSURL's fileURLWithPath:p)
+		set pbItem to (current application's NSPasteboardItem's alloc's init())
+		(pbItem's setString:(theURL's absoluteString()) forType:"public.file-url")
+		(pbItems's addObject:pbItem)
+		set end of paths to p
+	end repeat
+
+	set AppleScript's text item delimiters to linefeed
+	((pbItems's objectAtIndex:0)'s setString:(paths as text) forType:"public.utf8-plain-text")
+
+	if not (pb's writeObjects:pbItems) then error "failed to write to clipboard"
+end run

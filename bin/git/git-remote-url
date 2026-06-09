@@ -6,21 +6,10 @@
 
 require 'optparse2'
 require 'gvars'
-
-PROGRAM_NAME = File.basename($0, '.*').sub(/\Agit-/, 'git ')
-
-def abort(msg)
-  super("#{PROGRAM_NAME}: #{msg}")
-end
-
-def `(cmd)
-  super.chomp.tap do
-    $?.success? or abort "shell command return non-zero exit status: #{cmd.inspect}"
-  end
-end
+require 'sw'
 
 OptParse2.new nil, 20 do |op|
-  op.program_name = PROGRAM_NAME
+  op.program_name = $program_name.sub(/\Agit-/, 'git ')
   op.summary 'Print the link to a repository, a file in the repo, or a range within it.'
 
   op.on '-r', '--repo=REPO', 'Change to REPO; if not specified, uses REPO containing FILE. If no FILE, uses PWD.'
@@ -28,7 +17,7 @@ OptParse2.new nil, 20 do |op|
   op.group :branch do
     op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
     op.on '-c', '--current', 'Use the current branch'
-    op.on '-m', '--master', 'Use the master branch', default: true
+    op.on '-m', '--master', 'Use the master branch'; $branch = :master
     op.on '-p', '--permalink', 'Use a permalink'
   end
 
@@ -39,17 +28,17 @@ OptParse2.new nil, 20 do |op|
 end
 
 if $repo
-  Dir.chdir $repo rescue abort "cannot cd to repo #$repo"
+  Dir.chdir $repo rescue abort!("cannot cd to repo #$repo")
 elsif $file
   dir = File.directory?($file) ? $file : File.dirname($file)
-  Dir.chdir(dir) rescue abort "cannot cd to dir: #{dir}"
+  Dir.chdir(dir) rescue abort!("cannot cd to dir: #{dir}")
 end
 
-REPO = `gh repo view --json=url --jq=.url`
+REPO = x!('gh repo view --json=url --jq=.url')
 BRANCH = case $branch
-         when :current   then `git branch --show-current`
-         when :master    then `git master-branch`
-         when :permalink then `git rev-parse HEAD`
+         when :current   then x!('git branch --show-current')
+         when :master    then x!('git master-branch')
+         when :permalink then x!('git rev-parse HEAD')
          else                 $branch
          end
 
@@ -58,7 +47,7 @@ if $file
     $file += '/'
   end
 
-  $file = $file.delete_prefix(`git rev-parse --show-toplevel` + '/') # maybe also --show-prefix eventually?
+  $file = $file.delete_prefix x!('git rev-parse --show-toplevel') + '/' # maybe also --show-prefix eventually?
   $file.concat "#L#{$range.sub('-', '-L')}" if $range
 end
 
