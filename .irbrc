@@ -97,10 +97,17 @@ end
 ####################################################################################################
 
 module ObjectSpace
-  def self.each_method(type = Class, method )
+  def self.each_method(type = Class, method)
     return to_enum(__method__, type, method).to_a unless block_given?
     ObjectSpace.each_object type do |thing|
       yield thing if eval "defined? thing.#{method}"
+    end
+  end
+
+  def self.each_instance_method(type = Class, method)
+    return to_enum(__method__, type, method).to_a unless block_given?
+    ObjectSpace.each_object type do |thing|
+      yield thing if ::Class.instance_method(:method_defined?).bind_call(thing, method)
     end
   end
 end

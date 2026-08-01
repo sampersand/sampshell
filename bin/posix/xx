@@ -35,7 +35,7 @@ validate_optarg_is_an_int () {
 	esac
 }
 
-no_newline= count= width=s join=' ' sep=
+no_newline= count= width=80 join=' ' sep=
 while getopts 'hnj:c:Ww:s:' option; do
 	case $option in
 	h) usage; exit ;;

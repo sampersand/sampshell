@@ -17,7 +17,7 @@ OptParse2.new nil, 20 do |op|
   op.group :branch do
     op.on '-b', '--branch=NAME', 'Explicitly use branch NAME'
     op.on '-c', '--current', 'Use the current branch'
-    op.on '-m', '--master', 'Use the master branch'; $branch = :master
+    op.on '-m', '--master', 'Use the master branch [default]'; $branch = :master
     op.on '-p', '--permalink', 'Use a permalink'
   end
 
