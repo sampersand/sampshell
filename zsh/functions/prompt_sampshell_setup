@@ -67,7 +67,7 @@ function _SampShell-prompt-git-hook1 {
 	psvar[prompt_sampshell_var_long_git]=${$(__git_ps1 '%s')/\%\%/!} # the `/%%/!` replaces `%` with my `!`
 
 	local prefix=$(git config --get --default=$USERNAME sampshell.branchPrefix)
-	local sep=$(git config --get --default=/ sampshell.branchSeparator)
+	local sep=$(git config --get --default=. sampshell.branchSeparator)
 	psvar[prompt_sampshell_var_short_git]=${(*)psvar[prompt_sampshell_var_long_git]/#$prefix([^$sep]#[$sep])(#c2)/…}
 }
 

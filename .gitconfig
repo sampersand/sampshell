@@ -19,7 +19,7 @@
 	defaultBranch = master
 
 [sampshell]
-	branchSeparator = /
+	branchSeparator = .
 	branchPrefix = swesterman
 
 [alias]
