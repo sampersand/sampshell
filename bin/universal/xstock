@@ -5,6 +5,7 @@ require 'optparse2'
 require 'optparse2/pathname'
 require 'open3'
 require 'gvars'
+require 'json'
 
 OptParse2.new do |op|
   op.on '--[no-]debug', hidden: true
@@ -29,11 +30,12 @@ end
 
 def get_price(ticker)
   # ruby -rjson -e 'p JSON[`curl ''https://api.nasdaq.com/api/quote/AAPL/info?assetclass=stocks'' -s -H ''User-Agent: Mozilla/6.0''`].dig("data", "primaryData", "lastSalePrice")'
-  out, ok = Open3.capture2('curl', '-s',
-    "https://www.google.com/finance/quote/#{ticker}")
+  symbol = ticker.split(':', 2).first
+  out, ok = Open3.capture2('curl', '-s', '-H', 'User-Agent: Mozilla/6.0',
+    "https://api.nasdaq.com/api/quote/#{symbol}/info?assetclass=stocks")
   raise "unable to get ticker for #{ticker}: exit status #{ok.exitstatus}" unless ok.success?
-  # puts out
-  out[/data-last-price="([^"]*)"/, 1] or abort "unable to get stock for: #{ticker}"
+  price = JSON.parse(out).dig('data', 'primaryData', 'lastSalePrice')
+  price&.delete('$,') or abort "unable to get stock for: #{ticker}"
 end
 
 $tickers.each do |ticker|
