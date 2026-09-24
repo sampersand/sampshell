@@ -7,3 +7,4 @@
 *.ignore
 *.ignore.*
 *.old
+nohup.out

@@ -48,3 +48,5 @@ prA () {
 	for k v ( ${(@kvP)1} ) opts+=( --arg "$k" "$v" )
 	jq -n '$ARGS.named' "${opts[@]}"
 }
+
+wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
