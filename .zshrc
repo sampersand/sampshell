@@ -12,9 +12,6 @@
 # is where `unsetopt` is used to set options back to their default in case something changed them.
 # While not required (`setopt no_...` is the same as `unsetopt ...`), I find it easier to reason
 # about this way.
-#
-# Note: This file intentionally doesn't start with a `.`, as it's not meant to be used directly as
-# a user's `.zshrc`. (Instead, `source` the top-level `.shrc` file if needed.)
 #####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
@@ -95,15 +92,29 @@ fi
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
 SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
-# HISTFILE=...     # HISTFILE is already setup within `posix/.shrc`.
+: "${HISTFILE:=${ZDOTDIR:-$HOME}/.zsh_history}" # Save history to ~/.zsh_history by default
 
 ## Setup history options
+setopt APPEND_HISTORY         # Append history in $HISTFILE, not overwrite (this is a zsh default)
 setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
 setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
+unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
+
+## Helpers
+alias h='noglob h'
+function flush-hist {
+	# If using macos's shell session mechanism, go through that
+	if whence shell_session_save_history >/dev/null && shell_session_history_allowed; then
+		shell_session_save_history
+	else
+		# Otherwise, use the normal `fc -AI`
+		builtin fc -AI
+	fi
+}
 
 # Ignore commands by just prepending a space to them. This probably breaks on some commands, but I
 # haven't figured them out yet.
@@ -113,9 +124,8 @@ function history-ignore-command {
 		alias -- "$cmd= $(whence -- "$cmd")"
 	done
 }
+history-ignore-command h history-{enable,disable} flush-hist
 
-alias h='noglob h'
-history-ignore-command h history-{enable,disable}
 
 ####################################################################################################
 #                                                                                                  #
@@ -266,7 +276,9 @@ alias -g 2@N='2>/dev/null'
 alias '%=' '$=' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
 history-ignore-command reload
 
-# Copies the current directory, or a subdirectory of the current direcotry if given
+wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
+
+# Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
 	if (( $ARGC > 1 )); then print "at most 1 argument allowed" 2@N; return 1 ; fi
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
