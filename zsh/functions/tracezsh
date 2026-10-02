@@ -6,7 +6,6 @@
 
 echo "SampShell_PROFILE is not set. todo, set it up"
 clenv \
-	-i \
 	-v SampShell_PROFILE= \
 	-v SampShell_XTRACE= \
 	-v SampShell_ROOTDIR \
