@@ -40,7 +40,8 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 ## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
 # loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
 # the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH.)
-typeset -Ua fpath=( ~ss/zsh/{functions,widgets,zsh_directory_name_functions} $fpath ) # add to fpath so `freload` works
+# (Also, adds to `fpath` so `freload` works)
+typeset -Ua fpath=( ~ss/zsh/{functions,widgets,zsh_directory_name_functions} $fpath )
 autoload -Uz ~ss/zsh/{functions,widgets,zsh_directory_name_functions}/*
 
 ####################################################################################################
@@ -101,6 +102,7 @@ setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, then uniques.
 setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern OSes.)
+
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
 ## Helpers
@@ -180,8 +182,8 @@ setopt GLOB_STAR_SHORT      # Enable the `**.c` shorthand for `**/*.c`
 setopt EXTENDED_GLOB        # Always have extended globs enabled, without needing to set it.
 
 ## "Safety" options
-setopt NO_CLOBBER       # Don't overwrite files when using `>` (unless `>|` or `>!` is used.)
-setopt CLOBBER_EMPTY    # Modify `NO_CLOBBER` to let you clobber empty files.
+setopt NO_CLOBBER    # Don't overwrite files when using `>` (unless `>|` or `>!` is used.)
+setopt CLOBBER_EMPTY # Modify `NO_CLOBBER` to let you clobber empty files.
 
 ####################################################################################################
 #                                                                                                  #
@@ -193,7 +195,6 @@ alias bk='noglob bindkey'
 alias bkg='bindkey | noglob fgrep -ie'
 alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
 alias which-command=which # for `^[?`
-
 # function bindkey { print "bindkey: $*"; builtin bindkey $@ }
 
 source ~ss/zsh/keybinds.zsh
@@ -203,6 +204,7 @@ source ~ss/zsh/keybinds.zsh
 #                                           Autocomplete                                           #
 #                                                                                                  #
 ####################################################################################################
+
 autoload -Uz compinit
 if [[ ! -e $XDG_STATE_HOME/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
 if [[ -f $XDG_STATE_HOME/sampshell/.zcompdump ]] then
@@ -223,7 +225,7 @@ zstyle ':completion:*' list-colors '' # Add colours to completions
 zstyle ':completion:*:*:cd:*' file-sort modification
 zstyle ':completion:*:*:rm:*' completer _ignored
 zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
-# zstyle ':completion:*:files' file-sort '!ignored-patterns '*.DS_Store'
+# zstyle ':completion:*:files' file-sort '!ignored-patterns' '*.DS_Store' <-- TODO
 
 ####################################################################################################
 #                                                                                                  #
@@ -253,6 +255,7 @@ fi
 #                                          Git Shorthands                                          #
 #                                                                                                  #
 ####################################################################################################
+
 source ~ss/zsh/git-alias.zsh
 # x=( ${(f):-"$(git config -f $PWD/.gitconfig -l | sed -n 's/^alias\.\([a-z]*\)=.*/g\1=g \1/p')"} )
 
@@ -312,12 +315,13 @@ alias b100='banner --copy --width=100'
 
 ## Adding default arguments to builtin commands
 alias grep='grep --color=auto'
-alias fgrep='fgrep --color=auto'
-alias egrep='egrep --color=auto'
+alias fgrep='grep -F --color=auto'
+alias egrep='grep -E --color=auto'
 
+# Misc ones
 function hr { xx ${@:--} }
 function hrc { hr "$@" | pbc }
-function ncol { awk "{ print \$$1 }" }
+function ncol { awk "{ print \$${1:?} }" }
 
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
@@ -325,7 +329,7 @@ alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 # TODO: investigate this more. Maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
-alias cpu='top -o cpu'
+if [[ $VENDOR == apple ]] alias cpu='top -o cpu' # TODO: maybe `ps -Ao pcpu,pid,comm | sort -nr | head ...`
 
 function paa {
 	local -A ary=( ${(kvP)1} )
