@@ -125,8 +125,7 @@ function history-ignore-command {
 		alias -- "$cmd= $(whence -- "$cmd")"
 	done
 }
-history-ignore-command h history-{enable,disable} flush-hist
-
+history-ignore-command h history-{enable,disable} flush-his
 
 ####################################################################################################
 #                                                                                                  #
@@ -134,7 +133,7 @@ history-ignore-command h history-{enable,disable} flush-hist
 #                                                                                                  #
 ####################################################################################################
 
-## Setup job options (programs in the background, started by eg `echo hi &`)
+## Setup job options
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
@@ -192,10 +191,10 @@ setopt CLOBBER_EMPTY # Modify `NO_CLOBBER` to let you clobber empty files.
 ####################################################################################################
 
 alias bk='noglob bindkey'
-alias bkg='bindkey | noglob fgrep -ie'
-alias bkgd='clzsh -- -ic bindkey | noglob fgrep -ie'
+alias bkg='bindkey | noglob grep -Fie'
+alias bkgd='clzsh -- -ic bindkey | noglob grep -Fie'
 alias which-command=which # for `^[?`
-# function bindkey { print "bindkey: $*"; builtin bindkey $@ }
+# function bindkey { print "bindkey: $*"; builtin bindkey $@
 
 source ~ss/zsh/keybinds.zsh
 
@@ -236,9 +235,9 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 ## Load "experimental" options---things I'm not sure about yet.
 if [[ -n $SampShell_EXPERIMENTAL ]] then
 	## Options I'm not sure if I want to set or not.
-	# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
+	# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"' # <-- TODO, do we want ENV
 
-	: "${REPORTTIME=4}" # Print the duration of commands that take more than 4s of CPU time
+	: "${REPORTTIME:=4}" # Print the duration of commands that take more than 4s of CPU time
 
 	setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
 	setopt COMPLETE_IN_WORD
@@ -258,7 +257,6 @@ fi
 
 source ~ss/zsh/git-alias.zsh
 # x=( ${(f):-"$(git config -f $PWD/.gitconfig -l | sed -n 's/^alias\.\([a-z]*\)=.*/g\1=g \1/p')"} )
-
 
 ####################################################################################################
 #                                                                                                  #
@@ -282,7 +280,7 @@ wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
-	if (( $ARGC > 1 )) then print -u2 "at most 1 argument allowed"; return 1; fi
+	if (( $# > 1 )) then print -u2 "at most 1 argument allowed"; return 1; fi
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
 
@@ -293,7 +291,7 @@ function pk9 { pkill -KILL -afl $@ }
 
 # Interact with zsh files
 function szfiles {
-	if (( ARGC != 0 )) then print -u2 takes no arguments; return 1; fi
+	if (( $# != 0 )) then print -u2 takes no arguments; return 1; fi
 	$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
 }
 
@@ -318,7 +316,6 @@ alias grep='grep --color=auto'
 alias fgrep='grep -F --color=auto'
 alias egrep='grep -E --color=auto'
 
-# Misc ones
 function hr { xx ${@:--} }
 function hrc { hr "$@" | pbc }
 function ncol { awk "{ print \$${1:?} }" }
@@ -329,7 +326,7 @@ alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 # TODO: investigate this more. Maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
-if [[ $VENDOR == apple ]] alias cpu='top -o cpu' # TODO: maybe `ps -Ao pcpu,pid,comm | sort -nr | head ...`
+if [[ $VENDOR = apple ]] alias cpu='top -o cpu' # TODO: maybe `ps -Ao pcpu,pid,comm | sort -nr | head ...`
 
 function paa {
 	local -A ary=( ${(kvP)1} )
