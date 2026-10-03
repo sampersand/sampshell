@@ -122,12 +122,13 @@ function flush-hist {
 # Ignore commands by just prepending a space to them. This probably breaks on some commands, but I
 # haven't figured them out yet.
 function history-ignore-command {
-	local cmd
+	local cmd target
 	for cmd do
-		alias -- "$cmd= $(whence -- "$cmd")"
+		target=$(whence -- "$cmd") || { print -u2 "$0: no such command: $cmd"; continue }
+		alias -- "$cmd= $target"
 	done
 }
-history-ignore-command h history-{enable,disable} flush-his
+history-ignore-command h history-{enable,disable} flush-hist
 
 ####################################################################################################
 #                                                                                                  #
@@ -139,7 +140,7 @@ history-ignore-command h history-{enable,disable} flush-his
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-unalias j
+unalias j 2>/dev/null
 function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 
 ####################################################################################################
@@ -149,7 +150,7 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 ####################################################################################################
 
 # Default zstyle for prompt
-zstyle ':prompt:sampshell:git:*' pattern "$(whoami)?[0-9]???-??-??"
+zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
 
 autoload -Uz promptinit && promptinit
 () {
@@ -208,23 +209,20 @@ source ~ss/zsh/keybinds.zsh
 
 autoload -Uz compinit
 if [[ ! -e $XDG_STATE_HOME/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
-if [[ -f $XDG_STATE_HOME/sampshell/.zcompdump ]] then
-	compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
-else
-	compinit
-fi
+
+compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
 
 if [[ $VENDOR = apple ]] then
 	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
-	fignore+=(DS_Store) # boo, DS_Store files!
+	fignore+=(.DS_Store) # boo, DS_Store files!
 fi
 
 zmodload -i zsh/complist # May not be required
 zstyle ':completion:*' list-colors '' # Add colours to completions
 zstyle ':completion:*:*:cd:*' file-sort modification
-zstyle ':completion:*:*:rm:*' completer _ignored
+# zstyle ':completion:*:*:rm:*' completer _ignored <-- why delete
 zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 # zstyle ':completion:*:files' file-sort '!ignored-patterns' '*.DS_Store' <-- TODO
 
@@ -243,8 +241,8 @@ if [[ -n $SampShell_EXPERIMENTAL ]] then
 
 	setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
 	setopt COMPLETE_IN_WORD
-	setopt CORRECT              # Correct commands when executing.
-	setopt CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
+	setopt CORRECT                 # Correct commands when executing.
+	setopt NO_CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
 
 	CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting with `_`
 
@@ -278,7 +276,7 @@ alias -g 2@N='2>/dev/null'
 alias '%=' '$=' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
 
-wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
+wait-for-pid () while kill -0 ${1:?need pid} 2>/dev/null; do sleep ${2:-5}; done
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
@@ -287,9 +285,9 @@ function pwdc () (
 )
 
 # Shorthand for looking for processes
-function pg  { pgrep -afl $@ | command grep --color=always $@ }
-function pk  { pkill -afl $@ } # IDK if these always kill the right processes...
-function pk9 { pkill -KILL -afl $@ }
+function pg  { pgrep -fl $@ | command grep --color=always $@ }
+function pk  { pkill -fl $@ } # IDK if these always kill the right processes...
+function pk9 { pkill -KILL afl $@ }
 
 # Interact with zsh files
 function szfiles {
