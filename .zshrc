@@ -82,10 +82,9 @@ function cd {
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
 	## Add the record history function to the end.
-	# We want it to be the last function, so it'll only record things down if all the previous history
-	# functions have passed. However, it's not critical for it to be the last one (as this is just used
-	# for statistical purposes, and nothing mission-critical), so that if functions are added after it,
-	# it's ok.
+	# Ideally, it's the last function, so that it only records commands that all previous history
+	# functions accepted. However, being last isn't critical (it's only used in statistics), so it's
+	# fine if other functions are added after it.
 	zshaddhistory_functions+=( _SampShell-record-every-command )
 fi
 
@@ -100,14 +99,14 @@ setopt HIST_REDUCE_BLANKS     # Remove extra whitespace between arguments.
 setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
-setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicates commands first, then uniques.
-setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern computers.)
+setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, then uniques.
+setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern OSes.)
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
 ## Helpers
 alias h='noglob h'
 function flush-hist {
-	# If using macos's shell session mechanism, go through that
+	# If using macOS's shell session mechanism, go through that
 	if whence shell_session_save_history >/dev/null && shell_session_history_allowed; then
 		shell_session_save_history
 	else
@@ -133,7 +132,7 @@ history-ignore-command h history-{enable,disable} flush-hist
 #                                                                                                  #
 ####################################################################################################
 
-## Setup job options (jobs programs in the background, started by eg `echo hi &`)
+## Setup job options (programs in the background, started by eg `echo hi &`)
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
@@ -155,7 +154,7 @@ autoload -Uz promptinit && promptinit
 	zstyle -s ':sampshell:interactive:prompt' style prompt_style || prompt_style=default
 	prompt sampshell $prompt_style
 }
-setopt transient_rprompt # TODO: How to set this in the prompt
+setopt TRANSIENT_RPROMPT # TODO: How to set this in the prompt
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -172,7 +171,7 @@ POSTEDIT=$'\e[m'
 histchars[2]=,            # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
 setopt HIST_SUBST_PATTERN # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
 
-## Options that modify valid syntax 
+## Options that modify valid syntax
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
 setopt RC_QUOTES            # Within `'` strings, `''` is interpreted as an escaped `'`.
 setopt RC_EXPAND_PARAM      # `ary=(x y z); echo a${ary}b` is `axb ayb azb`.
@@ -204,8 +203,8 @@ source ~ss/zsh/keybinds.zsh
 #                                           Autocomplete                                           #
 #                                                                                                  #
 ####################################################################################################
-autoload -U compinit
-[[ ! -e $XDG_STATE_HOME/sampshell ]] && mkdir "$XDG_STATE_HOME/sampshell"
+autoload -Uz compinit
+if [[ ! -e $XDG_STATE_HOME/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
 if [[ -f $XDG_STATE_HOME/sampshell/.zcompdump ]] then
 	compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 else
@@ -214,7 +213,7 @@ fi
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
 
-if [[ $VENDOR = apple ]]; then
+if [[ $VENDOR = apple ]] then
 	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
 	fignore+=(DS_Store) # boo, DS_Store files!
 fi
@@ -232,8 +231,8 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 #                                                                                                  #
 ####################################################################################################
 
-## Load "experimental" options---things I'm not sure yet about.
-if [[ -n $SampShell_EXPERIMENTAL ]] {
+## Load "experimental" options---things I'm not sure about yet.
+if [[ -n $SampShell_EXPERIMENTAL ]] then
 	## Options I'm not sure if I want to set or not.
 	# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"'
 
@@ -246,8 +245,8 @@ if [[ -n $SampShell_EXPERIMENTAL ]] {
 
 	CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting with `_`
 
-	: command_not_found_handler # <-- thing executed when a command'snot found
-}
+	: command_not_found_handler # <-- thing executed when a command's not found
+fi
 
 ####################################################################################################
 #                                                                                                  #
@@ -273,14 +272,14 @@ source ~ss/zsh/misc.zsh
 alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
 
-alias '%=' '$=' # Let's you paste commands in; a start `$` or `%` on its own is ignored.
+alias '%=' '$=' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
 
 wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
-	if (( $ARGC > 1 )); then print "at most 1 argument allowed" 2@N; return 1 ; fi
+	if (( $ARGC > 1 )) then print -u2 "at most 1 argument allowed"; return 1; fi
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
 
@@ -291,15 +290,15 @@ function pk9 { pkill -KILL -afl $@ }
 
 # Interact with zsh files
 function szfiles {
-	if (( ARGC != 0 )) { print 2@N exactly 0 args must be given; return 1 }
-	subl ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
+	if (( ARGC != 0 )) then print -u2 takes no arguments; return 1; fi
+	$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
 }
 
-function szrc { subl ~/.zshrc }
+function szrc { $SampShell_EDITOR ~/.zshrc }
 function zfns { typeset -m '*_functions' }
 sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
 
-# Adds in "clean shell" aliases, which startup a clean version of shells, and only set "normal"
+# Adds in "clean shell" aliases, which start up a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
 alias   clsh='clean-shell sh'
 alias clbash='clean-shell bash'
@@ -316,19 +315,19 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-function hr () { xx ${@:--} }
-function hrc () { hr "$@" | pbcopy }
+function hr { xx ${@:--} }
+function hrc { hr "$@" | pbc }
 function ncol { awk "{ print \$$1 }" }
 
 # `prp` is a shorthand for `print -P`, which prints out a fmt string as if it were in the prompt.
 alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 
-# TODO: investigate this more. maybe `du -chd1`?
+# TODO: investigate this more. Maybe `du -chd1`?
 function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
 alias cpu='top -o cpu'
 
-function paa () {
+function paa {
 	local -A ary=( ${(kvP)1} )
 	local k v MBEGIN MEND MATCH
 	local max_len=${${(*Onk)ary/(#m)*/$MEND}[1]}
