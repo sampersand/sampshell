@@ -1,18 +1,20 @@
-#### Basic SampShell definitions for interactive ZSH shell instances.
-# This file shouldn't be sourced directly; instead, the top-level `.shrc` file sources it.
+#### SampShell's core config for interactive ZSH sessions
+# This file is the stable foundation for my ZSH setup---it changes rarely, should be correct, and
+# must work on every system that runs a modern ZSH. Everything that it sources (barring `.shrc`) is
+# less stable, and is subject to change.
 #
-# The definitions in this file aren't really meant to be changed, as they codify how I use ZSH. Any
-# options I'm not certain about go into `experimental.zsh`, which is `source`d unless the variable
-# `$SampShell_EXPERIMENTAL` is set
+# ZSH inherits from `.shrc` (where options that all POSIX shells can understand); this file is where
+# ZSH-only config is defined. Anything I'm uncertain about is guarded via `$SampShell_EXPERIMENTAL`,
+# which defaults to being enabled.
 #
-# This file is not the location for functions, but rather configuration; Functions go into the
-# `utils.zsh` or `functions.zsh` files instead.
+# This file is a mix of ZSH setup (path/fpath, options, etc.) and common functions/aliases that are
+# used constantly and rarely change.
 #
 # Note that `setopt` is used for setting options to a value other than their default; `undo.zsh`
 # is where `unsetopt` is used to set options back to their default in case something changed them.
 # While not required (`setopt no_...` is the same as `unsetopt ...`), I find it easier to reason
 # about this way.
-#####
+####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
 if [[ -n $SampShell_DISABLED ]] return
