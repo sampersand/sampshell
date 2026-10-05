@@ -208,8 +208,7 @@ source ~ss/zsh/keybinds.zsh
 ####################################################################################################
 
 autoload -Uz compinit
-if [[ ! -e $XDG_STATE_HOME/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
-
+if [[ ! -e ${XDG_STATE_HOME:=~/.local/state}/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
 compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
@@ -264,10 +263,13 @@ source ~ss/zsh/git-alias.zsh
 #                                                                                                  #
 ####################################################################################################
 
+## Few notes:
+# 1. Functions here use `function ... { ... }` to prevent clashes with existing aliases
+# 2. These declarations are the smaller and more "stable" ones I use often; ones I don't go into
+#    zsh/misc.zsh.
+
 ## All extra unsorted functions and aliases should be defined here.
 source ~ss/zsh/misc.zsh
-
-## What follows are functions/aliases I use commonly enough
 
 # Shorthands for redirecting to `/dev/null`
 alias -g @N='>/dev/null'
@@ -276,28 +278,40 @@ alias -g 2@N='2>/dev/null'
 alias '%=' '$=' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
 
-wait-for-pid () while kill -0 ${1:?need pid} 2>/dev/null; do sleep ${2:-5}; done
+# Wait until a pid finishes
+function wait-for-pid {
+	local pid=${1:?need a pid}
+	local time=${2:-5}
+
+	while kill -0 $pid 2>/dev/null; do
+		sleep $time
+	done
+}
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
-	if (( $# > 1 )) then print -u2 "at most 1 argument allowed"; return 1; fi
+	if (( $# > 1 )) then
+		print -u2 "$0: at most 1 argument allowed"
+		return 1
+	fi
+
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
 
 # Shorthand for looking for processes
 function pg  { pgrep -fl $@ | command grep --color=always $@ }
 function pk  { pkill -fl $@ } # IDK if these always kill the right processes...
-function pk9 { pkill -KILL afl $@ }
+function pk9 { pkill -KILL -fl $@ }
 
 # Interact with zsh files
 function szfiles {
-	if (( $# != 0 )) then print -u2 takes no arguments; return 1; fi
+	if (( $# != 0 )) then print -u2 "$0: takes no arguments"; return 1; fi
 	$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
 }
 
-function szrc { $SampShell_EDITOR ~/.zshrc }
+function szrc { $SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc }
 function zfns { typeset -m '*_functions' }
-sublf () subl "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
+sublf () $SampShell_EDITOR "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
 
 # Adds in "clean shell" aliases, which start up a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
