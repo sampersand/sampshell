@@ -5,7 +5,14 @@
 ####################################################################################################
 
 ## Register functions; We use an anonymous function so `fn` doesn't escape
-() { local fn; for fn do zle -N $fn; done } ~ss/zsh/widgets/*(:t)
+if ! autoload-dir ~ss/zsh/widgets; then
+	print -ru2 "unable to load widgets, returning"
+	return 1
+else
+	for REPLY in $reply; do
+		zle -N $REPLY
+	done
+fi
 
 bindkey '^?' kill-region-or-backward-delete-char
 

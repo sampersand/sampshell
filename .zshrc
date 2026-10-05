@@ -39,12 +39,33 @@ typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't a
 #                                                                                                  #
 ####################################################################################################
 
-## Mark all the functions within the `functions` directory as autoloaded functions: They'll only be
-# loaded when they're first executed. (The `-U` flag specifies no aliases are used when expanding
-# the functions, `-z` specifies they're autoloaded in ZSH-style, not KSH.)
-# (Also, adds to `fpath` so `freload` works)
-typeset -Ua fpath=( ~ss/zsh/{functions,widgets,zsh_directory_name_functions} $fpath )
-autoload -Uz ~ss/zsh/{functions,widgets,zsh_directory_name_functions}/*
+## Standardize `fpath`. (`-g` and `-a` are sanity checks; `-U` makes it unique)
+# $fpath is where we ZSH's `autoload` will search for functions. The idea here is to offload
+# functions that are somewhat large, or don't need to be included in every startup, to their own
+# files.
+#
+# Importantly though, these are functions that somehow interact with ZSH's internals (such as
+# history functions, widgets, etc), and thus have to be ZSH. In general, we prefer sticking general
+# purpose functions into `$PATH`, so that they can be used by other programs (or shells).
+typeset -gaU fpath
+
+# Adds a directory to the `fpath`, and then autoloads all functions in it. Sets `$reply` to the
+# list of functions names that were autoloaded.
+function autoload-dir {
+	local dir=${1:?}
+	reply=( $dir/*(.N:t) )
+
+	if (( $#reply == 0 )) then
+		print -ru2 "$0: no functions found in $dir"
+		return 1
+	fi
+
+	fpath=( $dir $fpath )
+	autoload -Uz $reply
+}
+
+# Load the general-purpose functions we use.
+autoload-dir ~ss/zsh/functions
 
 ####################################################################################################
 #                                                                                                  #
@@ -67,10 +88,12 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
-typeset -Ua zsh_directory_name_functions
-zsh_directory_name_functions+=( ~ss/zsh/zsh_directory_name_functions/*(:t) )
+if autoload-dir ~ss/zsh/zsh_directory_name_functions; then
+	typeset -Ua zsh_directory_name_functions
+	zsh_directory_name_functions+=( $reply )
+fi
 
-# Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
+## Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
 	[[ $# == 1 && -f $1 ]] && set -- $1:h
 	builtin cd $@
@@ -157,8 +180,8 @@ autoload -Uz promptinit && promptinit
 	local prompt_style
 	zstyle -s ':sampshell:interactive:prompt' style prompt_style || prompt_style=default
 	prompt sampshell $prompt_style
+	setopt TRANSIENT_RPROMPT # Unfortunately, this can't be set in the prompt :-(
 }
-setopt TRANSIENT_RPROMPT # TODO: How to set this in the prompt
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -197,8 +220,8 @@ alias bk='noglob bindkey'
 alias bkg='bindkey | noglob grep -Fie'
 alias bkgd='clzsh -- -ic bindkey | noglob grep -Fie'
 alias which-command=which # for `^[?`
-# function bindkey { print "bindkey: $*"; builtin bindkey $@
 
+# function bindkey { print "bindkey: $*"; builtin bindkey $@ } # Helper for showing keybinds
 source ~ss/zsh/keybinds.zsh
 
 ####################################################################################################
@@ -275,7 +298,7 @@ source ~ss/zsh/misc.zsh
 alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
 
-alias '%=' '$=' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
+alias '%= ' '$= ' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
 
 # Wait until a pid finishes
