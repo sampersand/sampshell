@@ -28,10 +28,12 @@ hash -d ss=$SampShell_ROOTDIR
 source ~ss/zsh/undo.zsh
 
 ####################################################################################################
+#                                                                                                  #
 #                                           Setup $PATH                                            #
+#                                                                                                  #
 ####################################################################################################
 
-typeset -xgU path  # Ensure `path` is unique, and export it (in case it wasn't already).
+typeset -xgU path # Ensure `path` is unique, and export it (in case it wasn't already).
 
 ####################################################################################################
 #                                                                                                  #
@@ -88,10 +90,9 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
-if autoload-dir ~ss/zsh/zsh_directory_name_functions; then
-	typeset -Ua zsh_directory_name_functions
-	zsh_directory_name_functions+=( $reply )
-fi
+autoload-dir ~ss/zsh/zsh_directory_name_functions
+typeset -Ua zsh_directory_name_functions
+zsh_directory_name_functions+=( $reply )
 
 ## Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -104,6 +105,9 @@ function cd {
 #                                             History                                              #
 #                                                                                                  #
 ####################################################################################################
+
+# Autoload any relevant history functions
+autoload-dir ~ss/zsh/functions/history
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
@@ -132,26 +136,7 @@ unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case some
 
 ## Helpers
 alias h='noglob h'
-function flush-hist {
-	# If using macOS's shell session mechanism, go through that
-	if whence shell_session_save_history >/dev/null && shell_session_history_allowed; then
-		shell_session_save_history
-	else
-		# Otherwise, use the normal `fc -AI`
-		builtin fc -AI
-	fi
-}
-
-# Ignore commands by just prepending a space to them. This probably breaks on some commands, but I
-# haven't figured them out yet.
-function history-ignore-command {
-	local cmd target
-	for cmd do
-		target=$(whence -- "$cmd") || { print -u2 "$0: no such command: $cmd"; continue }
-		alias -- "$cmd= $target"
-	done
-}
-history-ignore-command h history-{enable,disable} flush-hist
+history-ignore-command h history-{enable,disable} flush-history
 
 ####################################################################################################
 #                                                                                                  #
@@ -171,6 +156,9 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 #                                     The Prompt: PS1 and RPS1                                     #
 #                                                                                                  #
 ####################################################################################################
+
+# Load in the prompt and any relevant files
+autoload-dir ~ss/zsh/functions/prompt
 
 # Default zstyle for prompt
 zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"

@@ -1,0 +1,36 @@
+#!zsh
+
+## Ignores commands in ZSH's history mechanism.
+#
+# After lots of iteration with different features, the simplest way to do this
+# is just using an alias and prepending a space to it, requiring the
+# `HIST_IGNORE_SPACE` option to be set.
+if [[ ${1-} == (-h|--help) ]] || (( $# == 0 )); then
+	cat >&2 <<-EOS
+		usage: $0 COMMAND [...COMMAND]
+
+		Do not record any COMMANDs to history. This is done by aliasing the
+		command with a space before it, and thus requires 'HIST_IGNORE_SPACE' to
+		be set.
+	EOS
+
+	return 1
+fi
+
+if [[ ! -o HIST_IGNORE_SPACE ]]; then
+	print -ru2 "$0: setopt HIST_IGNORE_SPACE is required to use this feature"
+	return 1
+fi
+
+local cmd target error=0
+for cmd; do
+	if ! target=$(whence -- "$cmd"); then
+		print -ru2 "$0: no such command: $cmd"
+		error=1
+		continue
+	fi
+
+	alias -- "$cmd= $target"
+done
+
+return $error

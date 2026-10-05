@@ -1,0 +1,24 @@
+#!zsh
+
+# Flushes the current history to a file
+if (( $# != 0 )) then
+	cat >&2 <<-EOS
+		usage: $0
+
+		Flushes the current shell's history to the history file. Also supports
+		macOS's Terminal.app's shell session mechanism.
+	EOS
+
+	return 1
+fi
+
+# If using macOS's shell session mechanism, go through that
+if whence shell_session_save_history >/dev/null &&
+	whence shell_session_history_allowed >/dev/null &&
+	shell_session_history_allowed
+then
+	shell_session_save_history
+else
+	# Otherwise, use the normal `fc -AI`
+	builtin fc -AI
+fi
