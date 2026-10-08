@@ -33,74 +33,92 @@
 
 	# git rebase
 	rb  = rebase
-	rbm = !git rebase "$(git master-branch)"
+	rbm = !git rebase \"$(git master-branch)\"
 	rba = rebase --abort
 
 	# git checkout
 	co = checkout
-	com = !git checkout "$(git master-branch)" --
+	com = !cd -- \"${GIT_PREFIX:-.}\" && git checkout \"$(git master-branch)\" --
 
+	# misc
 	rs = reset
 	cp = cherry-pick
 
+	# git diff
 	d  = diff
-	dm = !git diff "$(git master-branch)"
+	dm = !cd -- \"${GIT_PREFIX:-.}\" && git diff \"$(git master-branch)\"
 	ds = diff --stat
-	dms = !git diff --stat "$(git master-branch)"
+	dms = !cd -- \"${GIT_PREFIX:-.}\" && git diff --stat \"$(git master-branch)\"
 	dsm = dms
+	dh  = !cd -- \"${GIT_PREFIX:-.}\" && git diff HEAD~1
+	dhs = !cd -- \"${GIT_PREFIX:-.}\" && git diff --stat HEAD~1
 	dno = diff --name-only
-	dh = "!f () { if [ $# -eq 0 ]; then set -- 'HEAD~1'; fi; git diff \"$@\"; }; f"
-	dhs = "!f () { if [ $# -eq 0 ]; then set -- 'HEAD~1'; fi; git diff --stat \"$@\"; }; f"
 
-	m = "!f () { if [ $# -eq 0 ]; then set -- '@{-1}'; fi; git merge \"$@\"; }; f"
-	mm = !git merge "$(git master-branch)"
+	# git merge
+	m = "!f () { if [ $# -eq 0 ]; then set '@{-1}'; fi; git merge \"$@\"; }; f"
+	mm = !git merge \"$(git master-branch)\"
 	ma = merge --abort
 
+	# git add
 	a = add
 	aa = !git add --all && git status
 
-	cm = commit-msg
-	cma = cm --amend
-	cmn = cm --no-verify
-	cman = cm --amend --no-verify
-	cmna = cman
+	# git commit
+	cm    = commit-msg
+	cma   = cm --amend
+	cmn   = cm --no-verify
+	cman  = cm --amend --no-verify
+	cmna  = cman
+	amend = cma
 
-	new-branch = "!f() { branch=$(git branch-name "$@") && git switch --create "$branch"; }; f"
-	nb = new-branch
-	dirs = prev-branches
+	# Branches
+	new-branch = "!f() { branch=$(git branch-name \"$@\") && git switch --create \"$branch\"; }; f"
+	nb         = new-branch
+	dirs       = prev-branches
+	br         = branch
+	brc        = branch --show-current
 
-	br = branch
-	brc = branch --show-current
+	# switching branches
+	sw  = "!f() { if [ $# -eq 0 ]; then set '@{-1}'; fi; git switch \"$@\"; }; f"
+	swm = !git switch \"$(git master-branch)\"
 
-	sw = "!f() { if [ $# -eq 0 ]; then set '@{-1}'; fi; git switch \"$@\"; }; f"
-	swm = !git switch "$(git master-branch)"
-
-	st = stash
+	# Stashing
+	st  = stash
 	stp = stash pop
 
-	f = fetch
-	pl = pull
-	ph = push
-	phf = push --force
+	# Fetching and Pushing
+	f   = fetch
+	pl  = pull
+	ph  = push
+	phf = push --force-with-lease
 
+	# "commands"
 	nit     = commit --amend --no-edit
 	current-branch = branch --show-current
 	aliases = config --get-regexp ^alias\\.
 
+	# Inspect logs
 	l = log
 	log-short = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short
+	ls = log-short
 
 	# interacting with github
-	pr = create-pr
+	pr  = create-pr
 	prv = !gh pr view --web
-	ru = remote-url
+	ru  = remote-url
 	ruo = "!f () { if [ \"$1\" == -h ]; then git remote-url -h >&2; return 1; fi; remote=$(git remote-url \"$@\") && open -- \"$remote\"; }; f"
 	ruc = "!f () { if [ \"$1\" == -h ]; then git remote-url -h >&2; return 1; fi; git remote-url \"$@\" | pbcopy; }; f"
+
+	# Re-exports of `$PATH` so shell aliases see them
+	oops   = oops
+	ignore = ignore
+	squash = squash
 
 	# others idk i need
 	isancestor = merge-base --is-ancestor
 	g = grep
 
+	# "aliases" for `$PATH` gits, so that autopopulate will find them
 	# oops = !git add --all && git commit --amend --no-edit && git push --force
 # TODO: Only `git push --force` if a remote is available
 

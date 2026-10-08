@@ -274,8 +274,32 @@ fi
 #                                                                                                  #
 ####################################################################################################
 
-source ~ss/zsh/git-alias.zsh
-# x=( ${(f):-"$(git config -f $PWD/.gitconfig -l | sed -n 's/^alias\.\([a-z]*\)=.*/g\1=g \1/p')"} )
+## Shorthand and spellcheck
+alias g=git gti=git
+
+## Make `g<cmd>` aliases for all git aliases defined. Explicitly skips ones with `-` ("long-form").
+# Also intentionally not specific to sampshell aliases, this'll load any other git aliases defined.
+() {
+	local cmd
+	for cmd in $(git config --name-only --get-regexp '^alias\.[^-]+$'); do
+		cmd=${cmd#alias.}
+		alias "g$cmd=git $cmd"
+	done
+}
+
+## ZSH-specific aliases
+alias gcm='noglob git commit-msg'
+alias gcma='gcm --amend'
+alias gcmn='gcm --no-verify'
+alias gcman='gcm --amend --no-verify' gcmna=gcman
+alias gnb='noglob git new-branch'
+
+# Git shorthand, make `@-X` be the same as `@{-X}`.
+alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
+         '@-4=@{-4}' '@-5=@{-5}' '@-6=@{-6}' \
+         '@-7=@{-7}' '@-8=@{-8}' '@-9=@{-9}'
+
+# }source ~ss/zsh/git-alias.zsh
 
 ####################################################################################################
 #                                                                                                  #
