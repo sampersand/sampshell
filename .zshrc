@@ -115,6 +115,28 @@ function cd {
 #                                                                                                  #
 ####################################################################################################
 
+## Overview of how I use history
+# The way I use history is pretty specific: Every ZSH instance's history is unrelated to every other
+# instance's history (i.e. they don't share history _at all_), and only on shutdown (or an explicit
+# `history-flush` call), do they write to the shared history file. This heavily influences the
+# "saving" options. Note that macOS's Terminal.app's builtin session save mechanism actually fits
+# quite nicely into this, and I don't have to touch it at all (except for `history-flush`). Clean!
+#
+# Additionally, I like to use history as a chunk of contiguous commands (so I can CTRL+R to search
+# for commands, and CTRL+O to then execute the next one), but their relative order does not matter
+# much to me. On top of that, modern computers can easily store any amount of history commands,
+# so I explicitly set `HISTSIZE` and `SAVEHIST` to very large numbers, so I never run out of space,
+# and most "how do deal with duplicates" options that ZSH uses aren't too relevant.
+#
+# I do like to omit commands from being stored in history, though. This is done by enabling the
+# `HIST_IGNORE_SPACE` option, so prepending spaces skips adding a command to history. Some commands
+# I don't want to add to history ever for some reason or other, so `history-ignore-command` can
+# prevent them from ever being recorded (by essentially aliasing commands to prepend a space).
+#
+# I also want to record every non-ignored command (for statistical purposes), so the
+# `_SampShell-record-every-command` function is used to record things as needed.
+##
+
 # Autoload any relevant history functions
 autoload-dir ~ss/zsh/functions/history
 
@@ -139,7 +161,7 @@ setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, then uniques.
-setopt HIST_FCNTL_LOCK        # Use `fcntl` to lock files. (Supported by all modern OSes.)
+# setopt HIST_FCNTL_LOCK      # Use `fcntl` to lock files. (Supported by all modern OSes.); removed cause i dont think i need it
 
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
@@ -167,7 +189,7 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 ####################################################################################################
 
 # `promptinit` does all the autoload itself
-fpath+=~ss/zsh/functions/prompt
+fpath=(~ss/zsh/functions/prompt $fpath)
 
 # Default zstyle for prompt
 zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
