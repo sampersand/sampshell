@@ -296,9 +296,6 @@ fi
 #                                                                                                  #
 ####################################################################################################
 
-## Shorthand and spellcheck
-alias g=git gti=git
-
 ## Make `g<cmd>` aliases for all git aliases defined. Explicitly skips ones with `-` ("long-form").
 # Also intentionally not specific to sampshell aliases, this'll load any other git aliases defined.
 () {
@@ -342,16 +339,6 @@ alias -g @@='&>/dev/null'
 
 alias '%= ' '$= ' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
-
-# # Wait until a pid finishes
-# function wait-for-pid {
-# 	local pid=${1:?need a pid}
-# 	local time=${2:-5}
-
-# 	while kill -0 $pid 2>/dev/null; do
-# 		sleep $time
-# 	done
-# }
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
