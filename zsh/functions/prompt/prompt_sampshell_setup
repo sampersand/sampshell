@@ -47,6 +47,7 @@ function prompt_sampshell_precmd {
 ## The function that's used to fetch the git status.
 function _SampShell-prompt-git-hook1 {
 	emulate -L zsh # Reset the shell to the default ZSH options
+	autoload -Uz __git_ps1 # Autoload the git ps1 as needed
 
 	psvar[prompt_sampshell_var_long_git]= psvar[prompt_sampshell_var_short_git]= # Empty the variables
 

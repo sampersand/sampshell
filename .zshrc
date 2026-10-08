@@ -17,11 +17,16 @@
 ####
 
 # If SampShell_DISABLED is set to a non-empty value, then don't do any setup
-if [[ -n $SampShell_DISABLED ]] return
+if [[ -n $SampShell_DISABLED ]]; then
+	return
+fi
 
-# Load universal sampshell config; `SampShell_ROOTDIR` should already have been set.
+## Load universal sampshell config that all POSIX shells share.
+# (Note that `SampShell_ROOTDIR` should already have been set in the `.profile`, so we `:?` as just
+# a sanity check)
 emulate sh -c '. "${SampShell_ROOTDIR:?}/.shrc"'
 
+## Adds `ss` as a named directory, as it's used heavily in this config file
 hash -d ss=$SampShell_ROOTDIR
 
 # Undo `setopt`s that might've been done
@@ -90,9 +95,13 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
-autoload-dir ~ss/zsh/zsh_directory_name_functions
-typeset -Ua zsh_directory_name_functions
-zsh_directory_name_functions+=( $reply )
+() {
+	autoload-dir ~ss/zsh/zdn || return
+	local zdn
+	for zdn in $reply; do
+		add-zsh-hook zsh_directory_name $zdn
+	done
+}
 
 ## Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -115,7 +124,7 @@ if zstyle -T ':sampshell:history:record-every-command' enabled; then
 	# Ideally, it's the last function, so that it only records commands that all previous history
 	# functions accepted. However, being last isn't critical (it's only used in statistics), so it's
 	# fine if other functions are added after it.
-	zshaddhistory_functions+=( _SampShell-record-every-command )
+	add-zsh-hook zshaddhistory _SampShell-record-every-command
 fi
 
 ## Setup history parameters
@@ -157,8 +166,8 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 #                                                                                                  #
 ####################################################################################################
 
-# Load in the prompt and any relevant files
-autoload-dir ~ss/zsh/functions/prompt
+# `promptinit` does all the autoload itself
+fpath+=~ss/zsh/functions/prompt
 
 # Default zstyle for prompt
 zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
@@ -285,6 +294,7 @@ source ~ss/zsh/misc.zsh
 # Shorthands for redirecting to `/dev/null`
 alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
+alias -g @@='&>/dev/null'
 
 alias '%= ' '$= ' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
