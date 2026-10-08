@@ -167,7 +167,7 @@ unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case some
 
 ## Helpers
 alias h='noglob h'
-history-ignore-command h history-{enable,disable} flush-history
+history-ignore-command h history-{enable,disable,flush}
 
 ####################################################################################################
 #                                                                                                  #
@@ -343,15 +343,15 @@ alias -g @@='&>/dev/null'
 alias '%= ' '$= ' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
 history-ignore-command reload
 
-# Wait until a pid finishes
-function wait-for-pid {
-	local pid=${1:?need a pid}
-	local time=${2:-5}
+# # Wait until a pid finishes
+# function wait-for-pid {
+# 	local pid=${1:?need a pid}
+# 	local time=${2:-5}
 
-	while kill -0 $pid 2>/dev/null; do
-		sleep $time
-	done
-}
+# 	while kill -0 $pid 2>/dev/null; do
+# 		sleep $time
+# 	done
+# }
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
