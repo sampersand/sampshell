@@ -33,20 +33,15 @@ hash -d ss=$SampShell_ROOTDIR
 source ~ss/zsh/undo.zsh
 
 autoload -Uz add-zsh-hook
+####################################################################################################
+#                                                                                                  #
+#                                            Load Paths                                            #
+#                                                                                                  #
+####################################################################################################
 
-####################################################################################################
-#                                                                                                  #
-#                                           Setup $PATH                                            #
-#                                                                                                  #
-####################################################################################################
-
-typeset -xgU path # Ensure `path` is unique, and export it (in case it wasn't already).
-
-####################################################################################################
-#                                                                                                  #
-#                                   Add in autoloaded functions                                    #
-#                                                                                                  #
-####################################################################################################
+## Ensure `path` is unique, and export it (in case it wasn't already).
+# (Note that sampshell only adds to `$PATH` in login shells; cf `.zprofile` / `.profile`.)
+typeset -xgU path
 
 ## Standardize `fpath`. (`-g` and `-a` are sanity checks; `-U` makes it unique)
 # $fpath is where we ZSH's `autoload` will search for functions. The idea here is to offload
@@ -232,6 +227,11 @@ setopt EXTENDED_GLOB        # Always have extended globs enabled, without needin
 setopt NO_CLOBBER    # Don't overwrite files when using `>` (unless `>|` or `>!` is used.)
 setopt CLOBBER_EMPTY # Modify `NO_CLOBBER` to let you clobber empty files.
 
+## Global shorthands for redirecting to `/dev/null`
+alias -g @N='>/dev/null'
+alias -g 2@N='2>/dev/null'
+alias -g @@='&>/dev/null'
+
 ####################################################################################################
 #                                                                                                  #
 #                                           Key Bindings                                           #
@@ -332,11 +332,6 @@ for i in {1..9}; do alias -g "@-$i=@{-$i}"; done
 # 1. Functions here use `function ...` to prevent clashes with existing aliases
 # 2. These declarations are the smaller and more "stable" ones I use often; ones I don't go into
 #    zsh/misc.zsh.
-
-# Shorthands for redirecting to `/dev/null`
-alias -g @N='>/dev/null'
-alias -g 2@N='2>/dev/null'
-alias -g @@='&>/dev/null'
 
 # Let you paste in commands that start with `$` or `%` (they're just ignored)
 alias '%= ' '$= '
