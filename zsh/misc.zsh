@@ -6,7 +6,7 @@ if [[ $VENDOR == apple ]] {
 	function  toggle-wifi { disable-wifi; sleep 2; enable-wifi }
 }
 
-function ducks { du -chs -- $@ | sort -h }
+function ducks { du -chs -- ${@:-*} | sort -h }
 
 diffs () { if (( $# != 2 )) { echo "need 2 args"; return 1}
 	diff <(print -r "$1") <(print -r "$2")
@@ -48,5 +48,15 @@ prA () {
 	for k v ( ${(@kvP)1} ) opts+=( --arg "$k" "$v" )
 	jq -n '$ARGS.named' "${opts[@]}"
 }
+function paa {
+	local -A ary=( ${(kvP)1} )
+	local k v MBEGIN MEND MATCH
+	local max_len=${${(*Onk)ary/(#m)*/$MEND}[1]}
+	foreach k v ( ${(kv)ary} ) {
+		printf ' %*s: ' $max_len "$k"
+		p --no-prefixes --trailing-newline -- "$v"
+	}
+}
 
-wait-for-pid () while kill -0 ${1:?need pid} 2@N; do sleep ${2:-5}; done
+
+## ---

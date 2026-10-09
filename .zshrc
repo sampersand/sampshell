@@ -32,6 +32,8 @@ hash -d ss=$SampShell_ROOTDIR
 # Undo `setopt`s that might've been done
 source ~ss/zsh/undo.zsh
 
+autoload -Uz add-zsh-hook
+
 ####################################################################################################
 #                                                                                                  #
 #                                           Setup $PATH                                            #
@@ -100,6 +102,7 @@ setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 	local zdn
 	for zdn in $reply; do
 		add-zsh-hook zsh_directory_name $zdn
+		# NOTE: `add-zsh-hook` actually autoloads, so maybe we dont need a loop here?
 	done
 }
 
@@ -249,8 +252,11 @@ source ~ss/zsh/keybinds.zsh
 #                                                                                                  #
 ####################################################################################################
 
+## Unlike most other features of ZSH, I never got too deep into autocomplete. This section is
+# ship-shod, and will be revisited once I get a better handle on how autocompletes work.
+
 autoload -Uz compinit
-if [[ ! -e ${XDG_STATE_HOME:=~/.local/state}/sampshell ]] mkdir "$XDG_STATE_HOME/sampshell"
+if [[ ! -e ${XDG_STATE_HOME:=~/.local/state}/sampshell ]] mkdir -p "$XDG_STATE_HOME/sampshell"
 compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
@@ -314,9 +320,7 @@ alias gcman='gcm --amend --no-verify' gcmna=gcman
 alias gnb='noglob git new-branch'
 
 # Git shorthand, make `@-X` be the same as `@{-X}`.
-alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
-         '@-4=@{-4}' '@-5=@{-5}' '@-6=@{-6}' \
-         '@-7=@{-7}' '@-8=@{-8}' '@-9=@{-9}'
+for i in {1..9}; do alias -g "@-$i=@{-$i}"; done
 
 ####################################################################################################
 #                                                                                                  #
@@ -325,20 +329,17 @@ alias -g '@-1=@{-1}' '@-2=@{-2}' '@-3=@{-3}' \
 ####################################################################################################
 
 ## Few notes:
-# 1. Functions here use `function ... { ... }` to prevent clashes with existing aliases
+# 1. Functions here use `function ...` to prevent clashes with existing aliases
 # 2. These declarations are the smaller and more "stable" ones I use often; ones I don't go into
 #    zsh/misc.zsh.
-
-## All extra unsorted functions and aliases should be defined here.
-source ~ss/zsh/misc.zsh
 
 # Shorthands for redirecting to `/dev/null`
 alias -g @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
 alias -g @@='&>/dev/null'
 
-alias '%= ' '$= ' # Lets you paste commands in; a starting `$` or `%` on its own is ignored.
-history-ignore-command reload
+# Let you paste in commands that start with `$` or `%` (they're just ignored)
+alias '%= ' '$= '
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
@@ -363,7 +364,7 @@ function szfiles {
 
 function szrc { $SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc }
 function zfns { typeset -m '*_functions' }
-sublf () $SampShell_EDITOR "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
+function sublf () $SampShell_EDITOR "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
 
 # Adds in "clean shell" aliases, which start up a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.
@@ -379,8 +380,8 @@ alias b100='banner --copy --width=100'
 
 ## Adding default arguments to builtin commands
 alias grep='grep --color=auto'
-alias fgrep='grep -F --color=auto'
-alias egrep='grep -E --color=auto'
+alias fgrep='grep -F'
+alias egrep='grep -E'
 
 function hr { xx ${@:--} }
 function hrc { hr "$@" | pbc }
@@ -390,16 +391,17 @@ function ncol { awk "{ print \$${1:?} }" }
 alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 
 # TODO: investigate this more. Maybe `du -chd1`?
-function ducks { du -chs -- ${@:-*} | sort -h }
 function awkf () awk "BEGIN{${(j:;:)@}; exit}"
 if [[ $VENDOR = apple ]] alias cpu='top -o cpu' # TODO: maybe `ps -Ao pcpu,pid,comm | sort -nr | head ...`
 
-function paa {
-	local -A ary=( ${(kvP)1} )
-	local k v MBEGIN MEND MATCH
-	local max_len=${${(*Onk)ary/(#m)*/$MEND}[1]}
-	foreach k v ( ${(kv)ary} ) {
-		printf ' %*s: ' $max_len "$k"
-		p --no-prefixes --trailing-newline -- "$v"
-	}
+function wait-for-pid {
+	local pid=${1:?need pid}
+	local duration=${2:-5}
+	while kill -0 $pid 2>/dev/null; do
+		sleep $duration
+	done
 }
+
+
+## All extra unsorted functions and aliases should be defined here.
+source ~ss/zsh/misc.zsh
