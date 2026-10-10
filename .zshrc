@@ -53,23 +53,23 @@ typeset -xgU path
 # purpose functions into `$PATH`, so that they can be used by other programs (or shells).
 typeset -gaU fpath
 
-# Adds a directory to the `fpath`, and then autoloads all functions in it. Sets `$reply` to the
-# list of functions names that were autoloaded.
+## Autoloads all functions inside a directory, and sets `$reply` to the function names
 function autoload-dir {
 	local dir=${1:?}
-	reply=( $dir/*(.N:t) )
+	local fn_paths=( $dir/*(.N) )
 
-	if (( $#reply == 0 )) then
+	if (( $#fn_paths == 0 )) then
 		print -ru2 "$0: no functions found in $dir"
 		return 1
 	fi
 
-	fpath=( $dir $fpath )
-	autoload -Uz $reply
+	autoload -Uz $fn_paths
+	reply=( ${fn_paths:t} )
 }
 
+
 # Load the general-purpose functions we use.
-autoload-dir ~ss/zsh/functions
+() { local reply ; autoload-dir ~ss/zsh/functions }
 
 ####################################################################################################
 #                                                                                                  #
@@ -77,13 +77,14 @@ autoload-dir ~ss/zsh/functions
 #                                                                                                  #
 ####################################################################################################
 
+## Add names directories for common locations, if they are set
 if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR
-if [[ -d ~/tmp               ]] hash -d tmp=$HOME/tmp
-if [[ -d ~/Desktop           ]] hash -d d=$HOME/Desktop
-if [[ -d ~/Downloads         ]] hash -d dl=$HOME/Downloads
+if [[ -d ~/tmp               ]] hash -d tmp=~/tmp
+if [[ -d ~/Desktop           ]] hash -d d=~/Desktop
+if [[ -d ~/Downloads         ]] hash -d dl=~/Downloads
 
 ## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
-function d { builtin dirs ${@:--v} }
+function dirs { builtin dirs ${@:--v} }
 
 ## Setup `cd` options
 setopt CDABLE_VARS  # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
@@ -93,6 +94,7 @@ setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
 () {
+	local -a reply
 	autoload-dir ~ss/zsh/zdn || return
 	local zdn
 	for zdn in $reply; do
@@ -136,7 +138,7 @@ function cd {
 ##
 
 # Autoload any relevant history functions
-autoload-dir ~ss/zsh/functions/history
+() { local reply; autoload-dir ~ss/zsh/functions/history }
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
@@ -186,12 +188,11 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 #                                                                                                  #
 ####################################################################################################
 
-# `promptinit` does all the autoload itself
-fpath=(~ss/zsh/functions/prompt $fpath)
-
 # Default zstyle for prompt
 zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
 
+# `promptinit` does all the autoload itself
+fpath=( ~ss/zsh/functions/prompt $fpath )
 autoload -Uz promptinit && promptinit
 () {
 	local prompt_style
@@ -228,9 +229,9 @@ setopt NO_CLOBBER    # Don't overwrite files when using `>` (unless `>|` or `>!`
 setopt CLOBBER_EMPTY # Modify `NO_CLOBBER` to let you clobber empty files.
 
 ## Global shorthands for redirecting to `/dev/null`
-alias -g @N='>/dev/null'
+alias -g  @N='>/dev/null'
 alias -g 2@N='2>/dev/null'
-alias -g @@='&>/dev/null'
+alias -g  @@='&>/dev/null'
 
 ####################################################################################################
 #                                                                                                  #
@@ -320,7 +321,9 @@ alias gcman='gcm --amend --no-verify' gcmna=gcman
 alias gnb='noglob git new-branch'
 
 # Git shorthand, make `@-X` be the same as `@{-X}`.
-for i in {1..9}; do alias -g "@-$i=@{-$i}"; done
+for i in {1..9}; do
+	alias -g "@-$i=@{-$i}"
+done
 
 ####################################################################################################
 #                                                                                                  #
@@ -345,6 +348,8 @@ function pwdc () (
 
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
+
+reload! () HISTFILE= reload $@
 
 # Shorthand for looking for processes
 function pg  { pgrep -fl $@ | command grep --color=always $@ }

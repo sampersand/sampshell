@@ -1,0 +1,4 @@
+# These are things that used to be in `.zhsrc`, but I've decided against
+
+# I originally thought I'd use the `trash` command more often. I use it occasionally, but I have never needed to reference it via `~trash`
+if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR
