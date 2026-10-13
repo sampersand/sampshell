@@ -77,14 +77,13 @@ function autoload-dir {
 #                                                                                                  #
 ####################################################################################################
 
-## Add names directories for common locations, if they are set
-if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR
-if [[ -d ~/tmp               ]] hash -d tmp=~/tmp
-if [[ -d ~/Desktop           ]] hash -d d=~/Desktop
-if [[ -d ~/Downloads         ]] hash -d dl=~/Downloads
+## Add names directories for common locations, if they exist
+if [[ -d ~/tmp       ]] hash -d tmp=~/tmp
+if [[ -d ~/Desktop   ]] hash -d d=~/Desktop
+if [[ -d ~/Downloads ]] hash -d dl=~/Downloads
 
-## Have `d` act like `dirs`, except it also lists line numbers; Passing any args disables this.
-function dirs { builtin dirs ${@:--v} }
+## Overwrite `dirs` to always pass `-v`; passing any args disables this.
+function dirs { builtin dirs "${@:--v}" }
 
 ## Setup `cd` options
 setopt CDABLE_VARS  # Adds `cd var` as a shorthand for `cd $var` and `cd ~var`.
