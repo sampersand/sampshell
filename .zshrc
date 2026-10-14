@@ -52,8 +52,10 @@ typeset -xgU path
 # purpose functions into `$PATH`, so that they can be used by other programs (or shells).
 typeset -gaU fpath
 
-fpath=( ~ss/zsh/functions/{hooks,prompt} $fpath )
+## Add all sampshell features to `fpath`, so later `autoload`s can handle them
+fpath=( ~ss/zsh/{functions,hooks,widgets,prompt} $fpath )
 
+## Autoload `add-zsh-hook` for later use
 autoload -Uz add-zsh-hook
 
 ## Autoloads all functions inside a directory, and sets `$reply` to the function names
@@ -70,9 +72,8 @@ function autoload-dir {
 	reply=( ${fn_paths:t} )
 }
 
-
-# Load the general-purpose functions we use.
-() { local reply ; autoload-dir ~ss/zsh/functions }
+# Autoload normal ZSH functions I use
+autoload ~ss/zsh/functions/*(.)
 
 ####################################################################################################
 #                                                                                                  #
@@ -131,8 +132,6 @@ function cd {
 # `_SampShell-record-every-command` function is used to record things as needed.
 ##
 
-# Autoload any relevant history functions
-() { local reply; autoload-dir ~ss/zsh/functions/history }
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
