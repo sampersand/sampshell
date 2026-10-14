@@ -39,7 +39,7 @@ source ~ss/zsh/undo.zsh
 ####################################################################################################
 
 ## Ensure `path` is unique, and export it (in case it wasn't already).
-# (Note that sampshell only adds to `$PATH` in login shells; cf `.zprofile` / `.profile`.)
+# (Note that SampShell only adds to `$PATH` in login shells; cf `.zprofile` / `.profile`.)
 typeset -xgU path
 
 ## Standardize `fpath`. (`-g` and `-a` are sanity checks; `-U` makes it unique)
@@ -52,28 +52,14 @@ typeset -xgU path
 # purpose functions into `$PATH`, so that they can be used by other programs (or shells).
 typeset -gaU fpath
 
-## Add all sampshell features to `fpath`, so later `autoload`s can handle them
+## Add all SampShell features to `fpath`, so later `autoload`s can handle them
 fpath=( ~ss/zsh/{functions,hooks,widgets,prompt} $fpath )
 
 ## Autoload `add-zsh-hook` for later use
 autoload -Uz add-zsh-hook
 
-## Autoloads all functions inside a directory, and sets `$reply` to the function names
-function autoload-dir {
-	local dir=${1:?}
-	local fn_paths=( $dir/*(.N) )
-
-	if (( $#fn_paths == 0 )) then
-		print -ru2 "$0: no functions found in $dir"
-		return 1
-	fi
-
-	autoload -Uz $fn_paths
-	reply=( ${fn_paths:t} )
-}
-
 # Autoload normal ZSH functions I use
-autoload ~ss/zsh/functions/*(.)
+autoload -Uz ~ss/zsh/functions/*(.)
 
 ####################################################################################################
 #                                                                                                  #

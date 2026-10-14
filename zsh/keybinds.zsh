@@ -4,15 +4,13 @@
 #                                               Misc                                               #
 ####################################################################################################
 
-## Register functions; We use an anonymous function so `fn` doesn't escape
-if ! autoload-dir ~ss/zsh/widgets; then
-	print -ru2 "unable to load widgets, returning"
-	return 1
-else
-	for REPLY in $reply; do
-		zle -N $REPLY
+## Autoload and register all widgets; We use an anonymous function so `w` doesn't escape
+() {
+	local w
+	for w in ~ss/zsh/widgets/*(.); do
+		autoload -Uz $w && zle -N $w:t
 	done
-fi
+}
 
 bindkey '^?' kill-region-or-backward-delete-char
 

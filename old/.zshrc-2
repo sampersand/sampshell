@@ -3,3 +3,19 @@
 
 # I originally thought I'd use the `trash` command more often. I use it occasionally, but I have never needed to reference it via `~trash`
 if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR
+
+
+# I've changed how I do autoload, so no need to autoload dirs all at once.
+## Autoloads all functions inside a directory, and sets `$reply` to the function names
+function autoload-dir {
+	local dir=${1:?}
+	local fn_paths=( $dir/*(.N) )
+
+	if (( $#fn_paths == 0 )) then
+		print -ru2 "$0: no functions found in $dir"
+		return 1
+	fi
+
+	autoload -Uz $fn_paths
+	reply=( ${fn_paths:t} )
+}
