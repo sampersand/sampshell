@@ -32,7 +32,6 @@ hash -d ss=$SampShell_ROOTDIR
 # Undo `setopt`s that might've been done
 source ~ss/zsh/undo.zsh
 
-autoload -Uz add-zsh-hook
 ####################################################################################################
 #                                                                                                  #
 #                                            Load Paths                                            #
@@ -52,6 +51,10 @@ typeset -xgU path
 # history functions, widgets, etc), and thus have to be ZSH. In general, we prefer sticking general
 # purpose functions into `$PATH`, so that they can be used by other programs (or shells).
 typeset -gaU fpath
+
+fpath=( ~ss/zsh/functions/{hooks,prompt} $fpath )
+
+autoload -Uz add-zsh-hook
 
 ## Autoloads all functions inside a directory, and sets `$reply` to the function names
 function autoload-dir {
@@ -92,15 +95,7 @@ setopt CHASE_LINKS  # Ensure symlinks are always resolved when changing director
 setopt PUSHD_MINUS  # Have `~-1` mean "the last dir", not `~+1`.
 
 ## Setup `~[dir]` expansions
-() {
-	local -a reply
-	autoload-dir ~ss/zsh/zdn || return
-	local zdn
-	for zdn in $reply; do
-		add-zsh-hook zsh_directory_name $zdn
-		# NOTE: `add-zsh-hook` actually autoloads, so maybe we dont need a loop here?
-	done
-}
+add-zsh-hook -Uz zsh_directory_name zdn-repo-root # `~[rr]` is the repo root
 
 ## Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
@@ -191,7 +186,6 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
 
 # `promptinit` does all the autoload itself
-fpath=( ~ss/zsh/functions/prompt $fpath )
 autoload -Uz promptinit && promptinit
 () {
 	local prompt_style
