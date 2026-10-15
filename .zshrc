@@ -326,7 +326,7 @@ function pwdc () (
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
 
-reload! () HISTFILE= reload $@
+function reload! () { unset -v HISTFILE; reload $@ }
 
 # Shorthand for looking for processes
 function pg  { pgrep -fl $@ | command grep --color=always $@ }
