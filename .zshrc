@@ -313,8 +313,16 @@ done
 # 2. These declarations are the smaller and more "stable" ones I use often; ones I don't go into
 #    zsh/misc.zsh.
 
+## Replace the current shell with a brand new ZSH. `reload` does normal shutdown procedures
+alias reload='zshexit_functions+=reload!; exit'
+history-ignore-command reload{,!}
+
 # Let you paste in commands that start with `$` or `%` (they're just ignored)
 alias '%= ' '$= '
+
+################################################################################
+#                           clean up ones below here                           #
+################################################################################
 
 # Copies the current directory, or a subdirectory of the current directory if given
 function pwdc () (
@@ -325,8 +333,6 @@ function pwdc () (
 
 	cd -q -- "$PWD${1+/$1}" && pbc "$PWD"
 )
-
-function reload! () { unset -v HISTFILE; reload $@ }
 
 # Shorthand for looking for processes
 function pg  { pgrep -fl $@ | command grep --color=always $@ }

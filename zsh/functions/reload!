@@ -1,0 +1,28 @@
+#!zsh
+
+## "Reloads" ZSH by replacing the current ZSH instance with a new one.
+# This is primarily used to re-load dotfile config changes.
+#
+# This function does not do any normal ZSH cleanup procedures (writing history,
+# .zlogout, zshexit, etc), because it `exec`s. This unexpected functionality
+# is why it has a `!` in the name (modeled after Ruby's "mutating methods").
+#
+# To perform normal ZSH cleanup procedures, you have to append this function
+# to `zshexit_functions` then exit normally. Unfortunately, due to a bug
+# ZSH 5.9, this must be done in a top-level interactive call, so something like
+# an alias is required:
+#    alias reload='zshexit_functions+=reload!; exit'
+##
+
+# No arguments are supported.
+if (( $# != 0 )) then
+	print -ru2 "$0: no arguments are accepted"
+fi
+
+# Startup options to give to the new shell
+local -a opts
+if [[ -o LOGIN ]] opts+=-i
+if [[ -o LOGIN ]] opts+=-l
+
+# Run ZSH
+exec =zsh $opts
