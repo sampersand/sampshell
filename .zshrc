@@ -315,7 +315,8 @@ done
 
 ## Replace the current shell with a brand new ZSH. `reload` does normal shutdown procedures
 alias reload='zshexit_functions+=reload!; exit'
-history-ignore-command reload{,!}
+alias r!='reload!'
+history-ignore-command reload{,!} r!
 
 # Let you paste in commands that start with `$` or `%` (they're just ignored)
 alias '%= ' '$= '
@@ -357,6 +358,13 @@ alias  clzsh='clean-shell zsh'
 alias cldash='clean-shell dash'
 
 ## Banner utility
+# Note that we have to explicitly specify the banner location, as macOS also ships with a banner
+# utility (/usr/bin/banner). Even though we prepend our banner to `$PATH` normally, if macOS's
+# `/usr/libexec/path_helper` command (which the default `/etc/zprofile` uses) is run _after_ we
+# construct our path, it'll actually prepend its own `/usr/bin` to the start---yikes! Normally
+# this doesn't matter, but when we `reload` the shell this does happen. The easiest workaround
+# is to just explicitly specify the path here for `banner`; if I ever have more problems in
+# the future, I might end up modifying `/etc/zprofile`, but I'd rather not futz with that right now.
 alias banner='noglob ~ss/bin/universal/banner'
 alias b80='banner --copy --width=80'
 alias b100='banner --copy --width=100'
@@ -383,7 +391,6 @@ function wait-for-pid {
 		sleep $duration
 	done
 }
-
 
 ## All extra unsorted functions and aliases should be defined here.
 source ~ss/zsh/misc.zsh
