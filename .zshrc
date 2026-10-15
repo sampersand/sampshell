@@ -118,7 +118,6 @@ function cd {
 # `_SampShell-record-every-command` function is used to record things as needed.
 ##
 
-
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
 if zstyle -T ':sampshell:history:record-every-command' enabled; then
 	## Add the record history function to the end.
