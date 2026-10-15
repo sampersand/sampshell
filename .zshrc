@@ -374,7 +374,6 @@ function ncol { awk "{ print \$${1:?} }" }
 alias prp='print -P'  # NOTE: You can also use `print ${(%)@}`
 
 # TODO: investigate this more. Maybe `du -chd1`?
-function awkf () awk "BEGIN{${(j:;:)@}; exit}"
 if [[ $VENDOR = apple ]] alias cpu='top -o cpu' # TODO: maybe `ps -Ao pcpu,pid,comm | sort -nr | head ...`
 
 function wait-for-pid {
