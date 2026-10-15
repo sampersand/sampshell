@@ -12,6 +12,11 @@ if (( $# != 0 )) then
 	return 1
 fi
 
+if (( ! $+HISTFILE )) then
+	print -u2 "$0: cannot write history, \$HISTFILE unset"
+	return 1
+fi
+
 # If using macOS's shell session mechanism, go through that
 if whence shell_session_save_history >/dev/null &&
 	whence shell_session_history_allowed >/dev/null &&
