@@ -389,12 +389,9 @@ function pk  { pkill -fl $@ } # IDK if these always kill the right processes...
 function pk9 { pkill -KILL -fl $@ }
 
 # Interact with zsh files
-function szfiles {
-	if (( $# != 0 )) then print -u2 "$0: takes no arguments"; return 1; fi
-	$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)
-}
-
-function szrc { $SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc }
+alias szrc='$SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc'
+alias szp='$SampShell_EDITOR ${ZDOTDIR:-~}/.zprofile'
+alias szfiles='$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)'
 function zfns { typeset -m '*_functions' }
 function sublf () $SampShell_EDITOR "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
 
