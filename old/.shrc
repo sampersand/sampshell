@@ -4,3 +4,6 @@
 ## Shorthand aliases for "safe alternatives" found in `bin`
 alias m=mv-safe
 alias t=trash
+
+# I don't use this shorthand ever
+alias j=jobs

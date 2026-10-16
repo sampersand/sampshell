@@ -87,7 +87,7 @@ add-zsh-hook -Uz zsh_directory_name zdn-repo-root # `~[rr]` is the repo root
 ## Change the `cd` function to let you cd to a file if it is the only argument to `cd`.
 function cd {
 	[[ $# == 1 && -f $1 ]] && set -- $1:h
-	builtin cd $@
+	builtin cd "$@"
 }
 
 ####################################################################################################
@@ -205,7 +205,6 @@ fi
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
-unalias j 2>/dev/null
 function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 
 ####################################################################################################
@@ -214,17 +213,14 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 #                                                                                                  #
 ####################################################################################################
 
-# Default zstyle for prompt
-zstyle ':prompt:sampshell:git:*' pattern "$USERNAME?[0-9]???-??-??"
-
-# `promptinit` does all the autoload itself
+# `promptinit` does all the autoloading of prompt themes itself
 autoload -Uz promptinit && promptinit
 () {
 	local prompt_style
 	zstyle -s ':sampshell:interactive:prompt' style prompt_style || prompt_style=default
 	prompt sampshell $prompt_style
-	setopt TRANSIENT_RPROMPT # Unfortunately, this can't be set in the prompt :-(
 }
+setopt TRANSIENT_RPROMPT # Unfortunately, this can't be set in the prompt :-(
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -334,9 +330,10 @@ alias gcman='gcm --amend --no-verify' gcmna=gcman
 alias gnb='noglob git new-branch'
 
 # Git shorthand, make `@-X` be the same as `@{-X}`.
-for i in {1..9}; do
-	alias -g "@-$i=@{-$i}"
-done
+() {
+	local i
+	for i in {1..9}; alias -g "@-$i=@{-$i}"
+}
 
 ####################################################################################################
 #                                                                                                  #
@@ -349,8 +346,10 @@ done
 # 2. These declarations are the smaller and more "stable" ones I use often; ones I don't go into
 #    zsh/misc.zsh.
 
-## Replace the current shell with a brand new ZSH. `reload` does normal shutdown procedures
-alias reload='zshexit_functions+=reload!; exit'
+## Replace the current shell with a brand new ZSH. `reload` does normal shutdown procedures.
+# This has to be an alias to get around a ZSH 5.9 bug relating to; the removal of `reload!` on
+# exit failure is, eg, if we do `reload` when we still have active jobs.
+alias reload='zshexit_functions+=reload!; exit || zshexit_functions=${zshexit_functions#:reload!}'
 alias r!='reload!'
 history-ignore-command reload{,!} r!
 
@@ -381,7 +380,7 @@ alias szrc='$SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc'
 alias szp='$SampShell_EDITOR ${ZDOTDIR:-~}/.zprofile'
 alias szfiles='$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)'
 function zfns { typeset -m '*_functions' }
-function sublf () $SampShell_EDITOR "$(type ${1:?} | awk '{print $NF}')" # open file containing shell command
+function sublf () $SampShell_EDITOR ${functions_source[$1]:?}
 
 # Adds in "clean shell" aliases, which start up a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.

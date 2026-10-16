@@ -24,7 +24,7 @@ setopt PUSHD_IGNORE_DUPS # eh, let's see if it works?
 # }
 : ${SampShell_ZSHDIRS:=$XDG_STATE_HOME/sampshell/.zshdirs}
 if [[ -e $SampShell_ZSHDIRS ]] then
-	dirs -c $(< $SampShell_ZSHDIRS)
+	dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}
 	popd -q # remove the current directory from the base of the stack
 fi
 dirs-write () { mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS }

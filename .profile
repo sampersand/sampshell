@@ -17,7 +17,8 @@
 # without causing issues.
 #
 # Since the purpose of this is to setup common config across _all_ shells, there
-# are not shell-specific 
+# is intentionally minimal shell-specific setup here (though sometimes it cannot
+# be avoided).
 ##
 
 ## If SampShell_DISABLED is set to a non-empty value, then don't do any setup.

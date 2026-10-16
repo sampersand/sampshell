@@ -135,7 +135,6 @@ alias l=ls
 alias ls='ls -AFq'
 alias ll='l -l'
 alias lt='l -tl'
-alias j=jobs
 alias p=mviz # shorthand for the `mviz` command
 alias -- +x='chmod +x' # This is allowed by the posix standard, who woulda known
 

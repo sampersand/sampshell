@@ -10,8 +10,9 @@
 # To perform normal ZSH cleanup procedures, you have to append this function
 # to `zshexit_functions` then exit normally. Unfortunately, due to a bug
 # ZSH 5.9, this must be done in a top-level interactive call, so something like
-# an alias is required:
-#    alias reload='zshexit_functions+=reload!; exit'
+# an alias is required: (exit can fail if we eg have active jobs)
+#   alias reload='zshexit_functions+=reload!; \
+#                 exit || zshexit_functions=${zshexit_functions#:reload!}'
 ##
 
 # No arguments are supported.
