@@ -17,12 +17,13 @@
 # No arguments are supported.
 if (( $# != 0 )) then
 	print -ru2 "$0: no arguments are accepted"
+	return 1
 fi
 
 # Startup options to give to the new shell
 local -a opts
-if [[ -o LOGIN ]] opts+=-i
-if [[ -o LOGIN ]] opts+=-l
+if [[ -o INTERACTIVE ]] opts+=-i
+if [[ -o LOGIN       ]] opts+=-l
 
 # Run a new ZSH.
 exec =zsh $opts
