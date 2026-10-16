@@ -47,7 +47,11 @@ function prompt_sampshell_precmd {
 ## The function that's used to fetch the git status.
 function _SampShell-prompt-git-hook1 {
 	emulate -L zsh # Reset the shell to the default ZSH options
-	autoload -Uz __git_ps1 # Autoload the git ps1 as needed
+
+	# Autoload the git prompt function in. We use `emulate sh`, since the function is written with
+	# mnormal `/bin/sh` in mind, and we use `-k` since it just happens to be in the format that
+	# ksh autoloads are in
+	emulate sh -c 'autoload -rUk __git_ps1'
 
 	psvar[prompt_sampshell_var_long_git]= psvar[prompt_sampshell_var_short_git]= # Empty the variables
 
@@ -214,9 +218,6 @@ function prompt_sampshell_setup {
 
 	## Git status; we don't display it in a minimal prompt
 	if [[ $kind != minimal ]] {
-		__git_ps1 >/dev/null 2>&1 # <-- TODO: why does this need to always be run?
-		# emulate sh -c "autoload -RUk ${(q)SampShell_ROOTDIR}/zsh/prompt/__git_ps1"; __git_ps1 >/dev/null 2>&1
-
 		# Only expand the full thing if there's a significant amount of space left.
 		PS1+="%(${prompt_sampshell_var_long_git}V.%F{43}⇄" #%(${prompt_sampshell_var_git}V.⇄%${prompt_sampshell_var_git}v .)"
 

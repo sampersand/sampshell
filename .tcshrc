@@ -78,7 +78,7 @@ __EOS__
 	if ( $SHLVL != 1 ) set prompt = "$prompt L%"\$SHLVL
 	set prompt                    = "$prompt%B]%b %"\$"__pwd %"\$__git"%B%#%b%s "
 
-	alias __git_ps1 'sh -c ". $SampShell_ROOTDIR/zsh/functions/__git_ps1; __git_ps1 "\"\$@\" --'
+	alias __git_ps1 'sh -c ". $SampShell_ROOTDIR/zsh/prompt/__git_ps1; __git_ps1 "\"\$@\" --'
 	add_hook precmd 'set __git = "`__git_ps1 ⇄%s`"'
 
 	############################################################################################
