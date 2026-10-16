@@ -1,0 +1,43 @@
+#!/bin/sh
+
+set -euf
+
+if [ $# -eq 0 ]; then
+	cat <<-USAGE >&2
+		usage: ${0##*/} path [paths]
+
+		Runs \`chmod +x\` on all paths to make them executable. If
+		they are bare words, \$PATH is searched for it.
+	USAGE
+	exit 1
+fi
+
+exit=0
+for arg; do
+	# Easy case: if the arg is a path, then just try `chmod` directly
+	case $arg in */*)
+		chmod +x "$arg" || exit=1
+		continue ;;
+	esac
+
+	# Otherwise, scan the `$PATH` for it
+	found=0
+	IFS=:
+	for dir in $PATH; do
+		resolved=$dir/$arg
+
+		if [ -f "$resolved" ]; then
+			chmod +x "$resolved" || exit=1
+			found=1
+			break
+		fi
+	done
+	unset IFS
+
+	if [ $found = 0 ]; then
+		printf >&2 "${0##*/}: arg not found in \$PATH: %s\n" "$arg"
+		exit=1
+	fi
+done
+
+exit $exit
