@@ -130,7 +130,6 @@ setopt HIST_NO_STORE          # Don't store the `history` command, or `fc -l`.
 setopt HIST_IGNORE_SPACE      # Don't store commands that start with a space.
 setopt HIST_IGNORE_DUPS       # Don't store commands that're identical to the one before.
 setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, then uniques.
-# setopt HIST_FCNTL_LOCK      # Use `fcntl` to lock files. (Supported by all modern OSes.); removed cause i dont think i need it
 
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
