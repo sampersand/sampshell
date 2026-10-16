@@ -118,15 +118,6 @@ function cd {
 # `_SampShell-record-every-command` function is used to record things as needed.
 ##
 
-## Load in the "record every command" functionality, unless it's been explicitly opted out of
-if zstyle -T ':sampshell:history:record-every-command' enabled; then
-	## Add the record history function to the end.
-	# Ideally, it's the last function, so that it only records commands that all previous history
-	# functions accepted. However, being last isn't critical (it's only used in statistics), so it's
-	# fine if other functions are added after it.
-	add-zsh-hook zshaddhistory _SampShell-record-every-command
-fi
-
 ## Setup history parameters
 HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
 SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
@@ -143,9 +134,67 @@ setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, 
 
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
-## Helpers
-alias h='noglob h'
+## Setup builtin `h`; TODO, clean this way up.
+if [[ -n $SampShell_EXPERIMENTAL ]]; then
+	unfunction h
+	autoload h
+	alias h='noglob h'
+fi
+
+## Don't record some commands in history
+# I've gone though many iterations of this concept, including:
+# - An initial hacky `HISTORY_IGNORE` that required adding parens around everything. But, 'twas too
+#   fragile, and didn't prevent populating the in-history buffer, so it wasn't clear which commands
+#   would be ignored or not.
+# - Adding custom `zshaddhistory_functions` hooks. Unfortunately, This required the hook to always
+#   be first, which isn't easily enforced, and anything added before it---including defining the
+#   `zshaddhistory` function itself---would be entirely blind to it.)
+# - A failed attempt to use `zstyle` to specify which commands are ignored, which also required
+#   using `zshaddhistory` hooks.
+# - Prepending every ignored command with a space (`alias "$cmd= $cmd"`), and ensuring that
+#   `HIST_IGNORE_SPACE` was set. While this mostly worked, `type <ignored cmd>` isn't very usable
+#   (it shows its an alias), and didn't work too well with `_SampShell-record-every-command`. The
+#   nail in its coffin was realizing that multiple commands on one line would mark the entire
+#   line as entirely ignored (`foo ; ignored-cmd ; bar`), which wasn't ideal.
+#
+# I ended up realizing that the relaxing the previous requirement of "ignoring a command means that
+# SHOULD NEVER, HARD STOP, appear in any history file" to a simpler best-effort of "don't write
+# noisy/unnecessary commands to a history file" (while still keeping the `alias "$cmd= $cmd"` trick
+# in my back pocket in case I ever needed to SHOULD NEVER record a command).
+#
+# The current implementation relies on a combination of `HISTORY_IGNORE` and a `zshaddhistory` hook:
+# The hook (`dont-record-ignored-commands`) is a best-attempt at preventing some commands from being
+# recorded, but prior hooks and a `zshaddhistory` function itself can circumvent it, which is where
+# `HISTORY_IGNORE` comes into play: It's a backup that ensure that regardless of what history hooks
+# exist, these "noisy" commands won't eventually be written to the history file.
+##
+
+# Declare `HISTORY_IGNORE` as a tied variable, which lets us manipulate `history_ignore` (an array)
+# as much as we want, and all the elements are joined together with pipes (to delineate patterns).
+typeset -TU HISTORY_IGNORE history_ignore '|'
+
+# Adds the command(s) to the list of ignored commands---note that it escapes all the command names,
+# since it's supposed to be a pattern. To add a pattern, just append to `history_ignore` directly.
+function history-ignore-command { history_ignore+=( ${(b)@} ) }
+
+# Don't record commands which match `HISTORY_IGNORE`, after stripping trailing and leading space.
+function dont-record-ignored-commands {
+	[[ ${(*)${(*)1%%[[:space:]]#}##[[:space:]]#} != ${~HISTORY_IGNORE} ]]
+}
+add-zsh-hook zshaddhistory dont-record-ignored-commands
+
+## Ignore these history commands
 history-ignore-command h history-{enable,disable,flush}
+
+## Load in the "record every command" functionality, unless it's been explicitly opted out of
+if zstyle -T ':sampshell:history:record-every-command' enabled; then
+	## Add the record history function to the end.
+	# Ideally, it's the last function, so that it only records commands that all previous history
+	# functions accepted. However, being last isn't critical (it's only used in statistics), so it's
+	# fine if other functions are added after it.
+	add-zsh-hook zshaddhistory _SampShell-record-every-command
+fi
+
 
 ####################################################################################################
 #                                                                                                  #
