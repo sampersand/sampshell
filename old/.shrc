@@ -1,0 +1,6 @@
+#!/bin/sh
+# i dont need shorthands for these at all:
+
+## Shorthand aliases for "safe alternatives" found in `bin`
+alias m=mv-safe
+alias t=trash
