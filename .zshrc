@@ -307,19 +307,7 @@ zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
 
 ## Load "experimental" options---things I'm not sure about yet.
 if [[ -n $SampShell_EXPERIMENTAL ]] then
-	## Options I'm not sure if I want to set or not.
-	# [[ -n $ENV ]] && emulate sh -c '. "${(e)ENV}"' # <-- TODO, do we want ENV
-
-	: "${REPORTTIME:=4}" # Print the duration of commands that take more than 4s of CPU time
-
-	setopt EXTENDED_HISTORY     # (For fun) When writing cmds, write their start time & duration too.
-	setopt COMPLETE_IN_WORD
-	setopt CORRECT                 # Correct commands when executing.
-	setopt NO_CASE_GLOB CASE_PATHS # Enable case-insensitive globbing, woah!
-
-	CORRECT_IGNORE='(_*|[^[:space:]]# \(\))' # Don't correct to functions starting with `_`
-
-	: command_not_found_handler # <-- thing executed when a command's not found
+	source ~ss/zsh/experimental.zsh
 fi
 
 ####################################################################################################
