@@ -51,7 +51,6 @@ export SampShell_ROOTDIR
 
 ## Make sure the XDG environment variables are set to valid values, and export
 # them.
-
 SampShell_ensure_xdg_variable () {
    eval "
    case \${$1-} in
@@ -153,7 +152,7 @@ fi
 ## Prepend things to `PATH` unless they're already there.
 SampShell_add_PATH () {
    # If the directory doesn't exist, then just return early early.
-   [ -e "$1" ] || return
+   [ -d "$1" ] || return
 
    # Only add it if it's not there
    case :${PATH-}: in
@@ -164,12 +163,12 @@ SampShell_add_PATH () {
 
 ## Home directory bins
 SampShell_add_PATH "$HOME/bin"
+SampShell_add_PATH "$HOME/.local/bin"
 
 ## Universal scripts I always want available
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/posix"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/universal"
 SampShell_add_PATH "$SampShell_ROOTDIR/bin/git"
-SampShell_add_PATH "$HOME/.local/bin"
 
 ## MacOS-specific scripts
 [ "$(uname)" = Darwin ] && SampShell_add_PATH "$SampShell_ROOTDIR/bin/macOS"
@@ -177,8 +176,8 @@ SampShell_add_PATH "$HOME/.local/bin"
 ## Add in "experimental" scripts I'm working on and haven't quite completed.
 [ -n "${SampShell_EXPERIMENTAL-}" ] && SampShell_add_PATH "$SampShell_ROOTDIR/bin/experimental"
 
-# Make sure `SampShell_add_PATH`"$SampShell_ROOTDIR/bin/ doesn't escape this startup file."
+## Make sure `SampShell_add_PATH` doesn't escape this startup file.
 unset -f SampShell_add_PATH
 
-## Ensure `PATH` is exported so programs can get sampshell executables.
+## Ensure `PATH` is exported so programs can get SampShell executables.
 export PATH
