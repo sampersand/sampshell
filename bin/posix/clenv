@@ -11,17 +11,6 @@
 # Safety First!
 set -efuC
 
-# Name of the program; used in `die` and usage
-readonly __clenv_scriptname="${0##*/}"
-
-# Print a message out and abort
-die () {
-	fmt="%s: $1\n"
-	shift
-	printf "$fmt" "$__clenv_scriptname" "$@"
-	exit 1
-} >&2
-
 # Unset all the variables that're used within the program. We have to be careful
 # with the naming of these variables so they don't conflict with any environment
 # variables we may have inherited. (We `unset` these variables to remove their
@@ -43,8 +32,16 @@ unset -v __clenv_user_vars \
 		 __clenv_opt \
 		 __clenv_utility_path
 
+# Print a message out and abort
+die () {
+	fmt="%s: $1\n"
+	shift
+	printf "$fmt" "${0##*/}" "$@"
+	exit 1
+} >&2
+
 usage () { cat; } <<USAGE
-usage: $__clenv_scriptname [options] [--] [utility [argument ...]]
+usage: ${0##*/} [options] [--] [utility [argument ...]]
 options:
     -h              Print this
     -P altpath      Use 'altpath' to find 'utility', instead of \$PATH
