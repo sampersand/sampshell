@@ -1,17 +1,15 @@
 #!/bin/sh
 
 #### Interactive config for all POSIX-compliant shells.
-# This file sets up the minimum interactive environment I want on all shells (a
-# couple of essential functions, some aliases, and a few macOS-specific things),
-# then loads shell-specific config.
+# This file sets up the minimum interactive environment I want available to me
+# when using any POSIX-compliant shell (a couple of essential functions, some
+# aliases, a few OS-specific things, basic prompts, etc).
 #
-# (As this file is loaded by all shells, it's entirely POSIX-compliant.)
+# This file must stay strictly POSIX-compliant, as it should be usable on any
+# (reasonably modern) shell or computer.
 #
-# This file's intended to be loaded after `env.sh`, as it also does some setup,
-# namely setting `$SampShell_ROOTDIR`. This file expects that to be set, as it
-# uses that to determine where the shell-specific config is located; If it's not
-# set, the "universal config" in this file will still be run, but shell-specific
-# configs won't be (as they can't be located).
+# While this file strives to not have any shell-specific config in it, there are
+# a few places where this is unfortunately unenviable,
 ####
 
 ################################################################################
@@ -36,7 +34,7 @@ SampShell_interactive_loaded=1
 ## Short helper for looking at history.
 # If any arguments are given, they're forwarded to `fc -l` (ie list that many
 # arguments). Without arguments, if not connected to a tty, all commands are
-# printed out (for usage with `grep`).
+# printed out (for use with `grep`).
 h () {
 	if [ "$#" -eq 0 ] && [ ! -t 1 ]; then
 		set -- -n 1
@@ -58,11 +56,11 @@ cdd () {
 	# We have to do this whole rigmarole in case the directory ends in a
 	# newline. (Odd, but a possibility, and I don't want to be blindsided by
 	# it later.)
-	if ! SampShell_scratch=$(dirname -- "$1" && printf x); then
+	if ! SampShell_scratch=$(dirname -- "$1" && printf .); then
 		unset -v SampShell_scratch
 		return 1
 	else
-		set -- "${SampShell_scratch%?x}"
+		set -- "${SampShell_scratch%?.}"
 		unset -v SampShell_scratch # Unset the variable so it won't leak
 	fi
 
@@ -119,20 +117,23 @@ mzf () (
 	MZ_NO_ARGS=1 mz "$stdin"
 )
 
-## Creates a directory. (`rd` is a `bin` command.)
+# Creates a directory. (Note that `rd` is in `bin/posix`.)
 md () {
 	mkdir -p -- "$@"
 }
 
-## Creates a directory, and then `cd`s to it.
+# Creates a directory, and then `cd`s to it.
 mdc () {
-	# (use `\cd` so that we don't get alias expansion that might exist)
-	md "$@" && CDPATH= \cd -- "$1"
+	if [ "$#" -ne 1 ]; then
+		echo >&2 "usage: mdc directory"
+		return 1
+	fi
+
+	md "$1" && CDPATH= cd -- "$1"
 }
 
 ## Common aliases
 alias l=ls
-alias ls='ls -AFq'
 alias ll='l -l'
 alias lt='l -tl'
 alias p=mviz # shorthand for the `mviz` command
@@ -140,8 +141,7 @@ alias -- +x='chmod +x' # This is allowed by the posix standard, who woulda known
 
 ## Sublime Text editor shorthand aliases
 alias s=subl
-alias ss=ssubl
-alias ssubl='subl --create'
+alias ss='subl --create'
 
 ################################################################################
 #                                                                              #
@@ -172,14 +172,16 @@ alias cp='cp -i' cpp='command cp'
 #                                                                              #
 ################################################################################
 
+# Add `ls` aliases in that different OSes normally support.
 case $(uname) in
 Darwin)
-	## Add options to `ls` which macOS supports. (We only add the alias if
-	# `ls` was already an alias, otherwise the `eval` doesn't work.)
 	alias ls='ls -AFqhGb'
 	;;
 Linux)
 	alias ls='ls -AFq --color=auto'
+	;;
+*)
+	alias ls='ls -AFq'
 	;;
 esac
 

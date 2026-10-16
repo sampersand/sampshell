@@ -7,3 +7,6 @@ alias t=trash
 
 # I don't use this shorthand ever
 alias j=jobs
+
+# I just use `ss` instead of `ssubl`
+alias ssubl='subl --create'
