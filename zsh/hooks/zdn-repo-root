@@ -1,13 +1,20 @@
 #!zsh
-# Support `~[rr]`, which simply expands to the root of the repo
+emulate -L zsh
+# Support `~[rr]`, which simply expands to the root of the repo. Also supports
+# `~[rr:<path>]` which  is the root of that path.
 
 case $1 in
 n)
-	if [[ $2 != rr ]] return 1 # We only accept `~[rr]`
+	local dir=
+	case $2 in
+		rr) ;;
+		rr:*) dir=${${2#rr:}:h} ;;
+		*) return 1 ;;
+	esac
 
 	# make reply a global array (if its not already)
 	typeset -ga reply
-	reply=( $(git rev-parse --show-toplevel 2>/dev/null) ) ;;
+	reply=( $(git ${dir:+-C} ${dir:+$dir} rev-parse --show-toplevel 2>/dev/null) ) ;;
 
 # To support expansions (eg in prompts), then uncomment the following
 # d)
@@ -16,7 +23,8 @@ n)
 # 	reply=( "rr($top:t)" $#top ) ;;
 
 c)
-	# complete names; adapted from documentation
+	# complete names; adapted from documentation. TODO: have these expand
+	# if `:` is supplied afterwards.
 	local expl
 	_wanted dynamic-dirs expl 'dynamic directory' compadd -S\] rr ;;
 
