@@ -119,7 +119,7 @@ mzf () (
 	MZ_NO_ARGS=1 mz "$stdin"
 )
 
-## Creates a directory. (`rd` is a `bin-macOS` command.)
+## Creates a directory. (`rd` is a `bin` command.)
 md () {
 	mkdir -p -- "$@"
 }

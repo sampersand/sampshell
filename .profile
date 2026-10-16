@@ -20,6 +20,9 @@
 # are not shell-specific 
 ##
 
+## If SampShell_DISABLED is set to a non-empty value, then don't do any setup.
+[ -n "${SampShell_DISABLED-}" ] && return
+
 ################################################################################
 #                                                                              #
 #                  Ensure $SampShell_ROOTDIR is set and valid                  #
