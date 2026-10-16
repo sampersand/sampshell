@@ -1,4 +1,11 @@
-old () git mv $1 ~ss/old/${1#~ss}
+old () {
+	emulate -L zsh -o ERR_RETURN
+	local arg dst
+	for arg in ${@:P}; do
+		local dst=${arg/~[rr:$arg]/~[rr:$arg]/old}
+		mkdir -p $dst:h && git mv -- $arg $dst
+	done
+}
 
 if [[ $VENDOR == apple ]] {
 	function  enable-wifi { networksetup -setairportpower en0 on }
