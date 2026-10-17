@@ -4,7 +4,7 @@ return if defined? SAMPSHELL_IRB_DEFINED
 SAMPSHELL_IRB_DEFINED = true
 
 if !IRB.conf.key?(:HISTORY_FILE)
-  irb_base = File.join(ENV['XDG_DATA_HOME'] || Dir.home, 'irb')
+  irb_base = File.join(ENV['XDG_DATA_HOME'] || File.join(Dir.home, '.local', 'share'), 'irb')
   FileUtils.mkdir_p irb_base
   IRB.conf[:HISTORY_FILE] = File.join(irb_base, 'history')
 end
