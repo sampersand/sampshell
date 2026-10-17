@@ -24,6 +24,7 @@ PS4='+ $SECONDS %N:$i> '
 # time it takes
 function zdbg_seconds { SECONDS=0 }
 precmd_functions+=(zdbg_seconds)
+preexec_functions+=(zdbg_seconds)
 
 
 ################################################################################

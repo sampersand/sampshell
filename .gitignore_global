@@ -7,4 +7,6 @@
 *.ignore
 *.ignore.*
 *.old
+
+# No `nohup` files
 nohup.out

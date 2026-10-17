@@ -3,7 +3,6 @@
 (( ! $# )) && set -- -ilc :
 # SampShell_DISABLED=1 tracezsh
 
-
 echo "SampShell_PROFILE is not set. todo, set it up"
 clenv \
 	-v SampShell_PROFILE= \
