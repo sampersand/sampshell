@@ -66,11 +66,8 @@ SampShell_ensure_xdg_variable () {
    export $1"
 }
 
-SampShell_ensure_xdg_variable XDG_DATA_HOME "$HOME/.local/share"
-SampShell_ensure_xdg_variable XDG_CONFIG_HOME "$HOME/.config"
 SampShell_ensure_xdg_variable XDG_STATE_HOME "$HOME/.local/state"
 SampShell_ensure_xdg_variable XDG_CACHE_HOME "$HOME/.cache"
-[ -d /run/user ] && SampShell_ensure_xdg_variable XDG_RUNTIME_DIR "/run/user/$UID"
 unset -f SampShell_ensure_xdg_variable
 
 ################################################################################
