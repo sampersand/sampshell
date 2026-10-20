@@ -4,6 +4,10 @@
 # Dont really need this i dont think
 setopt HIST_FCNTL_LOCK      # Use `fcntl` to lock files. (Supported by all modern OSes.); removed cause i dont think i need it
 
+# I find i never use patterns, and moreoften than not screw up adding in chars like `[`, and
+# something like `,[,` is what i do by default.
+setopt HIST_SUBST_PATTERN # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns. RE
+
 
 # I originally thought I'd use the `trash` command more often. I use it occasionally, but I have never needed to reference it via `~trash`
 if [[ -n $SampShell_TRASHDIR ]] hash -d trash=$SampShell_TRASHDIR

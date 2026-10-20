@@ -22,7 +22,7 @@ setopt PUSHD_IGNORE_DUPS # eh, let's see if it works?
 # 	popd -q
 # 	setopt LOCAL_OPTIONS NO_AUTO_PUSHD PUSHD_SILENT; dirs -c; source ~/.cshdirs
 # }
-: ${SampShell_ZSHDIRS:=$XDG_STATE_HOME/sampshell/.zshdirs}
+: ${SampShell_ZSHDIRS:=$SampShell_STATE_HOME/.zshdirs}
 if [[ -e $SampShell_ZSHDIRS ]] then
 	dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}
 	popd -q # remove the current directory from the base of the stack

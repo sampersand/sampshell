@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'xdg'
 require 'optparse2'
 require 'optparse2/pathname'
 require 'open3'
@@ -14,8 +13,8 @@ OptParse2.new do |op|
   op.on '-w', '--[no-]write', 'Write fetched results to cached file'
   op.on '-p', '--period=SECONDS', Float, "If supplied, only read cached file if fewer than SECONDS has passed"
   op.on '--cache-folder=PATH', Pathname, 'Path to the cached folder',
-    default: proc{ XDG.new.cache_home / 'sampshell' / 'stockprice' },
-    default_description: '$XDG_CACHE_HOME/sampshell/stockprice'
+    default: proc{ Pathname(ENV.fetch('SampShell_CACHE_HOME')) / 'xstock' }, # TODO: should we fetch or use a default?
+    default_description: '$SampShell_CACHE_HOME/xtock'
 
   op.rest 'tickers', 'stock tickers to use', required: 1 do it.map(&:upcase) end
 

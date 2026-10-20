@@ -3,7 +3,6 @@
 require 'optparse2'
 require 'optparse2/pathname'
 require 'time'
-require 'xdg'
 require 'json'
 require 'securerandom'
 
@@ -123,8 +122,8 @@ end
 
 op = OptParse2.new
 op.on '--current-todo-file=FILE', Pathname, 'Where to locate todos',
-  default: proc{ XDG.new.state_home / 'sampshell' / 'todos' / 'current' },
-  default_description: '$XDG_CACHE_HOME/sampshell/todos/current'
+  default: proc{ Pathname(ENV.fetch('SampShell_STATE_HOME')) / 'todos' / 'current' }, # TODO: should we fetch or use a default?
+  default_description: '$SampShell_STATE_HOME/todos/current'
 op.banner = "usage: #{op.program_name} [options]"
 
 op.accept :due do |arg|

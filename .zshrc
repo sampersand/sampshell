@@ -234,8 +234,7 @@ POSTEDIT=$'\e[m'
 ####################################################################################################
 
 ## Interactive history options
-histchars[2]=,            # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
-setopt HIST_SUBST_PATTERN # The `,pat,repl` shorthand and `:s/` and `:&` modifiers accept patterns
+histchars[2]=, # Change from `^ehco^echo` to `,ehco,echo`; `^` is just so far away lol
 
 ## Options that modify valid syntax
 setopt INTERACTIVE_COMMENTS # Enable comments in interactive shells; I use this all the time
@@ -278,8 +277,7 @@ source ~ss/zsh/keybinds.zsh
 # ship-shod, and will be revisited once I get a better handle on how autocompletes work.
 
 autoload -Uz compinit
-if [[ ! -e ${XDG_STATE_HOME:=~/.local/state}/sampshell ]] mkdir -p "$XDG_STATE_HOME/sampshell"
-compinit -d $XDG_STATE_HOME/sampshell/.zcompdump
+compinit -d ${SampShell_CACHE_HOME:?}/.zcompdump
 
 zstyle ':completion:*' use-compctl false # never use old-style completion
 
