@@ -67,11 +67,10 @@ export SampShell_STATE_HOME SampShell_CACHE_HOME
 # always be present. It follows XDG Base Directory specifications, and stores
 # all files in the relevant folders.
 
-[ -z "${SampShell_TRASHDIR-}" ] && SampShell_TRASHDIR=${SampShell_STATE_HOME:?}/trash
 [ -z "${SampShell_HISTDIR-}"  ] && SampShell_HISTDIR=${SampShell_STATE_HOME:?}/history
-export SampShell_TRASHDIR SampShell_HISTDIR
+export SampShell_HISTDIR
 
-mkdir -p "$SampShell_TRASHDIR" "$SampShell_HISTDIR" || echo "oops failed: $?" # TODO, removeme?
+mkdir -p "$SampShell_HISTDIR" || echo "oops failed: $?" # TODO, removeme?
 
 ## Misc variables
 export SampShell_EDITOR="${SampShell_EDITOR:-subl}"

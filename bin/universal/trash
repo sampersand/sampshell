@@ -26,6 +26,9 @@ set -o nounset
 scriptname=${0##*/}             # Used only in usage and error messages.
 trashdir=${SampShell_TRASHDIR-} # The trash directory; has no default
 empty_trash=                    # Whether to empty the trash
+if [ -z "${trashdir-}" ] && [ -n "${SampShell_STATE_HOME-}" ]; then
+	trashdir=$SampShell_STATE_HOME/trash
+fi
 
 ## Utility functions
 die () {
@@ -44,8 +47,8 @@ options:
 	-tPATH        set the trash directory
 In the first form, moves files to the trash, possibly renaming them; in the
 second, empties the trash directory. The trash dir is set by the environment
-variable \$SampShell_TRASHDIR, but can be overwritten by '-t'; it's an error if
-it's unspecified.
+variable \$SampShell_TRASHDIR (defaults to  \$SampShell_STATE_HOME/trash), but
+can be overwritten by '-t'; it's an error if it's unspecified.
 LONGUSAGE
 
 ## Parse options
