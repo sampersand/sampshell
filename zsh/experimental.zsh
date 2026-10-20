@@ -27,5 +27,9 @@ if [[ -e $SampShell_ZSHDIRS ]] then
 	dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}
 	popd -q # remove the current directory from the base of the stack
 fi
-dirs-write () { mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS }
-zshexit() dirs-write
+dirs-write () {
+	if [[ $HISTFILE ]] {
+		mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS
+	}
+}
+add-zsh-hook zshexit dirs-write
