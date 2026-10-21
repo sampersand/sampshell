@@ -6,9 +6,9 @@ This repo contains all the standard definitions and configuration I use for my s
 ## Quick Start
 Every file in the root corresponds to a top-level file, and should be somehow sourced from the top. For example:
 
-- Shell configs, like `~/.zshrc` , should source their respective files (eg `. ~/.sampshell/.zshrc`)
+- Shell configs, like `~/.zshrc` , should source their respective files (eg `. ~/sampshell/.zshrc`)
 - `~/.irbrc` should `load` this one (eg `ENV['SampShell_ROOTDIR']&.then { load it + '/.irbrc' }'`)
-- `~/.gitconfig` should add `[include]\npath = ~/.sampshell/.gitconfig`, as well as a `[core]\nexcludesFile = ~/.sampshell/.gitignore_global`, as unfortunately there's no easy way to use env vars from git config
+- `~/.gitconfig` should add `[include]\npath = ~/sampshell/.gitconfig`, as well as a `[core]\nexcludesFile = ~/sampshell/.gitignore_global`, as unfortunately there's no easy way to use env vars from git config
 
 Notably, `.shrc` and `.profile` as 100% POSIX compliant, and can be sourced from any POSIX shell (and are in the ZSH and Bash configurations!)
 
@@ -36,7 +36,7 @@ SampShell_git_branch_prefix=swesterman
 # This is the path to the root of SampShell, and must be present so SampShell
 # knows where other files are. Some shells (eg ZSH and Bash) are able to
 # automatically determine it, and so this can be omitted in those shells. If it
-# is omitted, it warns and defaults to `$HOME/.sampshell`d.
+# is omitted, it warns and defaults to `$HOME/sampshell`d.
 SampShell_ROOTDIR=$HOME/me/sampshell
 
 ## Load SampShell itself
@@ -69,9 +69,9 @@ All config variables that're used within SampShell are prefixed with `SampShell_
 |:---------------------|----------------------------------------|:-----------------------------------------------------------------------------------|
 | `SampShell_ROOTDIR`  | (see `env.sh`)                         | The root directory of where SampShell is located.                                  |
 | `SampShell_gendir`   | `$HOME` (or if unset, `/tmp`)          | The directory where "sampshell" files/folders are created.                         |
-<!-- | `SampShell_TRASHDIR` | `$SampShell_gendir/.sampshell-trash`   | The default directory for the `trash` command.                                     | -->
+<!-- | `SampShell_TRASHDIR` | `$SampShell_gendir/sampshell-trash`   | The default directory for the `trash` command.                                     | -->
 | `SampShell_TMPDIR`   | `$SampShell_gendir/tmp`                | The directory for temp files for SampShell, and the `cdtmp` cmd. (note we don't actually use it for anything other than `cdtmp` and `~tmp` currently...)                   |
-| `SampShell_HISTDIR`  | `$SampShell_gendir/.sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. (Also used in ZSH.) |
+| `SampShell_HISTDIR`  | `$SampShell_gendir/sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. (Also used in ZSH.) |
 | `SampShell_EDITOR`   | `sublime4`                             | The default editor for `subl`.                                                     |
 | `SampShell_VERBOSE`  | `1` if interactive, (empty) otherwise  | Whether to log verbose messages (used in `SampShell_log`).                         |
 | `SampShell_XTRACE`    | (empty)                                | If set to `1`, all SampShell scripts will `set -o xtrace` at the very start.       |
@@ -104,7 +104,7 @@ env.sh might be just flat-out removed in the future.
 # ZSH Config
 ~/.zshenv
 	# TODO: `emulate -c sh '. xyx'`?
-	. ${SampShell_ROOTDIR:=~/.sampshell/shells}/.zshenv
+	. ${SampShell_ROOTDIR:=~/sampshell/shells}/.zshenv
 ~/.zprofile
 	# `$SampShell_ROOTDIR` was already set in `~/.zshenv`
 	. $SampShell_ROOTDIR/.zprofile
@@ -114,14 +114,14 @@ env.sh might be just flat-out removed in the future.
 # BASH Config
 ~/.bash_profile
 	# Bash doesn't have a "bash env" startup file, so add here and load it
-	. "${SampShell_ROOTDIR:=~/.sampshell/shells}/.bash_profile"
+	. "${SampShell_ROOTDIR:=~/sampshell/shells}/.bash_profile"
 ~/.bashrc
 	# `$SampShell_ROOTDIR` was already set in `~/.bash_profile`
 	. "$SampShell_ROOTDIR/interactive.sh"
 
 # Other shells
 ~/.profile
-	. "${SampShell_ROOTDIR:=~/.sampshell/shells}/env.sh"
+	. "${SampShell_ROOTDIR:=~/sampshell/shells}/env.sh"
 	. "$SampShell_ROOTDIR/login.sh"
 
 	[ -e "$ENV" ] && . "$ENV" # Load interactive stuff, even tho this is login code.

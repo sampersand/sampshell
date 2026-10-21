@@ -2,7 +2,7 @@
 [core]
 	excludesFile = ~/.gitignore_global
 	# editor = 'subl --wait'
-	# hooksPath = ~/.sampshell/git; #!/bin/sh; echo "precmd"; x=$GIT_DIR/hooks/pre-commit; if [ -e "$x" ]; then exec "$x" "$@"; fi
+	# hooksPath = ~/sampshell/git; #!/bin/sh; echo "precmd"; x=$GIT_DIR/hooks/pre-commit; if [ -e "$x" ]; then exec "$x" "$@"; fi
 
 
 [branch]
