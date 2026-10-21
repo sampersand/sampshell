@@ -14,7 +14,6 @@ while getopts 'zbtv' opt; do
 	esac
 done
 shift `expr $#`
-p "$@"
 
 ################################################################################
 #                                  Git Setup                                   #
@@ -23,15 +22,15 @@ echo --- Setting up git configurations ---
 
 # Add our config in to gitconfig.
 if ! git config --get-all --global include.path | grep -F -q -x "$SampShell_ROOTDIR/.gitconfig"; then
-	echo Adding "$SampShell_ROOTDIR/.gitconfig" to git\'s global include
+	echo "\tAdding $SampShell_ROOTDIR/.gitconfig to git\'s global include"
 	git config --add --global include.path "$SampShell_ROOTDIR/.gitconfig"
 else
-	[ $verbose ] && echo Git config of "$SampShell_ROOTDIR/.gitconfig" already set
+	[ $verbose ] && echo "\tGit config of $SampShell_ROOTDIR/.gitconfig already set"
 fi
 
 # Unfortunately, we can't set this in the sampshell `.gitconfig` file since the
 # install location might change.
-echo Setting global excludesFile to $SampShell_ROOTDIR/.gitignore_global
+echo "\tSetting global excludesFile to $SampShell_ROOTDIR/.gitignore_global"
 git config set --global core.excludesFile "$SampShell_ROOTDIR/.gitignore_global"
 
 ################################################################################
@@ -41,6 +40,8 @@ add_to_file_if_doesnt_exist () {
 	[ -f "${1:?}" ] || touch -- "$1"
 	if ! grep -F -q -x "${2:?}" "$1"; then
 		printf "%s\n" "$2" >> "$1"
+	else
+		[ $verbose ] && echo "\tAlready in $2: $1"
 	fi
 }
 
@@ -57,5 +58,5 @@ elif [ $shell == tcsh ]; then
 	add_to_file_if_doesnt_exist ~/.tcshrc 'if ( ! $?SampShell_ROOTDIR ) setenv SampShell_ROOTDIR ~/sampshell'
 	add_to_file_if_doesnt_exist ~/.tcshrc 'source "$SampShell_ROOTDIR/.tcshrc"'
 else
-	echo "unknown shell: $shekk"
+	echo "unknown shell: $shell"
 fi
