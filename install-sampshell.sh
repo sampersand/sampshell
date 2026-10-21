@@ -4,10 +4,11 @@ set -euC
 : "${SampShell_ROOTDIR:?SampShell_ROOTDIR is required}"
 
 shell=bash verbose=
-while getopts 'zbv' opt; do
+while getopts 'zbtv' opt; do
 	case $opt in
 	z) shell=zsh ;;
 	b) shell=bash ;;
+	t) shell=tcsh ;;
 	v) verbose=1 ;;
 	?) exit 1;;
 	esac
@@ -43,8 +44,18 @@ add_to_file_if_doesnt_exist () {
 	fi
 }
 
-add_to_file_if_doesnt_exist ~/.bashrc '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.bashrc"'
-add_to_file_if_doesnt_exist ~/.bash_profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.bash_profile"'
-add_to_file_if_doesnt_exist ~/.profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.profile"'
-add_to_file_if_doesnt_exist ~/.zshrc '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.zshrc"'
-add_to_file_if_doesnt_exist ~/.zprofile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.zprofile"'
+echo --- Setting up shell-specific configurations ---
+
+if [ $shell = bash ]; then
+	add_to_file_if_doesnt_exist ~/.bashrc '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.bashrc"'
+	add_to_file_if_doesnt_exist ~/.bash_profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.bash_profile"'
+	add_to_file_if_doesnt_exist ~/.profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.profile"'
+elif [ $shell = zsh ]; then
+	add_to_file_if_doesnt_exist ~/.zshrc '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.zshrc"'
+	add_to_file_if_doesnt_exist ~/.zprofile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.zprofile"'
+elif [ $shell == tcsh ]; then
+	add_to_file_if_doesnt_exist ~/.tcshrc 'if ( ! $?SampShell_ROOTDIR ) setenv SampShell_ROOTDIR ~/sampshell'
+	add_to_file_if_doesnt_exist ~/.tcshrc 'source "$SampShell_ROOTDIR/.tcshrc"'
+else
+	echo "unknown shell: $shekk"
+fi
