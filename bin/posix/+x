@@ -23,7 +23,7 @@ for arg; do
 	# Otherwise, scan the `$PATH` for it
 	found=0
 	IFS=:
-	for dir in $PATH; do
+	for dir in "$PWD" $PATH; do
 		resolved=$dir/$arg
 
 		if [ -f "$resolved" ]; then
