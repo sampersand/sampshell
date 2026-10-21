@@ -86,8 +86,7 @@ export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 # already set, and the file exists
 if [ -z "${words-}" ]; then
    export words=/usr/share/dict/words
-
-   if [ ! -f "$words" ]; then unset -v words; fi
+   [ -f "$words" ] || unset -v words
 fi
 
 ## Disable homebrew analytics.
@@ -98,11 +97,6 @@ fi
 if [ "$(uname)" = Darwin ]; then
    export HOMEBREW_NO_ANALYTICS=1
 fi
-
-## Use `vim` for editing history commands. (This is only really needed for
-# shells without better history mechanisms, which are quite rare---even dash has
-# history if `set -o emacs` is enabled.)
-export FCEDIT="${FCEDIT-vim}"
 
 ## Set `LANG` if it's not already present. (This is a POSIX env variable that I
 # don't see much of a need for, but eh whatever, why not add it in.)
