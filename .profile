@@ -73,7 +73,6 @@ export SampShell_HISTDIR
 mkdir -p "$SampShell_HISTDIR" || echo "oops failed: $?" # TODO, removeme?
 
 ## Misc variables
-export SampShell_EDITOR="${SampShell_EDITOR:-subl}"
 export SampShell_EXPERIMENTAL="${SampShell_EXPERIMENTAL-1}"
 
 ################################################################################

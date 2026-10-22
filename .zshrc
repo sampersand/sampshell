@@ -396,11 +396,11 @@ function pk  { pkill -fl $@ } # IDK if these always kill the right processes...
 function pk9 { pkill -KILL -fl $@ }
 
 # Interact with zsh files
-alias szrc='$SampShell_EDITOR ${ZDOTDIR:-~}/.zshrc'
-alias szp='$SampShell_EDITOR ${ZDOTDIR:-~}/.zprofile'
-alias szfiles='$SampShell_EDITOR ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)'
+alias szrc='viewer ${ZDOTDIR:-~}/.zshrc'
+alias szp='viewer ${ZDOTDIR:-~}/.zprofile'
+alias szfiles='viewer ${ZDOTDIR:-~}/.z(shenv|shrc|profile|login|logout)'
 function zfns { typeset -m '*_functions' }
-function sublf () $SampShell_EDITOR ${functions_source[$1]:?}
+function sublf () viewer ${functions_source[$1]:?}
 
 # Adds in "clean shell" aliases, which start up a clean version of shells, and only set "normal"
 # vars such as $TERM/$HOME etc. Relies on my `clean-shell` function being in `$PATH`.

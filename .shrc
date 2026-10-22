@@ -136,11 +136,7 @@ mdc () {
 alias l=ls
 alias ll='l -l'
 alias lt='l -tl'
-alias p=mviz # shorthand for the `mviz` command
-
-## Sublime Text editor shorthand aliases
-alias s=subl
-alias ss='subl --create'
+alias s=viewer
 
 ################################################################################
 #                                                                              #

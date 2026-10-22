@@ -1,0 +1,14 @@
+#!/bin/sh
+
+## View a file in a (potentially) non-blocking manner.
+# The purpose is to have an external program (Sublime Text, etc) that the file
+# can be opened in, but it still works when blocking is required (e.g. when
+# connecting via SSH, and editors aren't available.)
+#
+# It checks (in order) `$SampShell_VIEWER`, `$VISUAL`, `$EDITOR`, and if none
+# of those are setup, defaults to `vi`.
+##
+
+viewer=${SampShell_VIEWER:-${VISUAL:-${EDITOR:-vi}}}
+
+sh -c "$viewer \"\$@\"" -- "$@"

@@ -15,8 +15,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	alias reload    'exec tcsh `if ( $?loginsh ) echo -l`'
 	alias md        'mkdir -p \!*:q && \cd -- \!*q'
 	alias ls        'ls -AFqhGb'
-	alias s         'subl'
-	alias ss        'subl --create'
+	alias s         'viewer'
 	alias cdss      'cd $SampShell_ROOTDIR:q'
 
 	# TODO, look at highlight

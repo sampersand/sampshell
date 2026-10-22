@@ -72,7 +72,7 @@ All config variables that're used within SampShell are prefixed with `SampShell_
 <!-- | `SampShell_TRASHDIR` | `$SampShell_gendir/sampshell-trash`   | The default directory for the `trash` command.                                     | -->
 | `SampShell_TMPDIR`   | `$SampShell_gendir/tmp`                | The directory for temp files for SampShell, and the `cdtmp` cmd. (note we don't actually use it for anything other than `cdtmp` and `~tmp` currently...)                   |
 | `SampShell_HISTDIR`  | `$SampShell_gendir/sampshell-history` | If `HISTFILE` is not already setup, the default folder for it. (Also used in ZSH.) |
-| `SampShell_EDITOR`   | `sublime4`                             | The default editor for `subl`.                                                     |
+<!-- | `SampShell_EDITOR`   | `sublime4`                             | The default editor for `subl`.                                                     | -->
 | `SampShell_VERBOSE`  | `1` if interactive, (empty) otherwise  | Whether to log verbose messages (used in `SampShell_log`).                         |
 | `SampShell_XTRACE`    | (empty)                                | If set to `1`, all SampShell scripts will `set -o xtrace` at the very start.       |
 | `SampShell_scratch`  | N/A                                    | Used within POSIX-compliant shell functions; always unset upon exit.               |

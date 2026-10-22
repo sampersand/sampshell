@@ -11,7 +11,10 @@ end
 
 IRB.conf[:SAVE_HISTORY] = -1 # Save everything
 
-ENV['EDITOR'] ||= ENV['SampShell_EDITOR']
+# I use `edit` to view files, not to edit them. This lets me visualize it.
+# .... Though, I realistically should make another `view` command.
+ENV['SampShell_VIEWER'] = 'subl'
+ENV['VISUAL'] = 'viewer'
 
 if RUBY_VERSION < '3.3'
   # TODO: is this necessary? it was originally for cause `;` wasnt recognized at end of line
@@ -63,9 +66,8 @@ end
 #                                                                                                  #
 ####################################################################################################
 
-## Always have `subl` and `ssubl` visible
-public def subl(*files)  system('subl', '--no-create', '--', *files) end
-public def ssubl(*files) system('subl',    '--create', '--', *files) end
+## Always have `subl` visible
+public def subl(*files)  system('subl', '--', *files) end
 public def pbc(input = noinput = true)
   if noinput
     if equal?(IRB::TOPLEVEL_BINDING)
