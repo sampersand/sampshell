@@ -335,6 +335,28 @@ alias gnb='noglob git new-branch'
 
 ####################################################################################################
 #                                                                                                  #
+#                             Enable External ZSH features, if present                             #
+#                                                                                                  #
+####################################################################################################
+
+# Enable syntax highlighting and autosuggestion if they exist.
+() {
+	local prefix arg
+	prefix=$(brew --prefix) || return
+	for arg in $prefix/${^@}; do
+		[[ -e $arg ]] && source $arg
+	done
+} share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+  share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# TODO: I want this set on macos when highlights are installed. 
+if false; then
+	typeset -A ZSH_HIGHLIGHT_STYLES
+	ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
+fi
+
+####################################################################################################
+#                                                                                                  #
 #                                      Functions and Aliases                                       #
 #                                                                                                  #
 ####################################################################################################

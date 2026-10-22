@@ -1,35 +1,185 @@
 #!/bin/sh
 
 set -euC
+
 : "${SampShell_ROOTDIR:?SampShell_ROOTDIR is required}"
 readonly prog_name=${0##*/}
+readonly SCRIPTS_INSTALL_LOCATION=${SCRIPTS_INSTALL_LOCATION:-/usr/local/bin}
 
+################################################################################
+#                                  Utilities                                   #
+################################################################################
+
+warn () {
+	fmt="%s $1\n"
+	shift
+	printf >&2 "$fmt" "$prog_name" "$@"
+}
+
+die () { warn "$@"; exit 2; }
+
+log () {
+	if [ $verbose ]; then
+		fmt="\t$1\n"
+		shift
+		printf "$fmt" "$@"
+	fi
+}
+
+section () {
+	echo "--- $* ---"
+}
+
+# Adds `$2` to `$1`, unless the exact line already exists.
+add_to_file () {
+	# Sanity check---the file exists and is valid
+	if [ -e "${1:?}" ] && [ ! -f "${1:?}" ]; then
+		warn "path %s exists but isn't a file; not adding to it." "$1"
+		return 1
+	fi
+
+	# If it's already in the file, then do nothing
+	if [ -f "$1" ] && grep -F -q -x "${2:?}" "$1"; then
+		log 'Not adding to %s (already present): %s' "$1" "$2"
+	elif [ $dry ]; then
+		log 'Would add to %s: %s' "$1" "$2"
+	else
+		printf '\n# Added by `%s` at %s\n%s\n' \
+			"$prog_name" "$(date)" "$2" >> "$1"
+		echo "Installed setup to $1"
+	fi
+}
+
+####################################################################################################
+#                                            Git Setup                                             #
+####################################################################################################
+
+git_setup () {
+	# Add our config in to gitconfig.
+	if ! git config --get-all --global include.path | grep -F -q -x "$SampShell_ROOTDIR/.gitconfig"; then
+		echo "\tAdding $SampShell_ROOTDIR/.gitconfig to git\'s global include"
+		[ ! $dry ] && git config --add --global include.path "$SampShell_ROOTDIR/.gitconfig"
+	else
+		[ $verbose ] && echo "\tGit config of $SampShell_ROOTDIR/.gitconfig already set"
+	fi
+
+	# Unfortunately, we can't set this in the sampshell `.gitconfig` file since the
+	# install location might change.
+	echo "\tSetting global excludesFile to $SampShell_ROOTDIR/.gitignore_global"
+	[ ! $dry ] && git config set --global core.excludesFile "$SampShell_ROOTDIR/.gitignore_global"
+}
+
+####################################################################################################
+#                                           Shell Setup                                            #
+####################################################################################################
+
+install_shell_setup_sh () {
+	add_to_file ~/.profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.profile"'
+}
+
+install_shell_setup_bash () {
+	install_shell_setup_sh
+	add_to_file ~/.bashrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bashrc"'
+	add_to_file ~/.bash_profile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bash_profile"'
+}
+
+install_shell_setup_zsh () {
+	add_to_file ~/.zshrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zshrc"'
+	add_to_file ~/.zprofile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zprofile"'
+}
+
+install_shell_setup_tcsh () {
+	add_to_file ~/.tcshrc "$(
+		echo 'if ( ! $?SampShell_ROOTDIR ) setenv SampShell_ROOTDIR ~/sampshell'
+		echo 'source "$SampShell_ROOTDIR/.tcshrc"'
+	)"
+}
+
+
+####################################################################################################
+#                                         Install Scripts                                          #
+####################################################################################################
+
+install_scripts_p () {
+	readonly p_install_location="$SCRIPTS_INSTALL_LOCATION"/p
+
+	# Install mviz
+	if ! mviz_location=$(command -v mviz 2>/dev/null); then
+		echo cannot install p, mviz doesnt exist
+	elif [ "$p_install_location" -ef "$mviz_location" ]; then
+		[ $verbose ] && echo p already installed
+	elif [ -e "$p_install_location" ] || [ -L "$p_install_location" ]; then
+		echo p installed but isntmviz, uh oh
+	else
+		if [ $dry ]; then
+			echo "would make $SCRIPTS_INSTALL_LOCATION, and then" \
+			"link $mviz_location to $p_install_location"
+		else
+			set -x
+			sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
+				sudo ln -s "$mviz_location" "$p_install_location"
+			set +x
+		fi
+	fi
+}
+
+install_scripts () {
+	install_scripts_p
+}
+
+install_homebrew () {
+	if ! command -v brew >/dev/null 2>&1; then
+		warn 'Homebrew is not installed.'
+		return 1
+	fi
+
+	brew install zsh-autosuggestions
+	brew install zsh-syntax-highlighting
+}
+
+################################################################################
+#                                 Parse Config                                 #
+################################################################################
+
+readonly known_shells='sh bash zsh tcsh all'
 usage () { cat; } <<EOS
 usage: $prog_name [options]
 options:
-	-h     Show usage
-	-v     Enable verbose outputs
-	-a     Install all options
-	-s     Install sh hooks (i.e. '.profile')
-	-z     Install zsh hooks
-	-b     Install bash hooks
-	-t     Install tcsh hooks
-	-g     Install git options
-	-p     Install scripts into PATH
+	-h       Show usage
+	-d       Dry Run: Print what would happen but dont do it; implies -v
+	-v       Enable verbose outputs
+	-a       Install all options
+	-s SHELL Install SHELL hooks. Valid: $known_shells. Can Repeat.
+	-g       Install git options
+	-p       Install SampShell scripts into PATH
+	-b       Install homebrew features
 EOS
 
-all= shell= verbose= git= scripts=
-while getopts 'hvaszbtgp' opt; do
+sh_sh= sh_zsh= sh_bash= sh_tcsh=
+all= dry= verbose= git= scripts= brew=
+while getopts 'hdvas:gpb' opt; do
 	case $opt in
 	h) usage; exit ;;
 	v) verbose=1 ;;
+	d) dry=1 verbose=1 ;;
 	a) all=1 ;;
-	s) shell=sh ;;
-	z) shell=zsh ;;
-	b) shell=bash ;;
-	t) shell=tcsh ;;
+	s)
+		case $OPTARG in
+		sh) sh_sh=1 ;;
+		zsh) sh_zsh=1 ;;
+		bash) sh_bash=1 ;;
+		tcsh) sh_tcsh=1 ;;
+		all)
+			sh_sh=1
+			command -v zsh >/dev/null 2>&1 && sh_zsh=1
+			command -v bash >/dev/null 2>&1 && sh_bash=1
+			command -v tcsh >/dev/null 2>&1 && sh_tcsh=1
+			;;
+		*) die "invalid shell: %s (valid: %s)" "$OPTARG" "$known_shells"
+		esac ;;
 	g) git=1 ;;
 	p) scripts=1 ;;
+	b) brew=1 ;;
 	?) exit 2 ;;
 	esac
 done
@@ -40,89 +190,25 @@ if [ $# -ne 0 ]; then
 	usage >&2; exit 1
 fi
 
-# if [ $verbose ]; then
-# 	log () { echo "$@"; }
-# else
-# 	log () { :; }
-# fi
 
+####################################################################################################
+#                                      Run Install Functions                                       #
+####################################################################################################
+error=0
 
-################################################################################
-#                                  Git Setup                                   #
-################################################################################
-if [ ${git:-$all} ]; then
-echo --- Setting up git configurations ---
+## Git Installation
+[ ${git:-$all} ] && { section Git Setup; git_setup || error=1; }
 
-# Add our config in to gitconfig.
-if ! git config --get-all --global include.path | grep -F -q -x "$SampShell_ROOTDIR/.gitconfig"; then
-	echo "\tAdding $SampShell_ROOTDIR/.gitconfig to git\'s global include"
-	git config --add --global include.path "$SampShell_ROOTDIR/.gitconfig"
-else
-	[ $verbose ] && echo "\tGit config of $SampShell_ROOTDIR/.gitconfig already set"
-fi
+## Shell setup
+[ -n "$all$sh_sh$sh_bash$sh_zsh$sh_tcsh" ] && section Shell Setup
+[ ${sh_sh:-$all}   ] && { install_shell_setup_sh || error=1; }
+[ ${sh_bash:-$all} ] && { install_shell_setup_bash || error=1; }
+[ ${sh_zsh:-$all}  ] && { install_shell_setup_zsh || error=1; }
+[ ${sh_tcsh:-$all} ] && { install_shell_setup_tcsh || error=1; }
 
-# Unfortunately, we can't set this in the sampshell `.gitconfig` file since the
-# install location might change.
-echo "\tSetting global excludesFile to $SampShell_ROOTDIR/.gitignore_global"
-git config set --global core.excludesFile "$SampShell_ROOTDIR/.gitignore_global"
+## Install scripts
+[ ${scripts:-$all} ] && { section Shell Scripts; install_scripts || error=1; }
 
-fi
+[ ${brew:-$all} ] && { section Homebrew Installs; install_homebrew || error=1; }
 
-################################################################################
-#                                 Shell Setup                                  #
-################################################################################
-if [ ${shell:-$all} ]; then
-add_to_file_if_doesnt_exist () {
-	[ -f "${1:?}" ] || touch -- "$1"
-	if ! grep -F -q -x "${2:?}" "$1"; then
-		printf '# Added by `%s` at %s\n%s\n' \
-			"$prog_name" "$(date)" "$2" >> "$1"
-		echo "Installed setup to $1"
-	else
-		[ $verbose ] && echo "\tAlready in $2: $1"
-	fi
-}
-
-echo --- Setting up shell-specific configurations ---
-
-if [ $all ] || [ $shell = sh ] || [ $shell = bash ]; then
-	add_to_file_if_doesnt_exist ~/.profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.profile"'
-fi
-
-if [ $all ] || [ $shell = bash ]; then
-	add_to_file_if_doesnt_exist ~/.bashrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bashrc"'
-	add_to_file_if_doesnt_exist ~/.bash_profile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bash_profile"'
-fi
-
-if [ $all ] || [ $shell = zsh ]; then
-	add_to_file_if_doesnt_exist ~/.zshrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zshrc"'
-	add_to_file_if_doesnt_exist ~/.zprofile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zprofile"'
-fi
-
-if [ $all ] || [ $shell = tcsh ]; then
-	add_to_file_if_doesnt_exist ~/.tcshrc 'if ( ! $?SampShell_ROOTDIR ) setenv SampShell_ROOTDIR ~/sampshell'
-	add_to_file_if_doesnt_exist ~/.tcshrc 'source "$SampShell_ROOTDIR/.tcshrc"'
-fi
-
-fi
-
-################################################################################
-#                     Install scripts into /usr/local/bin                      #
-################################################################################
-if [ ${scripts:-$all} ]; then
-echo --- Installing scripts into path ---
-
-readonly INSTALL_LOCATION=${INSTALL_LOCATION:-/usr/local/bin}
-readonly p_install_location=$INSTALL_LOCATION/p
-if ! mviz_location=$(command -v mviz 2>/dev/null); then
-	echo cannot install p, mviz doesnt exist
-elif [ "$p_install_location" -ef "$mviz_location" ]; then
-	[ $verbose ] && echo p already installed
-elif [ -e "$p_install_location" ] || [ -L "$p_install_location" ]; then
-	echo p installed but isntmviz, uh oh
-else
-	sudo mkdir -p -- "$INSTALL_LOCATION" &&
-		sudo ln -s "$mviz_location" "$p_install_location"
-fi
-
-fi
+exit "$error"
