@@ -133,8 +133,7 @@ install_homebrew () {
 		return 1
 	fi
 
-	brew install zsh-autosuggestions
-	brew install zsh-syntax-highlighting
+	brew install ${dry:+--dry-run} zsh-autosuggestions zsh-syntax-highlighting
 }
 
 ################################################################################
@@ -157,6 +156,8 @@ EOS
 
 sh_sh= sh_zsh= sh_bash= sh_tcsh=
 all= dry= verbose= git= scripts= brew=
+something_specified=
+
 while getopts 'hdvas:gpb' opt; do
 	case $opt in
 	h) usage; exit ;;
@@ -164,6 +165,7 @@ while getopts 'hdvas:gpb' opt; do
 	d) dry=1 verbose=1 ;;
 	a) all=1 ;;
 	s)
+		something_specified=1
 		case $OPTARG in
 		sh) sh_sh=1 ;;
 		zsh) sh_zsh=1 ;;
@@ -177,12 +179,15 @@ while getopts 'hdvas:gpb' opt; do
 			;;
 		*) die "invalid shell: %s (valid: %s)" "$OPTARG" "$known_shells"
 		esac ;;
-	g) git=1 ;;
-	p) scripts=1 ;;
-	b) brew=1 ;;
+	g) something_specified=1; git=1 ;;
+	p) something_specified=1; scripts=1 ;;
+	b) something_specified=1; brew=1 ;;
 	?) exit 2 ;;
 	esac
 done
+
+# If nothing is specified, then use `-a` as the default
+[ -z "$something_specified" ] && all=1
 
 shift `expr $#`
 
