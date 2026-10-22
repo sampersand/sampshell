@@ -12,8 +12,10 @@ fi
 
 . "$SampShell_ROOTDIR/.shrc"
 
-if [[ -z "$PS1" ]]; then
-	PS1='[?$? !\! L$SHLVL] ${PWD#"${HOME%/}"/} ${0##*/}$ '
+if [[ -z "$PS1" || "$PS1" == '\s-\v\$ ' ]]; then
+	PS1='[\t !\! ?$?'
+	(( $SHLVL != 1 )) && PS1+=' L$SHLVL'
+	PS1+='] \w \s \$ '
 fi
 
 if [[ "$(uname)" = Darwin ]]; then
