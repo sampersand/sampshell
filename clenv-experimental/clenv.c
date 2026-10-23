@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
+#include <assert.h>
 
 #define LOG (fprintf(stderr, "%s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__), fflush(stderr))
 #define die(...) do { \
@@ -16,14 +17,37 @@ extern char **environ;
 char **inherited_environ;
 const char *program_name;
 
-int dry_mode, verbose_mode;
+int dry_mode, verbose;
 const char *alt_path;
 
 enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 
-const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG", 0};
+/******************************************************************************
+ *                                                                            *
+ *                       Interact with the Environment                        *
+ *                                                                            *
+ ******************************************************************************/
 
+void clenv_set(const char *restrict name, const char *restrict value) {
+	assert(name);
+	assert(value);
 
+	if (setenv(name, value, 1) == -1)
+		die("unable to set %s: %s", name, strerror(errno));
+
+	if (verbose)
+		printf("#clenv setting:   %s=%s\n", name, value);
+}
+
+void clenv_unset(const char *restrict name) {
+	assert(name);
+
+	if (unsetenv(name) == -1)
+		die("unable to unset %s: %s", name, strerror(errno));
+
+	if (verbose)
+		printf("#clenv unsetting: %s\n", name);
+}
 
 char *lookup_inherited_value(const char *name) {
 	char *value, **tmp_environ;
@@ -39,23 +63,32 @@ char *lookup_inherited_value(const char *name) {
 }
 
 void setup_initial_env(enum starting_env starting_env) {
-	switch (starting_env) {
-	case INHERIT_ENV:
-		break;
-	case EMPTY_ENV:
-		environ = malloc(1);
-		break;
-	case MINIMAL_ENV:
-		environ = malloc(1);
-		char *value;
-		for (int i = 0; minimal_env[i]; i++) {
-			if ((value = lookup_inherited_value(minimal_env[i]))){
-				setenv(minimal_env[i], value, 1);
-				if (errno) die("error!");
-			}
-		}
+	// If we inherit the environment, don't do anything special.
+	if (starting_env == INHERIT_ENV) {
+		if (verbose > 1) puts("#clenv inheriting environment");
+		return;
 	}
 
+	// Otherwise, clear the environment by setting a new one.
+	environ = malloc(1);
+	if (verbose)
+		puts("#clenv clearing environment");
+
+	// If we're not setting up the minimal env, we're done.
+	if (starting_env != MINIMAL_ENV)
+		return;
+
+	if (verbose) puts("#clenv setting up minimal environment");
+
+	// Now take all the "minimal" environment values and forward them through.
+	const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG"};
+
+	char *value;
+	for (int i = 0; i < sizeof(minimal_env) / sizeof(char *); i++) {
+		if ((value = lookup_inherited_value(minimal_env[i]))) {
+			clenv_set(minimal_env[i], value);
+		}
+	}
 }
 
 void print_environ(void) {
@@ -77,9 +110,8 @@ void set_matching(const char *pat) {
 		if (!s) die("no `=` found in environ?");
 		char *name = strndup(inherited_environ[i], s - inherited_environ[i]);
 		int does_match = regexec(&re, name, 0, 0 ,0);
-		if (does_match != REG_NOMATCH) {
-			if (setenv(name, s + 1, 1) == -1) die("error?");
-		}
+		if (does_match != REG_NOMATCH)
+			clenv_set(name, s + 1);
 		free(name);
 	}
 	regfree(&re);
@@ -110,7 +142,7 @@ void unset_matching(const char *pat) {
 	}
 	regfree(&re);
 	for (int i = 0; i < nmatches; ++i) {
-		if (unsetenv(matches[i]) == -1) die("error?");
+		clenv_unset(matches[i]);
 		free(matches[i]);
 	}
 	free(matches);
@@ -132,6 +164,8 @@ int main(int argc, char *const argv[]) {
 			usage();
 		case 'a': starting_env = INHERIT_ENV; break ;;
 		case 'n': case 'i': starting_env = EMPTY_ENV; break ;;
+		case 'D': dry_mode = 1; // fallthrough
+		case 'V': verbose++; break;
 		}
 	}
 
@@ -145,10 +179,9 @@ int main(int argc, char *const argv[]) {
 		case 'n':
 		case 'i':
 		case 'h':
+		case 'V':
+		case 'D':
 			break; // already handled
-
-		case 'D': dry_mode = 1; // fallthrough
-		case 'V': verbose_mode = 1; break;
 
 		case 'P':
 			alt_path = optarg;
@@ -157,7 +190,7 @@ int main(int argc, char *const argv[]) {
 		case 'p':
 			alt_path = lookup_inherited_value("PATH");
 			if (!alt_path) die("$PATH is not set in calling environment?");
-			setenv("PATH", alt_path, 1);
+			clenv_set("PATH", alt_path);
 			break;
 
 		case 'v':;
@@ -171,15 +204,12 @@ int main(int argc, char *const argv[]) {
 				if (!value) {
 					die("environment variable %s is unset", optarg);
 				}
-				setenv(optarg, value, 1);
-				if (errno) die("error!");
+				clenv_set(optarg, value);
 			}
 			break;
 
 		case 'u':
-			if (unsetenv(optarg) == -1) {
-				die("invalid -u value: %s", optarg);
-			}
+			clenv_unset(optarg);
 			break;
 
 		case 'm':
@@ -195,16 +225,31 @@ int main(int argc, char *const argv[]) {
 		}
 	}
 
+	// We're done parsing options, advance `argv` / `argc` to past the options
+	argv += optind;
+	argc -= optind;
+
 	// If no program was specified, just print the environment out.
-	if (argc == optind) { // TODO: can it ever get bigger than this?
+	if (argc <= 0) { // TODO: can it ever get bigger than this?
 		print_environ();
 		exit(EXIT_SUCCESS);
 	}
 
 	// Otherwise, let's execute it
-	// execvP()
-	execvP(argv[optind], alt_path, &argv[optind]);
-	die("exec failed: %s", strerror(errno));
+	if (verbose) {
+		printf("#clenv executing: %s\n", argv[0]);
+		for (int i = 0; i < argc; ++i)
+			printf("#clenv    argv[%d]='%s'\n", i, argv[i]);
+	}
+
+	errno = 0;
+	if (alt_path) {
+		// TODO: is `execvP` posix? if not, we have to find this ourself.
+		execvP(argv[0], alt_path, argv);
+	} else {
+		execvp(argv[0], argv);
+	}
+	die("exec of %s failed: %s", argv[0], strerror(errno));
 
 	/*
 	options:
