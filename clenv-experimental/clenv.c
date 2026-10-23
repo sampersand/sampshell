@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <regex.h>
 
 #define LOG (fprintf(stderr, "%s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__), fflush(stderr))
 #define die(...) do { \
@@ -15,9 +16,14 @@ extern char **environ;
 char **inherited_environ;
 const char *program_name;
 
+int dry_mode, verbose_mode;
+const char *alt_path;
+
 enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 
 const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG", 0};
+
+
 
 char *lookup_inherited_value(const char *name) {
 	char *value, **tmp_environ;
@@ -51,6 +57,7 @@ void setup_initial_env(enum starting_env starting_env) {
 	}
 
 }
+
 void print_environ(void) {
 	for (int i = 0; environ[i]; ++i)
 		puts(environ[i]);
@@ -61,11 +68,55 @@ void usage(void) {
 	exit(0);
 }
 
+void set_matching(const char *pat) {
+	regex_t re;
+	int err = regcomp(&re, pat, REG_EXTENDED | REG_EXTENDED);
+	if (err) die("bad regex: %s", pat); // TODO `regerror`
+	for (int i = 0; inherited_environ[i]; ++i) {
+		char *s = strchr(inherited_environ[i], '=');
+		if (!s) die("no `=` found in environ?");
+		char *name = strndup(inherited_environ[i], s - inherited_environ[i]);
+		int does_match = regexec(&re, name, 0, 0 ,0);
+		if (does_match != REG_NOMATCH) {
+			if (setenv(name, s + 1, 1) == -1) die("error?");
+		}
+		free(name);
+	}
+	regfree(&re);
+}
 
-int dry_mode, verbose_mode;
-const char *alt_path;
+void unset_matching(const char *pat) {
+	regex_t re;
+	int err = regcomp(&re, pat, REG_EXTENDED | REG_EXTENDED);
+	if (err) die("bad regex: %s", pat); // TODO `regerror`
 
-const char *options = "hDVaniv:u:m:u:pP:";
+	int nmatches = 0, cap = 4;
+	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
+
+	for (int i = 0; environ[i]; ++i) {
+		char *s = strchr(environ[i], '=');
+		if (!s) die("no `=` found in environ?");
+
+		char *name = strndup(environ[i], s - environ[i]);
+		int does_match = regexec(&re, name, 0, 0 ,0);
+		if (does_match == REG_NOMATCH) {
+			free(name);
+		} else {
+			if (nmatches == cap) {
+				matches = realloc(matches, sizeof(char *) * (cap *= 2));
+			}
+			matches[nmatches++] = name;
+		}
+	}
+	regfree(&re);
+	for (int i = 0; i < nmatches; ++i) {
+		if (unsetenv(matches[i]) == -1) die("error?");
+		free(matches[i]);
+	}
+	free(matches);
+}
+
+const char *options = "hDVaniv:u:m:U:pP:";
 int main(int argc, char *const argv[]) {
 	program_name = argv[0];
 
@@ -132,8 +183,12 @@ int main(int argc, char *const argv[]) {
 			break;
 
 		case 'm':
+			set_matching(optarg);
+			break;
+
 		case 'U':
-			die("unimplemented");
+			unset_matching(optarg);
+			break;
 
 		default:
 			die("todo");
