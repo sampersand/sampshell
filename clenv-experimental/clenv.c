@@ -96,11 +96,6 @@ void print_environ(void) {
 		puts(environ[i]);
 }
 
-void usage(void) {
-	printf("<todo: usage>");
-	exit(0);
-}
-
 void set_matching(const char *pat) {
 	regex_t re;
 	int err = regcomp(&re, pat, REG_EXTENDED | REG_EXTENDED);
@@ -146,6 +141,25 @@ void unset_matching(const char *pat) {
 		free(matches[i]);
 	}
 	free(matches);
+}
+
+void usage(void) {
+	printf("usage: %s [options] [utility ...arguments]\n", program_name);
+	puts("options:");
+    puts("\t-h              Print this");
+    puts("\t-D              Don't actually run the program; Sets -V");
+    puts("\t-V              Print the invocation, and any changed variables.");
+    puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
+    puts("\t-p              Shorthand for -vPATH -P$PATH");
+    puts("\t-a              Pass all environment variables in by default");
+    puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
+    puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
+    puts("\t                omitted, it uses the current VALUE (or errors if unset).");
+    puts("\t-u NAME         Unset 'NAME'. Ignores unset names.");
+    puts("\t-m PATTERN      Sets variables that match PATTERN");
+    puts("\t-U PATTERN      Unsets variables which match the regex.");
+
+	exit(0);
 }
 
 const char *options = "hDVaniv:u:m:U:pP:";
@@ -250,21 +264,4 @@ int main(int argc, char *const argv[]) {
 		execvp(argv[0], argv);
 	}
 	die("exec of %s failed: %s", argv[0], strerror(errno));
-
-	/*
-	options:
-    -h              Print this
-    -P altpath      Use 'altpath' to find 'utility', instead of \$PATH
-    -a              Pass all environment variables in by default
-    -n, -i          Don't set any arguments by default, including "essential ones"
-    -v name[=value] Puts 'name' in the environment of 'utility'. If 'value' is
-                    omitted, it uses the current value (or errors if unset).
-    -u name         Unset 'name'. If both -v and -u are given, -u wins.
-    -m pattern      Pass in any variables matching the awk pattern.
-    -U pattern      Unsets any variables which match the awk pattern.
-    -p              Shorthand for -vPATH -P\$PATH
-    -D              Don't actually run the program; Sets -V
-    -V              Print the invocation, and any changed variables.
-    */
-	// printf("%s\n", environ);
 }
