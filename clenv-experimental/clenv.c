@@ -91,50 +91,59 @@ void setup_initial_env(enum starting_env starting_env) {
 	}
 }
 
-void print_environ(void) {
-	for (int i = 0; environ[i]; ++i)
-		puts(environ[i]);
-}
-
 void set_matching(const char *pat) {
 	regex_t re;
-	int err = regcomp(&re, pat, REG_EXTENDED | REG_EXTENDED);
-	if (err) die("bad regex: %s", pat); // TODO `regerror`
+	int err = regcomp(&re, pat, REG_EXTENDED);
+	if (err) {
+		char buf[4096];
+		regerror(err, &re, buf, sizeof(buf));
+		die("-m: bad regex '%s': %s", pat, buf);
+	}
+
 	for (int i = 0; inherited_environ[i]; ++i) {
-		char *s = strchr(inherited_environ[i], '=');
-		if (!s) die("no `=` found in environ?");
-		char *name = strndup(inherited_environ[i], s - inherited_environ[i]);
-		int does_match = regexec(&re, name, 0, 0 ,0);
-		if (does_match != REG_NOMATCH)
-			clenv_set(name, s + 1);
+		char *eql = strchr(inherited_environ[i], '=');
+		if (!eql) die("no `=` found in environ?");
+
+		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
+		if (!regexec(&re, name, 0, 0, 0)) {
+			clenv_set(name, eql + 1);
+		} else if (verbose > 1) {
+			printf("#clenv   doesnt match '%s': %s\n", pat, name);
+		}
+
 		free(name);
 	}
+
 	regfree(&re);
 }
 
 void unset_matching(const char *pat) {
 	regex_t re;
-	int err = regcomp(&re, pat, REG_EXTENDED | REG_EXTENDED);
-	if (err) die("bad regex: %s", pat); // TODO `regerror`
+	int err = regcomp(&re, pat, REG_EXTENDED);
+	if (err) {
+		char buf[4096];
+		regerror(err, &re, buf, sizeof(buf));
+		die("-U: bad regex '%s': %s", pat, buf);
+	}
 
 	int nmatches = 0, cap = 4;
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
 
 	for (int i = 0; environ[i]; ++i) {
-		char *s = strchr(environ[i], '=');
-		if (!s) die("no `=` found in environ?");
+		char *eql = strchr(environ[i], '=');
+		if (!eql) die("no `=` found in environ?");
 
-		char *name = strndup(environ[i], s - environ[i]);
-		int does_match = regexec(&re, name, 0, 0 ,0);
-		if (does_match == REG_NOMATCH) {
-			free(name);
-		} else {
+		char *name = strndup(environ[i], eql - environ[i]);
+		if (regexec(&re, name, 0, 0, 0) == 0) {
 			if (nmatches == cap) {
 				matches = realloc(matches, sizeof(char *) * (cap *= 2));
 			}
 			matches[nmatches++] = name;
+		} else {
+			free(name);
 		}
 	}
+
 	regfree(&re);
 	for (int i = 0; i < nmatches; ++i) {
 		clenv_unset(matches[i]);
@@ -162,29 +171,50 @@ void usage(void) {
 	exit(0);
 }
 
-const char *options = "hDVaniv:u:m:U:pP:";
+const char *options = "+hDVaniv:u:m:U:pP:";
 int main(int argc, char *const argv[]) {
 	program_name = argv[0];
-
-	// Find starting clenv starting_env
-	enum starting_env starting_env = MINIMAL_ENV;
 	inherited_environ = environ;
 
-	opterr = 0;
+	// Scan the argument list for options which should be processed before
+	// any others. (This makes setting up a new environment significantly
+	// easier.)
+	enum starting_env starting_env = MINIMAL_ENV;
 	int ch;
+	opterr = 0;
 	while ((ch = getopt(argc, argv, options)) != -1) {
 		switch (ch) {
+		// Set the initial environment: inherited, empty, or minimal (default)
+		case 'a':
+			starting_env = INHERIT_ENV;
+			break;
+		case 'n':
+		case 'i':
+			starting_env = EMPTY_ENV;
+			break;
+
+		// Check for dry and verbose; verbose is checked in initial env setup.
+		case 'D':
+			dry_mode = 1;
+			// fallthrough
+		case 'V':
+			verbose++; // Repeat multiple times for more specificity
+			break;
+
+		// Might as well check for usage early on too.
 		case 'h':
 			usage();
-		case 'a': starting_env = INHERIT_ENV; break ;;
-		case 'n': case 'i': starting_env = EMPTY_ENV; break ;;
-		case 'D': dry_mode = 1; // fallthrough
-		case 'V': verbose++; break;
+
+		default:
+			; // Intentionally nothing, as we'll parse the other options later.
 		}
 	}
 
+	// Setup the initial environment based on the flags that were passed.
 	setup_initial_env(starting_env);
 
+	// Now, go through and parse out all the remaining options that didn't need
+	// to be handled out-of-order.
 	optind = 1;
 	opterr = 1;
 	while ((ch = getopt(argc, argv, options)) != -1) {
@@ -203,23 +233,22 @@ int main(int argc, char *const argv[]) {
 
 		case 'p':
 			alt_path = lookup_inherited_value("PATH");
-			if (!alt_path) die("$PATH is not set in calling environment?");
+			if (!alt_path)
+				die("-p: $PATH is not set.");
+
 			clenv_set("PATH", alt_path);
 			break;
 
 		case 'v':;
-			// If a value was assigned, then use that
-			if (strchr(optarg, '=')) {
-				// TODO: dont use putenv
-				putenv(optarg);
-				if (errno) die("error!");
-			} else {
-				char *value = lookup_inherited_value(optarg);
-				if (!value) {
-					die("environment variable %s is unset", optarg);
-				}
-				clenv_set(optarg, value);
+			char *value;
+
+			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
+			if ((value = strchr(optarg, '='))) {
+				*value++ = '\0';
+			} else if (!(value = lookup_inherited_value(optarg))) {
+				die("-v %s: variable is unset", optarg);
 			}
+			clenv_set(optarg, value);
 			break;
 
 		case 'u':
@@ -235,7 +264,7 @@ int main(int argc, char *const argv[]) {
 			break;
 
 		default:
-			die("todo");
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -245,8 +274,9 @@ int main(int argc, char *const argv[]) {
 
 	// If no program was specified, just print the environment out.
 	if (argc <= 0) { // TODO: can it ever get bigger than this?
-		print_environ();
-		exit(EXIT_SUCCESS);
+		for (int i = 0; environ[i]; ++i)
+			puts(environ[i]);
+		return EXIT_SUCCESS;
 	}
 
 	// Otherwise, let's execute it
@@ -256,12 +286,17 @@ int main(int argc, char *const argv[]) {
 			printf("#clenv    argv[%d]='%s'\n", i, argv[i]);
 	}
 
+	// Don't actually run the command in dry mode.
+	if (dry_mode)
+		return EXIT_SUCCESS;
+
 	errno = 0;
 	if (alt_path) {
-		// TODO: is `execvP` posix? if not, we have to find this ourself.
+		// TODO: is `execvP` posix? if not, we have to find this ourselves.
 		execvP(argv[0], alt_path, argv);
 	} else {
 		execvp(argv[0], argv);
 	}
+
 	die("exec of %s failed: %s", argv[0], strerror(errno));
 }
