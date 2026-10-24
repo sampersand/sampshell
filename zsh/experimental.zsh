@@ -28,7 +28,7 @@ if [[ -e $SampShell_ZSHDIRS ]] then
 	popd -q # remove the current directory from the base of the stack
 fi
 dirs-write () {
-	if [[ $HISTFILE ]] {
+	if (( !_SampShell_history_disabled )) {
 		mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS
 	}
 }
