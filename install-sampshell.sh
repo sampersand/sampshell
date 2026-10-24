@@ -123,8 +123,16 @@ install_scripts_p () {
 	fi
 }
 
+install_scripts_clenv () (
+	cd "${SampShell_ROOTDIR:?}/script-src"
+	make
+	sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
+		sudo ln -s "$PWD/clenv" "$SCRIPTS_INSTALL_LOCATION/clenv"
+)
+
 install_scripts () {
 	install_scripts_p
+	install_scripts_clenv
 }
 
 install_homebrew () {

@@ -84,7 +84,7 @@ void setup_initial_env(enum starting_env starting_env) {
 	const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG"};
 
 	char *value;
-	for (int i = 0; i < sizeof(minimal_env) / sizeof(char *); i++) {
+	for (unsigned long i = 0; i < sizeof(minimal_env) / sizeof(char *); i++) {
 		if ((value = lookup_inherited_value(minimal_env[i]))) {
 			clenv_set(minimal_env[i], value);
 		}
