@@ -6,21 +6,34 @@
 #include <regex.h>
 #include <assert.h>
 
-#define LOG (fprintf(stderr, "%s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__), fflush(stderr))
+/******************************************************************************
+ *                              Global Variables                              *
+ ******************************************************************************/
+
+// Initially the inherited environment, but cleared early on (unless `-a` is
+// passed in) to provide a "clean slate" for `setenv` and friends to work on.
+extern char **environ;
+
+// Set to `environ` at program start, to have a clean starting environment.
+char **inherited_environ;
+
+// Set to `argv[0]` at program start; used in error messages.
+const char *program_name;
+
+// Flags that can be set at startup; control program execution and logging.
+int dry_mode, verbose;
+
+/******************************************************************************
+ *                                 Utilities                                  *
+ ******************************************************************************/
+
+// Utility function to print an error message to stderr and exit.
 #define die(...) do { \
 		fprintf(stderr, "%s: ", program_name); \
 		fprintf(stderr, __VA_ARGS__); \
 		fputc('\n', stderr); \
 		fflush(stderr); \
 		exit(EXIT_FAILURE); } while (0)
-extern char **environ;
-char **inherited_environ;
-const char *program_name;
-
-int dry_mode, verbose;
-const char *alt_path;
-
-enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 
 /******************************************************************************
  *                                                                            *
@@ -28,39 +41,150 @@ enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
  *                                                                            *
  ******************************************************************************/
 
-void clenv_set(const char *restrict name, const char *restrict value) {
-	assert(name);
+/**
+ * Sets the value of `name` to `value` in the environment. The name must be
+ * valid (nonnull, nonempty, and cannot have `=`), and the value must be
+ * nonnull.
+ */
+void clenv_set(const char *name, const char *value) {
+	assert(name);               // non-null
+	assert(*name);              // non-empty
+	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
-
-	if (setenv(name, value, 1) == -1)
-		die("unable to set %s: %s", name, strerror(errno));
 
 	if (verbose)
 		printf("#clenv setting:   %s=%s\n", name, value);
+
+	if (setenv(name, value, 1) == -1) {
+		// Note we use `perror` since the error case is very unlikely
+		// (memory exhaustion; we already validate the name normally)
+		perror(program_name);
+		abort();
+	}
 }
 
-void clenv_unset(const char *restrict name) {
-	assert(name);
-
-	if (unsetenv(name) == -1)
-		die("unable to unset %s: %s", name, strerror(errno));
+/**
+ * Removes the value of `name` from the environment, if it's set. The name must
+ * be valid (nonnull, nonempty, and cannot have `=`).
+ */
+void clenv_unset(const char *name) {
+	assert(name);               // non-null
+	assert(*name);              // non-empty
+	assert(!strchr(name, '=')); // does not have `=`
 
 	if (verbose)
 		printf("#clenv unsetting: %s\n", name);
+
+	if (unsetenv(name) == -1) {
+		// Note we use `perror` since the error case is very unlikely
+		// (memory exhaustion; we already validate the name normally)
+		perror(program_name);
+		abort();
+	}
 }
 
+/**
+ * Fetches the original value of `name` that was inherited from the environment.
+ * Returns `NULL` if the name wasn't present. The name must be valid (nonnull,
+ * nonempty, and cannot have `=`).
+ */
 char *lookup_inherited_value(const char *name) {
+	assert(name);               // non-null
+	assert(*name);              // non-empty
+	assert(!strchr(name, '=')); // does not have `=`
+
 	char *value, **tmp_environ;
 
 	tmp_environ = environ;
 	environ = inherited_environ;
+
+	// We check `errno` here since a return value of `NULL` could also just mean
+	// it wasn't found inthe environment.
 	errno = 0;
-	value = getenv(name);
-	if (errno) die("error!");
+	if (!(value = getenv(name)) && errno) {
+		// Note we use `perror` since the error case is impossible (we already
+		// validate the name)
+		perror(program_name);
+		abort();
+	}
 	environ = tmp_environ;
 
 	return value;
 }
+
+/**
+ * Finds all parameters in the inherited environment whose names match
+ * `pattern`, and sets them in the current environment.
+ */
+void clenv_set_matching(const char *pattern) {
+	regex_t re;
+	int err = regcomp(&re, pattern, REG_EXTENDED);
+	if (err) {
+		char buf[4096];
+		regerror(err, &re, buf, sizeof(buf));
+		die("-m: bad regex '%s': %s", pattern, buf);
+	}
+
+	for (int i = 0; inherited_environ[i]; ++i) {
+		char *eql = strchr(inherited_environ[i], '=');
+		if (!eql) die("[bug] no `=` found in environ of %s", environ[i]);
+
+		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
+		if (!regexec(&re, name, 0, 0, 0)) {
+			clenv_set(name, eql + 1);
+		} else if (verbose > 1) {
+			printf("#clenv   -m: doesnt match '%s': %s\n", pattern, name);
+		}
+
+		free(name);
+	}
+
+	regfree(&re);
+}
+
+/**
+ * Unsets all parameters in the environment whose names match `pattern`.
+ */
+void clenv_unset_matching(const char *pattern) {
+	regex_t re;
+	int err = regcomp(&re, pattern, REG_EXTENDED);
+	if (err) {
+		char buf[4096];
+		regerror(err, &re, buf, sizeof(buf));
+		die("-U: bad regex '%s': %s", pattern, buf);
+	}
+
+	int nmatches = 0, cap = 4;
+	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
+
+	for (int i = 0; environ[i]; ++i) {
+		char *eql = strchr(environ[i], '=');
+		if (!eql) die("[bug] no `=` found in environ of %s", environ[i]);
+
+		char *name = strndup(environ[i], eql - environ[i]);
+		if (!regexec(&re, name, 0, 0, 0)) {
+			if (nmatches == cap)
+				matches = realloc(matches, sizeof(char *) * (cap *= 2));
+			matches[nmatches++] = name;
+		} else {
+			if (verbose > 1) {
+				printf("#clenv   -U: doesnt match '%s': %s\n", pattern, name);
+			}
+			free(name);
+		}
+	}
+
+	regfree(&re);
+	for (int i = 0; i < nmatches; ++i)
+		clenv_unset(matches[i]), free(matches[i]);
+	free(matches);
+}
+
+/******************************************************************************
+ *                               Business Logic                               *
+ ******************************************************************************/
+
+enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 
 void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
@@ -85,71 +209,9 @@ void setup_initial_env(enum starting_env starting_env) {
 
 	char *value;
 	for (unsigned long i = 0; i < sizeof(minimal_env) / sizeof(char *); i++) {
-		if ((value = lookup_inherited_value(minimal_env[i]))) {
+		if ((value = lookup_inherited_value(minimal_env[i])))
 			clenv_set(minimal_env[i], value);
-		}
 	}
-}
-
-void set_matching(const char *pat) {
-	regex_t re;
-	int err = regcomp(&re, pat, REG_EXTENDED);
-	if (err) {
-		char buf[4096];
-		regerror(err, &re, buf, sizeof(buf));
-		die("-m: bad regex '%s': %s", pat, buf);
-	}
-
-	for (int i = 0; inherited_environ[i]; ++i) {
-		char *eql = strchr(inherited_environ[i], '=');
-		if (!eql) die("no `=` found in environ?");
-
-		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
-		if (!regexec(&re, name, 0, 0, 0)) {
-			clenv_set(name, eql + 1);
-		} else if (verbose > 1) {
-			printf("#clenv   doesnt match '%s': %s\n", pat, name);
-		}
-
-		free(name);
-	}
-
-	regfree(&re);
-}
-
-void unset_matching(const char *pat) {
-	regex_t re;
-	int err = regcomp(&re, pat, REG_EXTENDED);
-	if (err) {
-		char buf[4096];
-		regerror(err, &re, buf, sizeof(buf));
-		die("-U: bad regex '%s': %s", pat, buf);
-	}
-
-	int nmatches = 0, cap = 4;
-	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
-
-	for (int i = 0; environ[i]; ++i) {
-		char *eql = strchr(environ[i], '=');
-		if (!eql) die("no `=` found in environ?");
-
-		char *name = strndup(environ[i], eql - environ[i]);
-		if (regexec(&re, name, 0, 0, 0) == 0) {
-			if (nmatches == cap) {
-				matches = realloc(matches, sizeof(char *) * (cap *= 2));
-			}
-			matches[nmatches++] = name;
-		} else {
-			free(name);
-		}
-	}
-
-	regfree(&re);
-	for (int i = 0; i < nmatches; ++i) {
-		clenv_unset(matches[i]);
-		free(matches[i]);
-	}
-	free(matches);
 }
 
 void usage(void) {
@@ -175,6 +237,9 @@ const char *options = "+hDVaniv:u:m:U:pP:";
 int main(int argc, char *const argv[]) {
 	program_name = argv[0];
 	inherited_environ = environ;
+
+	// The alternative `$PATH` to use. Set by `-p` and `-P`.
+	const char *alt_path = 0;
 
 	// Scan the argument list for options which should be processed before
 	// any others. (This makes setting up a new environment significantly
@@ -239,7 +304,10 @@ int main(int argc, char *const argv[]) {
 			clenv_set("PATH", alt_path);
 			break;
 
-		case 'v':;
+		case 'v':
+			if (!*optarg)
+				die("-u: argument must not be empty");
+
 			char *value;
 
 			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
@@ -252,15 +320,21 @@ int main(int argc, char *const argv[]) {
 			break;
 
 		case 'u':
+			if (!*optarg)
+				die("-u: argument must not be empty");
+
+			if (strchr(optarg, '='))
+				die("-u: variable name cannot contain an '=': %s", optarg);
+
 			clenv_unset(optarg);
 			break;
 
 		case 'm':
-			set_matching(optarg);
+			clenv_set_matching(optarg);
 			break;
 
 		case 'U':
-			unset_matching(optarg);
+			clenv_unset_matching(optarg);
 			break;
 
 		default:
