@@ -74,18 +74,18 @@ git_setup () {
 ####################################################################################################
 
 install_shell_setup_sh () {
-	add_to_file ~/.profile '. "${SampShell_ROOTDIR:-$HOME/sampshell}/.profile"'
+	add_to_file ~/.profile '. "${SampShell_ROOTDIR:=$HOME/sampshell}/.profile"'
 }
 
 install_shell_setup_bash () {
 	install_shell_setup_sh
-	add_to_file ~/.bashrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bashrc"'
-	add_to_file ~/.bash_profile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.bash_profile"'
+	add_to_file ~/.bashrc 'source "${SampShell_ROOTDIR:=$HOME/sampshell}/.bashrc"'
+	add_to_file ~/.bash_profile 'source "${SampShell_ROOTDIR:=$HOME/sampshell}/.bash_profile"'
 }
 
 install_shell_setup_zsh () {
-	add_to_file ~/.zshrc 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zshrc"'
-	add_to_file ~/.zprofile 'source "${SampShell_ROOTDIR:-$HOME/sampshell}/.zprofile"'
+	add_to_file ~/.zshrc 'source "${SampShell_ROOTDIR:=$HOME/sampshell}/.zshrc"'
+	add_to_file ~/.zprofile 'source "${SampShell_ROOTDIR:=$HOME/sampshell}/.zprofile"'
 }
 
 install_shell_setup_tcsh () {
