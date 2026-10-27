@@ -3,12 +3,15 @@
 set -euo pipefail
 
 usage () { cat <<EOS; }
-usage: $(basename -- "$0") SHELL [options] [-- [shell options]]
+usage: $(basename -- "$0") SHELL [_clenv option] [shell options]
 
 Starts a "clean shell" up, without any noise from the environment/startup files
 
-The 'options' are anything found in 'clenv', with also '-s' as shorthand for
--m'^SampShell_' and '-h' as this usage.
+Options passed to clenv must start with a '_' and be one word (eg '_p' or
+'_m^SampShell_'). Other options are passed to the shell.
+
+You can also specify '-s' to pass all sampshell variables through, or '-v' to
+enable logging.s
 EOS
 
 # Fetch the shell name (making sure it's supplied)
@@ -23,16 +26,12 @@ shell_args=()
 # Default shell variables for each shell to limit startup files
 case $shellname in
 zsh|*/zsh)
-	shell_args+=( --no-globalrcs --no-rcs )
-	;;
+	shell_args+=( --no-globalrcs --no-rcs ) ;;
 bash|*/bash)
 	# Ignore macOS's deprecation of bash
-	if [[ "$(uname)" = Darwin ]]; then
-		clenv_args+=( -vBASH_SILENCE_DEPRECATION_WARNING=1 )
-	fi
+	[[ "$(uname)" = Darwin ]] && clenv_args+=( -vBASH_SILENCE_DEPRECATION_WARNING=1 )
 
-	shell_args+=( --noprofile --norc )
-	;;
+	shell_args+=( --noprofile --norc ) ;;
 esac
 
 verbose=
@@ -43,15 +42,15 @@ while (( $# > 0 )); do
 	shift
 
 	case $arg in
-	--) break ;;
+	--) shell_args+=( "$@" ); break ;;
 	-h) usage; exit ;;
 	-s) clenv_args+=( -m'^SampShell_' ) ;;
 	-v) verbose=1;;
-	*)  clenv_args+=( "$arg" ) ;;
+	-sv|-vs) clenv_args+=( -m'^SampShell_' ); verbose=1 ;;
+	_*) clenv_args+=( -"${arg#_}" ) ;;
+	*)  shell_args+=( "$arg" ) ;;
 	esac
 done
 
-shell_args+=( "$@" )
-
-if [[ $verbose ]]; then set -x; fi
+[[ $verbose ]] && set -x
 exec clenv "${clenv_args[@]+"${clenv_args[@]}"}" -- "$shellname" "${shell_args[@]+"${shell_args[@]}"}"
