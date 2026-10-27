@@ -20,6 +20,9 @@ char **inherited_environ;
 // Set to `argv[0]` at program start; used in error messages.
 const char *program_name;
 
+// The alternative `$PATH` to search executables for.
+const char *alt_path;
+
 // Flags that can be set at startup; control program execution and logging.
 int dry_mode, verbose;
 
@@ -235,19 +238,19 @@ void usage(void) {
 }
 
 // not a const char, as we modify it. Caller must dup if if they want to not modify it.
-char *find_executable_path(const char *exe, const char *orig_alt_path) {
-	log(1, "Searching for %s in %s", exe, orig_alt_path);
+char *find_executable_path(const char *exe) {
+	log(1, "Searching for %s in %s", exe, alt_path);
 
-	char *alt_path = strdup(orig_alt_path);
+	char *alt_path2 = strdup(alt_path);
 
-	for (char *entry = strtok(alt_path, ":"); entry; entry = strtok(NULL, ":")) {
+	for (char *entry = strtok(alt_path2, ":"); entry; entry = strtok(NULL, ":")) {
 		long size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
 		snprintf(path, size, "%s/%s", entry, exe);
 
 		if (!access(path, X_OK)) {
 			log(1, "  matched: %s", path);
-			free(alt_path);
+			free(alt_path2);
 			return path;
 		} else {
 			log(2, "  didnt match: %s", path);
@@ -255,17 +258,55 @@ char *find_executable_path(const char *exe, const char *orig_alt_path) {
 		free(path);
 	}
 
-
-	return free(alt_path), NULL;
+	return free(alt_path2), NULL;
 }
 
-const char *options = "+hDVaniv:u:m:U:pP:";
-int main(int argc, char *argv[]) {
-	program_name = argv[0];
-	inherited_environ = environ;
+/**
+ * Prints the environment to stdout, one name per line.
+ */
+void print_environment(void) {
+	if (alt_path)
+		die("cannot supply an alternative $PATH and no executable");
 
-	// The alternative `$PATH` to use. Set by `-p` and `-P`.
-	const char *alt_path = 0;
+	for (int i = 0; environ[i]; ++i)
+		puts(environ[i]);
+}
+
+/**
+ * Executes the program in `argv[0]`, potentially resolving its path first (via
+ * a `find_executable_path` lookup). Does nothing if `dry_mode` is set.
+ */
+void execute_program(int argc, char *argv[]) {
+	if (verbose) {
+		log(0, "executing: %s", argv[0]);
+
+		for (int i = 0; i < argc; ++i)
+			log(0, "  argv[%d]= '%s'", i, argv[i]);
+	}
+
+	// Don't actually run the command in dry mode.
+	if (dry_mode) return;
+
+	errno = 0;
+	if (alt_path) {
+		char *orig = argv[0];
+		if (!(argv[0] = find_executable_path(orig)))
+			die("%s: No such file or directory", orig);
+		execv(argv[0], argv);
+	} else {
+		execvp(argv[0], argv);
+	}
+
+	die("exec of %s failed: %s", argv[0], strerror(errno));
+}
+
+/**
+ * Parses command line flags out from `argv`, and populates any relevant global
+ * variables. Updates `argc` and `argv` to point to the remaining non-flag
+ * arguments (if any).
+ */
+void parse_arguments(int *argc, char ***argv) {
+	const char *options = "+hDVaniv:u:m:U:pP:";
 
 	// Scan the argument list for options which should be processed before
 	// any others. (This makes setting up a new environment significantly
@@ -273,7 +314,7 @@ int main(int argc, char *argv[]) {
 	enum starting_env starting_env = MINIMAL_ENV;
 	int ch;
 	opterr = 0;
-	while ((ch = getopt(argc, argv, options)) != -1) {
+	while ((ch = getopt(*argc, *argv, options)) != -1) {
 		switch (ch) {
 		// Set the initial environment: inherited, empty, or minimal (default)
 		case 'a':
@@ -308,7 +349,7 @@ int main(int argc, char *argv[]) {
 	// to be handled out-of-order.
 	optind = 1;
 	opterr = 1;
-	while ((ch = getopt(argc, argv, options)) != -1) {
+	while ((ch = getopt(*argc, *argv, options)) != -1) {
 		switch (ch) {
 		case 'a':
 		case 'n':
@@ -364,43 +405,22 @@ int main(int argc, char *argv[]) {
 			break;
 
 		default:
-			return EXIT_FAILURE;
+			exit(EXIT_FAILURE);
 		}
 	}
 
-	// We're done parsing options, advance `argv` / `argc` to past the options
-	argv += optind;
-	argc -= optind;
+	*argc -= optind;
+	*argv += optind;
+}
 
-	// If no program was specified, just print the environment out.
-	if (argc <= 0) { // TODO: can it ever get bigger than this?
-		if (alt_path)
-			die("cannot supply an alternative $PATH and no executable");
-		for (int i = 0; environ[i]; ++i)
-			puts(environ[i]);
-		return EXIT_SUCCESS;
-	}
+int main(int argc, char *argv[]) {
+	program_name = argv[0];
+	inherited_environ = environ;
 
-	// Otherwise, let's execute it
-	if (verbose) {
-		log(0, "executing: %s", argv[0]);
-		for (int i = 0; i < argc; ++i)
-			log(0, "  argv[%d]= '%s'", i, argv[i]);
-	}
+	parse_arguments(&argc, &argv);
 
-	// Don't actually run the command in dry mode.
-	if (dry_mode)
-		return EXIT_SUCCESS;
-
-	errno = 0;
-	if (alt_path) {
-		char *orig = argv[0];
-		argv[0] = find_executable_path(orig, alt_path);
-		if (!argv[0]) die("%s: No such file or directory", orig);
-		execv(argv[0], argv);
-	} else {
-		execvp(argv[0], argv);
-	}
-
-	die("exec of %s failed: %s", argv[0], strerror(errno));
+	if (!argc)
+		print_environment();
+	else
+		execute_program(argc, argv);
 }
