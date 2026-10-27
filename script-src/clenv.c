@@ -44,6 +44,33 @@ int dry_mode, verbose;
 			fprintf(stderr, __VA_ARGS__); \
 			fputc('\n', stderr); \
 		} } while(0)
+
+/**
+ * Searches `alt_path` for the program `exe`. Returns a path to the first one
+ * that's found (and executable), or `NULL` if nothing matched.
+ */
+char *find_executable_path(const char *exe) {
+	log(1, "Searching for %s in %s", exe, alt_path);
+
+	char *mpath = strdup(alt_path);
+
+	for (char *entry = strtok(mpath, ":"); entry; entry = strtok(NULL, ":")) {
+		long size = strlen(entry) + 1 + strlen(exe) + 1;
+		char *path = malloc(size);
+		snprintf(path, size, "%s/%s", entry, exe);
+
+		if (!access(path, X_OK)) {
+			log(1, "  matched: %s", path);
+			return free(mpath), path;
+		}
+
+		log(2, "  didn't match: %s", path);
+		free(path);
+	}
+
+	return free(mpath), NULL;
+}
+
 /******************************************************************************
  *                                                                            *
  *                       Interact with the Environment                        *
@@ -199,7 +226,8 @@ void setup_initial_env(enum starting_env starting_env) {
 	}
 
 	// Otherwise, clear the environment by setting a new one.
-	environ = malloc(1);
+	environ = malloc(sizeof(char **));
+	*environ = NULL;
 	log(0, "clearing environment");
 
 	// If we're not setting up the minimal env, we're done.
@@ -235,30 +263,6 @@ void usage(void) {
     puts("\t-U PATTERN      Unsets variables which match the regex.");
 
 	exit(0);
-}
-
-// not a const char, as we modify it. Caller must dup if if they want to not modify it.
-char *find_executable_path(const char *exe) {
-	log(1, "Searching for %s in %s", exe, alt_path);
-
-	char *alt_path2 = strdup(alt_path);
-
-	for (char *entry = strtok(alt_path2, ":"); entry; entry = strtok(NULL, ":")) {
-		long size = strlen(entry) + 1 + strlen(exe) + 1;
-		char *path = malloc(size);
-		snprintf(path, size, "%s/%s", entry, exe);
-
-		if (!access(path, X_OK)) {
-			log(1, "  matched: %s", path);
-			free(alt_path2);
-			return path;
-		} else {
-			log(2, "  didnt match: %s", path);
-		}
-		free(path);
-	}
-
-	return free(alt_path2), NULL;
 }
 
 /**
