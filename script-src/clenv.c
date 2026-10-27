@@ -234,8 +234,33 @@ void usage(void) {
 	exit(0);
 }
 
+// not a const char, as we modify it. Caller must dup if if they want to not modify it.
+char *find_executable_path(const char *exe, const char *orig_alt_path) {
+	log(1, "Searching for %s in %s", exe, orig_alt_path);
+
+	char *alt_path = strdup(orig_alt_path);
+
+	for (char *entry = strtok(alt_path, ":"); entry; entry = strtok(NULL, ":")) {
+		long size = strlen(entry) + 1 + strlen(exe) + 1;
+		char *path = malloc(size);
+		snprintf(path, size, "%s/%s", entry, exe);
+
+		if (!access(path, X_OK)) {
+			log(1, "  matched: %s", path);
+			free(alt_path);
+			return path;
+		} else {
+			log(2, "  didnt match: %s", path);
+		}
+		free(path);
+	}
+
+
+	return free(alt_path), NULL;
+}
+
 const char *options = "+hDVaniv:u:m:U:pP:";
-int main(int argc, char *const argv[]) {
+int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	inherited_environ = environ;
 
@@ -349,6 +374,8 @@ int main(int argc, char *const argv[]) {
 
 	// If no program was specified, just print the environment out.
 	if (argc <= 0) { // TODO: can it ever get bigger than this?
+		if (alt_path)
+			die("cannot supply an alternative $PATH and no executable");
 		for (int i = 0; environ[i]; ++i)
 			puts(environ[i]);
 		return EXIT_SUCCESS;
@@ -367,8 +394,10 @@ int main(int argc, char *const argv[]) {
 
 	errno = 0;
 	if (alt_path) {
-		// TODO: is `execvP` posix? if not, we have to find this ourselves.
-		execvP(argv[0], alt_path, argv);
+		char *orig = argv[0];
+		argv[0] = find_executable_path(orig, alt_path);
+		if (!argv[0]) die("%s: No such file or directory", orig);
+		execv(argv[0], argv);
 	} else {
 		execvp(argv[0], argv);
 	}
