@@ -60,7 +60,7 @@ git_setup () {
 		echo "\tAdding $SampShell_ROOTDIR/.gitconfig to git\'s global include"
 		[ ! $dry ] && git config --add --global include.path "$SampShell_ROOTDIR/.gitconfig"
 	else
-		[ $verbose ] && echo "\tGit config of $SampShell_ROOTDIR/.gitconfig already set"
+		log "Git config of %s already set" "$SampShell_ROOTDIR/.gitconfig"
 	fi
 
 	# Unfortunately, we can't set this in the sampshell `.gitconfig` file since the
@@ -106,31 +106,60 @@ install_scripts_p () {
 	# Install mviz
 	if ! mviz_location=$(command -v mviz 2>/dev/null); then
 		echo cannot install p, mviz doesnt exist
-	elif [ "$p_install_location" -ef "$mviz_location" ]; then
-		[ $verbose ] && echo p already installed
-	elif [ -e "$p_install_location" ] || [ -L "$p_install_location" ]; then
-		echo p installed but isntmviz, uh oh
-	else
-		if [ $dry ]; then
-			echo "would make $SCRIPTS_INSTALL_LOCATION, and then" \
-			"link $mviz_location to $p_install_location"
+		return 1
+	fi
+
+	if [ "$p_install_location" -ef "$mviz_location" ]; then
+		if [ $force ]; then
+			log 'Removing old p install: %s' "$p_install_location"
+
+			if ! [ $dry ]; then
+				rm "$p_install_location" || return
+			fi
 		else
-			set -x
-			sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
-				sudo ln -s "$mviz_location" "$p_install_location"
-			set +x
+			log 'p already installed at: %s' "$p_install_location"
+			return
 		fi
+	fi
+
+	if [ -e "$p_install_location" ] || [ -L "$p_install_location" ]; then
+		echo p installed but isnt mviz, uh oh
+		return 1
+	fi
+
+	if [ $dry ]; then
+		echo "would make $SCRIPTS_INSTALL_LOCATION, and then" \
+		"link $mviz_location to $p_install_location"
+	else
+		set -x
+		sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
+			sudo ln -s "$mviz_location" "$p_install_location"
+		set +x
 	fi
 }
 
 install_scripts_clenv () (
+	readonly clenv_install_location="$SCRIPTS_INSTALL_LOCATION/clenv"
+	if [ -e "$clenv_install_location" ]; then
+		if [ $force ]; then
+			echo 'Removing old clenv file because -f was given'
+			sudo rm -- "$clenv_install_location" || return
+		else
+			log 'clenv installed at: %s' "$clenv_install_location"
+			return
+		fi
+	fi
+
 	cd "${SampShell_ROOTDIR:?}/script-src"
-	make
-	sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
-		sudo ln -s "$PWD/clenv" "$SCRIPTS_INSTALL_LOCATION/clenv"
+	make -B
+	sudo ln -s "$PWD/clenv" "$clenv_install_location"
 )
 
 install_scripts () {
+	if [ ! -d "$SCRIPTS_INSTALL_LOCATION" ]; then
+		printf 'Making %s\n' "$SCRIPTS_INSTALL_LOCATION"
+		sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" || return
+	fi
 	install_scripts_p
 	install_scripts_clenv
 }
@@ -160,17 +189,19 @@ options:
 	-g       Install git options
 	-p       Install SampShell scripts into PATH
 	-b       Install homebrew features
+	-f       Forcibly reinstall
 EOS
 
 sh_sh= sh_zsh= sh_bash= sh_tcsh=
-all= dry= verbose= git= scripts= brew=
+all= dry= verbose= git= scripts= brew= force=
 something_specified=
 
-while getopts 'hdvas:gpb' opt; do
+while getopts 'hdvas:gpbf' opt; do
 	case $opt in
 	h) usage; exit ;;
 	v) verbose=1 ;;
 	d) dry=1 verbose=1 ;;
+	f) force=1 ;;
 	a) all=1 ;;
 	s)
 		something_specified=1
