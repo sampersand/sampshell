@@ -38,6 +38,7 @@ int dry_mode, verbose;
 		fflush(stderr); \
 		exit(EXIT_FAILURE); } while (0)
 
+// Print out a log message to stderr if the verbose level is set.
 #define log(level, ...) do { \
 		if (verbose > (level)) { \
 			fputs("#clenv ", stderr); \
@@ -207,8 +208,10 @@ void clenv_unset_matching(const char *pattern) {
 	}
 
 	regfree(&re);
-	for (int i = 0; i < nmatches; ++i)
-		clenv_unset(matches[i]), free(matches[i]);
+	for (int i = 0; i < nmatches; ++i) {
+		clenv_unset(matches[i]);
+		free(matches[i]);
+	}
 	free(matches);
 }
 
@@ -226,9 +229,9 @@ void setup_initial_env(enum starting_env starting_env) {
 	}
 
 	// Otherwise, clear the environment by setting a new one.
+	log(0, "clearing environment");
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
-	log(0, "clearing environment");
 
 	// If we're not setting up the minimal env, we're done.
 	if (starting_env != MINIMAL_ENV)
@@ -237,10 +240,10 @@ void setup_initial_env(enum starting_env starting_env) {
 	log(1, "setting up minimal environment");
 
 	// Now take all the "minimal" environment values and forward them through.
-	const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG"};
+	const char *minimal_env[] = { "TERM", "HOME", "SHLVL", "LANG", 0 };
 
 	char *value;
-	for (unsigned long i = 0; i < sizeof(minimal_env) / sizeof(char *); i++) {
+	for (int i = 0; minimal_env[i]; i++) {
 		if ((value = lookup_inherited_value(minimal_env[i])))
 			clenv_set(minimal_env[i], value);
 	}
