@@ -35,6 +35,12 @@ int dry_mode, verbose;
 		fflush(stderr); \
 		exit(EXIT_FAILURE); } while (0)
 
+#define log(level, ...) do { \
+		if (verbose > (level)) { \
+			fputs("#clenv ", stderr); \
+			fprintf(stderr, __VA_ARGS__); \
+			fputc('\n', stderr); \
+		} } while(0)
 /******************************************************************************
  *                                                                            *
  *                       Interact with the Environment                        *
@@ -52,8 +58,7 @@ void clenv_set(const char *name, const char *value) {
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
-	if (verbose)
-		printf("#clenv setting:   %s=%s\n", name, value);
+	log(0, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1) == -1) {
 		// Note we use `perror` since the error case is very unlikely
@@ -72,8 +77,7 @@ void clenv_unset(const char *name) {
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
 
-	if (verbose)
-		printf("#clenv unsetting: %s\n", name);
+	log(0, "unsetting: %s", name);
 
 	if (unsetenv(name) == -1) {
 		// Note we use `perror` since the error case is very unlikely
@@ -132,8 +136,8 @@ void clenv_set_matching(const char *pattern) {
 		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
 		if (!regexec(&re, name, 0, 0, 0)) {
 			clenv_set(name, eql + 1);
-		} else if (verbose > 1) {
-			printf("#clenv   -m: doesnt match '%s': %s\n", pattern, name);
+		} else {
+			log(1, "  -m: doesnt match '%s': %s", pattern, name);
 		}
 
 		free(name);
@@ -167,9 +171,7 @@ void clenv_unset_matching(const char *pattern) {
 				matches = realloc(matches, sizeof(char *) * (cap *= 2));
 			matches[nmatches++] = name;
 		} else {
-			if (verbose > 1) {
-				printf("#clenv   -U: doesnt match '%s': %s\n", pattern, name);
-			}
+			log(1, "  -U: doesnt match '%s': %s", pattern, name);
 			free(name);
 		}
 	}
@@ -189,20 +191,19 @@ enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
 	if (starting_env == INHERIT_ENV) {
-		if (verbose > 1) puts("#clenv inheriting environment");
+		log(1, "inheriting environment");
 		return;
 	}
 
 	// Otherwise, clear the environment by setting a new one.
 	environ = malloc(1);
-	if (verbose)
-		puts("#clenv clearing environment");
+	log(0, "clearing environment");
 
 	// If we're not setting up the minimal env, we're done.
 	if (starting_env != MINIMAL_ENV)
 		return;
 
-	if (verbose) puts("#clenv setting up minimal environment");
+	log(1, "setting up minimal environment");
 
 	// Now take all the "minimal" environment values and forward them through.
 	const char *minimal_env[] = {"TERM", "HOME", "SHLVL", "LANG"};
@@ -355,9 +356,9 @@ int main(int argc, char *const argv[]) {
 
 	// Otherwise, let's execute it
 	if (verbose) {
-		printf("#clenv executing: %s\n", argv[0]);
+		log(0, "executing: %s", argv[0]);
 		for (int i = 0; i < argc; ++i)
-			printf("#clenv    argv[%d]='%s'\n", i, argv[i]);
+			log(0, "  argv[%d]= '%s'", i, argv[i]);
 	}
 
 	// Don't actually run the command in dry mode.
