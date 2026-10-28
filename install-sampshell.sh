@@ -44,8 +44,9 @@ add_to_file () {
 	elif [ $dry ]; then
 		log 'Would add to %s: %s' "$1" "$2"
 	else
-		printf '\n# Added by `%s` at %s\n%s\n' \
-			"$prog_name" "$(date)" "$2" >> "$1"
+		[ -s "$1" ] && echo >>$1
+		printf '# Added by `%s` at %s\n%s\n' \
+			"$prog_name" "$(date)" "$2" >>$1
 		echo "Installed setup to $1"
 	fi
 }
