@@ -391,13 +391,13 @@ void parse_arguments(int *argc, char ***argv) {
 		case 'v':
 			if (!*optarg)
 				die("-v: argument must not be empty");
+			if (*optarg == '=')
+				die("-v: variable name must not be empty");
 
 			char *value;
 
 			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
 			if ((value = strchr(optarg, '='))) {
-				if (*value == '=')
-					die("-v: variable name must not be empty");
 				*value++ = '\0';
 			} else if (!(value = lookup_inherited_value(optarg))) {
 				die("-v %s: variable is unset", optarg);
