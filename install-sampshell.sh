@@ -11,7 +11,7 @@ readonly SCRIPTS_INSTALL_LOCATION=${SCRIPTS_INSTALL_LOCATION:-/usr/local/bin}
 ################################################################################
 
 warn () {
-	fmt="%s $1\n"
+	fmt="%s: $1\n"
 	shift
 	printf >&2 "$fmt" "$prog_name" "$@"
 }
@@ -173,6 +173,15 @@ install_homebrew () {
 	brew install ${dry:+--dry-run} zsh-autosuggestions zsh-syntax-highlighting
 }
 
+install_ruby () {
+	if ! command -v gem >/dev/null 2>&1; then
+		warn 'gem is not installed'
+		return 1
+	fi
+
+	gem install optparse2 gvars
+}
+
 ################################################################################
 #                                 Parse Config                                 #
 ################################################################################
@@ -190,13 +199,14 @@ options:
 	-p       Install SampShell scripts into PATH
 	-b       Install homebrew features
 	-f       Forcibly reinstall
+	-r       Install ruby gems I commonly use
 EOS
 
 sh_sh= sh_zsh= sh_bash= sh_tcsh=
 all= dry= verbose= git= scripts= brew= force=
 something_specified=
 
-while getopts 'hdvas:gpbf' opt; do
+while getopts 'hdvas:gpbfr' opt; do
 	case $opt in
 	h) usage; exit ;;
 	v) verbose=1 ;;
@@ -221,6 +231,7 @@ while getopts 'hdvas:gpbf' opt; do
 	g) something_specified=1; git=1 ;;
 	p) something_specified=1; scripts=1 ;;
 	b) something_specified=1; brew=1 ;;
+	r) something_specified=1; ruby=1 ;;
 	?) exit 2 ;;
 	esac
 done
@@ -252,7 +263,8 @@ error=0
 
 ## Install scripts
 [ ${scripts:-$all} ] && { section Shell Scripts; install_scripts || error=1; }
-
 [ ${brew:-$all} ] && { section Homebrew Installs; install_homebrew || error=1; }
+[ ${ruby:-$all} ] && { section Ruby Gems; install_ruby || error=1; }
+
 
 exit "$error"
