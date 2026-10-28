@@ -8,6 +8,7 @@
 alias die 'echo \!* > /dev/stderr ; exit 1'
 
 set argv = ( `getopt hxXbBi:o: $argv` )
+if ( $status == 1 ) exit 1
 set input = 10
 set output = 10
 

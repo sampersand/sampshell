@@ -17,13 +17,13 @@ OptParse.new do |op|
 	# op.on '-u', '--unique=pattern', 'Pattern to use; must contain \1, which is base'
 	op.on '-d', '--[no-]delete', 'Deletes original file'
 	op.on '-o', '--[no-]open', 'Opens resulting file'
+	op.on '--output=WHERE', 'Put outputs in WHERE'
 	op.parse! into: OPTS rescue op.abort
 end
 
 success = true
 $*.each do |original|
-	converted = File.join File.dirname(original),
-	File.basename(original, '.*')+ ".#{OPTS.fetch(:extension)}"
+	converted = File.join (OPTS[:output] || File.dirname(original)), File.basename(original, '.*') + ".#{OPTS.fetch(:extension)}"
 
 	puts "#{original} -> #{converted}"
 	unless system(
