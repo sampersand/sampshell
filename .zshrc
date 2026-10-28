@@ -342,7 +342,7 @@ alias gnb='noglob git new-branch'
 # Enable syntax highlighting and autosuggestion if they exist.
 () {
 	local prefix arg
-	prefix=$(brew --prefix) || return
+	prefix=$(brew --prefix 2>/dev/null) || return
 	for arg in $prefix/${^@}; do
 		[[ -e $arg ]] && source $arg
 	done
