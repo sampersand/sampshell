@@ -81,6 +81,18 @@ char *find_executable_path(const char *exe) {
 	return free(mpath), NULL;
 }
 
+regex_t compile_regex(char flag, const char *pattern) {
+	regex_t re;
+	int err = regcomp(&re, pattern, REG_EXTENDED);
+
+	if (err) {
+		char buf[4096];
+		regerror(err, &re, buf, sizeof(buf));
+		die("-%c: bad regex '%s': %s", flag, pattern, buf);
+	}
+
+	return re;
+}
 /******************************************************************************
  *                                                                            *
  *                       Interact with the Environment                        *
@@ -128,10 +140,27 @@ void clenv_unset(const char *name) {
 }
 
 /**
- * Fetches the original value of `name` that was inherited from the environment.
- * Returns `NULL` if the name wasn't present. The name must be valid (nonnull,
- * nonempty, and cannot have `=`).
  */
+char *clenv_get(const char *name) {
+	assert(name);               // non-null
+	assert(*name);              // non-empty
+	assert(!strchr(name, '=')); // does not have `=`
+
+	char *value;
+
+	// We check `errno` here since a return value of `NULL` could also just mean
+	// it wasn't found inthe environment.
+	errno = 0;
+	if (!(value = getenv(name)) && errno) {
+		// Note we use `perror` since the error case is impossible (we already
+		// validate the name)
+		perror(program_name);
+		abort();
+	}
+
+	return value;
+}
+
 char *lookup_inherited_value(const char *name) {
 	assert(name);               // non-null
 	assert(*name);              // non-empty
@@ -265,7 +294,6 @@ void usage(void) {
     puts("\t-D              Don't actually run the program; Sets -V");
     puts("\t-V              Print the invocation, and any changed variables.");
     puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
-    puts("\t-p              Shorthand for -vPATH -P$PATH");
     puts("\t-a              Pass all environment variables in by default");
     puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
     puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
@@ -322,27 +350,23 @@ void execute_program(int argc, char *argv[]) {
  * variables. Updates `argc` and `argv` to point to the remaining non-flag
  * arguments (if any).
  */
+struct action { char flag, *arg, *value; };
 void parse_arguments(int *argc, char ***argv) {
-	const char *options = "+hDVaniv:u:m:U:pP:";
+	const char *options = "+hDVaniv:u:m:U:P:";
+
+	struct action *actions = malloc(*argc * sizeof(struct action));
+	int nactions = 0;
 
 	// Scan the argument list for options which should be processed before
 	// any others. (This makes setting up a new environment significantly
 	// easier.)
 	enum starting_env starting_env = MINIMAL_ENV;
-	int ch;
-	opterr = 0;
-	while ((ch = getopt(*argc, *argv, options)) != -1) {
-		switch (ch) {
-		// Set the initial environment: inherited, empty, or minimal (default)
-		case 'a':
-			starting_env = INHERIT_ENV;
-			break;
-		case 'n':
-		case 'i':
-			starting_env = EMPTY_ENV;
-			break;
+	int option;
+	while ((option = getopt(*argc, *argv, options)) != -1) {
+		switch (option) {
+		case 'h':
+			usage();
 
-		// Check for dry and verbose; verbose is checked in initial env setup.
 		case 'D':
 			dry_mode = 1;
 			// fallthrough
@@ -350,42 +374,18 @@ void parse_arguments(int *argc, char ***argv) {
 			verbose++; // Repeat multiple times for more specificity
 			break;
 
-		// Might as well check for usage early on too.
-		case 'h':
-			usage();
-
-		default:
-			; // Intentionally nothing, as we'll parse the other options later.
-		}
-	}
-
-	// Setup the initial environment based on the flags that were passed.
-	setup_initial_env(starting_env);
-
-	// Now, go through and parse out all the remaining options that didn't need
-	// to be handled out-of-order.
-	optind = 1;
-	opterr = 1;
-	while ((ch = getopt(*argc, *argv, options)) != -1) {
-		switch (ch) {
+		// Set the initial environment: inherited, empty, or minimal (default)
 		case 'a':
+			starting_env = INHERIT_ENV;
+			break;
+
 		case 'n':
 		case 'i':
-		case 'h':
-		case 'V':
-		case 'D':
-			break; // already handled
+			starting_env = EMPTY_ENV;
+			break;
 
 		case 'P':
 			alt_path = optarg;
-			break;
-
-		case 'p':
-			alt_path = lookup_inherited_value("PATH");
-			if (!alt_path)
-				die("-p: $PATH is not set.");
-
-			clenv_set("PATH", alt_path);
 			break;
 
 		case 'v':
@@ -403,7 +403,7 @@ void parse_arguments(int *argc, char ***argv) {
 				die("-v %s: variable is unset", optarg);
 			}
 
-			clenv_set(optarg, value);
+			actions[nactions++] = (struct action) { .flag = option, .arg = optarg, .value = value };
 			break;
 
 		case 'u':
@@ -413,15 +413,14 @@ void parse_arguments(int *argc, char ***argv) {
 			if (strchr(optarg, '='))
 				die("-u: variable name cannot contain an '=': %s", optarg);
 
-			clenv_unset(optarg);
+			actions[nactions++] = (struct action) { .flag = option, .arg = optarg };
 			break;
 
 		case 'm':
-			clenv_set_matching(optarg);
-			break;
-
 		case 'U':
-			clenv_unset_matching(optarg);
+			actions[nactions++] = (struct action) {
+				.flag = option, .arg = optarg
+			};
 			break;
 
 		default:
@@ -431,6 +430,20 @@ void parse_arguments(int *argc, char ***argv) {
 
 	*argc -= optind;
 	*argv += optind;
+
+	// Setup the initial environment based on the flags that were passed.
+	setup_initial_env(starting_env);
+
+	for (int i = 0; i < nactions; ++i) {
+		switch (actions[i].flag) {
+		case 'v': clenv_set(actions[i].arg, actions[i].value); break;
+		case 'u': clenv_unset(actions[i].arg); break;
+		case 'm': clenv_set_matching(actions[i].arg); break;
+		case 'U': clenv_unset_matching(actions[i].arg); break;
+		default: die("bug!");
+		}
+	}
+	free(actions);
 }
 
 int main(int argc, char *argv[]) {
