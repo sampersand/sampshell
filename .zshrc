@@ -267,6 +267,12 @@ alias which-command=which # for `^[?`
 # function bindkey { print "bindkey: $*"; builtin bindkey $@ } # Helper for showing keybinds
 source ~ss/zsh/keybinds.zsh
 
+# CTRL+G to open the command line in the editor.
+if autoload -Uz edit-command-line; then
+	zle -N edit-command-line
+	bindkey '^g' edit-command-line
+fi
+
 ####################################################################################################
 #                                                                                                  #
 #                                           Autocomplete                                           #
