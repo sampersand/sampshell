@@ -31,12 +31,15 @@ int dry_mode, verbose;
  ******************************************************************************/
 
 // Utility function to print an error message to stderr and exit.
-#define die(...) do { \
+#define die2(status, ...) do { \
 		fprintf(stderr, "%s: ", program_name); \
 		fprintf(stderr, __VA_ARGS__); \
 		fputc('\n', stderr); \
 		fflush(stderr); \
-		exit(EXIT_FAILURE); } while (0)
+		exit(status); } while (0)
+
+// Like `die2`, but without specify exit code
+#define die(...) die2(EXIT_FAILURE, __VA_ARGS__)
 
 // Print out a log message to stderr if the verbose level is set.
 #define log(level, ...) do { \
@@ -54,8 +57,14 @@ char *find_executable_path(const char *exe) {
 	log(1, "Searching for %s in %s", exe, alt_path);
 
 	char *mpath = strdup(alt_path);
+	char *cwd = NULL;
 
 	for (char *entry = strtok(mpath, ":"); entry; entry = strtok(NULL, ":")) {
+		// If entry is empty, that's PWD according to posix
+		if (!*entry) {
+			if (!cwd)
+    		getcwd(cwd, sizeof(cwd));
+		}
 		long size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
 		snprintf(path, size, "%s/%s", entry, exe);
@@ -162,7 +171,7 @@ void clenv_set_matching(const char *pattern) {
 
 	for (int i = 0; inherited_environ[i]; ++i) {
 		char *eql = strchr(inherited_environ[i], '=');
-		if (!eql) die("[bug] no `=` found in environ of %s", environ[i]);
+		if (!eql) die("[bug] no `=` found in environ of %s", inherited_environ[i]);
 
 		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
 		if (!regexec(&re, name, 0, 0, 0)) {
@@ -297,8 +306,9 @@ void execute_program(int argc, char *argv[]) {
 	errno = 0;
 	if (alt_path) {
 		char *orig = argv[0];
-		if (!(argv[0] = find_executable_path(orig)))
-			die("%s: No such file or directory", orig);
+		if (!(argv[0] = find_executable_path(orig))) {
+			die2(127, "%s: No such file or directory", orig);
+		}
 		execv(argv[0], argv);
 	} else {
 		execvp(argv[0], argv);
@@ -380,16 +390,19 @@ void parse_arguments(int *argc, char ***argv) {
 
 		case 'v':
 			if (!*optarg)
-				die("-u: argument must not be empty");
+				die("-v: argument must not be empty");
 
 			char *value;
 
 			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
 			if ((value = strchr(optarg, '='))) {
+				if (*value == '=')
+					die("-v: variable name must not be empty");
 				*value++ = '\0';
 			} else if (!(value = lookup_inherited_value(optarg))) {
 				die("-v %s: variable is unset", optarg);
 			}
+
 			clenv_set(optarg, value);
 			break;
 
