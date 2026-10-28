@@ -63,7 +63,7 @@ char *find_executable_path(const char *exe) {
 		// If entry is empty, that's PWD according to posix
 		if (!*entry) {
 			if (!cwd)
-    		getcwd(cwd, sizeof(cwd));
+			getcwd(cwd, sizeof(cwd));
 		}
 		long size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
@@ -290,17 +290,17 @@ void setup_initial_env(enum starting_env starting_env) {
 void usage(void) {
 	printf("usage: %s [options] [utility ...arguments]\n", program_name);
 	puts("options:");
-    puts("\t-h              Print this");
-    puts("\t-D              Don't actually run the program; Sets -V");
-    puts("\t-V              Print the invocation, and any changed variables.");
-    puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
-    puts("\t-a              Pass all environment variables in by default");
-    puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
-    puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
-    puts("\t                omitted, it uses the current VALUE (or errors if unset).");
-    puts("\t-u NAME         Unset 'NAME'. Ignores unset names.");
-    puts("\t-m PATTERN      Sets variables that match PATTERN");
-    puts("\t-U PATTERN      Unsets variables which match the regex.");
+	puts("\t-h              Print this");
+	puts("\t-D              Don't actually run the program; Sets -V");
+	puts("\t-V              Print the invocation, and any changed variables.");
+	puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
+	puts("\t-a              Pass all environment variables in by default");
+	puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
+	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
+	puts("\t                omitted, it uses the current VALUE (or errors if unset).");
+	puts("\t-u NAME         Unset 'NAME'. Ignores unset names.");
+	puts("\t-m PATTERN      Sets variables that match PATTERN");
+	puts("\t-U PATTERN      Unsets variables which match the regex.");
 
 	exit(0);
 }
@@ -329,7 +329,9 @@ void execute_program(int argc, char *argv[]) {
 	}
 
 	// Don't actually run the command in dry mode.
-	if (dry_mode) return;
+	if (dry_mode) {
+		return;
+	}
 
 	errno = 0;
 	if (alt_path) {
