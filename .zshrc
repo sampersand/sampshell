@@ -314,7 +314,7 @@ fi
 # Also intentionally not specific to sampshell aliases, this'll load any other git aliases defined.
 () {
 	local cmd
-	for cmd in $(git config --name-only --get-regexp '^alias\.[^-]+$'); do
+	for cmd in $(git config get --all --name-only --show-names --regexp '^alias\.[^-]+$'); do
 		cmd=${cmd#alias.}
 		alias "g$cmd=git $cmd"
 	done

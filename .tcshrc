@@ -51,6 +51,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	set cdpath = ( ~/.cdpath )
 	alias cdp 'ln -s \!:2 ~/.cdpath/\!:1'
 
+	mkdir -p ~/.cdpath
 	mkdir -p ~/.local/bin
 	alias __EOS__ : # for syntax highlighting lol
 	cat <<'__EOS__' >! ~/.local/bin/__tcsh_pwd && chmod +x ~/.local/bin/__tcsh_pwd
@@ -109,7 +110,7 @@ __EOS__
 	}'\'
 
 	# aliases based on git aliases
-	foreach tmp ( `git config -f $SampShell_ROOTDIR/.gitconfig --get-regexp '^alias\.' | grep -v '^alias\.[a-z]*-' | sed 's/^alias\.\([a-z]*\).*/\1/'` )
+	foreach tmp ( `git config get --all --name-only --show-names --regexp '^alias\.[^-]+$' | cut -c7-` )
 		alias g$tmp "git $tmp"
 	end
 	unset tmp
