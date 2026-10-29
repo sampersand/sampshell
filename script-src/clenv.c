@@ -1,17 +1,24 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 
 #ifndef __has_include
-#define __has_include(x) 0
+# define __has_include(x) 0
 #endif
 
 #if defined(HAS_REGEX_H) || __has_include(<regex.h>)
 # define HAS_REGEX_H
 # include <regex.h>
+#endif
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+# define NORETURN _Noreturn
+#else
+# define NORETURN
 #endif
 
 /******************************************************************************
@@ -38,31 +45,56 @@ int dry_mode, verbose;
  *                                 Utilities                                  *
  ******************************************************************************/
 
-// Utility function to print an error message to stderr and exit.
-#define die2(status, ...) do { \
-		fprintf(stderr, "%s: ", program_name); \
-		fprintf(stderr, __VA_ARGS__); \
-		fputc('\n', stderr); \
-		fflush(stderr); \
-		exit(status); } while (0)
+/**
+ * Print an error message to stderr and exit, prefixing it with the program name
+ **/
+static NORETURN void
+die2(int status, const char *fmt, ...)
+{
+
+	fprintf(stderr, "%s: ", program_name);
+
+	va_list vl;
+	va_start(vl, fmt);
+	vfprintf(stderr, fmt, vl);
+	va_end(vl);
+
+	fputc('\n', stderr);
+	fflush(stderr);
+
+	exit(status);
+}
 
 // Like `die2`, but without specify exit code
 #define die(...) die2(EXIT_FAILURE, __VA_ARGS__)
 
-// Print out a log message to stderr if the verbose level is set.
-#define log(level, ...) do { \
-		if (verbose > (level)) { \
-			fputs("#clenv ", stderr); \
-			fprintf(stderr, __VA_ARGS__); \
-			fputc('\n', stderr); \
-		} } while(0)
+/**
+ * Print out a log message to stderr, if the verbose is at least `min_level`
+ **/
+static void
+vlog(int min_level, const char *fmt, ...)
+{
+	if (verbose < min_level)
+		return;
+
+	fputs("#clenv ", stderr);
+
+	va_list vl;
+	va_start(vl, fmt);
+	vfprintf(stderr, fmt, vl);
+	va_end(vl);
+
+	fputc('\n', stderr);
+}
 
 /**
  * Searches `alt_path` for the program `exe`. Returns a path to the first one
  * that's found (and executable), or `NULL` if nothing matched.
- */
-static char *find_executable_path(const char *exe) {
-	log(1, "Searching for %s in %s", exe, alt_path);
+ **/
+static char *
+find_executable_path(const char *exe)
+{
+	vlog(1, "Searching for %s in %s", exe, alt_path);
 
 	char *mpath = strdup(alt_path);
 	char *cwd = NULL;
@@ -70,19 +102,18 @@ static char *find_executable_path(const char *exe) {
 	for (char *entry = strtok(mpath, ":"); entry; entry = strtok(NULL, ":")) {
 		// If entry is empty, that's PWD according to posix
 		if (!*entry) {
-			if (!cwd)
-			getcwd(cwd, sizeof(cwd));
+			if (!cwd) getcwd(cwd, sizeof(cwd));
 		}
 		long size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
 		snprintf(path, size, "%s/%s", entry, exe);
 
 		if (!access(path, X_OK)) {
-			log(1, "  matched: %s", path);
+			vlog(1, "  matched: %s", path);
 			return free(mpath), path;
 		}
 
-		log(2, "  didn't match: %s", path);
+		vlog(2, "  didn't match: %s", path);
 		free(path);
 	}
 
@@ -112,7 +143,7 @@ static void compile_regex(regex_t *re, char flag, const char *pattern) {
  * Sets the value of `name` to `value` in the environment. The name must be
  * valid (nonnull, nonempty, and cannot have `=`), and the value must be
  * nonnull.
- */
+ **/
 static void
 clenv_set(const char *restrict name, const char *restrict value)
 {
@@ -121,7 +152,7 @@ clenv_set(const char *restrict name, const char *restrict value)
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
-	log(0, "setting:   %s=%s", name, value);
+	vlog(0, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1) == -1) {
 		// Note we use `perror` since the error case is very unlikely
@@ -134,7 +165,7 @@ clenv_set(const char *restrict name, const char *restrict value)
 /**
  * Removes the value of `name` from the environment, if it's set. The name must
  * be valid (nonnull, nonempty, and cannot have `=`).
- */
+ **/
 static void
 clenv_unset(const char *name)
 {
@@ -142,7 +173,7 @@ clenv_unset(const char *name)
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
 
-	log(0, "unsetting: %s", name);
+	vlog(0, "unsetting: %s", name);
 
 	if (unsetenv(name) == -1) {
 		// Note we use `perror` since the error case is very unlikely
@@ -153,7 +184,7 @@ clenv_unset(const char *name)
 }
 
 /**
- */
+ **/
 static char *clenv_get(const char *name) {
 	assert(name);               // non-null
 	assert(*name);              // non-empty
@@ -178,7 +209,7 @@ static char *clenv_get(const char *name) {
 /**
  * Finds all parameters in the inherited environment whose names match
  * `pattern`, and sets them in the current environment.
- */
+ **/
 void clenv_set_matching(const regex_t *re) {
 	for (int i = 0; inherited_environ[i]; ++i) {
 		char *eql = strchr(inherited_environ[i], '=');
@@ -195,7 +226,7 @@ void clenv_set_matching(const regex_t *re) {
 
 /**
  * Unsets all parameters in the environment whose names match `pattern`.
- */
+ **/
 static void clenv_unset_matching(const regex_t *re) {
 	int nmatches = 0, cap = 4;
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
@@ -231,7 +262,7 @@ enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 static void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
 	if (starting_env == INHERIT_ENV) {
-		log(1, "inheriting environment");
+		vlog(1, "inheriting environment");
 		return;
 	}
 
@@ -246,13 +277,13 @@ static void setup_initial_env(enum starting_env starting_env) {
 	}
 
 	// Otherwise, clear the environment by setting a new one.
-	log(0, "clearing environment");
+	vlog(0, "clearing environment");
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
 
 	// If we're not setting up the minimal env, we're done.
 	if (starting_env == MINIMAL_ENV) {
-		log(1, "setting up minimal environment");
+		vlog(1, "setting up minimal environment");
 		for (int i = 0; minimal_env[i].name; ++i)
 			clenv_set(minimal_env[i].name, minimal_env[i].value);
 	}
@@ -260,7 +291,7 @@ static void setup_initial_env(enum starting_env starting_env) {
 
 /**
  * Prints the environment to stdout, one name per line.
- */
+ **/
 static void
 print_environment(void)
 {
@@ -274,15 +305,15 @@ print_environment(void)
 /**
  * Executes the program in `argv[0]`, potentially resolving its path first (via
  * a `find_executable_path` lookup). Does nothing if `dry_mode` is set.
- */
+ **/
 static void
 execute_program(int argc, char **const argv)
 {
 	if (verbose) {
-		log(0, "executing: %s", argv[0]);
+		vlog(0, "executing: %s", argv[0]);
 
 		for (int i = 0; i < argc; ++i)
-			log(0, "  argv[%d]= '%s'", i, argv[i]);
+			vlog(0, "  argv[%d]= '%s'", i, argv[i]);
 	}
 
 	// Don't actually run the command in dry mode.
@@ -304,7 +335,7 @@ execute_program(int argc, char **const argv)
 /**
  * Prints the usage and then exits
  **/
-static void
+static NORETURN void
 usage(void)
 {
 	printf("usage: %s [options] [utility ...arguments]\n", program_name);
@@ -333,7 +364,7 @@ usage(void)
  * Parses command line flags out from `argv`, and populates any relevant global
  * variables. Updates `argc` and `argv` to point to the remaining non-flag
  * arguments (if any).
- */
+ **/
 static void parse_arguments(int *argc, char ***argv) {
 	struct action {
 		char flag;
