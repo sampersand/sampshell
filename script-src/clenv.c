@@ -39,7 +39,7 @@ const char *program_name;
 const char *alt_path;
 
 // Flags that can be set at startup; control program execution and logging.
-int dry_mode, verbose;
+int dry_mode, verbose, null_ending;
 
 /******************************************************************************
  *                                 Utilities                                  *
@@ -246,7 +246,11 @@ static void clenv_unset_matching(const regex_t *re) {
  *                               Business Logic                               *
  ******************************************************************************/
 
-enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
+enum starting_env {
+	MINIMAL_ENV,
+	EMPTY_ENV,
+	INHERIT_ENV
+};
 
 static void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
@@ -285,7 +289,7 @@ static void
 print_environment(void)
 {
 	if (alt_path)
-		die("cannot supply an alternative $PATH and no executable");
+		die("cannot supply -P and no executable");
 
 	for (int i = 0; environ[i]; ++i)
 		puts(environ[i]);
@@ -327,7 +331,7 @@ execute_program(int argc, char **const argv)
 static NORETURN void
 usage(void)
 {
-	printf("usage: %s [options] [utility ...arguments]\n", program_name);
+	printf("usage: %s [options] [utility ...]\n", program_name);
 	puts("options:");
 	puts("\t-h              Print this");
 	puts("\t-D              Don't actually run the program; Sets -V");
@@ -336,7 +340,7 @@ usage(void)
 	puts("\t-a              Pass all environment variables in by default");
 	puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
 	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
-	puts("\t                omitted, it uses the current VALUE (or errors if unset).");
+	puts("\t                omitted, it uses the current VALUE (or omits unset).");
 	puts("\t-u NAME         Unset 'NAME'. Ignores unset names.");
 #ifdef HAS_REGEX_H
 	puts("\t-m PATTERN      Sets variables that match PATTERN");
@@ -385,6 +389,10 @@ static void parse_arguments(int *argc, char ***argv) {
 			verbose++; // Repeat multiple times for more specificity
 			break;
 
+		case '0':
+			null_ending = 1;
+			break;
+
 		// Set the initial environment: inherited, empty, or minimal (default)
 		case 'a':
 			starting_env = INHERIT_ENV;
@@ -409,7 +417,8 @@ static void parse_arguments(int *argc, char ***argv) {
 			if ((value = strchr(optarg, '='))) {
 				*value++ = '\0';
 			} else if (!(value = clenv_get(optarg))) {
-				die("-v %s: variable is unset", optarg);
+				vlog(0, "-v %s: variable not present, not setting", optarg);
+				continue;
 			}
 
 			actions[nactions++] = (struct action) {

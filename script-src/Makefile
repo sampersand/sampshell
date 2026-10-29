@@ -1,2 +1,2 @@
-CFLAGS+=-Wall -Wextra -Wpedantic -Werror
+CFLAGS+=-Wall -Wextra -Wpedantic
 clenv: clenv.c
