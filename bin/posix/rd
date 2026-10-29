@@ -61,7 +61,7 @@ fi
 # then we exit immediately. Normally, though, we just set the `exit_status`
 # which is reported at the end of the script
 exit_status=0
-if [ -n "$exit_status" ]; then
+if [ -n "$exit_early" ]; then
 	set_exit_status () { exit 1; }
 else
 	set_exit_status () { exit_status=1; }
