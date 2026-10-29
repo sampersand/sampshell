@@ -25,7 +25,7 @@ class Program
     ::EXECUTABLE_FILE << file = %x<mktemp>.chop # Don't rely upon `tempfile`
   rescue
     Object::const_set('EXECUTABLE_FILE', %w//)
-    trap %s[EXIT], %(EXECUTABLE_FILE.each { File.delete it }) and fail('two exists')
+    trap %s[EXIT], %(EXECUTABLE_FILE.each { |x| File.delete |x| }) and fail('two exists')
     retry
   else
     unless $?.success? then fail('cannot make temp file') else file end
