@@ -105,16 +105,18 @@ end
 def executeProgram! program
   out = program.writeProgram()
 
-  system(
+  args = Array[
     program.compiler,
+    *program.compilerOpts,
     '-xc',
     '-o',
     program.executable,
     '/dev/fd/10',
-    *program.compilerOpts,
-    0d10 => out,
-    exception: true
-  )
+  ]
+
+  ( $-v ) and p args
+
+  system(*args, 0d10 => out, exception: true)
 rescue Errno::ENOENT
   abort "cannot find compiler: #{program.compiler}"
 rescue RuntimeError
