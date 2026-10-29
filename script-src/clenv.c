@@ -61,7 +61,7 @@ int dry_mode, verbose;
  * Searches `alt_path` for the program `exe`. Returns a path to the first one
  * that's found (and executable), or `NULL` if nothing matched.
  */
-char *find_executable_path(const char *exe) {
+static char *find_executable_path(const char *exe) {
 	log(1, "Searching for %s in %s", exe, alt_path);
 
 	char *mpath = strdup(alt_path);
@@ -90,7 +90,7 @@ char *find_executable_path(const char *exe) {
 }
 
 #ifdef HAS_REGEX_H
-void compile_regex(regex_t *re, char flag, const char *pattern) {
+static void compile_regex(regex_t *re, char flag, const char *pattern) {
 	int err = regcomp(re, pattern, REG_EXTENDED | REG_NOSUB);
 
 	if (err) {
@@ -113,7 +113,7 @@ void compile_regex(regex_t *re, char flag, const char *pattern) {
  * valid (nonnull, nonempty, and cannot have `=`), and the value must be
  * nonnull.
  */
-void
+static void
 clenv_set(const char *restrict name, const char *restrict value)
 {
 	assert(name);               // non-null
@@ -135,7 +135,7 @@ clenv_set(const char *restrict name, const char *restrict value)
  * Removes the value of `name` from the environment, if it's set. The name must
  * be valid (nonnull, nonempty, and cannot have `=`).
  */
-void
+static void
 clenv_unset(const char *name)
 {
 	assert(name);               // non-null
@@ -154,7 +154,7 @@ clenv_unset(const char *name)
 
 /**
  */
-char *clenv_get(const char *name) {
+static char *clenv_get(const char *name) {
 	assert(name);               // non-null
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
@@ -196,7 +196,7 @@ void clenv_set_matching(const regex_t *re) {
 /**
  * Unsets all parameters in the environment whose names match `pattern`.
  */
-void clenv_unset_matching(const regex_t *re) {
+static void clenv_unset_matching(const regex_t *re) {
 	int nmatches = 0, cap = 4;
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
 
@@ -228,7 +228,7 @@ void clenv_unset_matching(const regex_t *re) {
 
 enum starting_env { MINIMAL_ENV, EMPTY_ENV, INHERIT_ENV };
 
-void setup_initial_env(enum starting_env starting_env) {
+static void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
 	if (starting_env == INHERIT_ENV) {
 		log(1, "inheriting environment");
@@ -237,7 +237,7 @@ void setup_initial_env(enum starting_env starting_env) {
 
 	// Now take all the "minimal" environment values and forward them through.
 	struct { char *name, *value; } minimal_env[] = {
-		{ "TERM", 0 }, { "HOME", 0 }, { "SHLVL", 0 }, { "LANG", 0 }, 0
+		{ "TERM", 0 }, { "HOME", 0 }, { "SHLVL", 0 }, { "LANG", 0 }, { 0, 0 }
 	};
 
 	if (starting_env == MINIMAL_ENV) {
@@ -334,7 +334,7 @@ usage(void)
  * variables. Updates `argc` and `argv` to point to the remaining non-flag
  * arguments (if any).
  */
-void parse_arguments(int *argc, char ***argv) {
+static void parse_arguments(int *argc, char ***argv) {
 	struct action {
 		char flag;
 		union {
