@@ -154,12 +154,8 @@ clenv_set(const char *restrict name, const char *restrict value)
 
 	vlog(0, "setting:   %s=%s", name, value);
 
-	if (setenv(name, value, 1) == -1) {
-		// Note we use `perror` since the error case is very unlikely
-		// (memory exhaustion; we already validate the name normally)
-		perror(program_name);
-		abort();
-	}
+	if (setenv(name, value, 1))
+		die2(3, "cannot unset %s: %s", name, strerror(errno));
 }
 
 /**
@@ -175,15 +171,12 @@ clenv_unset(const char *name)
 
 	vlog(0, "unsetting: %s", name);
 
-	if (unsetenv(name) == -1) {
-		// Note we use `perror` since the error case is very unlikely
-		// (memory exhaustion; we already validate the name normally)
-		perror(program_name);
-		abort();
-	}
+	if (unsetenv(name))
+		die2(3, "cannot unset %s: %s", name, strerror(errno));
 }
 
 /**
+ * Gets the current value of `name` from the environment
  **/
 static char *clenv_get(const char *name) {
 	assert(name);               // non-null
@@ -193,14 +186,10 @@ static char *clenv_get(const char *name) {
 	char *value;
 
 	// We check `errno` here since a return value of `NULL` could also just mean
-	// it wasn't found inthe environment.
+	// it wasn't found in the environment.
 	errno = 0;
-	if (!(value = getenv(name)) && errno) {
-		// Note we use `perror` since the error case is impossible (we already
-		// validate the name)
-		perror(program_name);
-		abort();
-	}
+	if (!(value = getenv(name)) && errno)
+		die2(3, "cannot get %s: %s", name, strerror(errno));
 
 	return value;
 }
