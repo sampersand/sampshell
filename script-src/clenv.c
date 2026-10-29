@@ -174,30 +174,6 @@ char *clenv_get(const char *name) {
 	return value;
 }
 
-char *lookup_inherited_value(const char *name) {
-	assert(name);               // non-null
-	assert(*name);              // non-empty
-	assert(!strchr(name, '=')); // does not have `=`
-
-	char *value, **tmp_environ;
-
-	tmp_environ = environ;
-	environ = inherited_environ;
-
-	// We check `errno` here since a return value of `NULL` could also just mean
-	// it wasn't found inthe environment.
-	errno = 0;
-	if (!(value = getenv(name)) && errno) {
-		// Note we use `perror` since the error case is impossible (we already
-		// validate the name)
-		perror(program_name);
-		abort();
-	}
-	environ = tmp_environ;
-
-	return value;
-}
-
 #ifdef HAS_REGEX_H
 /**
  * Finds all parameters in the inherited environment whose names match
@@ -259,24 +235,26 @@ void setup_initial_env(enum starting_env starting_env) {
 		return;
 	}
 
+	// Now take all the "minimal" environment values and forward them through.
+	struct { char *name, *value; } minimal_env[] = {
+		{ "TERM", 0 }, { "HOME", 0 }, { "SHLVL", 0 }, { "LANG", 0 }, 0
+	};
+
+	if (starting_env == MINIMAL_ENV) {
+		for (int i = 0; minimal_env[i].name; ++i)
+			minimal_env[i].value = clenv_get(minimal_env[i].name);
+	}
+
 	// Otherwise, clear the environment by setting a new one.
 	log(0, "clearing environment");
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
 
 	// If we're not setting up the minimal env, we're done.
-	if (starting_env != MINIMAL_ENV)
-		return;
-
-	log(1, "setting up minimal environment");
-
-	// Now take all the "minimal" environment values and forward them through.
-	const char *minimal_env[] = { "TERM", "HOME", "SHLVL", "LANG", 0 };
-
-	char *value;
-	for (int i = 0; minimal_env[i]; i++) {
-		if ((value = lookup_inherited_value(minimal_env[i])))
-			clenv_set(minimal_env[i], value);
+	if (starting_env == MINIMAL_ENV) {
+		log(1, "setting up minimal environment");
+		for (int i = 0; minimal_env[i].name; ++i)
+			clenv_set(minimal_env[i].name, minimal_env[i].value);
 	}
 }
 
