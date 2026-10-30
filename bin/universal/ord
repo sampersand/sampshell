@@ -3,7 +3,7 @@ exec ruby -Sx -nlaF'\K' -rg -rscript -- "$0" "$@"
 #!ruby
 
 BEGIN{
-  GLOBALS.expect! %w[h help d decimal b base f files]
+  $-g.expect! %w[h help d decimal b base f files]
   $h || $_help and exit <<-EOS
 usage: #$program_name [-d | -b num] [-f] [args...]
 options:
