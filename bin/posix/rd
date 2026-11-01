@@ -6,7 +6,7 @@
 # Safety first!
 set -euC
 
-readonly scriptname=${0##*/}
+readonly scriptname="${0##*/}"
 
 usage () { cat; } <<USAGE
 usage: $scriptname [-rev] dir [..]
