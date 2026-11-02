@@ -9,6 +9,8 @@ endif
 source "$SampShell_ROOTDIR"/.cshrc
 
 if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is defined
+	alias __EOS__ : # for syntax highlighting lol
+
 	alias cd        'pushd'
 	alias cdd       'cd `dirname \!*`'
 
@@ -48,25 +50,12 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	############################################################################################
 	#                                          CDPATH                                          #
 	############################################################################################
-	set cdpath = ( ~/.cdpath )
-	alias cdp 'ln -s \!:2 ~/.cdpath/\!:1'
+	if ( ! $?SampShell_CDPATH ) set SampShell_CDPATH = ~/.cdpath
+	set cdpath = ( $SampShell_CDPATH $cdpath:x )
 
-	mkdir -p ~/.cdpath
-	mkdir -p ~/.local/bin
-	alias __EOS__ : # for syntax highlighting lol
-	cat <<'__EOS__' >! ~/.local/bin/__tcsh_pwd && chmod +x ~/.local/bin/__tcsh_pwd
-#!/bin/tcsh -f
-foreach pfx ( ~/.cdpath/* ~/ )
-	set rp = "`realpath $pfx:q`"
-	pwd | awk -vrp=$rp:q -vpfx=$pfx:t:q '{ \
-		if (substr($0 "/", 1, length(rp)+1) == rp "/") { \
-			print "~" pfx substr($0, length(rp) + 1); exit 0 \
-		} ; exit 1 }'
-	if ( ! $status ) exit
-end
-pwd
-'__EOS__'
-__EOS__
+	mkdir -p $SampShell_CDPATH:q
+
+	set path = ( $path:x "$SampShell_ROOTDIR"/tcsh-bin )
 	add_hook cwdcmd 'set __pwd = "`__tcsh_pwd`"'
 	cwdcmd # just run it
 

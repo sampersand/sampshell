@@ -1,0 +1,10 @@
+#!/bin/tcsh -f
+foreach pfx ( ~/.cdpath/* ~/ )
+	set rp = "`realpath $pfx:q`"
+	pwd | awk -vrp=$rp:q -vpfx=$pfx:t:q '{ \
+		if (substr($0 "/", 1, length(rp)+1) == rp "/") { \
+			print "~" pfx substr($0, length(rp) + 1); exit 0 \
+		} ; exit 1 }'
+	if ( ! $status ) exit
+end
+pwd

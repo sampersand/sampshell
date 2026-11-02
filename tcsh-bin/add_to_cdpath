@@ -1,0 +1,29 @@
+#!/bin/csh -f
+
+set noglob
+
+if ( ! $?SampShell_CDPATH ) then
+	set SampShell_CDPATH = ~/.cdpath
+endif
+
+switch ( $#argv )
+case 1:
+	set x = "`realpath "$argv[1]:q"`"
+	if ( $status ) exit
+	set argv = ( "$x:t" "$x" )
+case 2:
+	breaksw
+default:
+	echo "usage: ${0:t} [cdpath-name] directory" >/dev/stderr
+	exit 1
+endsw
+
+if ( ! -d $argv[2]:q ) then
+	echo "${0:t}: not a directory: $argv[2]" >/dev/stderr
+	exit 1
+endif
+
+
+set echo verbose
+mkdir -p $SampShell_CDPATH:q
+p ln -s "$argv[2]" "$SampShell_CDPATH/$argv[1]"
