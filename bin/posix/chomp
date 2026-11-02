@@ -28,11 +28,11 @@ shift $(( OPTIND - 1 ))
 # Reverse mode---go from the front
 if [ "$reverse" = 1 ]; then
 	if [ "$all" = 1 ]; then
-		sed '1,/./{/./p;d;}' || exit
+		exec sed '1,/./{/./p;d;}'
 	else
-		sed '1{/^$/d;}' || exit
+		exec sed '1{/^$/d;}'
 	fi
-	exit 0
+	exit 1
 fi
 
 # Read each line from stdin, and print them out, prepended by the last
