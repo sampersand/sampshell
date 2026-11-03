@@ -122,7 +122,7 @@ remove_directory () {
 	fi
 
 	# Remove the directory if it's now empty.
-	if ls -A1q -- "$1" | grep -q .; then
+	if ! ls -A1q -- "$1" | grep -q .; then
 		log_file_for_deletion "$1"
 		if [ -z "$dry_mode" ] && ! rmdir -- "$1"; then
 			set_exit_status
