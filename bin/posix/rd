@@ -85,11 +85,6 @@ warn () {
 #                             Meat of the Program                              #
 ################################################################################
 
-# Returns whether the directory is empty.
-is_directory_empty () {
-	! ls -A1q -- "$1" | grep -q .
-}
-
 # Removes an empty directory, deleting any `.DS_Store`s which may exist (and
 # also recursively descending into child directories if `-r` was supplied)
 # first. Any deleted files are logged if verbose mode is enabled.
@@ -98,15 +93,6 @@ remove_directory () {
 	if [ ! -d "$1" ]; then
 		warn '%s: Not a directory' "$1"
 		return
-	fi
-
-	# If there's a `.DS_Store` file, go ahead and remove it
-	if [ -n "$rm_ds_store" ] && [ -e "$1"/.DS_Store ]; then
-		log_file_for_deletion "$1/.DS_Store"
-		if [ -z "$dry_mode" ] && ! rm -f -- "$1"/.DS_Store; then
-			set_exit_status
-			return
-		fi
 	fi
 
 	# If we're recursing, then iterate through all children directories,
@@ -121,8 +107,22 @@ remove_directory () {
 		done
 	fi
 
+
+	# If there's a `.DS_Store` file and it's the only file in the directory,
+	# then remove it.
+	if [ -n "$rm_ds_store" ] &&
+	   [ -e "$1"/.DS_Store ] &&
+	   { tmp=$(ls -A1q -- "$1") || { set_exit_status; return; }; [ "$tmp" = "$1"/.DS_Store ]; }
+	then
+		log_file_for_deletion "$1/.DS_Store"
+		if [ -z "$dry_mode" ] && ! rm -f -- "$1"/.DS_Store; then
+			set_exit_status
+			return
+		fi
+	fi
+
 	# Remove the directory if it's now empty.
-	if is_directory_empty "$1"; then
+	if ! ls -A1q -- "$1" | grep -q .; then
 		log_file_for_deletion "$1"
 		if [ -z "$dry_mode" ] && ! rmdir -- "$1"; then
 			set_exit_status
