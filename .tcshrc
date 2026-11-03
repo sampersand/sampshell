@@ -39,6 +39,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 		set histfile = ~/.tcsh_history
 	endif
 	set listflags   = A color
+	alias ls=ls-F
 
 	foreach __tmp ( cwdcmd periodic precmd ) # postcmd jobcmd
 		set ${__tmp}_functions = ( : )
@@ -50,10 +51,8 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	############################################################################################
 	#                                          CDPATH                                          #
 	############################################################################################
-	if ( ! $?SampShell_CDPATH ) set SampShell_CDPATH = ~/.cdpath
-	set cdpath = ( $SampShell_CDPATH $cdpath:x )
-
-	mkdir -p $SampShell_CDPATH:q
+	# (It should already be setup in `.cshrc`)
+	mkdir -p ~/.cdpath
 
 	set path = ( $path:x "$SampShell_ROOTDIR"/tcsh-bin )
 	add_hook cwdcmd 'set __pwd = "`__tcsh_pwd`"'

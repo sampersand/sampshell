@@ -17,11 +17,18 @@ if ( $?prompt ) then
 	if ( $SHLVL == 1 ) set ignoreeof = 2 
 	set filec savehist notify
 	set fignore     = ( .o .out )
-	set cdpath      = ( ~ )
 	set histchars   = '\!,'
 	set history     = 500
 	set time        = 5
 	set path        = ( . ~/bin $path:x )
+
+	# Setup cdpath
+	if ( ! $?cdpath ) set cdpath = ( )
+	set cdpath = ( ~/.cdpath ~ $cdpath:x )
+	mkdir -p ~/.cdpath
+	if ( $?CDPATH ) then
+		set cdpath = ( `echo $CDPATH:q | sed 's/:/\n/g'` $cdpath:q )
+	endif
 
 	# Set the prompt
 	set prompt = "`tput smso`[\!"

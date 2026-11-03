@@ -1,11 +1,5 @@
 #!/bin/csh -f
 
-set noglob
-
-if ( ! $?SampShell_CDPATH ) then
-	set SampShell_CDPATH = ~/.cdpath
-endif
-
 switch ( $#argv )
 case 1:
 	set x = "`realpath "$argv[1]:q"`"
@@ -23,7 +17,16 @@ if ( ! -d $argv[2]:q ) then
 	exit 1
 endif
 
+set shorthand = $argv[1]
+set directory = $argv[2]
+set target = ~/.cdpath/$shorthand:q
 
-set echo verbose
-mkdir -p $SampShell_CDPATH:q
-p ln -s "$argv[2]" "$SampShell_CDPATH/$argv[1]"
+mkdir -p ~/.cdpath
+
+if ( -e $target ) then
+	echo "named directory '$shorthand' already exists,"\
+	     "and points to: `realpath $target:q`" >/dev/stderr
+	exit 1
+endif
+
+ln -s $directory:q $target:q
