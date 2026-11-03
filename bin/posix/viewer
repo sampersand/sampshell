@@ -12,4 +12,4 @@
 viewer=${SampShell_VIEWER:-${VISUAL:-${EDITOR:-vi}}}
 
 [ $# -eq 0 ] && set -- .
-sh -c "$viewer \"\$@\"" -- "$@"
+exec sh -c "$viewer \"\$@\"" -- "$@"
