@@ -1,6 +1,8 @@
 #!/bin/tcsh -f
 
+set nonomatch
 foreach pfx ( ~/.cdpath/* )
+	if ( ! -l $pfx:q ) continue
 	set rp = "`realpath $pfx:q`"
 	pwd | awk -vrp=$rp:q -vpfx=$pfx:t:q '{ \
 		if (substr($0 "/", 1, length(rp)+1) == rp "/") { \
@@ -8,4 +10,5 @@ foreach pfx ( ~/.cdpath/* )
 		} ; exit 1 }'
 	if ( ! $status ) exit
 end
-pwd
+
+pwd | sed "s:${HOME}:~:"
