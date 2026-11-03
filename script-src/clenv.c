@@ -94,7 +94,7 @@ vlog(int min_level, const char *fmt, ...)
 static char *
 find_executable_path(const char *exe)
 {
-	vlog(1, "Searching for %s in %s", exe, alt_path);
+	vlog(2, "Searching for %s in %s", exe, alt_path);
 
 	char *mpath = strdup(alt_path);
 	char *cwd = NULL;
@@ -109,11 +109,11 @@ find_executable_path(const char *exe)
 		snprintf(path, size, "%s/%s", entry, exe);
 
 		if (!access(path, X_OK)) {
-			vlog(1, "  matched: %s", path);
+			vlog(2, "  matched: %s", path);
 			return free(mpath), path;
 		}
 
-		vlog(2, "  didn't match: %s", path);
+		vlog(3, "  didn't match: %s", path);
 		free(path);
 	}
 
@@ -152,7 +152,7 @@ clenv_set(const char *restrict name, const char *restrict value)
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
-	vlog(0, "setting:   %s=%s", name, value);
+	vlog(1, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1))
 		die2(3, "cannot unset %s: %s", name, strerror(errno));
@@ -169,7 +169,7 @@ clenv_unset(const char *name)
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
 
-	vlog(0, "unsetting: %s", name);
+	vlog(1, "unsetting: %s", name);
 
 	if (unsetenv(name))
 		die2(3, "cannot unset %s: %s", name, strerror(errno));
@@ -255,7 +255,7 @@ enum starting_env {
 static void setup_initial_env(enum starting_env starting_env) {
 	// If we inherit the environment, don't do anything special.
 	if (starting_env == INHERIT_ENV) {
-		vlog(1, "inheriting environment");
+		vlog(2, "inheriting environment");
 		return;
 	}
 
@@ -270,13 +270,13 @@ static void setup_initial_env(enum starting_env starting_env) {
 	}
 
 	// Otherwise, clear the environment by setting a new one.
-	vlog(0, "clearing environment");
+	vlog(1, "clearing environment");
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
 
 	// If we're not setting up the minimal env, we're done.
 	if (starting_env == MINIMAL_ENV) {
-		vlog(1, "setting up minimal environment");
+		vlog(2, "setting up minimal environment");
 		for (int i = 0; minimal_env[i].name; ++i)
 			clenv_set(minimal_env[i].name, minimal_env[i].value);
 	}
@@ -303,10 +303,10 @@ static void
 execute_program(int argc, char **const argv)
 {
 	if (verbose) {
-		vlog(0, "executing: %s", argv[0]);
+		vlog(1, "executing: %s", argv[0]);
 
 		for (int i = 0; i < argc; ++i)
-			vlog(0, "  argv[%d]= '%s'", i, argv[i]);
+			vlog(1, "  argv[%d]= '%s'", i, argv[i]);
 	}
 
 	// Don't actually run the command in dry mode.
@@ -417,7 +417,7 @@ static void parse_arguments(int *argc, char ***argv) {
 			if ((value = strchr(optarg, '='))) {
 				*value++ = '\0';
 			} else if (!(value = clenv_get(optarg))) {
-				vlog(0, "-v %s: variable not present, not setting", optarg);
+				vlog(1, "-v %s: variable not present, not setting", optarg);
 				continue;
 			}
 
