@@ -382,6 +382,10 @@ history-ignore-command reload{,!} r!
 # Let you paste in commands that start with `$` or `%` (they're just ignored)
 alias '%= ' '$= '
 
+# I use `zmv` occasionally, nice to have it present
+autoload -Uz zmv
+alias zmv='noglob zmv'
+
 ################################################################################
 #                           clean up ones below here                           #
 ################################################################################

@@ -112,7 +112,7 @@ remove_directory () {
 	# then remove it.
 	if [ -n "$rm_ds_store" ] &&
 	   [ -e "$1"/.DS_Store ] &&
-	   { tmp=$(ls -A1q -- "$1") || { set_exit_status; return; }; [ "$tmp" = "$1"/.DS_Store ]; }
+	   { tmp=$(ls -A1q -- "$1") || { set_exit_status; return; }; [ "$tmp" = .DS_Store ]; }
 	then
 		log_file_for_deletion "$1/.DS_Store"
 		if [ -z "$dry_mode" ] && ! rm -f -- "$1"/.DS_Store; then
@@ -122,7 +122,7 @@ remove_directory () {
 	fi
 
 	# Remove the directory if it's now empty.
-	if ! ls -A1q -- "$1" | grep -q .; then
+	if ls -A1q -- "$1" | grep -q .; then
 		log_file_for_deletion "$1"
 		if [ -z "$dry_mode" ] && ! rmdir -- "$1"; then
 			set_exit_status
