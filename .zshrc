@@ -273,6 +273,9 @@ if autoload -Uz edit-command-line; then
 	bindkey '^g' edit-command-line
 fi
 
+# "CTRL+Z" to undo
+bindkey '^X^Z' undo
+
 ####################################################################################################
 #                                                                                                  #
 #                                           Autocomplete                                           #
