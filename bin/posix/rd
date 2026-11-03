@@ -1,7 +1,7 @@
 #!/bin/sh
 
-## Remove an empty directory; A single `.DS_Store` file in the directory
-## Change the `rd` function to remove `.DS_Store` before doing `rmdir`.
+# Remove an empty directory; deletes any `.DS_Store` files first for ease-of-use
+# on macos
 
 # Safety first!
 set -euC
@@ -9,30 +9,35 @@ set -euC
 readonly scriptname="${0##*/}"
 
 usage () { cat; } <<USAGE
-usage: $scriptname [-rev] dir [..]
+usage: $scriptname [-rDvne] directory [...]
+options:
+	-r	Remove all empty child directories first
+	-D	Do not treat ".DS_Store" files specially
+	-v	Print out directories as they're removed
+	-n	Don't actually remove directories; implies -v
+	-e	Exit immediately upon error
 
-Alias for 'rmdir', except it'll also remove directories which
-only contain a '.DS_Store' file. (.DS_Store is a hidden macOS
-file in each directory Finder.app opens to store GUI info, eg
-file positions, "preview icon size", etc. If we are trying to
-remove an empty directory, then it can be removed too.)
-
-The '-r' flag will recursively go into directories
-The '-e' flag exits early if there's any problems; normally, problems are ignored.
-The '-v' flag sets verbose mode; prints out each folders as theyre remvoed
+Removies empty directories. Unless -D is specified, .DS_Store files are removed
+first before checking for emptiness
 USAGE
 
 ################################################################################
 #                                Parse Options                                 #
 ################################################################################
 
-recursive= exit_early= verbose=
-while getopts 'hrev' option; do
+recursive=
+exit_early=
+verbose=
+dry_mode=
+rm_ds_store=1
+while getopts 'hDrevn' option; do
 	case $option in
 	h) usage; exit ;;
 	r) recursive=1 ;;
+	D) rm_ds_store= ;;
 	e) exit_early=1 ;;
 	v) verbose=1 ;;
+	n) dry_mode=1 verbose=1 ;;
 	*) exit 2 ;;
 	esac
 done
@@ -75,9 +80,15 @@ warn () {
 	printf "$fmt" "$scriptname" "$@" >&2
 	set_exit_status
 }
+
 ################################################################################
 #                             Meat of the Program                              #
 ################################################################################
+
+# Returns whether the directory is empty.
+is_directory_empty () {
+	! ls -A1q -- "$1" | grep -q .
+}
 
 # Removes an empty directory, deleting any `.DS_Store`s which may exist (and
 # also recursively descending into child directories if `-r` was supplied)
@@ -90,30 +101,33 @@ remove_directory () {
 	fi
 
 	# If there's a `.DS_Store` file, go ahead and remove it
-	if [ -e "$1"/.DS_Store ]; then
+	if [ -n "$rm_ds_store" ] && [ -e "$1"/.DS_Store ]; then
 		log_file_for_deletion "$1/.DS_Store"
-		if ! command -p rm -f -- "$1"/.DS_Store; then
+		if [ -z "$dry_mode" ] && ! rm -f -- "$1"/.DS_Store; then
 			set_exit_status
 			return
 		fi
 	fi
 
-	# if there are files in the folder, and we're recursive, then delete them
-	if command -p ls -A1q -- "$1" | command -p grep -q . && [ -n "$recursive" ]; then
-		for file in "$1"/* "$1"/.*; do
-			# If it doesn't exist, or is `.` or `..`, then ignore it
-			[ -e "$file" ] || continue
-			case $file in */.|*/..) continue; esac
-
-			if [ -d "$file" ]; then
+	# If we're recursing, then iterate through all children directories,
+	# and remove them.
+	if [ -n "$recursive" ]; then
+		# (Use glob trick to so we don't iterate over `.` or `..`)
+		for file in "$1"/* "$1"/.[!.]* "$1"/..?*; do
+			# Only recurse if it's a directory, and not a symlink
+			if [ -d "$file" ] && ! [ -L "$file" ]; then
 				remove_directory "$file"
 			fi
 		done
 	fi
 
-	# Remove the directory; if there's a problem, set the exit status.
-	log_file_for_deletion "$1"
-	command -p rmdir -- "$1" || set_exit_status
+	# Remove the directory if it's now empty.
+	if is_directory_empty "$1"; then
+		log_file_for_deletion "$1"
+		if [ -z "$dry_mode" ] && ! rmdir -- "$1"; then
+			set_exit_status
+		fi
+	fi
 }
 
 
