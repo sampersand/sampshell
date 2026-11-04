@@ -127,6 +127,9 @@ remove_directory () {
 		if [ -z "$dry_mode" ] && ! rmdir -- "$1"; then
 			set_exit_status
 		fi
+	else
+		warn 'not removing folder (nonempty): %s' "$1"
+		set_exit_status
 	fi
 }
 
