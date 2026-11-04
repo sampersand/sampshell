@@ -1,0 +1,15 @@
+#!/bin/csh -f
+
+# "resolves" a path
+if ( $#argv != 1 ) then
+	echo usage: r \<path\> >/dev/tty
+	exit 1
+endif
+
+set shorthand = ~/.cdpath/$argv[1]:q
+if ( ! -e $shorthand ) then
+	echo shorthand does not exist: $shorthand:q >/dev/tty
+	exit 1
+endif
+
+realpath $shorthand:q

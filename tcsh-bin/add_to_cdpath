@@ -8,12 +8,12 @@ case 1:
 case 2:
 	breaksw
 default:
-	echo "usage: ${0:t} [cdpath-name] directory" >/dev/stderr
+	echo "usage: ${0:t} [cdpath-name] directory" >/dev/tty
 	exit 1
 endsw
 
 if ( ! -d $argv[2]:q ) then
-	echo "${0:t}: not a directory: $argv[2]" >/dev/stderr
+	echo "${0:t}: not a directory: $argv[2]" >/dev/tty
 	exit 1
 endif
 
@@ -25,7 +25,7 @@ mkdir -p ~/.cdpath
 
 if ( -e $target ) then
 	echo "named directory '$shorthand' already exists,"\
-	     "and points to: `realpath $target:q`" >/dev/stderr
+	     "and points to: `realpath $target:q`" >/dev/tty
 	exit 1
 endif
 
