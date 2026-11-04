@@ -274,11 +274,14 @@ static void setup_initial_env(enum starting_env starting_env) {
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
 
-	// If we're not setting up the minimal env, we're done.
+	// Setup the minimal environment
 	if (starting_env == MINIMAL_ENV) {
 		vlog(2, "setting up minimal environment");
-		for (int i = 0; minimal_env[i].name; ++i)
-			clenv_set(minimal_env[i].name, minimal_env[i].value);
+		for (int i = 0; minimal_env[i].name; ++i) {
+			// Only set it if there was an initial value
+			if (minimal_env[i].value)
+				clenv_set(minimal_env[i].name, minimal_env[i].value);
+		}
 	}
 }
 
