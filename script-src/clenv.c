@@ -39,7 +39,7 @@ const char *program_name;
 const char *alt_path;
 
 // Flags that can be set at startup; control program execution and logging.
-int dry_mode, verbose, null_ending;
+int dry_mode, verbose, null_ending, just_name;
 
 /******************************************************************************
  *                                 Utilities                                  *
@@ -295,8 +295,15 @@ print_environment(void)
 		die("cannot supply -P and no executable");
 
 	int ending = null_ending ? '\0' : '\n';
+	char *value;
 	for (int i = 0; environ[i]; ++i) {
-		fputs(environ[i], stdout);
+		if (just_name) {
+			if (!(value = strchr(environ[i], '=')))
+				die("[bug] no = found in environ arg: %s", value);
+			fwrite(environ[i], value - environ[i], 1, stdout);
+		} else {
+			fputs(environ[i], stdout);
+		}
 		fputc(ending, stdout);
 	}
 }
@@ -343,9 +350,10 @@ usage(void)
 	puts("\t-D              Don't actually run the program; Sets -V");
 	puts("\t-V              Print the invocation, and any changed variables.");
 	puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
-	puts("\t-0              End lines with NUL (\\0) instead of newline");
 	puts("\t-a              Pass all environment variables in by default");
-	puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
+	puts("\t-i              Don't set any arguments by default, including \"minimal ones\"");
+	puts("\t-0              End lines with NUL (\\0) instead of newline");
+	puts("\t-n              Print just variable names, instead of their values.");
 	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
 	puts("\t                omitted, it uses the current VALUE (or omits unset).");
 	puts("\t-u NAME         Unset 'NAME'. Ignores unset names.");
@@ -399,13 +407,15 @@ static void parse_arguments(int *argc, char ***argv) {
 		case '0':
 			null_ending = 1;
 			break;
+		case 'n':
+			just_name = 1;
+			break;
 
 		// Set the initial environment: inherited, empty, or minimal (default)
 		case 'a':
 			starting_env = INHERIT_ENV;
 			break;
 
-		case 'n':
 		case 'i':
 			starting_env = EMPTY_ENV;
 			break;
