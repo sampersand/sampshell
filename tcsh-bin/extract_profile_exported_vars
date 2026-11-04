@@ -6,6 +6,7 @@ endif
 
 set shfile = /tmp/__tcsh_$$_profile
 clenv sh -c '. ~/.profile; clenv -a0' > $shfile
-ruby -p0li -e '$\="\n"; gsub(/([[:blank:]*\x27\x21-\x24{}])/){?\\+$1};sub(?=,?\s); $_.prepend "setenv ";' $shfile
+# TODO: better regex for TCSH special chars
+ruby -p0li -e '$\="\n"; gsub(/([[:blank:]*\x27\x21-\x24{}])/){?\\+$1};sub(?=,?\s); $_.prepend "setenv "' $shfile
 source $shfile
 rm -f $shfile

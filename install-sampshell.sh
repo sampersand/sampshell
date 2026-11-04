@@ -94,6 +94,8 @@ install_shell_setup_tcsh () {
 		echo 'if ( ! $?SampShell_ROOTDIR ) setenv SampShell_ROOTDIR ~/sampshell'
 		echo 'source "$SampShell_ROOTDIR/.tcshrc"'
 	)"
+
+	add_to_file ~/.login 'source "$SampShell_ROOTDIR/.login"'
 }
 
 
