@@ -8,11 +8,6 @@ endif
 
 source "$SampShell_ROOTDIR"/.cshrc
 
-
-if ( $?loginsh ) then
-	source "$SampShell_ROOTDIR/"tcsh-bin/extract_profile_exported_vars
-endif
-
 if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is defined
 	alias __EOS__ : # for syntax highlighting lol
 
