@@ -291,8 +291,11 @@ print_environment(void)
 	if (alt_path)
 		die("cannot supply -P and no executable");
 
-	for (int i = 0; environ[i]; ++i)
-		puts(environ[i]);
+	int ending = null_ending ? '\0' : '\n';
+	for (int i = 0; environ[i]; ++i) {
+		fputs(environ[i], stdout);
+		fputc(ending, stdout);
+	}
 }
 
 /**
@@ -337,6 +340,7 @@ usage(void)
 	puts("\t-D              Don't actually run the program; Sets -V");
 	puts("\t-V              Print the invocation, and any changed variables.");
 	puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
+	puts("\t-0              End lines with NUL (\\0) instead of newline");
 	puts("\t-a              Pass all environment variables in by default");
 	puts("\t-n, -i          Don't set any arguments by default, including \"minimal ones\"");
 	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
@@ -377,7 +381,7 @@ static void parse_arguments(int *argc, char ***argv) {
 	// easier.)
 	enum starting_env starting_env = MINIMAL_ENV;
 	int option;
-	while ((option = getopt(*argc, *argv, "+hDVP:aniv:u:m:U:")) != -1) {
+	while ((option = getopt(*argc, *argv, "+hDV0P:aniv:u:m:U:")) != -1) {
 		switch (option) {
 		case 'h':
 			usage();
