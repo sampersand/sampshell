@@ -1,8 +1,8 @@
 #!/bin/csh -f
 
 set shfile = /tmp/__tcsh_$$_profile
-clenv sh -c '. ~/.profile; clenv -a0' > $shfile
+clenv sh -c '. ~/.profile; clenv -a0' >! $shfile
 # TODO: better regex for TCSH special chars
-ruby -p0li -e 'BEGIN{$\="\n"}; gsub(/([[:blank:]*\x27\x21-\x24{}])/){?\\+$1};sub(?=," ); $_.prepend "setenv "' $shfile
+ruby -p0li -e 'BEGIN{$\="\n"}; gsub(/([[:blank:]*\x27\x21-\x24{}])/){?\\+$1};sub(?=," "); $_.prepend "setenv "' $shfile
 source $shfile
 rm -f $shfile
