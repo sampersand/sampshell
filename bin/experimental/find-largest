@@ -1,0 +1,5 @@
+#!/bin/csh -f
+
+if (! $#argv) set argv=( `pwd` )
+
+find $argv[1] -name .git -prune -o -type f -exec ls -s1 {} + | sort -n
