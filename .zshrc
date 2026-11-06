@@ -379,8 +379,9 @@ fi
 # This has to be an alias to get around a ZSH 5.9 bug relating to; the removal of `reload!` on
 # exit failure is, eg, if we do `reload` when we still have active jobs.
 alias reload='zshexit_functions+=reload!; exit || zshexit_functions=${zshexit_functions#:reload!}'
-alias r!='reload!'
-history-ignore-command reload{,!} r!
+alias r!='reload!' r='reload'
+disable r # I don't use this at all; make sure it's not set even if `r` is unaliased
+history-ignore-command reload{,!} r{,!}
 
 # Let you paste in commands that start with `$` or `%` (they're just ignored)
 alias '%= ' '$= '
