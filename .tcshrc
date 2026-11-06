@@ -40,7 +40,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 	set listflags   = A color
 
 	foreach __tmp ( cwdcmd periodic precmd ) # postcmd jobcmd
-		set ${__tmp}_functions = ( : )
+		set ${__tmp}_functions = ( )
 		alias ${__tmp} 'eval '\$${__tmp}'_functions:q'
 	end
 	unset __tmp
@@ -54,7 +54,7 @@ if ( $?prompt && $?tcsh ) then # only do load up this file if a prompt is define
 
 	set path = ( $path:x "$SampShell_ROOTDIR"/tcsh-bin )
 	add_hook cwdcmd 'set __pwd = "`__tcsh_pwd`"'
-	cwdcmd # just run it
+	cwdcmd # Set the initial cwd
 
 	############################################################################################
 	#                                          prompt                                          #
