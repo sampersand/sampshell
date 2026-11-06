@@ -6,7 +6,7 @@ if ( $#argv != 1 ) then
 	exit 1
 endif
 
-set shorthand = ~/.cdpath/$argv[1]:q
+set shorthand = ~/.cdpath/$argv[1]
 if ( ! -e $shorthand ) then
 	echo shorthand does not exist: $shorthand:q >/dev/tty
 	exit 1
