@@ -34,6 +34,38 @@ source ~ss/zsh/undo.zsh
 
 ####################################################################################################
 #                                                                                                  #
+#                                        SampShell Features                                        #
+#                                                                                                  #
+####################################################################################################
+
+# Helper to see if a feature is enabled. First checks `enabled` then `enabled-default`.
+function SampShell-feature-enabled {
+	zstyle -t ":sampshell:$1" enabled ||
+		{ (( $? == 2 )) && zstyle -T ":sampshell:$1" enabled-default; }
+}
+
+## Set the default zstyles as needed
+case ${SampShell_PRESET-full} in
+agent)
+	# Agents get all interactive and history mechanisms disabled
+	zstyle ':sampshell:interactive:*' enabled-default false
+	zstyle ':sampshell:history:*' enabled-default false
+	;;
+
+minimal)
+	# Minimal just has a minimal prompt, but everything else is default
+	zstyle ':sampshell:interactive:prompt' style-default minimal
+	;;
+
+full)
+	# Full just uses the normal defaults
+	;;
+*)
+	print -ru2 "sampshell: invalid value for \$SampShell_PRESET: $SampShell_PRESET"
+esac
+
+####################################################################################################
+#                                                                                                  #
 #                                            Load Paths                                            #
 #                                                                                                  #
 ####################################################################################################
@@ -118,10 +150,12 @@ function cd {
 # `_SampShell-record-every-command` function is used to record things as needed.
 ##
 
-## Setup history parameters
-HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
-SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
-: "${HISTFILE:=${ZDOTDIR:-$HOME}/.zsh_history}" # Save history to ~/.zsh_history by default
+if SampShell-feature-enabled history:save; then
+	## Setup history parameters
+	HISTSIZE=1000000   # Maximum number of history events. It's large so we can use ancient commands
+	SAVEHIST=$HISTSIZE # How many events to write when saving; Set to HISTSIZE to ensure we save 'em all
+	: "${HISTFILE:=${ZDOTDIR:-$HOME}/.zsh_history}" # Save history to ~/.zsh_history by default
+fi
 
 ## Setup history options
 setopt APPEND_HISTORY         # Append history in $HISTFILE, not overwrite (this is a zsh default)
@@ -174,7 +208,9 @@ typeset -TU HISTORY_IGNORE history_ignore '|'
 
 # Adds the command(s) to the list of ignored commands---note that it escapes all the command names,
 # since it's supposed to be a pattern. To add a pattern, just append to `history_ignore` directly.
-function history-ignore-command { history_ignore+=( ${(b)@} ) }
+function history-ignore-command {
+	history_ignore+=( ${(b)@} )
+}
 
 # Don't record commands which match `HISTORY_IGNORE`, after stripping trailing and leading space.
 function dont-record-ignored-commands {
@@ -186,7 +222,7 @@ add-zsh-hook zshaddhistory dont-record-ignored-commands
 history-ignore-command h history-{enable,disable,flush}
 
 ## Load in the "record every command" functionality, unless it's been explicitly opted out of
-if zstyle -T ':sampshell:history:record-every-command' enabled; then
+if SampShell-feature-enabled history:record-every-command; then
 	## Add the record history function to the end.
 	# Ideally, it's the last function, so that it only records commands that all previous history
 	# functions accepted. However, being last isn't critical (it's only used in statistics), so it's
@@ -201,8 +237,11 @@ fi
 #                                                                                                  #
 ####################################################################################################
 
-## Setup job options
+## Setup job options; there's only one since everything else is defaulted
 setopt AUTO_CONTINUE # Always send `SIGCONT` when disowning jobs, so they run again.
+
+# Always display long format so there's a pid.
+alias jobs='jobs -l'
 
 ## Same as `jobs -d`, except the directories are on the same line as the jobs themselves
 function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
@@ -213,14 +252,19 @@ function j { jobs -ld $@ | paste - - } # Also coulda used `sed 'N;s/\n/ /'`
 #                                                                                                  #
 ####################################################################################################
 
-# `promptinit` does all the autoloading of prompt themes itself
-autoload -Uz promptinit && promptinit
-() {
-	local prompt_style
-	zstyle -s ':sampshell:interactive:prompt' style prompt_style || prompt_style=default
-	prompt sampshell $prompt_style
-}
-setopt TRANSIENT_RPROMPT # Unfortunately, this can't be set in the prompt :-(
+if SampShell-feature-enabled interactive:prompt; then
+	# `promptinit` does all the autoloading of prompt themes itself
+	autoload -Uz promptinit && promptinit
+
+	() {
+		local prompt_style
+		zstyle -s ':sampshell:interactive:prompt' style prompt_style ||
+			zstyle -s ':sampshell:interactive:prompt' style-default prompt_style ||
+			prompt_style=default
+		prompt sampshell $prompt_style
+	}
+	setopt TRANSIENT_RPROMPT # Unfortunately, this can't be set in `promptinit`` :-(
+fi
 
 ## Ensure that commands don't have visual effects applied to their outputs. `POSTEDIT` is a special
 # variable that's printed after a command's been accepted, but before its execution starts. Here, it
@@ -259,22 +303,24 @@ alias -g  @@='&>/dev/null'
 #                                                                                                  #
 ####################################################################################################
 
-alias bk='noglob bindkey'
-alias bkg='bindkey | noglob grep -Fie'
-alias bkgd='clzsh -- -ic bindkey | noglob grep -Fie'
-alias which-command=which # for `^[?`
+if SampShell-feature-enabled interactive:keybinds; then
+	alias bk='noglob bindkey'
+	alias bkg='bindkey | noglob grep -Fie'
+	alias bkgd='clzsh -- -ic bindkey | noglob grep -Fie'
+	alias which-command=which # for `^[?`
 
-# function bindkey { print "bindkey: $*"; builtin bindkey $@ } # Helper for showing keybinds
-source ~ss/zsh/keybinds.zsh
+	# function bindkey { print "bindkey: $*"; builtin bindkey $@ } # Helper for showing keybinds
+	source ~ss/zsh/keybinds.zsh
 
-# CTRL+G to open the command line in the editor.
-if autoload -Uz edit-command-line; then
-	zle -N edit-command-line
-	bindkey '^g' edit-command-line
+	# CTRL+G to open the command line in the editor.
+	if autoload -Uz edit-command-line; then
+		zle -N edit-command-line
+		bindkey '^g' edit-command-line
+	fi
+
+	# "CTRL+Z" to undo
+	bindkey '^X^Z' undo
 fi
-
-# "CTRL+Z" to undo
-bindkey '^X^Z' undo
 
 ####################################################################################################
 #                                                                                                  #
@@ -282,25 +328,27 @@ bindkey '^X^Z' undo
 #                                                                                                  #
 ####################################################################################################
 
-## Unlike most other features of ZSH, I never got too deep into autocomplete. This section is
-# ship-shod, and will be revisited once I get a better handle on how autocompletes work.
+if SampShell-feature-enabled interactive:completion; then
+	## Unlike most other features of ZSH, I never got too deep into autocomplete. This section is
+	# ship-shod, and will be revisited once I get a better handle on how autocompletes work.
 
-autoload -Uz compinit
-compinit -d ${SampShell_CACHE_HOME:?}/.zcompdump
+	autoload -Uz compinit
+	compinit -d ${SampShell_CACHE_HOME:?}/.zcompdump
 
-zstyle ':completion:*' use-compctl false # never use old-style completion
+	zstyle ':completion:*' use-compctl false # never use old-style completion
 
-if [[ $VENDOR = apple ]] then
-	zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
-	fignore+=(.DS_Store) # boo, DS_Store files!
+	if [[ $VENDOR = apple ]] then
+		zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case-insensitive for tab completion
+		fignore+=(.DS_Store) # boo, DS_Store files!
+	fi
+
+	zmodload -i zsh/complist # May not be required
+	zstyle ':completion:*' list-colors '' # Add colours to completions
+	zstyle ':completion:*:*:cd:*' file-sort modification
+	# zstyle ':completion:*:*:rm:*' completer _ignored <-- why delete
+	zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
+	# zstyle ':completion:*:files' file-sort '!ignored-patterns' '*.DS_Store' <-- TODO
 fi
-
-zmodload -i zsh/complist # May not be required
-zstyle ':completion:*' list-colors '' # Add colours to completions
-zstyle ':completion:*:*:cd:*' file-sort modification
-# zstyle ':completion:*:*:rm:*' completer _ignored <-- why delete
-zstyle ':completion:*:files' ignored-patterns '(*/|).DS_Store'
-# zstyle ':completion:*:files' file-sort '!ignored-patterns' '*.DS_Store' <-- TODO
 
 ####################################################################################################
 #                                                                                                  #
@@ -319,28 +367,29 @@ fi
 #                                                                                                  #
 ####################################################################################################
 
-## Make `g<cmd>` aliases for all git aliases defined. Explicitly skips ones with `-` ("long-form").
-# Also intentionally not specific to sampshell aliases, this'll load any other git aliases defined.
-() {
-	local cmd
-	for cmd in $(git config get --all --name-only --show-names --regexp '^alias\.[^-]+$'); do
-		cmd=${cmd#alias.}
-		alias "g$cmd=git $cmd"
-	done
-}
+if SampShell-feature-enabled interactive:git-shorthands; then
+	## Make `g<cmd>` aliases for all git aliases defined. Explicitly skips ones with `-` ("long-form").
+	# Also intentionally not specific to sampshell aliases, this'll load any other git aliases defined.
+	() {
+		local cmd
+		for cmd in ${$(git config get --all --name-only --show-names --regexp '^alias\.[^-]+$')#alias.}; do
+			alias "g$cmd=git $cmd"
+		done
+	}
 
-## ZSH-specific aliases
-alias gcm='noglob git commit-msg'
-alias gcma='gcm --amend'
-alias gcmn='gcm --no-verify'
-alias gcman='gcm --amend --no-verify' gcmna=gcman
-alias gnb='noglob git new-branch'
+	## ZSH-specific aliases
+	alias gcm='noglob git commit-msg'
+	alias gcma='gcm --amend'
+	alias gcmn='gcm --no-verify'
+	alias gcman='gcm --amend --no-verify' gcmna=gcman
+	alias gnb='noglob git new-branch'
 
-# Git shorthand, make `@-X` be the same as `@{-X}`.
-() {
-	local i
-	for i in {1..9}; alias -g "@-$i=@{-$i}"
-}
+	# Git shorthand, make `@-X` be the same as `@{-X}`.
+	() {
+		local i
+		for i in {1..9}; alias -g "@-$i=@{-$i}"
+	}
+fi
 
 ####################################################################################################
 #                                                                                                  #
@@ -348,18 +397,18 @@ alias gnb='noglob git new-branch'
 #                                                                                                  #
 ####################################################################################################
 
-# Enable syntax highlighting and autosuggestion if they exist.
-() {
-	local prefix arg
-	prefix=$(brew --prefix 2>/dev/null) || return
-	for arg in $prefix/${^@}; do
-		[[ -e $arg ]] && source $arg
-	done
-} share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
-  share/zsh-autosuggestions/zsh-autosuggestions.zsh
+if SampShell-feature-enabled interactive:zsh-highlight; then
+	# Enable syntax highlighting and autosuggestion if they exist.
+	() {
+		local prefix arg
+		prefix=$(brew --prefix 2>/dev/null) || return
+		for arg in $prefix/${^@}; do
+			[[ -e $arg ]] && source $arg
+		done
+	} share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+	  share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# TODO: I want this set on macos when highlights are installed. 
-if false; then
+	# TODO: I want this set on macos when highlights are installed.
 	typeset -A ZSH_HIGHLIGHT_STYLES
 	ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
 fi
