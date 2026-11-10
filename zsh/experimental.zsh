@@ -22,14 +22,16 @@ setopt PUSHD_IGNORE_DUPS # eh, let's see if it works?
 # 	popd -q
 # 	setopt LOCAL_OPTIONS NO_AUTO_PUSHD PUSHD_SILENT; dirs -c; source ~/.cshdirs
 # }
-: ${SampShell_ZSHDIRS:=$SampShell_STATE_HOME/.zshdirs}
-if [[ -e $SampShell_ZSHDIRS ]] then
-	dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}
-	popd -q # remove the current directory from the base of the stack
-fi
-dirs-write () {
-	if (( !_SampShell_history_disabled )) {
-		mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS
+if SampShell-feature-enabled experimental:dirs-write; then
+	: ${SampShell_ZSHDIRS:=$SampShell_STATE_HOME/.zshdirs}
+	if [[ -e $SampShell_ZSHDIRS ]] then
+		dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}
+		popd -q # remove the current directory from the base of the stack
+	fi
+	dirs-write () {
+		if (( !_SampShell_history_disabled )) {
+			mkdir -p $SampShell_ZSHDIRS:h && dirs -pl >| $SampShell_ZSHDIRS
+		}
 	}
-}
-add-zsh-hook zshexit dirs-write
+	add-zsh-hook zshexit dirs-write
+fi

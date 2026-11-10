@@ -48,8 +48,9 @@ function SampShell-feature-enabled {
 case ${SampShell_PRESET-full} in
 agent)
 	# Agents get all interactive and history mechanisms disabled
-	zstyle ':sampshell:interactive:*' enabled-default false
-	zstyle ':sampshell:history:*' enabled-default false
+	zstyle ':sampshell:interactive:*'  enabled-default false
+	zstyle ':sampshell:history:*'      enabled-default false
+	zstyle ':sampshell:experimental:*' enabled-default false
 	;;
 
 minimal)
@@ -357,7 +358,7 @@ fi
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure about yet.
-if [[ -n $SampShell_EXPERIMENTAL ]] then
+if SampShell-feature-enabled history:record-every-command && [[ -n $SampShell_EXPERIMENTAL ]]; then
 	source ~ss/zsh/experimental.zsh
 fi
 
