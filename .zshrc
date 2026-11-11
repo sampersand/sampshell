@@ -54,13 +54,16 @@ agent)
 	;;
 
 minimal)
-	# Minimal just has a minimal prompt, but everything else is default
-	zstyle ':sampshell:interactive:prompt' style-default minimal
+	# Minimal removes some extra nuances
+	zstyle ':sampshell:interactive:prompt'        style-default minimal
+	zstyle ':sampshell:interactive:zsh-highlight' enabled-default false
+	zstyle ':sampshell:interactive:tasks'         enabled-default false
 	;;
 
 full)
 	# Full just uses the normal defaults
 	;;
+
 *)
 	print -ru2 "sampshell: invalid value for \$SampShell_PRESET: $SampShell_PRESET"
 esac
@@ -219,10 +222,10 @@ function history-ignore-command {
 }
 
 # Don't record commands which match `HISTORY_IGNORE`, after stripping trailing and leading space.
-function dont-record-ignored-commands {
+function SampShell-dont-record-ignored-commands {
 	[[ ${(*)${(*)1%%[[:space:]]#}##[[:space:]]#} != ${~HISTORY_IGNORE} ]]
 }
-add-zsh-hook zshaddhistory dont-record-ignored-commands
+add-zsh-hook zshaddhistory SampShell-dont-record-ignored-commands
 
 ## Ignore these history commands
 history-ignore-command h history-{enable,disable,flush}
