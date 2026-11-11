@@ -39,6 +39,8 @@ function prompt_sampshell_precmd {
 
 	if zstyle -T ':prompt:sampshell:ruby-version' display; then
 		psvar[prompt_sampshell_var_ruby_version]=${$(ruby --version)[2]} || true
+	else
+		psvar[prompt_sampshell_var_ruby_version]=
 	fi
 
 	prompt_sampshell_time_to_human $now
