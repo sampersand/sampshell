@@ -7,7 +7,7 @@ def usage! success = false
   $> = $stderr unless success
 
   puts <<~USAGE; exit(success)
-    usage: #$0 [-c compiler] [compiler opts ...] [prelude ...] main [-- main-arguments]
+    usage: #$0 [-c compiler] [-I <include files>] [compiler opts ...] [prelude ...] main [-- main-arguments]
     compiles C code using 'compiler', which defaults to 'cc'. 'opts' can be
     interspersed within arguments.
       - prelude is done before 'main'
@@ -32,6 +32,7 @@ class Program
   end
 
   public  attr :compiler, true
+  public  attr :includes, true
   public  attr :compilerOpts, true
   private attr :prelude, true
   private attr :main, true
@@ -46,6 +47,7 @@ private
     self.compiler     = 'cc'
     self.compilerOpts = Array::new
     self.prelude      = Array::new
+    self.includes     = Array::new
 
     self.parseOptions(argv)
   end
@@ -56,6 +58,7 @@ private
       when '-h'   then usage! true
       when '-v'   then $VERBOSE = true
       when /^-c/  then self.compiler = $' != '' && $' || argv.shift() or usage!()
+      when /^-I/  then self.includes << $' != '' && $' || argv.shift() or usage!()
       when '--'   then break()
       when /^-.*/ then self.compilerOpts << arg
       else self.prelude << arg
@@ -84,6 +87,10 @@ public
     end
 
     IO::copy_stream(DATA, write)
+
+    for file in self.includes do
+      printf(write, "#include <%s.h>\n", file)
+    end
 
     for $LAST_READ_LINE in ( self.prelude )
       $LAST_READ_LINE += ';' unless /^\s*#/ or /;$/
