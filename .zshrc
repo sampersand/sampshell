@@ -65,6 +65,11 @@ full)
 	print -ru2 "sampshell: invalid value for \$SampShell_PRESET: $SampShell_PRESET"
 esac
 
+# use `:sampshell:experimental` over the `$SampShell_EXPERIMENTAL` variable
+if [[ -n $SampShell_EXPERIMENTAL ]]; then
+	zstyle ':sampshell:experimental:*' enabled-default $SampShell_EXPERIMENTAL
+fi
+
 ####################################################################################################
 #                                                                                                  #
 #                                            Load Paths                                            #
@@ -169,7 +174,7 @@ setopt HIST_EXPIRE_DUPS_FIRST # When trimming, delete duplicate commands first, 
 unsetopt SHARE_HISTORY INC_APPEND_HISTORY INC_APPEND_HISTORY_TIME # In case someone enables them
 
 ## Setup builtin `h`; TODO, clean this way up.
-if [[ -n $SampShell_EXPERIMENTAL ]]; then
+if SampShell-feature-enabled experimental:glob_h; then
 	unfunction h
 	autoload h
 	alias h='noglob h'
@@ -358,7 +363,7 @@ fi
 ####################################################################################################
 
 ## Load "experimental" options---things I'm not sure about yet.
-if SampShell-feature-enabled history:record-every-command && [[ -n $SampShell_EXPERIMENTAL ]]; then
+if SampShell-feature-enabled experimental:file; then
 	source ~ss/zsh/experimental.zsh
 fi
 
@@ -413,6 +418,20 @@ if SampShell-feature-enabled interactive:zsh-highlight; then
 	typeset -A ZSH_HIGHLIGHT_STYLES
 	ZSH_HIGHLIGHT_STYLES[comment]='fg=240'
 fi
+
+####################################################################################################
+#                                          Startup Hooks                                           #
+####################################################################################################
+
+## Print tasks
+if SampShell-feature-enabled interactive:tasks && [[ -t 0 ]]; then
+	if ! which tasks &>/dev/null; then
+		print -ru2 "sampshell: 'tasks' not found, cannot print initial tasks"
+	else
+		tasks list
+	fi
+fi
+
 
 ####################################################################################################
 #                                                                                                  #
