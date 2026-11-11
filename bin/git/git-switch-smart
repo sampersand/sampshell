@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $# -eq 1 ] && case $1 in https://*) true;; *) false;; esac; then
+	# If given just a url, then swap to it
+	exec gh pr checkout -- "$@"
+fi
+
+
+# No args, default to previous branch
+if [ $# -eq 0 ]; then
+	set '@{-1}'
+fi
+
+git switch "$@"

@@ -75,9 +75,9 @@
 	br         = branch
 	brc        = branch --show-current
 
-	# switching branches
-	sw  = "!f() { if [ $# -eq 0 ]; then set '@{-1}'; fi; git switch \"$@\"; }; f"
-	swm = !git switch \"$(git master-branch)\"
+	# Switching branches
+	sw  = switch-smart
+	swm = !git switch-smart \"$(git master-branch)\"
 
 	# Stashing
 	st  = stash
