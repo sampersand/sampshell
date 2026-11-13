@@ -342,7 +342,11 @@ if SampShell-feature-enabled interactive:completion; then
 	# ship-shod, and will be revisited once I get a better handle on how autocompletes work.
 
 	autoload -Uz compinit
-	compinit -d ${SampShell_CACHE_HOME:?}/.zcompdump
+	if [[ -n $SampShell_CACHE_HOME ]]; then
+		compinit -d $SampShell_CACHE_HOME/.zcompdump
+	else
+		compinit -D
+	fi
 
 	zstyle ':completion:*' use-compctl false # never use old-style completion
 

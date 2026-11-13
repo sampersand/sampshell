@@ -22,7 +22,10 @@ setopt PUSHD_IGNORE_DUPS # eh, let's see if it works?
 # 	popd -q
 # 	setopt LOCAL_OPTIONS NO_AUTO_PUSHD PUSHD_SILENT; dirs -c; source ~/.cshdirs
 # }
-if SampShell-feature-enabled experimental:dirs-write; then
+
+# you have to opt-in, which it isn't by default. this is essentially a comment-out,
+# since i didnt end up usig this
+if zstyle -t :sampshell:experimental:dirs-write enabled; then
 	: ${SampShell_ZSHDIRS:=$SampShell_STATE_HOME/.zshdirs}
 	if [[ -e $SampShell_ZSHDIRS ]] then
 		dirs -c ${(f)"$(< $SampShell_ZSHDIRS)"}

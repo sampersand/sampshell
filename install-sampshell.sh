@@ -117,7 +117,7 @@ install_scripts_p () {
 			log 'Removing old p install: %s' "$p_install_location"
 
 			if ! [ $dry ]; then
-				rm "$p_install_location" || return
+				sudo rm "$p_install_location" || return
 			fi
 		else
 			log 'p already installed at: %s' "$p_install_location"
@@ -134,10 +134,8 @@ install_scripts_p () {
 		echo "would make $SCRIPTS_INSTALL_LOCATION, and then" \
 		"link $mviz_location to $p_install_location"
 	else
-		set -x
 		sudo mkdir -p -- "$SCRIPTS_INSTALL_LOCATION" &&
-			sudo ln -s "$mviz_location" "$p_install_location"
-		set +x
+			sudo ln "$mviz_location" "$p_install_location"
 	fi
 }
 
@@ -155,7 +153,7 @@ install_scripts_clenv () (
 
 	cd "${SampShell_ROOTDIR:?}/script-src"
 	make -B
-	sudo ln -s "$PWD/clenv" "$clenv_install_location"
+	sudo ln "$PWD/clenv" "$clenv_install_location"
 )
 
 install_scripts () {
@@ -268,6 +266,5 @@ error=0
 [ ${scripts:-$all} ] && { section Shell Scripts; install_scripts || error=1; }
 [ ${brew:-$all} ] && { section Homebrew Installs; install_homebrew || error=1; }
 [ ${ruby:-$all} ] && { section Ruby Gems; install_ruby || error=1; }
-
 
 exit "$error"
