@@ -139,7 +139,7 @@ else
 end
 
 executeProgram! Program::new()
-exit Process::last_status.exitstatus
+exit Process::last_status&.exitstatus || 1
 
 __END__
 #include <stdio.h>
