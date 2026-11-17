@@ -426,7 +426,7 @@ $malformed_error = true
 $escape_error = false
 $quiet = false
 $prefixes = :auto
-$trailing_newline = :auto
+$newline = :auto
 $escape_surronding_spaces = true
 
 ## Parse Options
@@ -555,14 +555,14 @@ OptParse.new do |op|
     Color.enabled = (color == :auto ? Color::DEFAULT : color)
   end
 
-  op.on '--[no-]prefixes[=WHEN]',:WHEN, 'When to output "prefixes". (WHEN is always, never, auto). auto',
-                                        'enables prefixes only when stdout is a tty. [default: auto]' do |pfx|
+  op.on '--[no-]prefixes[=WHEN]', :WHEN, 'When to output "prefixes". (WHEN is always, never, auto). auto',
+                                         'enables prefixes only when stdout is a tty. [default: auto]' do |pfx|
     $prefixes = pfx
   end
 
-  op.on '--[no-]trailing-newline[=WHEN]',:WHEN, 'When to output trailing newlines. (WHEN is always, never, auto). auto',
+  op.on '--[no-]newline[=WHEN]', :WHEN, 'When to output trailing newlines. (WHEN is always, never, auto). auto',
                                         'disables trailing newlines only when reading from stdin [default: auto]' do |tnl|
-    $trailing_newline = tnl
+    $newline = tnl
   end
 
   op.on '--[no-]escape-surrounding-spaces', "Escape leading/trailing spaces in strings. [default]" do |ess|
@@ -570,11 +570,11 @@ OptParse.new do |op|
   end
 
   op.on '-1', 'Same as --no-prefixes' do
-    $prefixes = false; $trailing_newline = true
+    $prefixes = false; $newline = true
   end
 
-  op.on '-n', 'Same as --no-prefixes --no-trailing-newline' do
-    $prefixes = $trailing_newline = false
+  op.on '-n', 'Same as --no-prefixes --no-newline' do
+    $prefixes = $newline = false
   end
 
   op.on '--[no-]malformed-error', 'Invalid chars in the --encoding cause exit status 2. [default]' do |me|
@@ -770,14 +770,14 @@ if $source == :auto
   $source = ARGV.empty? && !$stdin.tty? && $stdout.tty? ? :stdin : :strings
 end
 
-# Handle `--stdin` as actually the same as `--files /dev/stdin`, except `--trailing-newline`
+# Handle `--stdin` as actually the same as `--files /dev/stdin`, except `--newline`
 # defaults to false if it's not given (so you can do `echo ... | mviz -s | ...`, and mviz
 # won't append a trailing newline)
 if $source == :stdin
   ARGV.empty? or abort "cannot supply arguments with --stdin (#{ARGV.length} given)"
   ARGV.replace %w[/dev/stdin]
   $source = :files
-  $trailing_newline = false if $trailing_newline == :auto
+  $newline = false if $newline == :auto
 end
 
 # If `--quiet` is given, then redirect stdout to /dev/null
@@ -786,8 +786,8 @@ $stdout = File.open(File::NULL, 'w') if $quiet
 # Have `--prefixes` default to whether more than one argument is given. Convenient for `mviz $arg`.
 $prefixes = 1 < ARGV.length if $prefixes == :auto
 
-# Have `--trailing-newline` default to true if at least one argument is supplied
-$trailing_newline = ARGV.length.positive? if $trailing_newline == :auto
+# Have `--newline` default to true if at least one argument is supplied
+$newline = ARGV.length.positive? if $newline == :auto
 
 PatternAndAction.build!
 
@@ -857,6 +857,8 @@ end
 $stdout.binmode
 $stdin.binmode.set_encoding $encoding
 
+# Prints the escapes for the argument (which must respond to `has_each_char`). Returns the final
+# character sequence that was printed
 def print_escapes(has_each_char)
   ## Print out each character in the file, or their escapes. We capture the last printed character,
   # so that we can match it in the following block. (We don't want to print newlines if the last
@@ -864,11 +866,12 @@ def print_escapes(has_each_char)
   last = nil
   was_newline = true
   acc = +''
+
   has_each_char.each_char do |char|
     if $escape_surronding_spaces
       case char
       when "\n"
-        print Color.visualize acc unless acc.empty?
+        print Color.visualize(acc) unless acc.empty?
         acc.clear
         was_newline = ESCAPES_CACHE[char] == char # only set if we're ignoring newlines
       when ' '
@@ -881,25 +884,12 @@ def print_escapes(has_each_char)
       end
     end
 
-    print ESCAPES_CACHE[char]
+    print last = ESCAPES_CACHE[char]
   end
 
   print Color.visualize(acc) unless acc.empty?
 
-  ## If a suffix is given (eg trailing spaces with `--escape-surrounding-space)`, then print it out
-  # before printing a (possible) trailing newline.
-  # print suffix if suffix
-
-  ## Print a newline if the following are satisfied:
-  # 1. It was requested. (This is the default, but can be suppressed by `--no-prefixes-or-newline`.)
-  # 2. At least one character was printed, or prefixes were enabled; If no characters are printed,
-  #    we normally don't want to add a newline, when prefixes are being output we want each filename
-  #    to be on their own lines.
-  # 3. The last character to be printed was not a newline; This is normally the case, but if the
-  #    newline was unescaped (eg `-l`), then the last character may be a newline. This condition is
-  #    to prevent a blank line in the output. (Kinda like how `puts "a\n"` only prints one newline.)
-  # puts if $prefixes && last != "\n" && (last != nil || $prefixes) # <-- TODO: make sure this is the format we want
-  # puts if $prefixes && $source == :files
+  last
 rescue Interrupt
   # If we receive an interrupt (CTRL-C), then just exit with status 130.
   exit 130
@@ -914,10 +904,11 @@ end
 ## Interpret arguments as strings
 if $source == :strings
   puts "#{ARGV.length} argument#{ARGV.length == 1 ? '' : 's'}:" if $prefixes
+  pending = false
 
   ARGV.each_with_index do |string, idx|
     # Print out the prefix if a header was requested
-    puts if idx.nonzero?
+    puts if pending
     printf '%5d: ', idx + 1 if $prefixes
 
     # Unfortunately, `ARGV` strings are frozen, and we need to forcibly change the string's encoding
@@ -926,10 +917,11 @@ if $source == :strings
     string = +string
 
     # handle the input string
-    print_escapes string.force_encoding($encoding)
+    last = print_escapes string.force_encoding($encoding)
+    pending = ($newline || $prefixes) && last != "\n"
   end
 
-  puts if $trailing_newline
+  puts if pending
 
   # Exit early so we don't deal with the chunk below. Note however, the `at_exit` earlier in this
   # file for dealing with the `--malformed-error` flag.
@@ -979,7 +971,6 @@ def print_file_escapes(filename, idx)
     end
 
   ## Print out the filename, a colon, and a space if prefixes were requested.
-  puts if idx.nonzero?
   puts Color.bold("==[#{filename.inspect}]==") if $prefixes # TODO: escape thru visualize
 
   ## Print the escapes for the file
@@ -1005,11 +996,15 @@ end
 
 ## Iterate over each file in `ARGV`, and print their contents.
 begin
+  pending = false
+
   ARGV.each_with_index do |filename, idx|
-    print_file_escapes(filename, idx)
+    puts if pending
+    last = print_file_escapes(filename, idx)
+    pending = ($newline || $prefixes) && last != "\n"
   end
 
-  puts if $trailing_newline
+  puts if pending
 rescue Errno::EPIPE
   # do nothing, we're exiting
   # When stdout is a closed pipe, then just reraise.
