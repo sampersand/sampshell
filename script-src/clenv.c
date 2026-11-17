@@ -6,11 +6,13 @@
 #include <errno.h>
 #include <assert.h>
 
-#ifndef __has_include
-# define __has_include(x) 0
+#ifdef __has_include
+# define HAS_INCLUDE(x) __has_include(x)
+#else
+# define HAS_INCLUDE(x) 0
 #endif
 
-#if defined(HAS_REGEX_H) || __has_include(<regex.h>)
+#if defined(HAS_REGEX_H) || HAS_INCLUDE(<regex.h>)
 # define HAS_REGEX_H
 # include <regex.h>
 #endif
@@ -30,16 +32,16 @@
 extern char **environ;
 
 // Set to `environ` at program start, to have a clean starting environment.
-char **inherited_environ;
+static char **inherited_environ;
 
 // Set to `argv[0]` at program start; used in error messages.
-const char *program_name;
+static const char *program_name;
 
 // The alternative `$PATH` to search executables for.
-const char *alt_path;
+static const char *alt_path;
 
 // Flags that can be set at startup; control program execution and logging.
-int dry_mode, verbose, null_ending, just_name;
+static int dry_mode, verbose, null_ending, just_name;
 
 /******************************************************************************
  *                                 Utilities                                  *
@@ -104,7 +106,7 @@ find_executable_path(const char *exe)
 		if (!*entry) {
 			if (!cwd) getcwd(cwd, sizeof(cwd));
 		}
-		long size = strlen(entry) + 1 + strlen(exe) + 1;
+		size_t size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
 		snprintf(path, size, "%s/%s", entry, exe);
 
@@ -279,9 +281,9 @@ setup_initial_env(enum starting_env starting_env)
 			minimal_env[i].value = clenv_get(minimal_env[i].name);
 	}
 
-	// Otherwise, clear the environment by setting a new one.
+	// Clear the environment by setting a new one.
 	verbose_log(1, "clearing environment");
-	environ = malloc(sizeof(char **));
+	environ = malloc(sizeof(char *));
 	*environ = NULL;
 
 	// Setup the minimal environment
@@ -301,9 +303,6 @@ setup_initial_env(enum starting_env starting_env)
 static void
 print_environment(void)
 {
-	if (alt_path)
-		die("cannot supply -P and no executable");
-
 	int ending = null_ending ? '\0' : '\n';
 	char *value;
 	for (int i = 0; environ[i]; ++i) {
@@ -336,7 +335,7 @@ execute_program(int argc, char **const argv)
 	if (dry_mode)
 		return;
 
-	if (alt_path) {
+	if (alt_path && !strchr(argv[0], '/')) {
 		char *orig = argv[0];
 		if (!(argv[0] = find_executable_path(orig)))
 			die2(127, "%s: No such file or directory", orig);
@@ -361,7 +360,7 @@ usage(void)
 	puts("\t-V              Print the invocation, and any changed variables.");
 	puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
 	puts("\t-a              Pass all environment variables in by default");
-	puts("\t-i              Don't set any arguments by default, including \"minimal ones\"");
+	puts("\t-i              Don't set any variables by default, including \"minimal ones\"");
 	puts("\t-0              End lines with NUL (\\0) instead of newline");
 	puts("\t-n              Print just variable names, instead of their values.");
 	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
@@ -388,8 +387,8 @@ parse_arguments(int *argc, char ***argv)
 {
 	struct action {
 		char flag;
-		union {
-			struct { char *arg, *value; };
+		union args {
+			struct args2 { char *arg, *value; };
 	#ifdef HAS_REGEX_H
 			regex_t re;
 	#endif
@@ -487,6 +486,14 @@ parse_arguments(int *argc, char ***argv)
 
 	*argc -= optind;
 	*argv += optind;
+
+	// Make sure mutually-incompatible options aren't given
+	if (alt_path && !*argc)
+		die("cannot supply -P and no executable");
+	if (null_ending && *argc)
+		die("cannot supply -0 and an executable");
+	if (null_ending && *argc)
+		die("cannot supply -n and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
 	setup_initial_env(starting_env);
