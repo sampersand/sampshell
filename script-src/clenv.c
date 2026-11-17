@@ -106,6 +106,7 @@ find_executable_path(const char *exe)
 		if (!*entry) {
 			if (!cwd) getcwd(cwd, sizeof(cwd));
 		}
+
 		size_t size = strlen(entry) + 1 + strlen(exe) + 1;
 		char *path = malloc(size);
 		snprintf(path, size, "%s/%s", entry, exe);
@@ -329,7 +330,7 @@ execute_program(int argc, char **const argv)
 {
 	// Search for the program name if an alt path is set, and the program is
 	// a bare name
-	if (alt_path && !strchr(argv[0], '/')) {
+	if (alt_path && *argv[0] && !strchr(argv[0], '/')) {
 		char *orig = argv[0];
 		if (!(argv[0] = find_executable_path(orig)))
 			die2(127, "%s: No such file or directory", orig);
@@ -346,13 +347,11 @@ execute_program(int argc, char **const argv)
 	if (dry_mode)
 		return;
 
-	if (alt_path && !strchr(argv[0], '/')) {
-		execv(argv[0], argv);
-	} else {
-		execvp(argv[0], argv);
-	}
+	// execvp not execv, it wont search (argv[0] has `/`), and falls back to
+	// `sh` on ENOEXEC
+	execvp(argv[0], argv);
 
-	die2(127, "exec of %s failed: %s", argv[0], strerror(errno));
+	die2(errno == ENOENT ? 127 : 126, "%s: %s", argv[0], strerror(errno));
 }
 
 /**
@@ -369,7 +368,7 @@ usage(void)
 	puts("\t-P ALTPATH      Use 'ALTPATH' to find 'utility', instead of $PATH");
 	puts("\t-a              Pass all environment variables in by default");
 	puts("\t-i              Don't set any variables by default, including \"minimal ones\"");
-	puts("\t-0              End lines with NUL (\\0) instead of newline");
+	puts("\t-0              End lines with NUL (\\0) instead of newline; omit utility");
 	puts("\t-n              Print just variable names, instead of their values.");
 	puts("\t-v NAME[=VALUE] Puts 'NAME' in the environment of 'utility'. If 'VALUE' is");
 	puts("\t                omitted, it uses the current VALUE (or omits unset).");
@@ -411,6 +410,7 @@ parse_arguments(int *argc, char ***argv)
 	// easier.)
 	enum starting_env starting_env = MINIMAL_ENV;
 	int option;
+
 	while ((option = getopt(*argc, *argv, "+hDV0P:aniv:u:m:U:")) != -1) {
 		switch (option) {
 		case 'h':
@@ -499,8 +499,6 @@ parse_arguments(int *argc, char ***argv)
 		die("cannot supply -P and no executable");
 	if (null_ending && *argc)
 		die("cannot supply -0 and an executable");
-	if (null_ending && *argc)
-		die("cannot supply -n and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
 	setup_initial_env(starting_env);
