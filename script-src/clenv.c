@@ -156,7 +156,10 @@ clenv_set(const char *restrict name, const char *restrict value)
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
-	verbose_log(1, "setting:   %s=%s", name, value);
+	if (just_name)
+		verbose_log(1, "setting:   %s", name);
+	else
+		verbose_log(1, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1))
 		die2(3, "cannot set %s: %s", name, strerror(errno));
@@ -324,9 +327,17 @@ print_environment(void)
 static void
 execute_program(int argc, char **const argv)
 {
+	// Search for the program name if an alt path is set, and the program is
+	// a bare name
+	if (alt_path && !strchr(argv[0], '/')) {
+		char *orig = argv[0];
+		if (!(argv[0] = find_executable_path(orig)))
+			die2(127, "%s: No such file or directory", orig);
+	}
+
+	// Log what we're executing in verbose mode
 	if (verbose) {
 		verbose_log(1, "executing: %s", argv[0]);
-
 		for (int i = 0; i < argc; ++i)
 			verbose_log(1, "  argv[%d]= '%s'", i, argv[i]);
 	}
@@ -336,9 +347,6 @@ execute_program(int argc, char **const argv)
 		return;
 
 	if (alt_path && !strchr(argv[0], '/')) {
-		char *orig = argv[0];
-		if (!(argv[0] = find_executable_path(orig)))
-			die2(127, "%s: No such file or directory", orig);
 		execv(argv[0], argv);
 	} else {
 		execvp(argv[0], argv);
@@ -387,12 +395,12 @@ parse_arguments(int *argc, char ***argv)
 {
 	struct action {
 		char flag;
-		union args {
-			struct args2 { char *arg, *value; };
+		union {
+			struct arg_value { char *arg, *value; } av;
 	#ifdef HAS_REGEX_H
 			regex_t re;
 	#endif
-		};
+		} u;
 	};
 
 	struct action *actions = malloc(*argc * sizeof(struct action));
@@ -451,8 +459,7 @@ parse_arguments(int *argc, char ***argv)
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
-				.arg = optarg,
-				.value = value
+				.u = { (struct arg_value) { .arg = optarg, .value = value } }
 			};
 			break;
 
@@ -465,7 +472,7 @@ parse_arguments(int *argc, char ***argv)
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
-				.arg = optarg
+				.u = { (struct arg_value) { .arg = optarg} }
 			};
 			break;
 
@@ -473,7 +480,7 @@ parse_arguments(int *argc, char ***argv)
 		case 'U':
 #ifdef HAS_REGEX_H
 			actions[nactions].flag = option;
-			compile_regex(&actions[nactions++].re, option, optarg);
+			compile_regex(&actions[nactions++].u.re, option, optarg);
 			break;
 #else
 			die("-%c: regex is not compiled into this version of clenv", option);
@@ -500,11 +507,11 @@ parse_arguments(int *argc, char ***argv)
 
 	for (int i = 0; i < nactions; ++i) {
 		switch (actions[i].flag) {
-		case 'v': clenv_set(actions[i].arg, actions[i].value); break;
-		case 'u': clenv_unset(actions[i].arg); break;
+		case 'v': clenv_set(actions[i].u.av.arg, actions[i].u.av.value); break;
+		case 'u': clenv_unset(actions[i].u.av.arg); break;
 #ifdef HAS_REGEX_H
-		case 'm': clenv_set_matching(&actions[i].re); break;
-		case 'U': clenv_unset_matching(&actions[i].re); break;
+		case 'm': clenv_set_matching(&actions[i].u.re); break;
+		case 'U': clenv_unset_matching(&actions[i].u.re); break;
 #endif
 		default: die("bug!");
 		}
@@ -515,7 +522,8 @@ parse_arguments(int *argc, char ***argv)
 int
 main(int argc, char *argv[])
 {
-	program_name = argv[0];
+	program_name = strrchr(argv[0], '/');
+	program_name = program_name ? program_name + 1 : argv[0];
 	inherited_environ = environ;
 
 	parse_arguments(&argc, &argv);
