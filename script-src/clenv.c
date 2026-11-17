@@ -72,12 +72,12 @@ die2(int status, const char *fmt, ...)
  * Print out a log message to stderr, if the verbose is at least `min_level`
  **/
 static void
-vlog(int min_level, const char *fmt, ...)
+verbose_log(int min_level, const char *fmt, ...)
 {
 	if (verbose < min_level)
 		return;
 
-	fputs("#clenv ", stderr);
+	fprintf(stderr, "#%s ", program_name);
 
 	va_list vl;
 	va_start(vl, fmt);
@@ -94,7 +94,7 @@ vlog(int min_level, const char *fmt, ...)
 static char *
 find_executable_path(const char *exe)
 {
-	vlog(2, "Searching for %s in %s", exe, alt_path);
+	verbose_log(2, "Searching for %s in %s", exe, alt_path);
 
 	char *mpath = strdup(alt_path);
 	char *cwd = NULL;
@@ -109,11 +109,11 @@ find_executable_path(const char *exe)
 		snprintf(path, size, "%s/%s", entry, exe);
 
 		if (!access(path, X_OK)) {
-			vlog(2, "  matched: %s", path);
+			verbose_log(2, "  matched: %s", path);
 			return free(mpath), path;
 		}
 
-		vlog(3, "  didn't match: %s", path);
+		verbose_log(3, "  didn't match: %s", path);
 		free(path);
 	}
 
@@ -121,7 +121,9 @@ find_executable_path(const char *exe)
 }
 
 #ifdef HAS_REGEX_H
-static void compile_regex(regex_t *re, char flag, const char *pattern) {
+static void
+compile_regex(regex_t *re, char flag, const char *pattern)
+{
 	int err = regcomp(re, pattern, REG_EXTENDED | REG_NOSUB);
 
 	if (err) {
@@ -131,7 +133,7 @@ static void compile_regex(regex_t *re, char flag, const char *pattern) {
 		die("-%c: bad regex '%s': %s", flag, pattern, buf);
 	}
 }
-#endif
+#endif /* HAS_REGEX_H */
 
 /******************************************************************************
  *                                                                            *
@@ -152,10 +154,10 @@ clenv_set(const char *restrict name, const char *restrict value)
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
-	vlog(1, "setting:   %s=%s", name, value);
+	verbose_log(1, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1))
-		die2(3, "cannot unset %s: %s", name, strerror(errno));
+		die2(3, "cannot set %s: %s", name, strerror(errno));
 }
 
 /**
@@ -169,7 +171,7 @@ clenv_unset(const char *name)
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
 
-	vlog(1, "unsetting: %s", name);
+	verbose_log(1, "unsetting: %s", name);
 
 	if (unsetenv(name))
 		die2(3, "cannot unset %s: %s", name, strerror(errno));
@@ -178,7 +180,9 @@ clenv_unset(const char *name)
 /**
  * Gets the current value of `name` from the environment
  **/
-static char *clenv_get(const char *name) {
+static char *
+clenv_get(const char *name)
+{
 	assert(name);               // non-null
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
@@ -199,7 +203,9 @@ static char *clenv_get(const char *name) {
  * Finds all parameters in the inherited environment whose names match
  * `pattern`, and sets them in the current environment.
  **/
-void clenv_set_matching(const regex_t *re) {
+static void
+clenv_set_matching(const regex_t *re)
+{
 	for (int i = 0; inherited_environ[i]; ++i) {
 		char *eql = strchr(inherited_environ[i], '=');
 		if (!eql) die("[bug] no `=` found in environ of %s", inherited_environ[i]);
@@ -216,7 +222,9 @@ void clenv_set_matching(const regex_t *re) {
 /**
  * Unsets all parameters in the environment whose names match `pattern`.
  **/
-static void clenv_unset_matching(const regex_t *re) {
+static void
+clenv_unset_matching(const regex_t *re)
+{
 	int nmatches = 0, cap = 4;
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
 
@@ -240,7 +248,7 @@ static void clenv_unset_matching(const regex_t *re) {
 	}
 	free(matches);
 }
-#endif
+#endif /* HAS_REGEX_H */
 
 /******************************************************************************
  *                               Business Logic                               *
@@ -252,10 +260,12 @@ enum starting_env {
 	INHERIT_ENV
 };
 
-static void setup_initial_env(enum starting_env starting_env) {
+static void
+setup_initial_env(enum starting_env starting_env)
+{
 	// If we inherit the environment, don't do anything special.
 	if (starting_env == INHERIT_ENV) {
-		vlog(2, "inheriting environment");
+		verbose_log(2, "inheriting environment");
 		return;
 	}
 
@@ -270,13 +280,13 @@ static void setup_initial_env(enum starting_env starting_env) {
 	}
 
 	// Otherwise, clear the environment by setting a new one.
-	vlog(1, "clearing environment");
+	verbose_log(1, "clearing environment");
 	environ = malloc(sizeof(char **));
 	*environ = NULL;
 
 	// Setup the minimal environment
 	if (starting_env == MINIMAL_ENV) {
-		vlog(2, "setting up minimal environment");
+		verbose_log(2, "setting up minimal environment");
 		for (int i = 0; minimal_env[i].name; ++i) {
 			// Only set it if there was an initial value
 			if (minimal_env[i].value)
@@ -299,7 +309,7 @@ print_environment(void)
 	for (int i = 0; environ[i]; ++i) {
 		if (just_name) {
 			if (!(value = strchr(environ[i], '=')))
-				die("[bug] no = found in environ arg: %s", value);
+				die("[bug] no = found in environ arg: %s", environ[i]);
 			fwrite(environ[i], value - environ[i], 1, stdout);
 		} else {
 			fputs(environ[i], stdout);
@@ -316,10 +326,10 @@ static void
 execute_program(int argc, char **const argv)
 {
 	if (verbose) {
-		vlog(1, "executing: %s", argv[0]);
+		verbose_log(1, "executing: %s", argv[0]);
 
 		for (int i = 0; i < argc; ++i)
-			vlog(1, "  argv[%d]= '%s'", i, argv[i]);
+			verbose_log(1, "  argv[%d]= '%s'", i, argv[i]);
 	}
 
 	// Don't actually run the command in dry mode.
@@ -335,7 +345,7 @@ execute_program(int argc, char **const argv)
 		execvp(argv[0], argv);
 	}
 
-	die("exec of %s failed: %s", argv[0], strerror(errno));
+	die2(127, "exec of %s failed: %s", argv[0], strerror(errno));
 }
 
 /**
@@ -373,7 +383,9 @@ usage(void)
  * variables. Updates `argc` and `argv` to point to the remaining non-flag
  * arguments (if any).
  **/
-static void parse_arguments(int *argc, char ***argv) {
+static void
+parse_arguments(int *argc, char ***argv)
+{
 	struct action {
 		char flag;
 		union {
@@ -434,7 +446,7 @@ static void parse_arguments(int *argc, char ***argv) {
 			if ((value = strchr(optarg, '='))) {
 				*value++ = '\0';
 			} else if (!(value = clenv_get(optarg))) {
-				vlog(1, "-v %s: variable not present, not setting", optarg);
+				verbose_log(1, "-v %s: variable not present, not setting", optarg);
 				continue;
 			}
 
@@ -465,7 +477,7 @@ static void parse_arguments(int *argc, char ***argv) {
 			compile_regex(&actions[nactions++].re, option, optarg);
 			break;
 #else
-			die("-%c: regex is not compiled into this version of clenv", optarg);
+			die("-%c: regex is not compiled into this version of clenv", option);
 #endif
 
 		default:
@@ -493,7 +505,9 @@ static void parse_arguments(int *argc, char ***argv) {
 	free(actions);
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 	program_name = argv[0];
 	inherited_environ = environ;
 
