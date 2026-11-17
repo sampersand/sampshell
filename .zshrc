@@ -341,6 +341,10 @@ if SampShell-feature-enabled interactive:completion; then
 	## Unlike most other features of ZSH, I never got too deep into autocomplete. This section is
 	# ship-shod, and will be revisited once I get a better handle on how autocompletes work.
 
+	if [[ -d $SampShell_CACHE_HOME/zsh-completions ]] {
+		fpath+=( $SampShell_CACHE_HOME/zsh-completions )
+	}
+
 	autoload -Uz compinit
 	if [[ -n $SampShell_CACHE_HOME ]]; then
 		compinit -d $SampShell_CACHE_HOME/.zcompdump

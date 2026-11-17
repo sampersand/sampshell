@@ -11,5 +11,12 @@ fi
 # Source the the POSIX-compliant profile, in sh-style emulation mode.
 emulate sh -c '. "$SampShell_ROOTDIR/.profile"'
 
+# Add ZSH autocompletions in
+
+if which p &>/dev/null && [[ -d $SampShell_CACHE_HOME ]]; then
+	mkdir -p $SampShell_CACHE_HOME/zsh-completions
+	p '--*-completion-zsh=p' >| $SampShell_CACHE_HOME/zsh-completions/_p
+fi
+
 # Only set `IGNORE_EOF` in the login shell
 setopt IGNORE_EOF
