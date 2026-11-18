@@ -596,6 +596,7 @@ main(int argc, char *argv[])
 {
 	program_name = strrchr(argv[0], '/');
 	if (program_name) argv[0] = strdup(++program_name); // todo: get rid of strdup
+	else program_name = argv[0];
 	inherited_environ = environ;
 
 	parse_arguments(&argc, &argv);
