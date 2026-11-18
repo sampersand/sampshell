@@ -62,20 +62,41 @@ static const char *program_name;
 // The alternative `$PATH` to search executables for.
 static const char *alt_path;
 
-// Flags that can be set at startup; control program execution and logging.
-static int dry_mode, verbose, null_ending, just_name;
+// Flags that can be set at startup
+static int verbose;     // print debug information
+static int dry_mode;    // don't actually execute programs
+static int null_ending; // separate entries via `\0` not `\n`
+static int just_name;   // only print out the name
 
 /******************************************************************************
  *                                 Utilities                                  *
  ******************************************************************************/
 
+// The status associated with the program exit.
+enum exit_status
+{
+	// Successful exit
+	EXIT_STATUS_SUCCESS = 0,
+
+	// There was a problem with a flag (unknown, invalid regex pattern, etc)
+	EXIT_STATUS_BAD_FLAG = 1,
+
+	// Some internal problem happened
+	EXIT_STATUS_INTERNAL = 2,
+
+	// An executable was found, but couldn't be run
+	EXIT_STATUS_CANNOT_EXECUTE_EXE = 126,
+
+	// When executing a program, it couldn't be found
+	EXIT_STATUS_CANNOT_FIND_EXE = 127
+};
+
 /**
  * Print an error message to stderr and exit, prefixing it with the program name
  **/
 static NORETURN void
-die(int status, const char *fmt, ...)
+die(enum exit_status status, const char *fmt, ...)
 {
-
 	fprintf(stderr, "%s: ", program_name);
 
 	va_list vl;
@@ -143,6 +164,10 @@ find_executable_path(const char *exe)
 }
 
 #ifdef HAS_REGEX_H
+/**
+ * Attempts to compile a regex; if there's a problem with the regex,
+ * then the program aborts with the flag mentioned.
+ **/
 static void
 compile_regex(regex_t *re, char flag, const char *pattern)
 {
@@ -152,7 +177,7 @@ compile_regex(regex_t *re, char flag, const char *pattern)
 		size_t err_size = regerror(err, re, 0, 0);
 		char *buf = malloc(err_size);
 		regerror(err, re, buf, err_size);
-		die(EXIT_FAILURE, "-%c: bad regex '%s': %s", flag, pattern, buf);
+		die(EXIT_STATUS_BAD_FLAG, "-%c: bad regex '%s': %s", flag, pattern, buf);
 	}
 }
 #endif /* HAS_REGEX_H */
@@ -182,7 +207,7 @@ clenv_set(const char *restrict name, const char *restrict value)
 		verbose_log(1, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1))
-		die(3, "cannot set %s: %s", name, strerror(errno));
+		die(EXIT_STATUS_INTERNAL, "cannot set %s: %s", name, strerror(errno));
 }
 
 /**
@@ -199,7 +224,7 @@ clenv_unset(const char *name)
 	verbose_log(1, "unsetting: %s", name);
 
 	if (unsetenv(name))
-		die(3, "cannot unset %s: %s", name, strerror(errno));
+		die(EXIT_STATUS_INTERNAL, "cannot unset %s: %s", name, strerror(errno));
 }
 
 /**
@@ -218,7 +243,7 @@ clenv_get(const char *name)
 	// it wasn't found in the environment.
 	errno = 0;
 	if (!(value = getenv(name)) && errno)
-		die(3, "cannot get %s: %s", name, strerror(errno));
+		die(EXIT_STATUS_INTERNAL, "cannot get %s: %s", name, strerror(errno));
 
 	return value;
 }
@@ -309,7 +334,6 @@ setup_initial_env(enum starting_env starting_env)
 		return;
 	}
 
-
 	// The list of "minimal" values that should be forwarded on by default.
 	// Note that this must end in `{0, 0}` (to signify the end of it).
 	struct { const char *name; char *value; } minimal_env[] =
@@ -354,8 +378,9 @@ print_environment(void)
 
 	for (int i = 0; environ[i]; ++i) {
 		if (just_name) {
+			// If the value is malformed (ie no `=`) then don't print it.
 			if (!(value = strchr(environ[i], '=')))
-				die(3, "[bug] no = found in environ arg: %s", environ[i]);
+				continue;
 			fwrite(environ[i], value - environ[i], 1, stdout);
 		} else {
 			fputs(environ[i], stdout);
@@ -376,7 +401,7 @@ execute_program(int argc, char **const argv)
 	if (alt_path && *argv[0] && !strchr(argv[0], '/')) {
 		char *orig = argv[0];
 		if (!(argv[0] = find_executable_path(orig)))
-			die(127, "%s: No such file or directory", orig);
+			die(EXIT_STATUS_CANNOT_FIND_EXE, "%s: No such file or directory", orig);
 	}
 
 	// Log what we're executing in verbose mode
@@ -394,7 +419,8 @@ execute_program(int argc, char **const argv)
 	// `sh` on ENOEXEC
 	execvp(argv[0], argv);
 
-	die(errno == ENOENT ? 127 : 126, "%s: %s", argv[0], strerror(errno));
+	die(errno == ENOENT ? EXIT_STATUS_CANNOT_FIND_EXE :
+			EXIT_STATUS_CANNOT_EXECUTE_EXE, "%s: %s", argv[0], strerror(errno));
 }
 
 /**
@@ -424,7 +450,7 @@ usage(void)
 	puts("\t-U PATTERN      <Not compiled in>");
 #endif
 
-	exit(EXIT_SUCCESS);
+	exit(EXIT_STATUS_SUCCESS);
 }
 
 /**
@@ -488,7 +514,7 @@ parse_arguments(int *argc, char ***argv)
 
 		case 'v':
 			if (!*optarg || *optarg == '=')
-				die(1, "-v: variable name must not be empty");
+				die(EXIT_STATUS_BAD_FLAG, "-v: variable name must not be empty");
 
 			char *value;
 
@@ -508,10 +534,10 @@ parse_arguments(int *argc, char ***argv)
 
 		case 'u':
 			if (!*optarg)
-				die(1, "-u: argument must not be empty");
+				die(EXIT_STATUS_BAD_FLAG, "-u: argument must not be empty");
 
 			if (strchr(optarg, '='))
-				die(1, "-u: variable name cannot contain an '=': %s", optarg);
+				die(EXIT_STATUS_BAD_FLAG, "-u: variable name cannot contain an '=': %s", optarg);
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
@@ -526,7 +552,7 @@ parse_arguments(int *argc, char ***argv)
 			compile_regex(&actions[nactions++].u.re, option, optarg);
 			break;
 #else
-			die(1, "-%c: regex is not compiled into this version of clenv", option);
+			die(EXIT_STATUS_BAD_FLAG, "-%c: regex is not compiled into this version of clenv", option);
 #endif
 
 		default:
@@ -539,9 +565,9 @@ parse_arguments(int *argc, char ***argv)
 
 	// Make sure mutually-incompatible options aren't given
 	if (alt_path && !*argc)
-		die(1, "cannot supply -P and no executable");
+		die(EXIT_STATUS_BAD_FLAG, "cannot supply -P and no executable");
 	if (null_ending && *argc)
-		die(1, "cannot supply -0 and an executable");
+		die(EXIT_STATUS_BAD_FLAG, "cannot supply -0 and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
 	setup_initial_env(starting_env);
@@ -554,7 +580,7 @@ parse_arguments(int *argc, char ***argv)
 		case 'm': clenv_set_matching(&actions[i].u.re); break;
 		case 'U': clenv_unset_matching(&actions[i].u.re); break;
 #endif
-		default: die(1, "bug!");
+		default: die(EXIT_STATUS_INTERNAL, "bug!");
 		}
 	}
 	free(actions);
@@ -564,7 +590,7 @@ int
 main(int argc, char *argv[])
 {
 	program_name = strrchr(argv[0], '/');
-	program_name = program_name ? program_name + 1 : argv[0];
+	if (program_name) argv[0] = strdup(++program_name); // todo: get rid of strdup
 	inherited_environ = environ;
 
 	parse_arguments(&argc, &argv);
@@ -573,4 +599,6 @@ main(int argc, char *argv[])
 		print_environment();
 	else
 		execute_program(argc, argv);
+
+	return EXIT_STATUS_SUCCESS;
 }
