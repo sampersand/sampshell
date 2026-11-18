@@ -189,6 +189,27 @@ compile_regex(regex_t *re, char flag, const char *pat)
  ******************************************************************************/
 
 /**
+ * Gets the current value of `name` from the environment
+ **/
+static char *
+clenv_get(const char *name)
+{
+	assert(name);               // non-null
+	assert(*name);              // non-empty
+	assert(!strchr(name, '=')); // does not have `=`
+
+	char *value;
+
+	// We check `errno` here since a return value of `NULL` could also just mean
+	// it wasn't found in the environment.
+	errno = 0;
+	if (!(value = getenv(name)) && errno)
+		die(EXIT_STATUS_INTERNAL, "cannot get %s: %s", name, strerror(errno));
+
+	return value;
+}
+
+/**
  * Sets the value of `name` to `value` in the environment. The name must be
  * valid (nonnull, nonempty, and cannot have `=`), and the value must be
  * nonnull.
@@ -225,27 +246,6 @@ clenv_unset(const char *name)
 
 	if (unsetenv(name))
 		die(EXIT_STATUS_INTERNAL, "cannot unset %s: %s", name, strerror(errno));
-}
-
-/**
- * Gets the current value of `name` from the environment
- **/
-static char *
-clenv_get(const char *name)
-{
-	assert(name);               // non-null
-	assert(*name);              // non-empty
-	assert(!strchr(name, '=')); // does not have `=`
-
-	char *value;
-
-	// We check `errno` here since a return value of `NULL` could also just mean
-	// it wasn't found in the environment.
-	errno = 0;
-	if (!(value = getenv(name)) && errno)
-		die(EXIT_STATUS_INTERNAL, "cannot get %s: %s", name, strerror(errno));
-
-	return value;
 }
 
 #ifdef HAS_REGEX_H
