@@ -48,17 +48,13 @@
  *                              Global Variables                              *
  ******************************************************************************/
 
-// Initially set to the inherited environment, it's cleared early on in
-// the `setup_initial_env()` function (unless `-a` is supplied), and populated
-// with arguments. This value is what's eventually passed to the end program.
+// The inherited environment. It's never modified, instead `child_environ` is
+// constructed.
 extern char **environ;
 
-// Set to `environ` at program start; used by `-m` to lookup values in the
-// original environment.
-static char **inherited_environ;
-
+// The environment to pass to the child process.
 static char **child_environ;
-static size_t child_environ_cap;
+static size_t child_environ_cap; // Capacity for the child environment
 
 // Set to `argv[0]` at program start; used in error messages.
 static const char *program_name;
@@ -71,6 +67,10 @@ static int verbose;     // print debug information
 static int dry_mode;    // don't actually execute programs
 static int null_ending; // separate entries via `\0` not `\n`
 static int just_name;   // only print out the name
+
+// The list of "minimal" values that should be forwarded on by default.
+// Note that if this is ever modified, it must end in a `NULL`.
+static const char *minimal_env[] = { "TERM", "HOME", "SHLVL", "LANG", NULL };
 
 /******************************************************************************
  *                                 Utilities                                  *
@@ -192,32 +192,28 @@ compile_regex(regex_t *re, char flag, const char *pat)
  ******************************************************************************/
 
 /**
- * Gets the current value of `name` from the environment
+ * Returns the pointer to `child_environ` for the entry with the name `name`.
+ * If `name` is not present, returns the last value in `child_environ` (which
+ * when dereferenced is NULL)
  **/
-static char *
-clenv_get(const char *name)
+static char **
+clenv_find(const char *name, size_t name_len)
 {
-	assert(name);               // non-null
-	assert(*name);              // non-empty
-	assert(!strchr(name, '=')); // does not have `=`
+	char **curr_entry;
 
-	// for (char **c = child_environ; *c; ++c) {
-	// 	char *eql = strchr(*c, '=');
-	// 	if (!*eql) continue; // malformed, no `=` found.
-	// 			char *eql = strchr(inherited_environ[i], '=');
+	for (curr_entry = child_environ; *curr_entry; ++curr_entry) {
+		// Fetch the location of the `=` (if one is present)
+		char *eql = strchr(*curr_entry, '=');
+		if (!eql) continue; // malformed
 
-	// 	strchr(const char *s, int c)
-	// }
+		// Check to see if the name matches
+		size_t curr_entry_name_len = eql - *curr_entry;
+		if (curr_entry_name_len != name_len) continue;
+		if (strncmp(name, *curr_entry, curr_entry_name_len)) continue;
+		return curr_entry;
+	}
 
-	char *value;
-
-	// We check `errno` here since a return value of `NULL` could also just mean
-	// it wasn't found in the environment.
-	errno = 0;
-	if (!(value = getenv(name)) && errno)
-		die(EXIT_STATUS_INTERNAL, "cannot get %s: %s", name, strerror(errno));
-
-	return value;
+	return curr_entry;
 }
 
 /**
@@ -233,44 +229,37 @@ clenv_set(const char *restrict name, const char *restrict value)
 	assert(!strchr(name, '=')); // does not have `=`
 	assert(value);
 
+	// Log just the name if `-n` is supplied (for security).
 	if (just_name)
 		verbose_log(1, "setting:   %s", name);
 	else
 		verbose_log(1, "setting:   %s=%s", name, value);
 
-	size_t name_len = strlen(name);
+	size_t name_len  = strlen(name);
 	size_t value_len = strlen(value);
 
-	// Find the value if it's not set
-	char **curr_entry;
-	for (curr_entry = child_environ; *curr_entry; ++curr_entry) {
-		char *eql = strchr(*curr_entry, '=');
-		if (!eql) continue; // malformed
+	// Find the entry associated with the name
+	char **entry_ptr = clenv_find(name, name_len);
 
-		// Check to see if the value matches
-		size_t curr_entry_len = eql - *curr_entry;
-		if (curr_entry_len != name_len) continue;
-		if (strncmp(name, *curr_entry, curr_entry_len)) continue;
-
-		// It matches; reallocate the value, copy over the entry, and we're done.
-		*curr_entry = realloc(*curr_entry, name_len + value_len + 2);
-		memcpy(*curr_entry + name_len + 1, value, value_len + 1);
+	// It existed, just append the value
+	if (*entry_ptr) {
+		// Reallocate to have enough size for the new value
+		*entry_ptr = realloc(*entry_ptr, name_len + value_len + 2);
+		// Copy just the value over
+		memcpy(*entry_ptr + name_len + 1, value, value_len + 1);
 		return;
 	}
 
-	// It's not set; expand the size
-	size_t size = curr_entry - child_environ;
-	if (size == child_environ_cap)
-		child_environ = realloc(child_environ, child_environ_cap *= 2);
+	// It didn't exist, expand the environment if needed
+	if (child_environ_cap == (entry_ptr - child_environ) - 1) // TODO: this `1` is going to be an off-by-one; is it `+1`?
+		child_environ = realloc(child_environ, sizeof(char *) * (child_environ_cap *= 2));
 
-	// Allocate the value, and assign it
-	child_environ[size] = malloc(name_len + value_len + 2);
-	memcpy(child_environ[size], name, name_len);
-	child_environ[size][name_len] = '=';
-	memcpy(child_environ[size] + name_len + 1, value, value_len + 1); // also copy trailing `\0`
-
-	if (setenv(name, value, 1))
-		die(EXIT_STATUS_INTERNAL, "cannot set %s: %s", name, strerror(errno));
+	// Construct the entry_ptr
+	entry_ptr[1] = NULL; // make sure the next one is zero'd out (for reference)
+	*entry_ptr = malloc(name_len + value_len + 2);
+	memcpy(*entry_ptr, name, name_len);
+	(*entry_ptr)[name_len] = '=';
+	memcpy(*entry_ptr + name_len + 1, value, value_len + 1); // also copy trailing `\0`
 }
 
 /**
@@ -310,9 +299,6 @@ clenv_unset(const char *name)
 		*curr_entry = 0; // zero out the last one
 		return;
 	}
-
-	if (unsetenv(name))
-		die(EXIT_STATUS_INTERNAL, "cannot unset %s: %s", name, strerror(errno));
 }
 
 #ifdef HAS_REGEX_H
@@ -323,17 +309,15 @@ clenv_unset(const char *name)
 static void
 clenv_set_matching(const regex_t *re)
 {
-	for (int i = 0; inherited_environ[i]; ++i) {
+	for (int i = 0; environ[i]; ++i) {
 		// Find the position of `=`; if it doesn't exist, that's a malformed
 		// value and we just ignore it entirely.
-		char *eql = strchr(inherited_environ[i], '=');
+		char *eql = strchr(environ[i], '=');
 		if (!eql) continue;
 
-		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
-		if (!regexec(re, name, 0, 0, 0)) {
+		char *name = strndup(environ[i], eql - environ[i]);
+		if (!regexec(re, name, 0, 0, 0))
 			clenv_set(name, eql + 1);
-		}
-
 		free(name);
 	}
 }
@@ -404,11 +388,14 @@ setup_initial_env(enum starting_env starting_env)
 		verbose_log(2, "inheriting environment");
 
 		// Gotta manually copy it to prevent `clenv -a -u HOME -v HOME` errors
-		for (size_t i = 0; environ[i]; ++i) {
-			if (i == child_environ_cap)
-				child_environ = realloc(child_environ, child_environ_cap *= 2);
+		size_t i = 0;
+		for (i = 0; environ[i]; ++i) {
+			if (i == child_environ_cap - 1)
+				child_environ = realloc(child_environ, sizeof(char *) * (child_environ_cap *= 2));
 			child_environ[i] = strdup(environ[i]); // Also have to strdup so modifications dont affect the `-m`, and we can free
 		}
+
+		child_environ[i] = NULL;
 		return;
 	}
 
@@ -416,16 +403,12 @@ setup_initial_env(enum starting_env starting_env)
 	// Clear the environment by setting
 	verbose_log(1, "clearing environment");
 
-	// The list of "minimal" values that should be forwarded on by default.
-	// Note that this must end in `{0, 0}` (to signify the end of it).
-	static const char *minimal_env[] = { "TERM", "HOME", "SHLVL", "LANG", 0 };
-
 	// Populate the "minimal environment" before clearing it
 	if (starting_env == MINIMAL_ENV) {
 		verbose_log(2, "setting up minimal environment");
 
 		for (int i = 0; minimal_env[i]; ++i) {
-			char *value = clenv_get(minimal_env[i]);
+			char *value = getenv(minimal_env[i]);
 			if (value) clenv_set(minimal_env[i], value);
 		}
 	}
@@ -591,7 +574,7 @@ parse_arguments(int *argc, char ***argv)
 			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
 			if ((value = strchr(optarg, '='))) {
 				*value++ = '\0';
-			} else if (!(value = clenv_get(optarg))) {
+			} else if (!(value = getenv(optarg))) {
 				verbose_log(1, "-v %s: variable not present, not setting", optarg);
 				continue;
 			}
@@ -662,7 +645,6 @@ main(int argc, char *argv[])
 	program_name = strrchr(argv[0], '/');
 	if (program_name) argv[0] = strdup(++program_name); // todo: get rid of strdup
 	else program_name = argv[0];
-	inherited_environ = environ;
 
 	parse_arguments(&argc, &argv);
 
