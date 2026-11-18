@@ -1,3 +1,20 @@
+/**
+ * clenv: get a "clean environment".
+ *
+ * clenv is intended to be similar to `env`, with a few key differences:
+ * - By default only a handful of "minimal" variables (eg `LANG`, `TERM`, etc)
+ *   are preserved in the environment. This can be changed with `-a` (include
+ *   all values) and `-i` (include none)
+ * - Instead of setting variables via `NAME=value`, variables are set via
+ *   the `-v` flag: `-v NAME=value`. Also supplied as a convenience, `-v NAME`
+ *   lets you forward environment variables if they're present. You can also
+ *   unset variables with `-u NAME`.
+ * - Support for regex (if `regex.h` is present): `-m PATTERN` includes all
+ *   variables whose name match PATTERN, and `-U` unsets them.
+ * clenv also supports some other QoL features (eg `-0`, `-P`, and `-n`); check
+ * the usage for more.
+ **/
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +29,13 @@
 # define HAS_INCLUDE(x) 0
 #endif
 
+// Two flags (`-m` and `-U`) require that `<regex.h>` be present. This checks
+// for that.
 #if defined(HAS_REGEX_H) || HAS_INCLUDE(<regex.h>)
 # define HAS_REGEX_H
 # include <regex.h>
+#else
+# warning no <regex.h> present; -m and -U disabled
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
@@ -27,8 +48,9 @@
  *                              Global Variables                              *
  ******************************************************************************/
 
-// Initially the inherited environment, but cleared early on (unless `-a` is
-// passed in) to provide a "clean slate" for `setenv` and friends to work on.
+// Initially set to the inherited environment, it's cleared early on in
+// the `setup_initial_env()` function (unless `-a` is supplied), and populated
+// with arguments. This value is what's eventually passed to the end program.
 extern char **environ;
 
 // Set to `environ` at program start, to have a clean starting environment.
@@ -51,7 +73,7 @@ static int dry_mode, verbose, null_ending, just_name;
  * Print an error message to stderr and exit, prefixing it with the program name
  **/
 static NORETURN void
-die2(int status, const char *fmt, ...)
+die(int status, const char *fmt, ...)
 {
 
 	fprintf(stderr, "%s: ", program_name);
@@ -66,9 +88,6 @@ die2(int status, const char *fmt, ...)
 
 	exit(status);
 }
-
-// Like `die2`, but without specify exit code
-#define die(...) die2(EXIT_FAILURE, __VA_ARGS__)
 
 /**
  * Print out a log message to stderr, if the verbose is at least `min_level`
@@ -133,7 +152,7 @@ compile_regex(regex_t *re, char flag, const char *pattern)
 		size_t err_size = regerror(err, re, 0, 0);
 		char *buf = malloc(err_size);
 		regerror(err, re, buf, err_size);
-		die("-%c: bad regex '%s': %s", flag, pattern, buf);
+		die(EXIT_FAILURE, "-%c: bad regex '%s': %s", flag, pattern, buf);
 	}
 }
 #endif /* HAS_REGEX_H */
@@ -163,7 +182,7 @@ clenv_set(const char *restrict name, const char *restrict value)
 		verbose_log(1, "setting:   %s=%s", name, value);
 
 	if (setenv(name, value, 1))
-		die2(3, "cannot set %s: %s", name, strerror(errno));
+		die(3, "cannot set %s: %s", name, strerror(errno));
 }
 
 /**
@@ -180,7 +199,7 @@ clenv_unset(const char *name)
 	verbose_log(1, "unsetting: %s", name);
 
 	if (unsetenv(name))
-		die2(3, "cannot unset %s: %s", name, strerror(errno));
+		die(3, "cannot unset %s: %s", name, strerror(errno));
 }
 
 /**
@@ -199,7 +218,7 @@ clenv_get(const char *name)
 	// it wasn't found in the environment.
 	errno = 0;
 	if (!(value = getenv(name)) && errno)
-		die2(3, "cannot get %s: %s", name, strerror(errno));
+		die(3, "cannot get %s: %s", name, strerror(errno));
 
 	return value;
 }
@@ -213,8 +232,10 @@ static void
 clenv_set_matching(const regex_t *re)
 {
 	for (int i = 0; inherited_environ[i]; ++i) {
+		// Find the position of `=`; if it doesn't exist, that's a malformed
+		// value and we just ignore it entirely.
 		char *eql = strchr(inherited_environ[i], '=');
-		if (!eql) die("[bug] no `=` found in environ of %s", inherited_environ[i]);
+		if (!eql) continue;
 
 		char *name = strndup(inherited_environ[i], eql - inherited_environ[i]);
 		if (!regexec(re, name, 0, 0, 0)) {
@@ -235,8 +256,10 @@ clenv_unset_matching(const regex_t *re)
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
 
 	for (int i = 0; environ[i]; ++i) {
+		// Find the position of `=`; if it doesn't exist, that's a malformed
+		// value and we just ignore it entirely.
 		char *eql = strchr(environ[i], '=');
-		if (!eql) die("[bug] no `=` found in environ of %s", environ[i]);
+		if (!eql) continue;
 
 		char *name = strndup(environ[i], eql - environ[i]);
 		if (!regexec(re, name, 0, 0, 0)) {
@@ -260,32 +283,51 @@ clenv_unset_matching(const regex_t *re)
  *                               Business Logic                               *
  ******************************************************************************/
 
-enum starting_env {
+// How to setup the initial environment
+enum starting_env
+{
+	// Unset everything except the "minimal" options
 	MINIMAL_ENV,
+
+	// Unset everything
 	EMPTY_ENV,
+
+	// Unset nothing
 	INHERIT_ENV
 };
 
+/**
+ * Replace `environ` with the initial starting environment, depending on
+ * the `starting_env` value.
+ **/
 static void
 setup_initial_env(enum starting_env starting_env)
 {
-	// If we inherit the environment, don't do anything special.
+	// If we inherit the environment, don't change `environ` at all.
 	if (starting_env == INHERIT_ENV) {
 		verbose_log(2, "inheriting environment");
 		return;
 	}
 
-	// Now take all the "minimal" environment values and forward them through.
-	struct { char *name, *value; } minimal_env[] = {
-		{ "TERM", 0 }, { "HOME", 0 }, { "SHLVL", 0 }, { "LANG", 0 }, { 0, 0 }
+
+	// The list of "minimal" values that should be forwarded on by default.
+	// Note that this must end in `{0, 0}` (to signify the end of it).
+	struct { const char *name; char *value; } minimal_env[] =
+	{
+		{ "TERM", 0 },
+		{ "HOME", 0 },
+		{ "SHLVL", 0 },
+		{ "LANG", 0 },
+		{ 0, 0 }
 	};
 
+	// Populate the "minimal environment" before clearing it
 	if (starting_env == MINIMAL_ENV) {
 		for (int i = 0; minimal_env[i].name; ++i)
 			minimal_env[i].value = clenv_get(minimal_env[i].name);
 	}
 
-	// Clear the environment by setting a new one.
+	// Clear the environment by setting
 	verbose_log(1, "clearing environment");
 	environ = malloc(sizeof(char *));
 	*environ = NULL;
@@ -307,12 +349,13 @@ setup_initial_env(enum starting_env starting_env)
 static void
 print_environment(void)
 {
-	int ending = null_ending ? '\0' : '\n';
+	char ending = null_ending ? '\0' : '\n';
 	char *value;
+
 	for (int i = 0; environ[i]; ++i) {
 		if (just_name) {
 			if (!(value = strchr(environ[i], '=')))
-				die("[bug] no = found in environ arg: %s", environ[i]);
+				die(3, "[bug] no = found in environ arg: %s", environ[i]);
 			fwrite(environ[i], value - environ[i], 1, stdout);
 		} else {
 			fputs(environ[i], stdout);
@@ -333,7 +376,7 @@ execute_program(int argc, char **const argv)
 	if (alt_path && *argv[0] && !strchr(argv[0], '/')) {
 		char *orig = argv[0];
 		if (!(argv[0] = find_executable_path(orig)))
-			die2(127, "%s: No such file or directory", orig);
+			die(127, "%s: No such file or directory", orig);
 	}
 
 	// Log what we're executing in verbose mode
@@ -351,7 +394,7 @@ execute_program(int argc, char **const argv)
 	// `sh` on ENOEXEC
 	execvp(argv[0], argv);
 
-	die2(errno == ENOENT ? 127 : 126, "%s: %s", argv[0], strerror(errno));
+	die(errno == ENOENT ? 127 : 126, "%s: %s", argv[0], strerror(errno));
 }
 
 /**
@@ -445,7 +488,7 @@ parse_arguments(int *argc, char ***argv)
 
 		case 'v':
 			if (!*optarg || *optarg == '=')
-				die("-v: variable name must not be empty");
+				die(1, "-v: variable name must not be empty");
 
 			char *value;
 
@@ -465,10 +508,10 @@ parse_arguments(int *argc, char ***argv)
 
 		case 'u':
 			if (!*optarg)
-				die("-u: argument must not be empty");
+				die(1, "-u: argument must not be empty");
 
 			if (strchr(optarg, '='))
-				die("-u: variable name cannot contain an '=': %s", optarg);
+				die(1, "-u: variable name cannot contain an '=': %s", optarg);
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
@@ -483,7 +526,7 @@ parse_arguments(int *argc, char ***argv)
 			compile_regex(&actions[nactions++].u.re, option, optarg);
 			break;
 #else
-			die("-%c: regex is not compiled into this version of clenv", option);
+			die(1, "-%c: regex is not compiled into this version of clenv", option);
 #endif
 
 		default:
@@ -496,9 +539,9 @@ parse_arguments(int *argc, char ***argv)
 
 	// Make sure mutually-incompatible options aren't given
 	if (alt_path && !*argc)
-		die("cannot supply -P and no executable");
+		die(1, "cannot supply -P and no executable");
 	if (null_ending && *argc)
-		die("cannot supply -0 and an executable");
+		die(1, "cannot supply -0 and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
 	setup_initial_env(starting_env);
@@ -511,7 +554,7 @@ parse_arguments(int *argc, char ***argv)
 		case 'm': clenv_set_matching(&actions[i].u.re); break;
 		case 'U': clenv_unset_matching(&actions[i].u.re); break;
 #endif
-		default: die("bug!");
+		default: die(1, "bug!");
 		}
 	}
 	free(actions);
