@@ -48,8 +48,7 @@
  *                              Global Variables                              *
  ******************************************************************************/
 
-// The inherited environment. It's never modified, instead `child_environ` is
-// constructed.
+// The inherited environment. Never modified; instead `child_environ` is used.
 extern char **environ;
 
 // The environment to pass to the child process.
@@ -138,11 +137,10 @@ verbose_log(int min_level, const char *fmt, ...)
  * that's found (and executable), or `NULL` if nothing matched.
  **/
 static char *
-find_executable_path(const char *exe)
+find_executable_path(const char *exe, const char *path)
 {
-	verbose_log(2, "Searching for %s in %s", exe, alt_path);
-
-	char *mpath = strdup(alt_path);
+	verbose_log(2, "Searching for %s in %s", exe, path);
+	char *mpath = strdup(path);
 	char *cwd = NULL;
 
 	// TODO: support posix `:`
@@ -251,8 +249,11 @@ clenv_set(const char *restrict name, const char *restrict value)
 	}
 
 	// It didn't exist, expand the environment if needed
-	if (child_environ_cap == (entry_ptr - child_environ) - 1) // TODO: this `1` is going to be an off-by-one; is it `+1`?
+	size_t child_environ_len = entry_ptr - child_environ;
+	if (child_environ_cap == child_environ_len + 1) {
 		child_environ = realloc(child_environ, sizeof(char *) * (child_environ_cap *= 2));
+		entry_ptr = child_environ + child_environ_len;
+	}
 
 	// Construct the entry_ptr
 	entry_ptr[1] = NULL; // make sure the next one is zero'd out (for reference)
@@ -450,9 +451,12 @@ execute_program(int argc, char **const argv)
 {
 	// Search for the program name if an alt path is set, and the program is
 	// a bare name
-	if (alt_path && *argv[0] && !strchr(argv[0], '/')) {
+	if (*argv[0] && !strchr(argv[0], '/')) {
 		char *orig = argv[0];
-		if (!(argv[0] = find_executable_path(orig)))
+		if (!alt_path)
+			alt_path = getenv("PATH");
+
+		if (!(argv[0] = find_executable_path(orig, alt_path)))
 			die(EXIT_STATUS_CANNOT_FIND_EXE, "%s: No such file or directory", orig);
 	}
 
@@ -642,9 +646,13 @@ parse_arguments(int *argc, char ***argv)
 int
 main(int argc, char *argv[])
 {
-	program_name = strrchr(argv[0], '/');
-	if (program_name) argv[0] = strdup(++program_name); // todo: get rid of strdup
-	else program_name = argv[0];
+	if (argc == 0) {
+		program_name = "clenv";
+	} else {
+		program_name = strrchr(argv[0], '/');
+		if (program_name) argv[0] = strdup(++program_name); // todo: get rid of strdup
+		else program_name = argv[0];
+	}
 
 	parse_arguments(&argc, &argv);
 
