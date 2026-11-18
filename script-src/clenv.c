@@ -57,6 +57,9 @@ extern char **environ;
 // original environment.
 static char **inherited_environ;
 
+static char **child_environ;
+static size_t child_environ_cap;
+
 // Set to `argv[0]` at program start; used in error messages.
 static const char *program_name;
 
@@ -198,6 +201,14 @@ clenv_get(const char *name)
 	assert(*name);              // non-empty
 	assert(!strchr(name, '=')); // does not have `=`
 
+	// for (char **c = child_environ; *c; ++c) {
+	// 	char *eql = strchr(*c, '=');
+	// 	if (!*eql) continue; // malformed, no `=` found.
+	// 			char *eql = strchr(inherited_environ[i], '=');
+
+	// 	strchr(const char *s, int c)
+	// }
+
 	char *value;
 
 	// We check `errno` here since a return value of `NULL` could also just mean
@@ -227,6 +238,37 @@ clenv_set(const char *restrict name, const char *restrict value)
 	else
 		verbose_log(1, "setting:   %s=%s", name, value);
 
+	size_t name_len = strlen(name);
+	size_t value_len = strlen(value);
+
+	// Find the value if it's not set
+	char **curr_entry;
+	for (curr_entry = child_environ; *curr_entry; ++curr_entry) {
+		char *eql = strchr(*curr_entry, '=');
+		if (!eql) continue; // malformed
+
+		// Check to see if the value matches
+		size_t curr_entry_len = eql - *curr_entry;
+		if (curr_entry_len != name_len) continue;
+		if (strncmp(name, *curr_entry, curr_entry_len)) continue;
+
+		// It matches; reallocate the value, copy over the entry, and we're done.
+		*curr_entry = realloc(*curr_entry, name_len + value_len + 2);
+		memcpy(*curr_entry + name_len + 1, value, value_len + 1);
+		return;
+	}
+
+	// It's not set; expand the size
+	size_t size = curr_entry - child_environ;
+	if (size == child_environ_cap)
+		child_environ = realloc(child_environ, child_environ_cap *= 2);
+
+	// Allocate the value, and assign it
+	child_environ[size] = malloc(name_len + value_len + 2);
+	memcpy(child_environ[size], name, name_len);
+	child_environ[size][name_len] = '=';
+	memcpy(child_environ[size] + name_len + 1, value, value_len + 1); // also copy trailing `\0`
+
 	if (setenv(name, value, 1))
 		die(EXIT_STATUS_INTERNAL, "cannot set %s: %s", name, strerror(errno));
 }
@@ -243,6 +285,31 @@ clenv_unset(const char *name)
 	assert(!strchr(name, '=')); // does not have `=`
 
 	verbose_log(1, "unsetting: %s", name);
+
+	size_t name_len = strlen(name);
+
+	// Find the value if it's not set
+	char **curr_entry;
+	for (curr_entry = child_environ; *curr_entry; ++curr_entry) {
+		char *eql = strchr(*curr_entry, '=');
+		if (!eql) continue; // malformed
+
+		// Check to see if the value matches
+		size_t curr_entry_len = eql - *curr_entry;
+		if (curr_entry_len != name_len) continue;
+		if (strncmp(name, *curr_entry, curr_entry_len)) continue;
+
+		// It matches; free the memory, then shift everything down by one.
+		// (Note that we _could_ just swap in the last value, as POSIX
+		// guarantees ordering is irrelevant, but I like being able to see which
+		// onesare the most recently added lol)
+		free(*curr_entry);
+
+		// Shift everything down
+		for (; curr_entry[1]; curr_entry++) *curr_entry = curr_entry[1];
+		*curr_entry = 0; // zero out the last one
+		return;
+	}
 
 	if (unsetenv(name))
 		die(EXIT_STATUS_INTERNAL, "cannot unset %s: %s", name, strerror(errno));
@@ -280,13 +347,13 @@ clenv_unset_matching(const regex_t *re)
 	int nmatches = 0, cap = 4;
 	char **matches = malloc(sizeof(char *) * cap); // todo: optimize when nothing matches?
 
-	for (int i = 0; environ[i]; ++i) {
+	for (int i = 0; child_environ[i]; ++i) {
 		// Find the position of `=`; if it doesn't exist, that's a malformed
 		// value and we just ignore it entirely.
-		char *eql = strchr(environ[i], '=');
+		char *eql = strchr(child_environ[i], '=');
 		if (!eql) continue;
 
-		char *name = strndup(environ[i], eql - environ[i]);
+		char *name = strndup(child_environ[i], eql - child_environ[i]);
 		if (!regexec(re, name, 0, 0, 0)) {
 			if (nmatches == cap)
 				matches = realloc(matches, sizeof(char *) * (cap *= 2));
@@ -328,41 +395,38 @@ enum starting_env
 static void
 setup_initial_env(enum starting_env starting_env)
 {
+	child_environ_cap = 8;
+	child_environ = malloc(sizeof(char *) * child_environ_cap);
+	*child_environ = 0;
+
 	// If we inherit the environment, don't change `environ` at all.
 	if (starting_env == INHERIT_ENV) {
 		verbose_log(2, "inheriting environment");
+
+		// Gotta manually copy it to prevent `clenv -a -u HOME -v HOME` errors
+		for (size_t i = 0; environ[i]; ++i) {
+			if (i == child_environ_cap)
+				child_environ = realloc(child_environ, child_environ_cap *= 2);
+			child_environ[i] = strdup(environ[i]); // Also have to strdup so modifications dont affect the `-m`, and we can free
+		}
 		return;
 	}
 
-	// The list of "minimal" values that should be forwarded on by default.
-	// Note that this must end in `{0, 0}` (to signify the end of it).
-	struct { const char *name; char *value; } minimal_env[] =
-	{
-		{ "TERM", 0 },
-		{ "HOME", 0 },
-		{ "SHLVL", 0 },
-		{ "LANG", 0 },
-		{ 0, 0 }
-	};
-
-	// Populate the "minimal environment" before clearing it
-	if (starting_env == MINIMAL_ENV) {
-		for (int i = 0; minimal_env[i].name; ++i)
-			minimal_env[i].value = clenv_get(minimal_env[i].name);
-	}
 
 	// Clear the environment by setting
 	verbose_log(1, "clearing environment");
-	environ = malloc(sizeof(char *));
-	*environ = NULL;
 
-	// Setup the minimal environment
+	// The list of "minimal" values that should be forwarded on by default.
+	// Note that this must end in `{0, 0}` (to signify the end of it).
+	static const char *minimal_env[] = { "TERM", "HOME", "SHLVL", "LANG", 0 };
+
+	// Populate the "minimal environment" before clearing it
 	if (starting_env == MINIMAL_ENV) {
 		verbose_log(2, "setting up minimal environment");
-		for (int i = 0; minimal_env[i].name; ++i) {
-			// Only set it if there was an initial value
-			if (minimal_env[i].value)
-				clenv_set(minimal_env[i].name, minimal_env[i].value);
+
+		for (int i = 0; minimal_env[i]; ++i) {
+			char *value = clenv_get(minimal_env[i]);
+			if (value) clenv_set(minimal_env[i], value);
 		}
 	}
 }
@@ -375,19 +439,19 @@ print_environment(void)
 {
 	char ending = null_ending ? '\0' : '\n';
 
-	for (int i = 0; environ[i]; ++i) {
+	for (int i = 0; child_environ[i]; ++i) {
 		if (just_name) {
 			char *value;
 
 			// If the value is malformed (ie no `=`) then don't print it.
-			if (!(value = strchr(environ[i], '='))){
-				verbose_log(2, "not outputting malformed env value: %s", environ[i]);
+			if (!(value = strchr(child_environ[i], '='))){
+				verbose_log(2, "not outputting malformed env value: %s", child_environ[i]);
 				continue;
 			}
 
-			fwrite(environ[i], value - environ[i], 1, stdout);
+			fwrite(child_environ[i], value - child_environ[i], 1, stdout);
 		} else {
-			fputs(environ[i], stdout);
+			fputs(child_environ[i], stdout);
 		}
 
 		fputc(ending, stdout);
@@ -420,6 +484,7 @@ execute_program(int argc, char **const argv)
 	if (dry_mode)
 		return;
 
+	environ = child_environ;
 	// execvp not execv, it wont search (argv[0] has `/`), and falls back to
 	// `sh` on ENOEXEC
 	execvp(argv[0], argv);
