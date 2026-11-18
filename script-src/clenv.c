@@ -53,7 +53,8 @@
 // with arguments. This value is what's eventually passed to the end program.
 extern char **environ;
 
-// Set to `environ` at program start, to have a clean starting environment.
+// Set to `environ` at program start; used by `-m` to lookup values in the
+// original environment.
 static char **inherited_environ;
 
 // Set to `argv[0]` at program start; used in error messages.
@@ -111,7 +112,7 @@ die(enum exit_status status, const char *fmt, ...)
 }
 
 /**
- * Print out a log message to stderr, if the verbose is at least `min_level`
+ * Print out a log message to stderr, if `verbose` is at least `min_level`
  **/
 static void
 verbose_log(int min_level, const char *fmt, ...)
@@ -141,6 +142,7 @@ find_executable_path(const char *exe)
 	char *mpath = strdup(alt_path);
 	char *cwd = NULL;
 
+	// TODO: support posix `:`
 	for (char *entry = strtok(mpath, ":"); entry; entry = strtok(NULL, ":")) {
 		// If entry is empty, that's PWD according to posix
 		if (!*entry) {
@@ -169,23 +171,21 @@ find_executable_path(const char *exe)
  * then the program aborts with the flag mentioned.
  **/
 static void
-compile_regex(regex_t *re, char flag, const char *pattern)
+compile_regex(regex_t *re, char flag, const char *pat)
 {
-	int err = regcomp(re, pattern, REG_EXTENDED | REG_NOSUB);
+	int err = regcomp(re, pat, REG_EXTENDED | REG_NOSUB);
 
 	if (err) {
 		size_t err_size = regerror(err, re, 0, 0);
 		char *buf = malloc(err_size);
 		regerror(err, re, buf, err_size);
-		die(EXIT_STATUS_BAD_FLAG, "-%c: bad regex '%s': %s", flag, pattern, buf);
+		die(EXIT_STATUS_BAD_FLAG, "-%c: bad regex '%s': %s", flag, pat, buf);
 	}
 }
 #endif /* HAS_REGEX_H */
 
 /******************************************************************************
- *                                                                            *
  *                       Interact with the Environment                        *
- *                                                                            *
  ******************************************************************************/
 
 /**
@@ -374,17 +374,22 @@ static void
 print_environment(void)
 {
 	char ending = null_ending ? '\0' : '\n';
-	char *value;
 
 	for (int i = 0; environ[i]; ++i) {
 		if (just_name) {
+			char *value;
+
 			// If the value is malformed (ie no `=`) then don't print it.
-			if (!(value = strchr(environ[i], '=')))
+			if (!(value = strchr(environ[i], '='))){
+				verbose_log(2, "not outputting malformed env value: %s", environ[i]);
 				continue;
+			}
+
 			fwrite(environ[i], value - environ[i], 1, stdout);
 		} else {
 			fputs(environ[i], stdout);
 		}
+
 		fputc(ending, stdout);
 	}
 }
