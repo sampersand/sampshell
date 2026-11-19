@@ -22,6 +22,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #ifdef __has_include
 # define HAS_INCLUDE(x) __has_include(x)
@@ -132,38 +133,57 @@ verbose_log(int min_level, const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
+
 /**
- * Searches `alt_path` for the program `exe`. Returns a path to the first one
+ * Returns whether the file is a normal executable file.
+ **/
+static int
+is_executable_file(const char *path)
+{
+	struct stat st;
+	return !stat(path, &st) && S_ISREG(st.st_mode) && !access(path, X_OK);
+}
+
+/**
+ * Searches `path` for the program `exe`. Returns a path to the first one
  * that's found (and executable), or `NULL` if nothing matched.
  **/
 static char *
 find_executable_path(const char *exe, const char *path)
 {
 	verbose_log(2, "Searching for %s in %s", exe, path);
-	char *mpath = strdup(path);
-	char *cwd = NULL;
 
-	// TODO: support posix `:`
-	for (char *entry = strtok(mpath, ":"); entry; entry = strtok(NULL, ":")) {
-		// If entry is empty, that's PWD according to posix
-		if (!*entry) {
-			if (!cwd) getcwd(cwd, sizeof(cwd));
+	size_t exe_len = strlen(exe);
+
+	while (*path) {
+		// Find the current entry, then increment `path`
+		const char *dir = path;
+		size_t dir_len = strcspn(path, ":");
+		path += dir_len;
+
+		// An empty dir is actually `.`
+		if (!dir_len) {
+			dir_len = 1;
+			dir = ".";
 		}
 
-		size_t size = strlen(entry) + 1 + strlen(exe) + 1;
-		char *path = malloc(size);
-		snprintf(path, size, "%s/%s", entry, exe);
+		// Construct the candidate path
+		size_t candidate_len = dir_len + exe_len + 2; // 2 for `/` and NUL
+		char *candidate = malloc(candidate_len);
+		memcpy(candidate, dir, dir_len);
+		candidate[dir_len] = '/';
+		memcpy(candidate + dir_len + 1, exe, exe_len + 1); // exe_len + 1 for NUL
 
-		if (!access(path, X_OK)) {
-			verbose_log(2, "  matched: %s", path);
-			return free(mpath), path;
-		}
+		// If it's actually executable, we're done!
+		if (is_executable_file(candidate))
+			return candidate;
 
-		verbose_log(3, "  didn't match: %s", path);
-		free(path);
+		// Not executable, free it.
+		free(candidate);
 	}
 
-	return free(mpath), NULL;
+	// Nothing found, return null.
+	return NULL;
 }
 
 #ifdef HAS_REGEX_H
