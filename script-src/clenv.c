@@ -209,6 +209,17 @@ compile_regex(regex_t *re, char flag, const char *pat)
  *                       Interact with the Environment                        *
  ******************************************************************************/
 
+static int
+clenv_expand_environ_if_needed(size_t current_size)
+{
+	if (current_size < child_environ_cap - 1)
+		return 0;
+
+	child_environ_cap *= 2;
+	child_environ = realloc(child_environ, sizeof(char *) * child_environ_cap);
+	return 1;
+}
+
 /**
  * Returns the pointer to `child_environ` for the entry with the name `name`.
  * If `name` is not present, returns the last value in `child_environ` (which
@@ -270,10 +281,8 @@ clenv_set(const char *restrict name, const char *restrict value)
 
 	// It didn't exist, expand the environment if needed
 	size_t child_environ_len = entry_ptr - child_environ;
-	if (child_environ_cap == child_environ_len + 1) {
-		child_environ = realloc(child_environ, sizeof(char *) * (child_environ_cap *= 2));
+	if (clenv_expand_environ_if_needed(child_environ_len))
 		entry_ptr = child_environ + child_environ_len;
-	}
 
 	// Construct the entry_ptr
 	entry_ptr[1] = NULL; // make sure the next one is zero'd out (for reference)
@@ -411,8 +420,7 @@ setup_initial_env(enum starting_env starting_env)
 		// Gotta manually copy it to prevent `clenv -a -u HOME -v HOME` errors
 		size_t i = 0;
 		for (i = 0; environ[i]; ++i) {
-			if (i == child_environ_cap - 1)
-				child_environ = realloc(child_environ, sizeof(char *) * (child_environ_cap *= 2));
+			clenv_expand_environ_if_needed(i);
 			child_environ[i] = strdup(environ[i]); // Also have to strdup so modifications dont affect the `-m`, and we can free
 		}
 
@@ -469,13 +477,20 @@ print_environment(void)
 static void
 execute_program(int argc, char **const argv)
 {
-	// Search for the program name if an alt path is set, and the program is
-	// a bare name
+	// Search for the program name if a non-path executable is given
 	if (*argv[0] && !strchr(argv[0], '/')) {
-		char *orig = argv[0];
+		// If no alt path is supplied, check the inherited `$PATH`
 		if (!alt_path)
 			alt_path = getenv("PATH");
 
+		// If there's still not alt path, fetch the default one.
+		if (!alt_path) {
+			size_t alt_len = confstr(_CS_PATH, 0, 0);
+			alt_path = malloc(alt_len);
+			confstr(_CS_PATH, (char *) alt_path, alt_len);
+		}
+
+		char *orig = argv[0];
 		if (!(argv[0] = find_executable_path(orig, alt_path)))
 			die(EXIT_STATUS_CANNOT_FIND_EXE, "%s: No such file or directory", orig);
 	}
