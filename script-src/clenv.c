@@ -36,7 +36,11 @@
 # define HAS_REGEX_H
 # include <regex.h>
 #else
-# warning no <regex.h> present; -m and -U disabled
+# if defined(_MSC_VER)
+#  pragma message("warning: no <regex.h> present; -m and -U disabled")
+# else
+#  warning no <regex.h> present; -m and -U disabled
+# endif
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
@@ -579,11 +583,24 @@ parse_arguments(int argc, char **argv)
 	// easier.)
 	enum starting_env starting_env = MINIMAL_ENV;
 	int option;
+	char *argopt;
+	int argidx = 1;
+	for (; argv[argidx]; argidx++) {
+		if (argv[argidx][0] != '-') break;
+		if (argv[argidx][1] == '-' && argv[argidx][2] == '\0') {
+			argidx++;
+			break;
+		}
 
-	// Use the `+` prefix, which POSIX 2024 allows for and says is a no-op. (In
-	// older versions of `getopt`, the `+` is handled by the `default` case)
-	while ((option = getopt(argc, argv, "+hDV0P:aniv:u:m:U:")) != -1) {
-		switch (option) {
+#define REQUIRED_ARG(into) do { \
+			if (*arg) into = arg; \
+			else if (!(into = argv[++argidx])) \
+				die(EXIT_STATUS_BAD_FLAG, "option requires an argument -- %c", option); \
+			} while(0)
+
+		char *arg = argv[argidx] + 1;
+	re_arg:
+		switch (option = *arg++) {
 		case 'h':
 			usage();
 
@@ -611,61 +628,69 @@ parse_arguments(int argc, char **argv)
 			break;
 
 		case 'P':
-			alt_path = optarg;
+			REQUIRED_ARG(alt_path);
 			break;
 
 		case 'v':
-			if (!*optarg || *optarg == '=')
+			REQUIRED_ARG(argopt);
+
+			if (!*argopt || *argopt == '=')
 				die(EXIT_STATUS_BAD_FLAG, "-v: variable name must not be empty");
 
 			char *value;
 
 			// Parse out `-v NAME=VALUE` vs just `-v NAME`.
-			if ((value = strchr(optarg, '='))) {
+			if ((value = strchr(argopt, '='))) {
 				*value++ = '\0';
-			} else if (!(value = getenv(optarg))) {
-				verbose_log(1, "-v %s: variable not present, not setting", optarg);
+			} else if (!(value = getenv(argopt))) {
+				verbose_log(1, "-v %s: variable not present, not setting", argopt);
 				break;
 			}
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
-				.u = { (struct arg_value) { .arg = optarg, .value = value } }
+				.u = { (struct arg_value) { .arg = argopt, .value = value } }
 			};
 			break;
 
 		case 'u':
-			if (!*optarg)
+			REQUIRED_ARG(argopt);
+
+			if (!*argopt)
 				die(EXIT_STATUS_BAD_FLAG, "-u: argument must not be empty");
 
-			if (strchr(optarg, '='))
-				die(EXIT_STATUS_BAD_FLAG, "-u: variable name cannot contain an '=': %s", optarg);
+			if (strchr(argopt, '='))
+				die(EXIT_STATUS_BAD_FLAG, "-u: variable name cannot contain an '=': %s", argopt);
 
 			actions[nactions++] = (struct action) {
 				.flag = option,
-				.u = { (struct arg_value) { .arg = optarg} }
+				.u = { (struct arg_value) { .arg = argopt} }
 			};
 			break;
 
 		case 'm':
 		case 'U':
 #ifdef HAS_REGEX_H
+			REQUIRED_ARG(argopt);
+
 			actions[nactions].flag = option;
-			compile_regex(&actions[nactions++].u.re, option, optarg);
+			compile_regex(&actions[nactions++].u.re, option, argopt);
 			break;
 #else
 			die(EXIT_STATUS_BAD_FLAG, "-%c: regex is not compiled into this version of clenv", option);
 #endif
 
 		default:
-			exit(EXIT_FAILURE);
+			exit(EXIT_FAILURE); // TODO: FIXME
 		}
+
+		if (*arg) goto re_arg;
 	}
 
 	// Make sure mutually-incompatible options aren't given
-	if (alt_path && argc == optind)
+	if (alt_path && argc == argidx)
 		die(EXIT_STATUS_BAD_FLAG, "cannot supply -P and no executable");
-	if (null_ending && argc != optind)
+	if (null_ending && argc != argidx)
 		die(EXIT_STATUS_BAD_FLAG, "cannot supply -0 and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
@@ -683,7 +708,8 @@ parse_arguments(int argc, char **argv)
 		}
 	}
 	free(actions);
-	return optind;
+	printf("argc=%d, argid=%d\n", argc, argidx);
+	return argidx;
 }
 
 int
