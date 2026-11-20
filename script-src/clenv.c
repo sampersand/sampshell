@@ -558,8 +558,8 @@ usage(void)
  * variables. Updates `argc` and `argv` to point to the remaining non-flag
  * arguments (if any).
  **/
-static void
-parse_arguments(int *argc, char ***argv)
+static int
+parse_arguments(int argc, char **argv)
 {
 	struct action {
 		char flag;
@@ -571,7 +571,7 @@ parse_arguments(int *argc, char ***argv)
 		} u;
 	};
 
-	struct action *actions = malloc(*argc * sizeof(struct action));
+	struct action *actions = malloc(argc * sizeof(struct action));
 	int nactions = 0;
 
 	// Scan the argument list for options which should be processed before
@@ -582,7 +582,7 @@ parse_arguments(int *argc, char ***argv)
 
 	// Use the `+` prefix, which POSIX 2024 allows for and says is a no-op. (In
 	// older versions of `getopt`, the `+` is handled by the `default` case)
-	while ((option = getopt(*argc, *argv, "+hDV0P:aniv:u:m:U:")) != -1) {
+	while ((option = getopt(argc, argv, "+hDV0P:aniv:u:m:U:")) != -1) {
 		switch (option) {
 		case 'h':
 			usage();
@@ -662,13 +662,10 @@ parse_arguments(int *argc, char ***argv)
 		}
 	}
 
-	*argc -= optind;
-	*argv += optind;
-
 	// Make sure mutually-incompatible options aren't given
-	if (alt_path && !*argc)
+	if (alt_path && argc == optind)
 		die(EXIT_STATUS_BAD_FLAG, "cannot supply -P and no executable");
-	if (null_ending && *argc)
+	if (null_ending && argc != optind)
 		die(EXIT_STATUS_BAD_FLAG, "cannot supply -0 and an executable");
 
 	// Setup the initial environment based on the flags that were passed.
@@ -686,6 +683,7 @@ parse_arguments(int *argc, char ***argv)
 		}
 	}
 	free(actions);
+	return optind;
 }
 
 int
@@ -699,7 +697,9 @@ main(int argc, char *argv[])
 		else program_name = argv[0];
 	}
 
-	parse_arguments(&argc, &argv);
+	int offset = parse_arguments(argc, argv);
+	argc -= offset;
+	argv += offset;
 
 	if (!argc)
 		print_environment();
