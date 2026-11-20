@@ -155,7 +155,7 @@ find_executable_path(const char *exe, const char *path)
 
 	size_t exe_len = strlen(exe);
 
-	while (*path) {
+	while (1) {
 		// Find the current entry, then increment `path`
 		const char *dir = path;
 		size_t dir_len = strcspn(path, ":");
@@ -180,6 +180,10 @@ find_executable_path(const char *exe, const char *path)
 
 		// Not executable, free it.
 		free(candidate);
+
+		// last entry
+		if (!*path) break;
+		path++; // skip the `:`
 	}
 
 	// Nothing found, return null.
@@ -209,6 +213,10 @@ compile_regex(regex_t *re, char flag, const char *pat)
  *                       Interact with the Environment                        *
  ******************************************************************************/
 
+/**
+ * Resizes the environment so that a new entry can be added, if `current_size`
+ * (which is the current size of the environment) is too small to hold it.
+ **/
 static int
 clenv_expand_environ_if_needed(size_t current_size)
 {
@@ -572,6 +580,8 @@ parse_arguments(int *argc, char ***argv)
 	enum starting_env starting_env = MINIMAL_ENV;
 	int option;
 
+	// Use the `+` prefix, which POSIX 2024 allows for and says is a no-op. (In
+	// older versions of `getopt`, the `+` is handled by the `default` case)
 	while ((option = getopt(*argc, *argv, "+hDV0P:aniv:u:m:U:")) != -1) {
 		switch (option) {
 		case 'h':
@@ -615,7 +625,7 @@ parse_arguments(int *argc, char ***argv)
 				*value++ = '\0';
 			} else if (!(value = getenv(optarg))) {
 				verbose_log(1, "-v %s: variable not present, not setting", optarg);
-				continue;
+				break;
 			}
 
 			actions[nactions++] = (struct action) {
